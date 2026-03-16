@@ -2,11 +2,12 @@
 import { defineConfig } from 'wxt';
 
 export default defineConfig({
+  outDir: 'dev',
   manifest: {
     name: 'Ghost Protocols — Iskandar Diagnosis Engine V1',
     description:
       'Sentra Assist delivers trustworthy clinical decision support for ePuskesmas with safer diagnosis workflows, smarter medication guidance, and doctor-first efficiency.',
-    version: '1.0.4',
+    version: '1.0.5',
     icons: {
       16: 'icon/16.png',
       32: 'icon/32.png',
@@ -14,8 +15,14 @@ export default defineConfig({
       96: 'icon/96.png',
       128: 'icon/128.png',
     },
-    permissions: ['activeTab', 'storage', 'sidePanel', 'identity', 'scripting'],
-    host_permissions: ['https://kotakediri.epuskesmas.id/*', 'https://*.googleapis.com/*'],
+    permissions: ['activeTab', 'storage', 'sidePanel', 'identity', 'scripting', 'alarms'],
+    host_permissions: [
+      'https://kotakediri.epuskesmas.id/*',
+      'https://*.googleapis.com/*',
+      'https://crew.puskesmasbalowerti.com/*',
+      'https://primary-healthcare-production.up.railway.app/*',
+      'http://localhost:*/*',
+    ],
     action: {
       default_title: 'Open Ghost Protocols',
       default_icon: {

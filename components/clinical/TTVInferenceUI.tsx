@@ -1,9 +1,8 @@
 // Designed and constructed by Claudesy.
 import { TextEffect } from '@/components/ui/text-effect'
-import { createLogger } from '@/utils/logger'
 import {
-  extractClinicalAnamnesis,
   evaluateCanonicalClinicalEngine,
+  extractClinicalAnamnesis,
   getOnlineDoctors,
   sendConsultToDoctor,
   type CanonicalClinicalEngineOutput,
@@ -28,9 +27,10 @@ import {
   type HistoricalBP,
 } from '@/lib/emergency-detector/occult-shock-detector'
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store'
+import { createLogger } from '@/utils/logger'
+import type { AnamnesisExtractionResult, AnamnesisMissingField } from '@/utils/types'
 import { AlertTriangle, ChevronDown, RefreshCw, SendHorizontal, ShieldAlert } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { AnamnesisExtractionResult, AnamnesisMissingField } from '@/utils/types'
 
 export interface ScreeningAlert {
   id: string
@@ -1022,7 +1022,9 @@ export function TTVInferenceUI({
   const [isDisabilityOpen, setIsDisabilityOpen] = useState(false)
   const [isObesityOpen, setIsObesityOpen] = useState(false)
   const [isPresetOpen, setIsPresetOpen] = useState(false)
-  const [extractedAnamnesis, setExtractedAnamnesis] = useState<AnamnesisExtractionResult | null>(null)
+  const [extractedAnamnesis, setExtractedAnamnesis] = useState<AnamnesisExtractionResult | null>(
+    null
+  )
   const [anamnesisMissingFields, setAnamnesisMissingFields] = useState<AnamnesisMissingField[]>([])
   const [shadowSuggestion, setShadowSuggestion] = useState('')
   const [autoTextSource, setAutoTextSource] = useState<'backend' | 'fallback-local' | null>(null)
@@ -2132,7 +2134,7 @@ export function TTVInferenceUI({
         <div className="form-group form-group--inline">
           <div className="form-group-header">
             <div className="console-label console-label-prominent">Status Kehamilan</div>
-            {isFemalePatient && !extractedPregnancyRisk && !state.pregnancyStatus ? (
+            {isFemalePatient && !extractedPregnancyRisk && state.pregnancyStatus === null ? (
               <span className="field-placeholder-hint">Mohon diisi</span>
             ) : isFemalePatient && extractedPregnancyRisk ? (
               <span className="field-extracted-indicator">risiko terdeteksi</span>
@@ -2357,7 +2359,9 @@ export function TTVInferenceUI({
             </div>
           </div>
         </div>
-        <div className={`vitals-grid vitals-grid--redesign ${isGhostFillAnimating ? 'vitals-grid--ghosting' : ''}`}>
+        <div
+          className={`vitals-grid vitals-grid--redesign ${isGhostFillAnimating ? 'vitals-grid--ghosting' : ''}`}
+        >
           {/* Row 1 — Tensi (2-col, teal highlight) */}
           <div className="vitals-row vitals-row--2col vitals-row--tensi">
             <div className={getVitalGhostItemClassName('bp')}>

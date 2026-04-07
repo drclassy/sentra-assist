@@ -1,130 +1,139 @@
 // Designed and constructed by Claudesy.
+import { TextEffect } from '@/components/ui/text-effect'
 import {
-  type CanonicalClinicalEngineOutput,
   evaluateCanonicalClinicalEngine,
   getOnlineDoctors,
   sendConsultToDoctor,
+  type CanonicalClinicalEngineOutput,
   type OnlineDoctor,
-} from '@/lib/api/bridge-client';
+} from '@/lib/api/bridge-client'
+import { composeAnamnesaDraft, type ComposedAnamnesaDraft } from '@/lib/clinical/anamnesa-composer'
+import { AutosenPreset, DisabilityType, ObesityConfirmation } from '@/lib/clinical/autosen-types'
 import {
-  composeAnamnesaDraft,
-  type ComposedAnamnesaDraft,
-} from '@/lib/clinical/anamnesa-composer';
-import { buildVitalAutofill } from '@/lib/clinical/vital-autocomplete';
-import { getVitalScreeningProfile } from '@/lib/clinical/vital-screening-thresholds';
-import { buildCanonicalRequestId, buildCanonicalTriageInput } from '@/lib/clinical/canonical-triage-builder';
+  buildCanonicalRequestId,
+  buildCanonicalTriageInput,
+} from '@/lib/clinical/canonical-triage-builder'
+import { buildVitalAutofill } from '@/lib/clinical/vital-autocomplete'
+import { getVitalScreeningProfile } from '@/lib/clinical/vital-screening-thresholds'
 import {
-  AutosenPreset,
-  DisabilityType,
-  ObesityConfirmation,
-} from '@/lib/clinical/autosen-types';
-import { TextEffect } from '@/components/ui/text-effect';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  AlertTriangle,
-  ChevronDown,
-  RefreshCw,
-  SendHorizontal,
-  ShieldAlert,
-} from 'lucide-react';
+  calculateBaseline,
+  SHOCK_THRESHOLDS,
+  type HistoricalBP,
+} from '@/lib/emergency-detector/occult-shock-detector'
+import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store'
+import { AlertTriangle, ChevronDown, RefreshCw, SendHorizontal, ShieldAlert } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 export interface ScreeningAlert {
-  id: string;
-  type: string;
-  severity: 'critical' | 'high' | 'warning';
-  title: string;
-  gate: string;
-  reasoning: string;
-  recommendations: string[];
+  id: string
+  type: string
+  severity: 'critical' | 'high' | 'warning'
+  title: string
+  gate: string
+  reasoning: string
+  recommendations: string[]
   clinicalData?: {
-    sbp?: number;
-    dbp?: number;
-    hr?: number;
-    rr?: number;
-    temp?: number;
-    spo2?: number;
-    glucose?: number;
-    map?: number;
-  };
+    sbp?: number
+    dbp?: number
+    hr?: number
+    rr?: number
+    temp?: number
+    spo2?: number
+    glucose?: number
+    map?: number
+  }
 }
 
 export interface TTVInferenceData {
   patient: {
-    name: string;
-    gender: 'L' | 'P';
-    age: number;
-    rm: string;
-    dob?: string;
-    bloodType?: string;
-    bpjsStatus?: 'aktif' | 'nonaktif' | 'mandiri' | null;
-    kelurahan?: string;
-  };
+    name: string
+    gender: 'L' | 'P'
+    age: number
+    rm: string
+    dob?: string
+    bloodType?: string
+    bpjsStatus?: 'aktif' | 'nonaktif' | 'mandiri' | null
+    kelurahan?: string
+  }
   vitals: {
-    sbp: number;
-    dbp: number;
-    hr: number;
-    rr: number;
-    temp: number;
-    spo2: number;
-    glucose: number;
-  };
-  symptomText: string;
-  allergies: string[];
-  pregnancyStatus: boolean | null;
-  disabilityType: DisabilityType;
-  obesityConfirmation: ObesityConfirmation;
-  autosenPreset: AutosenPreset;
-  alerts: ScreeningAlert[];
-  summary: string;
-  anamnesaDraft: ComposedAnamnesaDraft;
-  generatedAt: string;
+    sbp: number
+    dbp: number
+    hr: number
+    rr: number
+    temp: number
+    spo2: number
+    glucose: number
+  }
+  symptomText: string
+  allergies: string[]
+  pregnancyStatus: boolean | null
+  disabilityType: DisabilityType
+  obesityConfirmation: ObesityConfirmation
+  autosenPreset: AutosenPreset
+  alerts: ScreeningAlert[]
+  summary: string
+  anamnesaDraft: ComposedAnamnesaDraft
+  generatedAt: string
 }
 
 interface TTVStateShape {
-  sbp: string;
-  dbp: string;
-  hr: string;
-  rr: string;
-  temp: string;
-  spo2: string;
-  glucose: string;
-  symptomText: string;
-  allergies: string[];
-  pregnancyStatus: boolean | null;
-  disabilityType: DisabilityType;
-  obesityConfirmation: ObesityConfirmation;
-  autosenPreset: AutosenPreset;
+  sbp: string
+  dbp: string
+  hr: string
+  rr: string
+  temp: string
+  spo2: string
+  glucose: string
+  symptomText: string
+  allergies: string[]
+  pregnancyStatus: boolean | null
+  disabilityType: DisabilityType
+  obesityConfirmation: ObesityConfirmation
+  autosenPreset: AutosenPreset
+  avpu: 'A' | 'C' | 'V' | 'P' | 'U'
+  supplemental_o2: boolean
+  pain_score: string
 }
 
-type VitalFieldKey = 'sbp' | 'dbp' | 'hr' | 'rr' | 'temp' | 'spo2' | 'glucose';
-type VitalGhostLane = 'bp' | 'glucose' | 'hr' | 'rr' | 'temp' | 'spo2';
+type VitalFieldKey = 'sbp' | 'dbp' | 'hr' | 'rr' | 'temp' | 'spo2' | 'glucose'
+type AvpuValue = 'A' | 'C' | 'V' | 'P' | 'U'
+const AVPU_OPTIONS: AvpuValue[] = ['A', 'C', 'V', 'P', 'U']
+const AVPU_LABELS: Record<AvpuValue, string> = {
+  A: 'Alert',
+  C: 'Confusion',
+  V: 'Voice',
+  P: 'Pain',
+  U: 'Unresponsive',
+}
+type VitalGhostLane = 'bp' | 'glucose' | 'hr' | 'rr' | 'temp' | 'spo2'
 
 interface TTVInferenceUIProps {
-  patientName?: string;
-  patientGender?: 'L' | 'P';
-  patientAge?: number;
-  patientRM?: string;
-  patientDOB?: string;
-  patientBloodType?: string;
-  patientBPJSStatus?: 'aktif' | 'nonaktif' | 'mandiri' | null;
-  patientKelurahan?: string;
-  onComplete?: (data: TTVInferenceData) => void;
-  onAlertsChange?: (alerts: ScreeningAlert[]) => void;
-  showMaskedName?: boolean;
-  ttvState?: TTVStateShape;
-  onTTVStateChange?: (state: TTVStateShape) => void;
-  onRefreshPatient?: () => void | Promise<void>;
-  isLoadingPatient?: boolean;
-  onNavigateToTrajectory?: () => void;
-  onChronicHistoryChange?: (summary: string) => void;
-  prefilledHistoryFlags?: Record<string, boolean>;
-  extractedSpecialConditions?: string[];
-  extractedPregnancyRisk?: string;
-  extractedFacilityName?: string;
-  extractedPayerLabel?: string;
-  extractedAllergies?: string[];
-  extractedPregnancyStatus?: boolean | null;
-  canonicalOutput?: CanonicalClinicalEngineOutput | null;
+  patientName?: string
+  patientGender?: 'L' | 'P'
+  patientAge?: number
+  patientRM?: string
+  patientDOB?: string
+  patientBloodType?: string
+  patientBPJSStatus?: 'aktif' | 'nonaktif' | 'mandiri' | null
+  patientKelurahan?: string
+  onComplete?: (data: TTVInferenceData) => void
+  onAlertsChange?: (alerts: ScreeningAlert[]) => void
+  showMaskedName?: boolean
+  ttvState?: TTVStateShape
+  onTTVStateChange?: (state: TTVStateShape) => void
+  onRefreshPatient?: () => void | Promise<void>
+  isLoadingPatient?: boolean
+  onNavigateToTrajectory?: () => void
+  onChronicHistoryChange?: (summary: string) => void
+  prefilledHistoryFlags?: Record<string, boolean>
+  extractedSpecialConditions?: string[]
+  extractedPregnancyRisk?: string
+  extractedFacilityName?: string
+  extractedPayerLabel?: string
+  extractedAllergies?: string[]
+  extractedPregnancyStatus?: boolean | null
+  canonicalOutput?: CanonicalClinicalEngineOutput | null
+  prefetchedVisits?: VisitRecord[]
 }
 
 const DEFAULT_STATE: TTVStateShape = {
@@ -141,7 +150,10 @@ const DEFAULT_STATE: TTVStateShape = {
   disabilityType: '',
   obesityConfirmation: '',
   autosenPreset: 'adl',
-};
+  avpu: 'A',
+  supplemental_o2: false,
+  pain_score: '',
+}
 
 const historyItems = [
   { id: 'dm', label: 'DM' },
@@ -150,10 +162,10 @@ const historyItems = [
   { id: 'stroke', label: 'Stroke' },
   { id: 'ginjal', label: 'Ginjal' },
   { id: 'asma', label: 'Asma' },
-] as const;
+] as const
 
-const allergyPresets = ['Makanan', 'Kulit', 'Debu', 'Obat'] as const;
-const VITAL_GHOST_LANES: VitalGhostLane[] = ['bp', 'glucose', 'hr', 'rr', 'temp', 'spo2'];
+const allergyPresets = ['Makanan', 'Kulit', 'Debu', 'Obat'] as const
+const VITAL_GHOST_LANES: VitalGhostLane[] = ['bp', 'glucose', 'hr', 'rr', 'temp', 'spo2']
 const VITAL_GHOST_LANE_FIELDS: Record<VitalGhostLane, VitalFieldKey[]> = {
   bp: ['sbp', 'dbp'],
   glucose: ['glucose'],
@@ -161,7 +173,7 @@ const VITAL_GHOST_LANE_FIELDS: Record<VitalGhostLane, VitalFieldKey[]> = {
   rr: ['rr'],
   temp: ['temp'],
   spo2: ['spo2'],
-};
+}
 const disabilityOptions: DisabilityType[] = [
   '',
   'Netra',
@@ -174,7 +186,7 @@ const disabilityOptions: DisabilityType[] = [
   'Hiperaktivitas',
   'Belajar spesifik',
   'Spektrum Autis (ASD)',
-];
+]
 
 const presetLabels: Record<AutosenPreset, string> = {
   hypertension: 'Hipertensi',
@@ -182,56 +194,56 @@ const presetLabels: Record<AutosenPreset, string> = {
   hypoglycemia: 'Hipoglikemi',
   glucose_tolerance: 'Gangguan Toleransi glukosa',
   adl: 'ADL Terganggu',
-};
+}
 
 const parseNumber = (value: string): number => {
-  const normalized = value.replace(',', '.').trim();
+  const normalized = value.replace(',', '.').trim()
   if (!normalized) {
-    return 0;
+    return 0
   }
 
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : 0
+}
 
 const shuffleGhostLanes = (lanes: readonly VitalGhostLane[]): VitalGhostLane[] => {
-  const next = [...lanes];
+  const next = [...lanes]
 
   for (let index = next.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [next[index], next[swapIndex]] = [next[swapIndex], next[index]];
+    const swapIndex = Math.floor(Math.random() * (index + 1))
+    ;[next[index], next[swapIndex]] = [next[swapIndex], next[index]]
   }
 
-  return next;
-};
+  return next
+}
 
 const getSelectedHistoryLabels = (flags: Record<string, boolean>): string[] =>
-  historyItems.filter((item) => flags[item.id]).map((item) => item.label);
+  historyItems.filter((item) => flags[item.id]).map((item) => item.label)
 
 const createEmptyHistoryFlags = (): Record<string, boolean> =>
   historyItems.reduce(
     (accumulator, item) => {
-      accumulator[item.id] = false;
-      return accumulator;
+      accumulator[item.id] = false
+      return accumulator
     },
     {} as Record<string, boolean>
-  );
+  )
 
 const AVAILABILITY_LABELS: Record<NonNullable<OnlineDoctor['availability_status']>, string> = {
   online: 'ONLINE',
   busy: 'BUSY',
   away: 'AWAY',
   offline: 'OFFLINE',
-};
+}
 
 const AVAILABILITY_RANK: Record<NonNullable<OnlineDoctor['availability_status']>, number> = {
   online: 0,
   busy: 1,
   away: 2,
   offline: 3,
-};
+}
 
-const normalizeText = (value?: string): string => (value || '').trim().toLowerCase();
+const normalizeText = (value?: string): string => (value || '').trim().toLowerCase()
 
 const GERIATRIC_ORTHOSTATIC_KEYWORDS = [
   'pusing',
@@ -242,7 +254,7 @@ const GERIATRIC_ORTHOSTATIC_KEYWORDS = [
   'pingsan',
   'lemas',
   'lemah',
-] as const;
+] as const
 
 const GERIATRIC_ATYPICAL_INFECTION_KEYWORDS = [
   'bingung',
@@ -254,75 +266,75 @@ const GERIATRIC_ATYPICAL_INFECTION_KEYWORDS = [
   'intake turun',
   'penurunan aktivitas',
   'penurunan fungsi',
-] as const;
+] as const
 
 const hasKeywordSignal = (text: string, keywords: readonly string[]): boolean =>
-  keywords.some((keyword) => text.includes(keyword));
+  keywords.some((keyword) => text.includes(keyword))
 
 const derivePreferredPoliKeywords = (
   flags: string[],
   preset: AutosenPreset,
   pregnancyStatus: boolean | null
 ): string[] => {
-  const keywords = new Set<string>(['umum']);
+  const keywords = new Set<string>(['umum'])
 
   if (pregnancyStatus === true) {
-    keywords.add('kia');
-    keywords.add('obgyn');
-    keywords.add('kandungan');
+    keywords.add('kia')
+    keywords.add('obgyn')
+    keywords.add('kandungan')
   }
 
   if (flags.includes('Jantung')) {
-    keywords.add('jantung');
-    keywords.add('penyakit dalam');
+    keywords.add('jantung')
+    keywords.add('penyakit dalam')
   }
 
   if (flags.includes('DM') || preset === 'hyperglycemia' || preset === 'hypoglycemia') {
-    keywords.add('penyakit dalam');
-    keywords.add('metabolik');
+    keywords.add('penyakit dalam')
+    keywords.add('metabolik')
   }
 
   if (preset === 'hypertension') {
-    keywords.add('penyakit dalam');
+    keywords.add('penyakit dalam')
   }
 
-  return Array.from(keywords);
-};
+  return Array.from(keywords)
+}
 
-const formatBpjsStatus = (
-  status?: TTVInferenceUIProps['patientBPJSStatus']
-): string => {
-  if (status === 'aktif') return 'BPJS Aktif';
-  if (status === 'nonaktif') return 'BPJS Nonaktif';
-  if (status === 'mandiri') return 'Mandiri';
-  return 'Menunggu data';
-};
+const formatBpjsStatus = (status?: TTVInferenceUIProps['patientBPJSStatus']): string => {
+  if (status === 'aktif') return 'BPJS Aktif'
+  if (status === 'nonaktif') return 'BPJS Nonaktif'
+  if (status === 'mandiri') return 'Mandiri'
+  return 'Menunggu data'
+}
 
 const formatPayerLabel = (
   extractedPayerLabel?: string,
   patientBPJSStatus?: TTVInferenceUIProps['patientBPJSStatus']
-): string => extractedPayerLabel?.trim() || formatBpjsStatus(patientBPJSStatus);
+): string => extractedPayerLabel?.trim() || formatBpjsStatus(patientBPJSStatus)
 
-const humanize = (value: string): string => value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+const humanize = (value: string): string => value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim()
 
 const matchesPreferredPoli = (doctor: OnlineDoctor, keywords: string[]): boolean => {
-  const poli = normalizeText(doctor.poli);
+  const poli = normalizeText(doctor.poli)
   if (!poli) {
-    return false;
+    return false
   }
 
-  return keywords.some((keyword) => poli.includes(keyword));
-};
+  return keywords.some((keyword) => poli.includes(keyword))
+}
 
 const matchesPreferredFacility = (doctor: OnlineDoctor, facilityName?: string): boolean => {
-  const locationHint = normalizeText(facilityName);
+  const locationHint = normalizeText(facilityName)
   if (!locationHint) {
-    return false;
+    return false
   }
 
-  const combinedLocation = normalizeText([doctor.location_name, doctor.room_name].filter(Boolean).join(' '));
-  return combinedLocation.includes(locationHint);
-};
+  const combinedLocation = normalizeText(
+    [doctor.location_name, doctor.room_name].filter(Boolean).join(' ')
+  )
+  return combinedLocation.includes(locationHint)
+}
 
 const buildForwardSummary = ({
   targetDoctorName,
@@ -336,16 +348,16 @@ const buildForwardSummary = ({
   consultId,
   canonicalOutput,
 }: {
-  targetDoctorName: string;
-  patientName: string;
-  patientRM: string;
-  patientBPJSStatus?: TTVInferenceUIProps['patientBPJSStatus'];
-  extractedPayerLabel?: string;
-  specialConditions: string[];
-  pregnancyRisk?: string;
-  facilityName?: string;
-  consultId?: string;
-  canonicalOutput?: CanonicalClinicalEngineOutput | null;
+  targetDoctorName: string
+  patientName: string
+  patientRM: string
+  patientBPJSStatus?: TTVInferenceUIProps['patientBPJSStatus']
+  extractedPayerLabel?: string
+  specialConditions: string[]
+  pregnancyRisk?: string
+  facilityName?: string
+  consultId?: string
+  canonicalOutput?: CanonicalClinicalEngineOutput | null
 }): string => {
   const lines = [
     '[FORWARD TO DOCTOR]',
@@ -355,12 +367,12 @@ const buildForwardSummary = ({
     `Penyakit Khusus: ${specialConditions.length > 0 ? specialConditions.join(', ') : 'Tidak terdeteksi'}`,
     `Risiko Kehamilan: ${pregnancyRisk?.trim() || 'Tidak terdeteksi'}`,
     `Faskes RME: ${facilityName?.trim() || 'Tidak terdeteksi'}`,
-  ];
+  ]
 
   if (canonicalOutput?.scoring.news2) {
     lines.push(
       `Canonical NEWS2: ${canonicalOutput.scoring.news2.score} • ${canonicalOutput.scoring.news2.risk_level.toUpperCase()}`
-    );
+    )
   }
 
   if (canonicalOutput?.trajectory?.overall_trend || canonicalOutput?.trajectory?.overall_risk) {
@@ -374,49 +386,50 @@ const buildForwardSummary = ({
           ? humanize(canonicalOutput.trajectory.overall_risk).toUpperCase()
           : 'TIDAK TERSEDIA'
       }`
-    );
+    )
   }
 
   if (canonicalOutput?.recommendations.immediate_actions?.length) {
     lines.push(
       `Immediate Actions: ${canonicalOutput.recommendations.immediate_actions.slice(0, 3).join(', ')}`
-    );
+    )
   }
 
   if (consultId) {
-    lines.push(`Consult ID: ${consultId}`);
+    lines.push(`Consult ID: ${consultId}`)
   }
 
-  return lines.join('\n');
-};
+  return lines.join('\n')
+}
 
 export const buildAlerts = (
   state: TTVStateShape,
-  patient: Pick<TTVInferenceUIProps, 'patientAge'>
+  patient: Pick<TTVInferenceUIProps, 'patientAge'>,
+  context?: { bpHistory?: HistoricalBP[]; knownHTN?: boolean }
 ): ScreeningAlert[] => {
-  const alerts: ScreeningAlert[] = [];
-  const sbp = parseNumber(state.sbp);
-  const dbp = parseNumber(state.dbp);
-  const hr = parseNumber(state.hr);
-  const rr = parseNumber(state.rr);
-  const temp = parseNumber(state.temp);
-  const spo2 = parseNumber(state.spo2);
-  const glucose = parseNumber(state.glucose);
-  const map = sbp > 0 && dbp > 0 ? Math.round((sbp + 2 * dbp) / 3) : undefined;
-  const physiology = getVitalScreeningProfile(patient.patientAge || 0);
-  const ageContext = `${physiology.label.toLowerCase()} (${patient.patientAge || 0} tahun)`;
-  const symptomText = normalizeText(state.symptomText);
+  const alerts: ScreeningAlert[] = []
+  const sbp = parseNumber(state.sbp)
+  const dbp = parseNumber(state.dbp)
+  const hr = parseNumber(state.hr)
+  const rr = parseNumber(state.rr)
+  const temp = parseNumber(state.temp)
+  const spo2 = parseNumber(state.spo2)
+  const glucose = parseNumber(state.glucose)
+  const map = sbp > 0 && dbp > 0 ? Math.round((sbp + 2 * dbp) / 3) : undefined
+  const physiology = getVitalScreeningProfile(patient.patientAge || 0)
+  const ageContext = `${physiology.label.toLowerCase()} (${patient.patientAge || 0} tahun)`
+  const symptomText = normalizeText(state.symptomText)
   const hasOrthostaticCue =
-    physiology.isOlderAdult && hasKeywordSignal(symptomText, GERIATRIC_ORTHOSTATIC_KEYWORDS);
+    physiology.isOlderAdult && hasKeywordSignal(symptomText, GERIATRIC_ORTHOSTATIC_KEYWORDS)
   const hasAtypicalInfectionCue =
-    physiology.isOlderAdult && hasKeywordSignal(symptomText, GERIATRIC_ATYPICAL_INFECTION_KEYWORDS);
+    physiology.isOlderAdult && hasKeywordSignal(symptomText, GERIATRIC_ATYPICAL_INFECTION_KEYWORDS)
 
   const hasHypotension =
     sbp > 0 &&
     dbp > 0 &&
     (physiology.isPediatric
       ? sbp < physiology.hypotensionSbpFloor
-      : Boolean((map && map < 65) || sbp < physiology.hypotensionSbpFloor));
+      : Boolean((map && map < 65) || sbp < physiology.hypotensionSbpFloor))
 
   if (hasHypotension) {
     alerts.push({
@@ -438,7 +451,39 @@ export const buildAlerts = (
         'Segera eskalasi ke dokter penanggung jawab.',
       ],
       clinicalData: { sbp, dbp, map },
-    });
+    })
+  }
+
+  // GATE_1B: Relative hypotension — occult shock pada pasien HTN
+  if (
+    !physiology.isPediatric &&
+    context?.knownHTN &&
+    context.bpHistory &&
+    context.bpHistory.length >= 3 &&
+    sbp > 0 &&
+    dbp > 0
+  ) {
+    const baseline = calculateBaseline(context.bpHistory)
+    if (baseline) {
+      const deltaSbp = baseline.sbp - sbp
+      if (deltaSbp >= SHOCK_THRESHOLDS.RELATIVE_HYPOTENSION_DELTA && !hasHypotension) {
+        alerts.push({
+          id: 'occult-shock-relative-hypotension',
+          type: 'occult_shock',
+          severity: 'high',
+          title: 'Hipotensi relatif — curiga occult shock',
+          gate: 'GATE_1_HEMODYNAMIC',
+          reasoning: `TD saat ini ${sbp}/${dbp} mmHg turun ${deltaSbp} mmHg dari baseline pasien (${baseline.sbp}/${baseline.dbp} mmHg, median 3 kunjungan). Pasien hipertensi dapat shock pada TD yang tampak "normal".`,
+          recommendations: [
+            'Nilai gejala akut: pusing, hampir pingsan, lemah.',
+            'Cek perfusi: CRT, suhu akral, status mental.',
+            'Serial BP setiap 15 menit.',
+            'Eskalasi jika ada gejala atau memburuk.',
+          ],
+          clinicalData: { sbp, dbp, map },
+        })
+      }
+    }
   }
 
   if (sbp >= physiology.severeHypertensionSbp || dbp >= physiology.severeHypertensionDbp) {
@@ -459,7 +504,7 @@ export const buildAlerts = (
         'Prioritaskan review dokter di kunjungan ini.',
       ],
       clinicalData: { sbp, dbp, map },
-    });
+    })
   }
 
   if (glucose > 0 && glucose < 70) {
@@ -476,7 +521,7 @@ export const buildAlerts = (
         'Pantau perubahan kesadaran dan risiko kejang.',
       ],
       clinicalData: { glucose },
-    });
+    })
   } else if (glucose >= 300) {
     alerts.push({
       id: 'hyperglycemia-alert',
@@ -491,7 +536,7 @@ export const buildAlerts = (
         'Prioritaskan review dokter untuk tata laksana lanjutan.',
       ],
       clinicalData: { glucose },
-    });
+    })
   }
 
   if (spo2 > 0 && spo2 < 90) {
@@ -508,7 +553,7 @@ export const buildAlerts = (
         'Amati kerja napas dan tanda kelelahan respirasi.',
       ],
       clinicalData: { spo2, rr },
-    });
+    })
   } else if (spo2 > 0 && spo2 <= 93) {
     alerts.push({
       id: 'borderline-hypoxia-alert',
@@ -522,7 +567,7 @@ export const buildAlerts = (
         'Pantau RR dan keluhan sesak.',
       ],
       clinicalData: { spo2, rr },
-    });
+    })
   }
 
   if (hr >= physiology.tachycardiaThreshold) {
@@ -542,7 +587,7 @@ export const buildAlerts = (
         'Evaluasi kemungkinan infeksi, perdarahan, atau nyeri tidak terkontrol.',
       ],
       clinicalData: { hr },
-    });
+    })
   }
 
   if (hr > 0 && hr <= physiology.bradycardiaThreshold) {
@@ -563,7 +608,7 @@ export const buildAlerts = (
         'Segera eskalasi bila disertai perfusi buruk atau penurunan kesadaran.',
       ],
       clinicalData: { hr, spo2 },
-    });
+    })
   }
 
   if (rr >= physiology.tachypneaThreshold) {
@@ -583,7 +628,7 @@ export const buildAlerts = (
         'Pertimbangkan triase lebih tinggi bila ada sesak atau SpO2 menurun.',
       ],
       clinicalData: { rr, spo2 },
-    });
+    })
   }
 
   if (rr > 0 && rr <= physiology.bradypneaThreshold) {
@@ -604,7 +649,7 @@ export const buildAlerts = (
         'Pertimbangkan eskalasi cepat bila disertai hipoksia atau perfusi buruk.',
       ],
       clinicalData: { rr, spo2 },
-    });
+    })
   }
 
   if (hasOrthostaticCue) {
@@ -623,7 +668,7 @@ export const buildAlerts = (
         'Segera eskalasi bila ada sinkop, jatuh berulang, atau perfusi tetap buruk.',
       ],
       clinicalData: { sbp, dbp, hr, map },
-    });
+    })
   }
 
   if (physiology.isOlderAdult) {
@@ -640,7 +685,7 @@ export const buildAlerts = (
           'Pastikan hidrasi adekuat, observasi respons antipiretik, dan verifikasi suhu ulang.',
         ],
         clinicalData: { temp },
-      });
+      })
     } else if (temp >= (physiology.geriatricSingleFeverThreshold || 37.8)) {
       alerts.push({
         id: 'geriatric-fever-alert',
@@ -655,7 +700,7 @@ export const buildAlerts = (
           'Prioritaskan review dokter bila disertai hemodinamik labil atau hipoksia.',
         ],
         clinicalData: { temp, spo2, rr },
-      });
+      })
     } else if (temp >= (physiology.geriatricRepeatFeverThreshold || 37.2)) {
       alerts.push({
         id: 'geriatric-low-grade-fever-alert',
@@ -669,7 +714,7 @@ export const buildAlerts = (
           'Cari fokus infeksi, intake menurun, bingung mendadak, atau penurunan fungsi.',
         ],
         clinicalData: { temp },
-      });
+      })
     } else if (hasAtypicalInfectionCue) {
       alerts.push({
         id: 'geriatric-afebrile-infection-alert',
@@ -683,7 +728,7 @@ export const buildAlerts = (
           'Pantau perubahan mental, intake, aktivitas, dan ulangi suhu bila keluhan berlanjut.',
         ],
         clinicalData: { temp, spo2, rr },
-      });
+      })
     }
   } else if (temp >= 39) {
     alerts.push({
@@ -698,11 +743,11 @@ export const buildAlerts = (
         'Pastikan hidrasi adekuat dan observasi respons antipiretik.',
       ],
       clinicalData: { temp },
-    });
+    })
   }
 
-  return alerts;
-};
+  return alerts
+}
 
 const buildSummary = (
   state: TTVStateShape,
@@ -710,11 +755,11 @@ const buildSummary = (
   flags: Record<string, boolean>,
   patient: Pick<TTVInferenceUIProps, 'patientName' | 'patientGender' | 'patientAge' | 'patientRM'>
 ): string => {
-  const physiology = getVitalScreeningProfile(patient.patientAge || 0);
+  const physiology = getVitalScreeningProfile(patient.patientAge || 0)
   const activeFlags = historyItems
     .filter((item) => flags[item.id])
     .map((item) => item.label)
-    .join(', ');
+    .join(', ')
 
   const lines = [
     '[AUTOSEN ANALYSIS]',
@@ -722,7 +767,9 @@ const buildSummary = (
     `Profil: ${patient.patientGender || '-'} | ${patient.patientAge || 0} tahun | Preset ${presetLabels[state.autosenPreset]}`,
     `Mode screening fisiologis: ${physiology.label}`,
     ...(physiology.isOlderAdult
-      ? ['Catatan geriatri: suhu bisa tampak lebih rendah; cek ortostatik bila ada pusing, jatuh, atau sinkop.']
+      ? [
+          'Catatan geriatri: suhu bisa tampak lebih rendah; cek ortostatik bila ada pusing, jatuh, atau sinkop.',
+        ]
       : []),
     '',
     `Keluhan utama: ${state.symptomText || 'Belum diisi'}`,
@@ -746,10 +793,10 @@ const buildSummary = (
     alerts.length > 0
       ? `Tindakan awal: ${alerts[0].recommendations[0]}`
       : 'Tindakan awal: lanjutkan observasi dan lengkapi data klinis bila perlu',
-  ];
+  ]
 
-  return lines.join('\n');
-};
+  return lines.join('\n')
+}
 
 const buildSenautoOutput = (draft: ComposedAnamnesaDraft, summary: string): string => {
   const lines = [
@@ -762,19 +809,19 @@ const buildSenautoOutput = (draft: ComposedAnamnesaDraft, summary: string): stri
     `Catatan verifikasi: ${draft.metadata.missingFacts.join('; ')}.`,
     '',
     summary,
-  ];
+  ]
 
-  return lines.join('\n');
-};
+  return lines.join('\n')
+}
 
 export const buildCanonicalVitalOutput = (
   canonical: CanonicalClinicalEngineOutput,
   fallback: string,
   context: {
-    patientName: string;
-    patientAge: number;
-    patientRM: string;
-    vitalsLine: string;
+    patientName: string
+    patientAge: number
+    patientRM: string
+    vitalsLine: string
   }
 ): string => {
   const lines: string[] = [
@@ -782,43 +829,43 @@ export const buildCanonicalVitalOutput = (
     `Pasien: ${context.patientName} | RM ${context.patientRM}`,
     `Usia: ${context.patientAge} tahun`,
     context.vitalsLine,
-  ];
+  ]
 
   if (canonical.scoring.news2) {
     lines.push(
       `NEWS2: ${canonical.scoring.news2.score} • ${canonical.scoring.news2.risk_level.toUpperCase()}`
-    );
+    )
   }
 
   if (canonical.trajectory?.overall_trend || canonical.trajectory?.overall_risk) {
     const trend = canonical.trajectory?.overall_trend
       ? canonical.trajectory.overall_trend.toUpperCase()
-      : 'TIDAK TERSEDIA';
+      : 'TIDAK TERSEDIA'
     const risk = canonical.trajectory?.overall_risk
       ? canonical.trajectory.overall_risk.toUpperCase()
-      : 'TIDAK TERSEDIA';
-    lines.push(`Trajectory: ${trend} • ${risk}`);
+      : 'TIDAK TERSEDIA'
+    lines.push(`Trajectory: ${trend} • ${risk}`)
   }
 
-  const immediateActions = canonical.recommendations.immediate_actions || [];
+  const immediateActions = canonical.recommendations.immediate_actions || []
   if (immediateActions.length > 0) {
-    lines.push(`Immediate Actions: ${immediateActions.slice(0, 3).join(', ')}`);
+    lines.push(`Immediate Actions: ${immediateActions.slice(0, 3).join(', ')}`)
   }
 
   if (canonical.alerts.length > 0) {
-    lines.push('Alerts:');
+    lines.push('Alerts:')
     canonical.alerts.slice(0, 3).forEach((alert) => {
-      lines.push(`- ${alert.severity.toUpperCase()} • ${alert.title} • ${alert.message}`);
-    });
+      lines.push(`- ${alert.severity.toUpperCase()} • ${alert.title} • ${alert.message}`)
+    })
   }
 
   if (canonical.governance?.disclaimer) {
-    lines.push(`Disclaimer: ${canonical.governance.disclaimer}`);
+    lines.push(`Disclaimer: ${canonical.governance.disclaimer}`)
   }
 
-  lines.push('', 'Fallback lokal:', fallback);
-  return lines.join('\n');
-};
+  lines.push('', 'Fallback lokal:', fallback)
+  return lines.join('\n')
+}
 
 const buildVitalAutocompleteOutput = ({
   state,
@@ -826,26 +873,30 @@ const buildVitalAutocompleteOutput = ({
   patient,
   autofillReasoning,
 }: {
-  state: TTVStateShape;
-  alerts: ScreeningAlert[];
-  patient: Pick<TTVInferenceUIProps, 'patientName' | 'patientGender' | 'patientAge' | 'patientRM'>;
-  autofillReasoning?: string[];
+  state: TTVStateShape
+  alerts: ScreeningAlert[]
+  patient: Pick<TTVInferenceUIProps, 'patientName' | 'patientGender' | 'patientAge' | 'patientRM'>
+  autofillReasoning?: string[]
 }): string => {
-  const physiology = getVitalScreeningProfile(patient.patientAge || 0);
+  const physiology = getVitalScreeningProfile(patient.patientAge || 0)
   const lines = [
     '[AUTOCOMPLETE+ VITAL SIGN]',
     `Pasien: ${patient.patientName || 'Belum terhubung'} | RM ${patient.patientRM || '-'}`,
     `Mode screening fisiologis: ${physiology.label}`,
     ...(physiology.isOlderAdult
-      ? ['Catatan geriatri: demam bisa lebih rendah dari dewasa umum dan infeksi dapat muncul tanpa demam tinggi.']
+      ? [
+          'Catatan geriatri: demam bisa lebih rendah dari dewasa umum dan infeksi dapat muncul tanpa demam tinggi.',
+        ]
       : []),
     `TTV: TD ${state.sbp || '-'}/${state.dbp || '-'} mmHg | Nadi ${state.hr || '-'} | RR ${state.rr || '-'} | Suhu ${state.temp || '-'} C | SpO2 ${state.spo2 || '-'}% | Gula darah ${state.glucose || '-'} mg/dL`,
     '',
-    alerts.length > 0 ? 'Ringkasan screening:' : 'Ringkasan screening: belum ada alert prioritas tinggi.',
+    alerts.length > 0
+      ? 'Ringkasan screening:'
+      : 'Ringkasan screening: belum ada alert prioritas tinggi.',
     ...(alerts.length > 0
-      ? alerts.slice(0, 3).map(
-          (alert) => `- ${alert.severity.toUpperCase()} • ${alert.title} • ${alert.reasoning}`
-        )
+      ? alerts
+          .slice(0, 3)
+          .map((alert) => `- ${alert.severity.toUpperCase()} • ${alert.title} • ${alert.reasoning}`)
       : []),
     ...(autofillReasoning?.length
       ? ['', 'Autofill reasoning:', ...autofillReasoning.map((line) => `- ${line}`)]
@@ -854,10 +905,62 @@ const buildVitalAutocompleteOutput = ({
     alerts.length > 0
       ? `Tindakan awal: ${alerts[0].recommendations.join(' ')}`
       : 'Tindakan awal: lanjutkan observasi, verifikasi ulang pengukuran, dan korelasikan dengan kondisi klinis pasien.',
-  ];
+  ]
 
-  return lines.join('\n');
-};
+  return lines.join('\n')
+}
+
+function deriveScreeningResultForAudit(out: CanonicalClinicalEngineOutput | null | undefined): {
+  status: 'positive' | 'negative' | 'inconclusive'
+  score: number
+  risk_level: 'low' | 'medium' | 'high' | 'critical'
+  summary: string
+} {
+  if (!out?.scoring?.news2) {
+    return {
+      status: 'inconclusive',
+      score: 0,
+      risk_level: 'low',
+      summary: 'NEWS2 tidak tersedia',
+    }
+  }
+
+  const news2 = out.scoring.news2
+  const traj = out.trajectory
+  let risk_level: 'low' | 'medium' | 'high' | 'critical' = 'medium'
+  if (news2.risk_level === 'low') risk_level = 'low'
+  else if (news2.risk_level === 'high') risk_level = 'high'
+  else risk_level = 'medium'
+
+  let status: 'positive' | 'negative' | 'inconclusive' = 'inconclusive'
+  const highTrajectory =
+    traj?.overall_risk === 'critical' ||
+    traj?.overall_risk === 'high' ||
+    traj?.deterioration_state === 'critical'
+  if (news2.risk_level === 'high' || highTrajectory) {
+    status = 'positive'
+  } else if (news2.risk_level === 'low' && (!traj?.overall_risk || traj.overall_risk === 'low')) {
+    status = 'negative'
+  }
+
+  const summary =
+    (traj?.narrative && traj.narrative.slice(0, 240)) ||
+    `NEWS2 ${news2.score} (${news2.risk_level})`
+
+  return { status, score: news2.score, risk_level, summary }
+}
+
+async function patientPseudonymToken(rm: string): Promise<string> {
+  const enc = new TextEncoder()
+  const buf = await crypto.subtle.digest(
+    'SHA-256',
+    enc.encode(`sentra-assist-pid|${rm || 'unknown'}`)
+  )
+  const hex = Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+  return `pid-${hex.slice(0, 24)}`
+}
 
 export function TTVInferenceUI({
   patientName = 'Pasien belum terhubung',
@@ -882,76 +985,78 @@ export function TTVInferenceUI({
   extractedAllergies = [],
   extractedPregnancyStatus = null,
   canonicalOutput: canonicalOutputProp = null,
+  prefetchedVisits,
 }: TTVInferenceUIProps): JSX.Element {
-  const [localState, setLocalState] = useState<TTVStateShape>(DEFAULT_STATE);
-  const [historyFlags, setHistoryFlags] = useState<Record<string, boolean>>(createEmptyHistoryFlags);
-  const [output, setOutput] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isAnalyzingVitals, setIsAnalyzingVitals] = useState(false);
-  const [animatedDraftText, setAnimatedDraftText] = useState('');
-  const [isDraftTyping, setIsDraftTyping] = useState(false);
-  const [lastProcessedSymptomText, setLastProcessedSymptomText] = useState('');
-  const [localCanonicalOutput, setLocalCanonicalOutput] = useState<CanonicalClinicalEngineOutput | null>(
-    canonicalOutputProp ?? null
-  );
-  const [canonicalError, setCanonicalError] = useState('');
-  const [isCanonicalLoading, setIsCanonicalLoading] = useState(false);
-  const [isGhostFillAnimating, setIsGhostFillAnimating] = useState(false);
-  const [ghostActiveLane, setGhostActiveLane] = useState<VitalGhostLane | null>(null);
-  const [ghostCompletedLanes, setGhostCompletedLanes] = useState<VitalGhostLane[]>([]);
-  const [ghostVisibleValues, setGhostVisibleValues] = useState<Partial<Record<VitalFieldKey, string>>>({});
-  const [outputMode, setOutputMode] = useState<'anamnesis' | 'vital' | null>(null);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isAllergyOpen, setIsAllergyOpen] = useState(false);
-  const [isDisabilityOpen, setIsDisabilityOpen] = useState(false);
-  const [isObesityOpen, setIsObesityOpen] = useState(false);
-  const [isPresetOpen, setIsPresetOpen] = useState(false);
-  const [onlineDoctors, setOnlineDoctors] = useState<OnlineDoctor[]>([]);
-  const [selectedDoctorId, setSelectedDoctorId] = useState('');
-  const [isLoadingDoctors, setIsLoadingDoctors] = useState(false);
-  const [isSendingConsult, setIsSendingConsult] = useState(false);
-  const [doctorPickerError, setDoctorPickerError] = useState('');
-  const [doctorPickerNotice, setDoctorPickerNotice] = useState('');
-  const [isConsultFooterOpen, setIsConsultFooterOpen] = useState(false);
-  const historyDropdownRef = useRef<HTMLDivElement | null>(null);
-  const allergyDropdownRef = useRef<HTMLDivElement | null>(null);
-  const disabilityDropdownRef = useRef<HTMLDivElement | null>(null);
-  const obesityDropdownRef = useRef<HTMLDivElement | null>(null);
-  const presetDropdownRef = useRef<HTMLDivElement | null>(null);
-  const ghostAnimationTimeoutsRef = useRef<number[]>([]);
+  const [localState, setLocalState] = useState<TTVStateShape>(DEFAULT_STATE)
+  const [historyFlags, setHistoryFlags] = useState<Record<string, boolean>>(createEmptyHistoryFlags)
+  const [output, setOutput] = useState('')
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isAnalyzingVitals, setIsAnalyzingVitals] = useState(false)
+  const [animatedDraftText, setAnimatedDraftText] = useState('')
+  const [isDraftTyping, setIsDraftTyping] = useState(false)
+  const [lastProcessedSymptomText, setLastProcessedSymptomText] = useState('')
+  const [localCanonicalOutput, setLocalCanonicalOutput] =
+    useState<CanonicalClinicalEngineOutput | null>(canonicalOutputProp ?? null)
+  const [canonicalError, setCanonicalError] = useState('')
+  const [isCanonicalLoading, setIsCanonicalLoading] = useState(false)
+  const [isGhostFillAnimating, setIsGhostFillAnimating] = useState(false)
+  const [ghostActiveLane, setGhostActiveLane] = useState<VitalGhostLane | null>(null)
+  const [ghostCompletedLanes, setGhostCompletedLanes] = useState<VitalGhostLane[]>([])
+  const [ghostVisibleValues, setGhostVisibleValues] = useState<
+    Partial<Record<VitalFieldKey, string>>
+  >({})
+  const [outputMode, setOutputMode] = useState<'anamnesis' | 'vital' | null>(null)
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const [isAllergyOpen, setIsAllergyOpen] = useState(false)
+  const [isDisabilityOpen, setIsDisabilityOpen] = useState(false)
+  const [isObesityOpen, setIsObesityOpen] = useState(false)
+  const [isPresetOpen, setIsPresetOpen] = useState(false)
+  const [onlineDoctors, setOnlineDoctors] = useState<OnlineDoctor[]>([])
+  const [selectedDoctorId, setSelectedDoctorId] = useState('')
+  const [isLoadingDoctors, setIsLoadingDoctors] = useState(false)
+  const [isSendingConsult, setIsSendingConsult] = useState(false)
+  const [doctorPickerError, setDoctorPickerError] = useState('')
+  const [doctorPickerNotice, setDoctorPickerNotice] = useState('')
+  const [isConsultFooterOpen, setIsConsultFooterOpen] = useState(false)
+  const historyDropdownRef = useRef<HTMLDivElement | null>(null)
+  const allergyDropdownRef = useRef<HTMLDivElement | null>(null)
+  const disabilityDropdownRef = useRef<HTMLDivElement | null>(null)
+  const obesityDropdownRef = useRef<HTMLDivElement | null>(null)
+  const presetDropdownRef = useRef<HTMLDivElement | null>(null)
+  const ghostAnimationTimeoutsRef = useRef<number[]>([])
 
-  const state = ttvState ?? localState;
-  const stateRef = useRef(state);
+  const state = ttvState ?? localState
+  const stateRef = useRef(state)
 
   useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+    stateRef.current = state
+  }, [state])
 
   useEffect(() => {
     return () => {
-      ghostAnimationTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
-      ghostAnimationTimeoutsRef.current = [];
-    };
-  }, []);
+      ghostAnimationTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId))
+      ghostAnimationTimeoutsRef.current = []
+    }
+  }, [])
 
   useEffect(() => {
-    setLocalCanonicalOutput(canonicalOutputProp ?? null);
-  }, [canonicalOutputProp]);
+    setLocalCanonicalOutput(canonicalOutputProp ?? null)
+  }, [canonicalOutputProp])
 
-  const canonicalOutput = localCanonicalOutput ?? canonicalOutputProp;
+  const canonicalOutput = localCanonicalOutput ?? canonicalOutputProp
 
   const clearGhostAnimationTimers = () => {
-    ghostAnimationTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
-    ghostAnimationTimeoutsRef.current = [];
-  };
+    ghostAnimationTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId))
+    ghostAnimationTimeoutsRef.current = []
+  }
 
   const displayedVitalValue = (field: VitalFieldKey): string => {
     if (isGhostFillAnimating) {
-      return ghostVisibleValues[field] ?? '';
+      return ghostVisibleValues[field] ?? ''
     }
 
-    return state[field];
-  };
+    return state[field]
+  }
 
   const getVitalGhostItemClassName = (lane: VitalGhostLane): string =>
     [
@@ -961,138 +1066,172 @@ export function TTVInferenceUI({
       ghostActiveLane === lane ? 'vital-item--ghost-active' : '',
     ]
       .filter(Boolean)
-      .join(' ');
+      .join(' ')
 
   const runGhostFillAnimation = (targetState: TTVStateShape): Promise<void> => {
-    clearGhostAnimationTimers();
+    clearGhostAnimationTimers()
 
     const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const orderedLanes = shuffleGhostLanes(VITAL_GHOST_LANES);
-    const startupDelay = prefersReducedMotion ? 0 : 88;
-    const laneDelay = prefersReducedMotion ? 42 : 136;
-    const revealDelay = prefersReducedMotion ? 10 : 62;
-    const laneHold = prefersReducedMotion ? 54 : 176;
+      typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const orderedLanes = shuffleGhostLanes(VITAL_GHOST_LANES)
+    const startupDelay = prefersReducedMotion ? 0 : 88
+    const laneDelay = prefersReducedMotion ? 42 : 136
+    const revealDelay = prefersReducedMotion ? 10 : 62
+    const laneHold = prefersReducedMotion ? 54 : 176
 
-    setIsGhostFillAnimating(true);
-    setGhostActiveLane(null);
-    setGhostCompletedLanes([]);
-    setGhostVisibleValues({});
+    setIsGhostFillAnimating(true)
+    setGhostActiveLane(null)
+    setGhostCompletedLanes([])
+    setGhostVisibleValues({})
 
     return new Promise((resolve) => {
       orderedLanes.forEach((lane, index) => {
-        const laneStartAt = startupDelay + index * laneDelay;
+        const laneStartAt = startupDelay + index * laneDelay
 
         const activateId = window.setTimeout(() => {
-          setGhostActiveLane(lane);
-        }, laneStartAt);
+          setGhostActiveLane(lane)
+        }, laneStartAt)
 
         const revealId = window.setTimeout(() => {
           setGhostCompletedLanes((previous) =>
             previous.includes(lane) ? previous : [...previous, lane]
-          );
+          )
           setGhostVisibleValues((previous) => {
-            const nextValues = { ...previous };
+            const nextValues = { ...previous }
             VITAL_GHOST_LANE_FIELDS[lane].forEach((field) => {
-              nextValues[field] = targetState[field];
-            });
-            return nextValues;
-          });
-        }, laneStartAt + revealDelay);
+              nextValues[field] = targetState[field]
+            })
+            return nextValues
+          })
+        }, laneStartAt + revealDelay)
 
         const deactivateId = window.setTimeout(() => {
-          setGhostActiveLane((current) => (current === lane ? null : current));
-        }, laneStartAt + laneHold);
+          setGhostActiveLane((current) => (current === lane ? null : current))
+        }, laneStartAt + laneHold)
 
-        ghostAnimationTimeoutsRef.current.push(activateId, revealId, deactivateId);
-      });
+        ghostAnimationTimeoutsRef.current.push(activateId, revealId, deactivateId)
+      })
 
-      const resolveId = window.setTimeout(() => {
-        resolve();
-      }, startupDelay + orderedLanes.length * laneDelay + laneHold);
+      const resolveId = window.setTimeout(
+        () => {
+          resolve()
+        },
+        startupDelay + orderedLanes.length * laneDelay + laneHold
+      )
 
-      ghostAnimationTimeoutsRef.current.push(resolveId);
-    });
-  };
+      ghostAnimationTimeoutsRef.current.push(resolveId)
+    })
+  }
 
   const normalizedPrefilledHistoryFlags = useMemo(
     () =>
       historyItems.reduce(
         (accumulator, item) => {
-          accumulator[item.id] = Boolean(prefilledHistoryFlags?.[item.id]);
-          return accumulator;
+          accumulator[item.id] = Boolean(prefilledHistoryFlags?.[item.id])
+          return accumulator
         },
         {} as Record<string, boolean>
       ),
     [prefilledHistoryFlags]
-  );
+  )
 
   const commitState = (updater: (prev: TTVStateShape) => TTVStateShape) => {
-    const nextState = updater(stateRef.current);
+    const nextState = updater(stateRef.current)
 
     if (onTTVStateChange) {
-      onTTVStateChange(nextState);
-      return;
+      onTTVStateChange(nextState)
+      return
     }
 
-    setLocalState(nextState);
-  };
+    setLocalState(nextState)
+  }
 
   const applySymptomText = (value: string) => {
     commitState((prev) => ({
       ...prev,
       symptomText: value,
-    }));
-  };
+    }))
+  }
 
-  const alerts = useMemo(
-    () => buildAlerts(state, { patientAge }),
-    [patientAge, state.dbp, state.glucose, state.hr, state.rr, state.sbp, state.spo2, state.temp]
-  );
-
-  useEffect(() => {
-    onAlertsChange?.(alerts);
-  }, [alerts, onAlertsChange]);
+  const bpHistory = useMemo<HistoricalBP[]>(
+    () =>
+      (prefetchedVisits ?? [])
+        .filter((v) => v.vitals.sbp > 0 && v.vitals.dbp > 0)
+        .map((v) => ({ visit_date: v.timestamp, sbp: v.vitals.sbp, dbp: v.vitals.dbp })),
+    [prefetchedVisits]
+  )
 
   const effectiveHistoryFlags = useMemo(() => {
-    const hasPrefilledSelection = historyItems.some((item) => normalizedPrefilledHistoryFlags[item.id]);
-    const hasLocalSelection = historyItems.some((item) => historyFlags[item.id]);
+    const hasPrefilledSelection = historyItems.some(
+      (item) => normalizedPrefilledHistoryFlags[item.id]
+    )
+    const hasLocalSelection = historyItems.some((item) => historyFlags[item.id])
 
     if (!hasLocalSelection && hasPrefilledSelection) {
-      return normalizedPrefilledHistoryFlags;
+      return normalizedPrefilledHistoryFlags
     }
 
-    return historyFlags;
-  }, [historyFlags, normalizedPrefilledHistoryFlags]);
+    return historyFlags
+  }, [historyFlags, normalizedPrefilledHistoryFlags])
 
-  const hasMinimalVitals = Boolean(state.sbp && state.dbp && state.hr && state.rr && state.temp);
-  const physiologyProfile = useMemo(() => getVitalScreeningProfile(patientAge || 0), [patientAge]);
-  const hasExtractedHistory = historyItems.some((item) => normalizedPrefilledHistoryFlags[item.id]);
-  const chronicHistoryLabels = getSelectedHistoryLabels(effectiveHistoryFlags);
-  const chronicHistorySummary = chronicHistoryLabels.join(', ');
-  const allergySummary = state.allergies.join(', ');
-  const chronicHistoryPlaceholder = chronicHistorySummary || 'Pilih di sini';
-  const allergyPlaceholder = allergySummary || 'Pilih di sini';
-  const disabilityPlaceholder = state.disabilityType || 'Pilih di sini';
+  const alerts = useMemo(
+    () =>
+      buildAlerts(
+        state,
+        { patientAge },
+        {
+          bpHistory,
+          knownHTN: Boolean(effectiveHistoryFlags['ht']),
+        }
+      ),
+    [
+      patientAge,
+      state.dbp,
+      state.glucose,
+      state.hr,
+      state.rr,
+      state.sbp,
+      state.spo2,
+      state.temp,
+      bpHistory,
+      effectiveHistoryFlags,
+    ]
+  )
+
+  useEffect(() => {
+    onAlertsChange?.(alerts)
+  }, [alerts, onAlertsChange])
+
+  const hasMinimalVitals = Boolean(state.sbp && state.dbp && state.hr && state.rr && state.temp)
+  const physiologyProfile = useMemo(() => getVitalScreeningProfile(patientAge || 0), [patientAge])
+  const hasExtractedHistory = historyItems.some((item) => normalizedPrefilledHistoryFlags[item.id])
+  const chronicHistoryLabels = getSelectedHistoryLabels(effectiveHistoryFlags)
+  const chronicHistorySummary = chronicHistoryLabels.join(', ')
+  const allergySummary = state.allergies.join(', ')
+  const chronicHistoryPlaceholder = chronicHistorySummary || 'Pilih di sini'
+  const allergyPlaceholder = allergySummary || 'Pilih di sini'
+  const disabilityPlaceholder = state.disabilityType || 'Pilih di sini'
   const obesityPlaceholder =
     state.obesityConfirmation === 'confirmed'
       ? 'Terkonfirmasi'
       : state.obesityConfirmation === 'not_confirmed'
         ? 'Tidak Terkonfirmasi'
-        : 'Pilih di sini';
-  const presetPlaceholder = presetLabels[state.autosenPreset];
-  const isFemalePatient = patientGender === 'P';
-  const isPregnancyStatusRequired = isFemalePatient && state.pregnancyStatus === null;
+        : 'Pilih di sini'
+  const presetPlaceholder = presetLabels[state.autosenPreset]
+  const isFemalePatient = patientGender === 'P'
+  const isPregnancyStatusRequired = isFemalePatient && state.pregnancyStatus === null
   const hasLoadedPatientContext =
-    patientAge > 0 && Boolean(patientRM && patientRM !== '-') && patientName !== 'Pasien belum terhubung';
-  const showPediatricScreeningMode = hasLoadedPatientContext && physiologyProfile.isPediatric;
+    patientAge > 0 &&
+    Boolean(patientRM && patientRM !== '-') &&
+    patientName !== 'Pasien belum terhubung'
+  const showPediatricScreeningMode = hasLoadedPatientContext && physiologyProfile.isPediatric
   const canForwardToDoctor =
     hasMinimalVitals &&
     Boolean(selectedDoctorId) &&
     !isSendingConsult &&
-    (!isFemalePatient || state.pregnancyStatus !== null);
-  const hasSymptomDraftPending = Boolean(state.symptomText.trim()) && state.symptomText.trim() !== lastProcessedSymptomText;
+    (!isFemalePatient || state.pregnancyStatus !== null)
+  const hasSymptomDraftPending =
+    Boolean(state.symptomText.trim()) && state.symptomText.trim() !== lastProcessedSymptomText
   const anamnesaDraft = useMemo(
     () =>
       composeAnamnesaDraft({
@@ -1135,15 +1274,19 @@ export function TTVInferenceUI({
       state.symptomText,
       state.temp,
     ]
-  );
+  )
   const preferredPoliKeywords = useMemo(
-    () => derivePreferredPoliKeywords(chronicHistoryLabels, state.autosenPreset, state.pregnancyStatus),
+    () =>
+      derivePreferredPoliKeywords(chronicHistoryLabels, state.autosenPreset, state.pregnancyStatus),
     [chronicHistoryLabels, state.autosenPreset, state.pregnancyStatus]
-  );
+  )
   const consultSummaryRows = useMemo(
     () =>
       [
-        { label: 'BPJS / Penjamin', value: formatPayerLabel(extractedPayerLabel, patientBPJSStatus) },
+        {
+          label: 'BPJS / Penjamin',
+          value: formatPayerLabel(extractedPayerLabel, patientBPJSStatus),
+        },
         {
           label: 'Penyakit Khusus',
           value:
@@ -1183,11 +1326,11 @@ export function TTVInferenceUI({
       extractedSpecialConditions,
       patientBPJSStatus,
     ]
-  );
+  )
   const selectedDoctor = useMemo(
     () => onlineDoctors.find((doctor) => doctor.id === selectedDoctorId) || null,
     [onlineDoctors, selectedDoctorId]
-  );
+  )
   const consultFooterRows = useMemo(
     () =>
       [
@@ -1202,225 +1345,234 @@ export function TTVInferenceUI({
           : null,
       ].filter(Boolean) as Array<{ label: string; value: string }>,
     [extractedAllergies, extractedPregnancyRisk, extractedSpecialConditions]
-  );
+  )
   const sortedDoctors = useMemo(
     () =>
       [...onlineDoctors].sort((left, right) => {
-        const leftRank = AVAILABILITY_RANK[left.availability_status || 'offline'];
-        const rightRank = AVAILABILITY_RANK[right.availability_status || 'offline'];
+        const leftRank = AVAILABILITY_RANK[left.availability_status || 'offline']
+        const rightRank = AVAILABILITY_RANK[right.availability_status || 'offline']
         if (leftRank !== rightRank) {
-          return leftRank - rightRank;
+          return leftRank - rightRank
         }
 
-        const leftPoli = normalizeText(left.poli);
-        const rightPoli = normalizeText(right.poli);
-        const leftPoliScore = preferredPoliKeywords.some((keyword) => leftPoli.includes(keyword)) ? 0 : 1;
-        const rightPoliScore = preferredPoliKeywords.some((keyword) => rightPoli.includes(keyword)) ? 0 : 1;
+        const leftPoli = normalizeText(left.poli)
+        const rightPoli = normalizeText(right.poli)
+        const leftPoliScore = preferredPoliKeywords.some((keyword) => leftPoli.includes(keyword))
+          ? 0
+          : 1
+        const rightPoliScore = preferredPoliKeywords.some((keyword) => rightPoli.includes(keyword))
+          ? 0
+          : 1
         if (leftPoliScore !== rightPoliScore) {
-          return leftPoliScore - rightPoliScore;
+          return leftPoliScore - rightPoliScore
         }
 
-        const locationHint = normalizeText(extractedFacilityName);
+        const locationHint = normalizeText(extractedFacilityName)
         const leftLocationScore =
-          locationHint && normalizeText(left.location_name).includes(locationHint) ? 0 : 1;
+          locationHint && normalizeText(left.location_name).includes(locationHint) ? 0 : 1
         const rightLocationScore =
-          locationHint && normalizeText(right.location_name).includes(locationHint) ? 0 : 1;
+          locationHint && normalizeText(right.location_name).includes(locationHint) ? 0 : 1
         if (leftLocationScore !== rightLocationScore) {
-          return leftLocationScore - rightLocationScore;
+          return leftLocationScore - rightLocationScore
         }
 
-        return left.name.localeCompare(right.name);
+        return left.name.localeCompare(right.name)
       }),
     [extractedFacilityName, onlineDoctors, preferredPoliKeywords]
-  );
+  )
 
   useEffect(() => {
-    onChronicHistoryChange?.(chronicHistorySummary || 'Menunggu Input');
-  }, [chronicHistorySummary, onChronicHistoryChange]);
+    onChronicHistoryChange?.(chronicHistorySummary || 'Menunggu Input')
+  }, [chronicHistorySummary, onChronicHistoryChange])
 
   useEffect(() => {
-    setHistoryFlags(normalizedPrefilledHistoryFlags);
-  }, [normalizedPrefilledHistoryFlags, patientRM]);
+    setHistoryFlags(normalizedPrefilledHistoryFlags)
+  }, [normalizedPrefilledHistoryFlags, patientRM])
 
   useEffect(() => {
     if (patientRM === '-') {
-      return;
+      return
     }
 
     commitState((prev) => ({
       ...prev,
       allergies: extractedAllergies,
       pregnancyStatus: extractedPregnancyStatus,
-    }));
-  }, [extractedAllergies, extractedPregnancyStatus, patientRM]);
+    }))
+  }, [extractedAllergies, extractedPregnancyStatus, patientRM])
 
   useEffect(() => {
-    setLastProcessedSymptomText('');
-    setAnimatedDraftText('');
-    setIsDraftTyping(false);
-  }, [patientRM]);
+    setLastProcessedSymptomText('')
+    setAnimatedDraftText('')
+    setIsDraftTyping(false)
+  }, [patientRM])
 
   useEffect(() => {
     if (!sortedDoctors.length) {
-      setSelectedDoctorId('');
-      return;
+      setSelectedDoctorId('')
+      return
     }
 
     setSelectedDoctorId((current) =>
       sortedDoctors.some((doctor) => doctor.id === current) ? current : sortedDoctors[0].id
-    );
-  }, [sortedDoctors]);
+    )
+  }, [sortedDoctors])
 
   useEffect(() => {
     if (!isHistoryOpen) {
-      return;
+      return
     }
 
     const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target;
+      const target = event.target
       if (!(target instanceof Node)) {
-        return;
+        return
       }
 
       if (!historyDropdownRef.current?.contains(target)) {
-        setIsHistoryOpen(false);
+        setIsHistoryOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [isHistoryOpen]);
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [isHistoryOpen])
 
   useEffect(() => {
     if (!isAllergyOpen) {
-      return;
+      return
     }
 
     const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target;
+      const target = event.target
       if (!(target instanceof Node)) {
-        return;
+        return
       }
 
       if (!allergyDropdownRef.current?.contains(target)) {
-        setIsAllergyOpen(false);
+        setIsAllergyOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [isAllergyOpen]);
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [isAllergyOpen])
 
   useEffect(() => {
     if (!isDisabilityOpen) {
-      return;
+      return
     }
 
     const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target;
+      const target = event.target
       if (!(target instanceof Node)) {
-        return;
+        return
       }
 
       if (!disabilityDropdownRef.current?.contains(target)) {
-        setIsDisabilityOpen(false);
+        setIsDisabilityOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [isDisabilityOpen]);
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [isDisabilityOpen])
 
   useEffect(() => {
     if (!isObesityOpen) {
-      return;
+      return
     }
 
     const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target;
+      const target = event.target
       if (!(target instanceof Node)) {
-        return;
+        return
       }
 
       if (!obesityDropdownRef.current?.contains(target)) {
-        setIsObesityOpen(false);
+        setIsObesityOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [isObesityOpen]);
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [isObesityOpen])
 
   useEffect(() => {
     if (!isPresetOpen) {
-      return;
+      return
     }
 
     const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target;
+      const target = event.target
       if (!(target instanceof Node)) {
-        return;
+        return
       }
 
       if (!presetDropdownRef.current?.contains(target)) {
-        setIsPresetOpen(false);
+        setIsPresetOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handlePointerDown);
-    return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [isPresetOpen]);
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [isPresetOpen])
 
   useEffect(() => {
-    void loadOnlineDoctorOptions();
-  }, []);
+    void loadOnlineDoctorOptions()
+  }, [])
 
   const updateField = (field: keyof TTVStateShape, value: string | boolean | string[] | null) => {
     commitState((prev) => ({
       ...prev,
       [field]: value,
-    }));
-  };
+    }))
+  }
 
   const toggleAllergy = (label: string) => {
     const nextAllergies = state.allergies.includes(label)
       ? state.allergies.filter((item) => item !== label)
-      : [...state.allergies, label];
+      : [...state.allergies, label]
 
-    updateField('allergies', nextAllergies);
-  };
+    updateField('allergies', nextAllergies)
+  }
 
   const loadOnlineDoctorOptions = async () => {
-    setIsLoadingDoctors(true);
-    setDoctorPickerError('');
-    setDoctorPickerNotice('');
+    setIsLoadingDoctors(true)
+    setDoctorPickerError('')
+    setDoctorPickerNotice('')
 
     try {
-      const doctors = await getOnlineDoctors();
-      setOnlineDoctors(doctors);
-      setSelectedDoctorId((current) => current || doctors[0]?.id || '');
+      const doctors = await getOnlineDoctors()
+      setOnlineDoctors(doctors)
+      setSelectedDoctorId((current) => current || doctors[0]?.id || '')
       if (doctors.length === 0) {
-        setDoctorPickerError('Tidak ada dokter online saat ini.');
+        setDoctorPickerError('Tidak ada dokter online saat ini.')
       }
     } catch (error) {
-      setDoctorPickerError(error instanceof Error ? error.message : 'Gagal memuat daftar dokter');
+      setDoctorPickerError(error instanceof Error ? error.message : 'Gagal memuat daftar dokter')
     } finally {
-      setIsLoadingDoctors(false);
+      setIsLoadingDoctors(false)
     }
-  };
+  }
 
   const handleForwardToDoctor = async () => {
     if (!selectedDoctorId) {
-      setDoctorPickerError('Pilih dokter tujuan terlebih dahulu.');
-      return;
+      setDoctorPickerError('Pilih dokter tujuan terlebih dahulu.')
+      return
     }
 
-    setIsSendingConsult(true);
-    setDoctorPickerError('');
-    setDoctorPickerNotice('');
+    setIsSendingConsult(true)
+    setDoctorPickerError('')
+    setDoctorPickerNotice('')
 
     try {
-      const consultId = await sendConsultToDoctor({
+      const screeningAudit = deriveScreeningResultForAudit(canonicalOutput)
+      const patient_id_token = await patientPseudonymToken(patientRM)
+      const assistSessionId = canonicalOutput?.request_id ?? buildCanonicalRequestId(patientRM)
+      const facilitySlug = (extractedFacilityName || 'unknown').trim() || 'unknown'
+
+      const { consultId, eventId: _consultEventId } = await sendConsultToDoctor({
         patient: {
           name: patientName,
           age: patientAge,
@@ -1488,11 +1640,20 @@ export function TTVInferenceUI({
           : undefined,
         target_doctor_id: selectedDoctorId,
         sent_at: new Date().toISOString(),
-      });
+        screening_result: screeningAudit,
+        patient_id_token,
+        screening_id: assistSessionId,
+        facility_id: facilitySlug,
+        assist_id: assistSessionId,
+        app_version:
+          typeof browser !== 'undefined' && browser.runtime?.getManifest
+            ? browser.runtime.getManifest().version
+            : undefined,
+      })
 
       const successMessage = `Consult terkirim ke ${selectedDoctor?.name || 'dokter tujuan'}${
         consultId ? ` • ${consultId}` : ''
-      }`;
+      }`
       const forwardSummary = buildForwardSummary({
         targetDoctorName: selectedDoctor?.name || 'Dokter tujuan',
         patientName,
@@ -1504,28 +1665,28 @@ export function TTVInferenceUI({
         facilityName: extractedFacilityName,
         consultId,
         canonicalOutput,
-      });
-      setDoctorPickerNotice(successMessage);
-      setOutput((prev) => `${prev ? `${prev}\n\n` : ''}${forwardSummary}`);
+      })
+      setDoctorPickerNotice(successMessage)
+      setOutput((prev) => `${prev ? `${prev}\n\n` : ''}${forwardSummary}`)
     } catch (error) {
-      setDoctorPickerError(error instanceof Error ? error.message : 'Gagal mengirim consult');
+      setDoctorPickerError(error instanceof Error ? error.message : 'Gagal mengirim consult')
     } finally {
-      setIsSendingConsult(false);
+      setIsSendingConsult(false)
     }
-  };
+  }
 
   const handleAnalyze = () => {
-    setIsAnalyzing(true);
+    setIsAnalyzing(true)
 
     window.setTimeout(() => {
-      const draftedSymptomText = anamnesaDraft.payload.keluhan_tambahan;
+      const draftedSymptomText = anamnesaDraft.payload.keluhan_tambahan
       const summary = buildSummary(state, alerts, effectiveHistoryFlags, {
         patientName,
         patientGender,
         patientAge,
         patientRM,
-      });
-      const senautoOutput = buildSenautoOutput(anamnesaDraft, summary);
+      })
+      const senautoOutput = buildSenautoOutput(anamnesaDraft, summary)
       const payload: TTVInferenceData = {
         patient: {
           name: patientName,
@@ -1556,45 +1717,45 @@ export function TTVInferenceUI({
         summary,
         anamnesaDraft,
         generatedAt: new Date().toISOString(),
-      };
+      }
 
-      setIsDraftTyping(true);
-      setAnimatedDraftText(draftedSymptomText);
-      applySymptomText('');
+      setIsDraftTyping(true)
+      setAnimatedDraftText(draftedSymptomText)
+      applySymptomText('')
 
-      setOutput(senautoOutput);
-      setOutputMode('anamnesis');
-      onComplete?.(payload);
-      setIsAnalyzing(false);
-    }, 320);
-  };
+      setOutput(senautoOutput)
+      setOutputMode('anamnesis')
+      onComplete?.(payload)
+      setIsAnalyzing(false)
+    }, 320)
+  }
 
   const handleDraftAnimationComplete = () => {
     if (!animatedDraftText) {
-      setIsDraftTyping(false);
-      return;
+      setIsDraftTyping(false)
+      return
     }
 
-    applySymptomText(animatedDraftText);
-    setLastProcessedSymptomText(animatedDraftText);
-    setAnimatedDraftText('');
-    setIsDraftTyping(false);
-  };
+    applySymptomText(animatedDraftText)
+    setLastProcessedSymptomText(animatedDraftText)
+    setAnimatedDraftText('')
+    setIsDraftTyping(false)
+  }
 
   const handleAnalyzeVitals = () => {
-    setIsAnalyzingVitals(true);
-    setIsCanonicalLoading(true);
-    setCanonicalError('');
-    setLocalCanonicalOutput(null);
+    setIsAnalyzingVitals(true)
+    setIsCanonicalLoading(true)
+    setCanonicalError('')
+    setLocalCanonicalOutput(null)
 
     window.setTimeout(() => {
       void (async () => {
-        const autofill = buildVitalAutofill(stateRef.current.autosenPreset, patientAge);
+        const autofill = buildVitalAutofill(stateRef.current.autosenPreset, patientAge)
         const nextState: TTVStateShape = {
           ...stateRef.current,
           ...autofill.vitals,
-        };
-        const nextAlerts = buildAlerts(nextState, { patientAge });
+        }
+        const nextAlerts = buildAlerts(nextState, { patientAge })
 
         const vitalOutput = buildVitalAutocompleteOutput({
           state: nextState,
@@ -1609,27 +1770,27 @@ export function TTVInferenceUI({
             `Preset ${presetLabels[nextState.autosenPreset]} mengisi field dengan profile ${autofill.physiologyLabel}.`,
             ...autofill.reasoning,
           ],
-        });
+        })
 
-        await runGhostFillAnimation(nextState);
-        commitState(() => nextState);
+        await runGhostFillAnimation(nextState)
+        commitState(() => nextState)
 
         const settleGhostId = window.setTimeout(() => {
-          setIsGhostFillAnimating(false);
-          setGhostActiveLane(null);
-          setGhostCompletedLanes([]);
-          setGhostVisibleValues({});
-        }, 96);
-        ghostAnimationTimeoutsRef.current.push(settleGhostId);
+          setIsGhostFillAnimating(false)
+          setGhostActiveLane(null)
+          setGhostCompletedLanes([])
+          setGhostVisibleValues({})
+        }, 96)
+        ghostAnimationTimeoutsRef.current.push(settleGhostId)
 
-        setOutput(vitalOutput);
-        setOutputMode('vital');
+        setOutput(vitalOutput)
+        setOutputMode('vital')
 
-        const vitalsLine = `TTV: TD ${nextState.sbp || '-'}/${nextState.dbp || '-'} mmHg | Nadi ${nextState.hr || '-'} | RR ${nextState.rr || '-'} | Suhu ${nextState.temp || '-'} C | SpO2 ${nextState.spo2 || '-'}% | Gula darah ${nextState.glucose || '-'} mg/dL`;
-        const symptomTextRaw = nextState.symptomText.trim();
+        const vitalsLine = `TTV: TD ${nextState.sbp || '-'}/${nextState.dbp || '-'} mmHg | Nadi ${nextState.hr || '-'} | RR ${nextState.rr || '-'} | Suhu ${nextState.temp || '-'} C | SpO2 ${nextState.spo2 || '-'}% | Gula darah ${nextState.glucose || '-'} mg/dL`
+        const symptomTextRaw = nextState.symptomText.trim()
         const fallbackChiefComplaint =
-          symptomTextRaw || `Pemeriksaan vital sign preset ${presetLabels[nextState.autosenPreset]}`;
-        const requestTime = new Date().toISOString();
+          symptomTextRaw || `Pemeriksaan vital sign preset ${presetLabels[nextState.autosenPreset]}`
+        const requestTime = new Date().toISOString()
         const canonicalInput = buildCanonicalTriageInput({
           requestId: buildCanonicalRequestId(patientRM),
           requestTime,
@@ -1650,6 +1811,11 @@ export function TTVInferenceUI({
             temp: parseNumber(nextState.temp),
             spo2: parseNumber(nextState.spo2),
             glucose: parseNumber(nextState.glucose),
+            avpu: nextState.avpu,
+            supplemental_o2: nextState.supplemental_o2,
+            ...(nextState.pain_score !== ''
+              ? { pain_score: Math.min(10, Math.max(0, parseNumber(nextState.pain_score))) }
+              : {}),
           },
           symptomTextRaw,
           keluhanUtama: anamnesaDraft.payload.keluhan_utama || fallbackChiefComplaint,
@@ -1662,11 +1828,12 @@ export function TTVInferenceUI({
           disabilityType: nextState.disabilityType,
           obesityConfirmation: nextState.obesityConfirmation,
           autosenPreset: nextState.autosenPreset,
-        });
+          hasCopd: Boolean(effectiveHistoryFlags['asma']),
+        })
 
         try {
-          const canonical = await evaluateCanonicalClinicalEngine(canonicalInput);
-          setLocalCanonicalOutput(canonical);
+          const canonical = await evaluateCanonicalClinicalEngine(canonicalInput)
+          setLocalCanonicalOutput(canonical)
           setOutput(
             buildCanonicalVitalOutput(canonical, vitalOutput, {
               patientName,
@@ -1674,27 +1841,29 @@ export function TTVInferenceUI({
               patientRM,
               vitalsLine,
             })
-          );
+          )
         } catch (error) {
           const message =
-            error instanceof Error ? error.message : 'Gagal memuat evaluasi canonical vital sign';
-          setLocalCanonicalOutput(null);
-          setCanonicalError(message);
-          setOutput(`${vitalOutput}\n\n[CANONICAL STATUS]\nFallback lokal aktif: ${message}`);
+            error instanceof Error ? error.message : 'Gagal memuat evaluasi canonical vital sign'
+          setLocalCanonicalOutput(null)
+          setCanonicalError(message)
+          setOutput(`${vitalOutput}\n\n[CANONICAL STATUS]\nFallback lokal aktif: ${message}`)
         } finally {
-          setIsCanonicalLoading(false);
-          setIsAnalyzingVitals(false);
+          setIsCanonicalLoading(false)
+          setIsAnalyzingVitals(false)
         }
-      })();
-    }, 180);
-  };
+      })()
+    }, 180)
+  }
 
   return (
-    <div className="fade-in flex flex-col gap-3">
+    <div className="clinical-form-stack flex flex-col gap-3">
       <div className="form-group">
         <div className="form-group-header">
           <div className="console-label console-label-prominent">Riwayat Penyakit Kronis</div>
-          {hasExtractedHistory ? <span className="field-extracted-indicator">extracted</span> : null}
+          {hasExtractedHistory ? (
+            <span className="field-extracted-indicator">extracted</span>
+          ) : null}
         </div>
         <div ref={historyDropdownRef} className="history-dropdown">
           <button
@@ -1750,12 +1919,12 @@ export function TTVInferenceUI({
             type="button"
             onClick={handleAnalyze}
             disabled={isAnalyzing}
-            className={`engine-btn engine-btn--primary rounded-[10px] text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
-              hasSymptomDraftPending ? 'engine-btn--breathing' : ''
+            className={`engine-btn engine-btn--autocomplete rounded-[10px] font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
+              hasSymptomDraftPending ? 'engine-btn--pulse' : ''
             }`}
             aria-label="Jalankan AutoComplete+"
           >
-            <span className={hasSymptomDraftPending ? 'engine-btn__text--breathing' : ''}>
+            <span className={hasSymptomDraftPending ? 'engine-btn__text--pulse' : ''}>
               {isAnalyzing ? 'Processing...' : 'AutoComplete+'}
             </span>
           </button>
@@ -1905,9 +2074,9 @@ export function TTVInferenceUI({
             <button
               type="button"
               onClick={() => {
-                setIsDisabilityOpen((prev) => !prev);
-                setIsObesityOpen(false);
-                setIsPresetOpen(false);
+                setIsDisabilityOpen((prev) => !prev)
+                setIsObesityOpen(false)
+                setIsPresetOpen(false)
               }}
               className={`collapsible-trigger neu-select font-mono text-[12px] ${
                 isDisabilityOpen ? 'collapsible-trigger-open' : ''
@@ -1915,7 +2084,10 @@ export function TTVInferenceUI({
               aria-expanded={isDisabilityOpen}
               aria-controls="disabilitas-panel"
             >
-              <span className="collapsible-trigger__summary field-summary-prominent" title={disabilityPlaceholder}>
+              <span
+                className="collapsible-trigger__summary field-summary-prominent"
+                title={disabilityPlaceholder}
+              >
                 {disabilityPlaceholder}
               </span>
               <ChevronDown
@@ -1923,15 +2095,18 @@ export function TTVInferenceUI({
               />
             </button>
             {isDisabilityOpen ? (
-              <div id="disabilitas-panel" className="history-dropdown__panel option-grid option-grid--single">
+              <div
+                id="disabilitas-panel"
+                className="history-dropdown__panel option-grid option-grid--single"
+              >
                 {disabilityOptions.map((option, index) => (
                   <button
                     key={`${option || 'placeholder'}-${index}`}
                     type="button"
                     className={`option-item option-item--single ${state.disabilityType === option ? 'option-item--selected' : ''}`}
                     onClick={() => {
-                      updateField('disabilityType', option);
-                      setIsDisabilityOpen(false);
+                      updateField('disabilityType', option)
+                      setIsDisabilityOpen(false)
                     }}
                   >
                     <span>{option || 'Pilih di sini'}</span>
@@ -1950,9 +2125,9 @@ export function TTVInferenceUI({
             <button
               type="button"
               onClick={() => {
-                setIsObesityOpen((prev) => !prev);
-                setIsDisabilityOpen(false);
-                setIsPresetOpen(false);
+                setIsObesityOpen((prev) => !prev)
+                setIsDisabilityOpen(false)
+                setIsPresetOpen(false)
               }}
               className={`collapsible-trigger neu-select font-mono text-[12px] ${
                 isObesityOpen ? 'collapsible-trigger-open' : ''
@@ -1960,7 +2135,10 @@ export function TTVInferenceUI({
               aria-expanded={isObesityOpen}
               aria-controls="obesitas-panel"
             >
-              <span className="collapsible-trigger__summary field-summary-prominent" title={obesityPlaceholder}>
+              <span
+                className="collapsible-trigger__summary field-summary-prominent"
+                title={obesityPlaceholder}
+              >
                 {obesityPlaceholder}
               </span>
               <ChevronDown
@@ -1968,7 +2146,10 @@ export function TTVInferenceUI({
               />
             </button>
             {isObesityOpen ? (
-              <div id="obesitas-panel" className="history-dropdown__panel option-grid option-grid--single">
+              <div
+                id="obesitas-panel"
+                className="history-dropdown__panel option-grid option-grid--single"
+              >
                 {[
                   { value: '' as ObesityConfirmation, label: 'Pilih di sini' },
                   { value: 'confirmed' as ObesityConfirmation, label: 'Terkonfirmasi' },
@@ -1979,8 +2160,8 @@ export function TTVInferenceUI({
                     type="button"
                     className={`option-item option-item--single ${state.obesityConfirmation === option.value ? 'option-item--selected' : ''}`}
                     onClick={() => {
-                      updateField('obesityConfirmation', option.value);
-                      setIsObesityOpen(false);
+                      updateField('obesityConfirmation', option.value)
+                      setIsObesityOpen(false)
                     }}
                   >
                     <span>{option.label}</span>
@@ -2011,9 +2192,9 @@ export function TTVInferenceUI({
           <button
             type="button"
             onClick={() => {
-              setIsPresetOpen((prev) => !prev);
-              setIsDisabilityOpen(false);
-              setIsObesityOpen(false);
+              setIsPresetOpen((prev) => !prev)
+              setIsDisabilityOpen(false)
+              setIsObesityOpen(false)
             }}
             className={`collapsible-trigger neu-select font-mono text-[12px] ${
               isPresetOpen ? 'collapsible-trigger-open' : ''
@@ -2021,7 +2202,10 @@ export function TTVInferenceUI({
             aria-expanded={isPresetOpen}
             aria-controls="autocomplete-preset-panel"
           >
-            <span className="collapsible-trigger__summary field-summary-prominent" title={presetPlaceholder}>
+            <span
+              className="collapsible-trigger__summary field-summary-prominent"
+              title={presetPlaceholder}
+            >
               {presetPlaceholder}
             </span>
             <ChevronDown
@@ -2029,15 +2213,18 @@ export function TTVInferenceUI({
             />
           </button>
           {isPresetOpen ? (
-            <div id="autocomplete-preset-panel" className="history-dropdown__panel option-grid option-grid--single">
+            <div
+              id="autocomplete-preset-panel"
+              className="history-dropdown__panel option-grid option-grid--single"
+            >
               {(Object.keys(presetLabels) as AutosenPreset[]).map((preset) => (
                 <button
                   key={preset}
                   type="button"
                   className={`option-item option-item--single ${state.autosenPreset === preset ? 'option-item--selected' : ''}`}
                   onClick={() => {
-                    updateField('autosenPreset', preset);
-                    setIsPresetOpen(false);
+                    updateField('autosenPreset', preset)
+                    setIsPresetOpen(false)
                   }}
                 >
                   <span>{presetLabels[preset]}</span>
@@ -2051,68 +2238,145 @@ export function TTVInferenceUI({
       <div className="form-group">
         <div className="form-group-header form-group-header--cta">
           <div className="form-group-header__title-block">
-            <div className="console-label console-label-prominent">Vital Signs - Cardiopulmonary Metrics</div>
+            <div className="console-label console-label-prominent">
+              Vital Signs - Cardiopulmonary Metrics
+            </div>
           </div>
           <button
             type="button"
             onClick={handleAnalyzeVitals}
             disabled={isAnalyzingVitals || isCanonicalLoading}
-            className="engine-btn engine-btn--primary rounded-[10px] text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+            className="engine-btn engine-btn--autocomplete rounded-[10px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Jalankan AutoComplete+ Vital Sign"
           >
-            <span>{isAnalyzingVitals || isCanonicalLoading ? 'Processing...' : 'AutoComplete+'}</span>
+            <span>
+              {isAnalyzingVitals || isCanonicalLoading ? 'Processing...' : 'AutoComplete+'}
+            </span>
           </button>
         </div>
-        <div className={`vitals-grid ${isGhostFillAnimating ? 'vitals-grid--ghosting' : ''}`}>
-          <div className={getVitalGhostItemClassName('bp')}>
-            <div className="vital-label">Tekanan Darah</div>
-            <div className="vital-value">
+        <div className={`vitals-grid vitals-grid--redesign ${isGhostFillAnimating ? 'vitals-grid--ghosting' : ''}`}>
+          {/* Row 1 — Tensi (2-col, teal highlight) */}
+          <div className="vitals-row vitals-row--2col vitals-row--tensi">
+            <div className={getVitalGhostItemClassName('bp')}>
+              <span className="vital-label-inline">Sistolik</span>
               <input
                 type="text"
-                className="vital-input"
+                className="vital-input vital-input--centered"
                 placeholder="---"
                 value={displayedVitalValue('sbp')}
                 onChange={(event) => updateField('sbp', event.target.value)}
                 aria-label="Sistolik"
                 disabled={isGhostFillAnimating}
               />
-              <span className="vital-unit">/</span>
+            </div>
+            <div className={getVitalGhostItemClassName('bp')}>
+              <span className="vital-label-inline">Diastolik</span>
               <input
                 type="text"
-                className="vital-input"
+                className="vital-input vital-input--centered"
                 placeholder="---"
                 value={displayedVitalValue('dbp')}
                 onChange={(event) => updateField('dbp', event.target.value)}
                 aria-label="Diastolik"
                 disabled={isGhostFillAnimating}
               />
-              <span className="vital-unit">mmHg</span>
             </div>
           </div>
 
-          {[
-            { key: 'glucose' as const, label: 'Gula Darah', unit: 'mg/dL', lane: 'glucose' as const },
-            { key: 'hr' as const, label: 'Nadi', unit: 'x/mnt', lane: 'hr' as const },
-            { key: 'rr' as const, label: 'Pernapasan', unit: 'x/mnt', lane: 'rr' as const },
-            { key: 'temp' as const, label: 'Suhu', unit: 'C', lane: 'temp' as const },
-            { key: 'spo2' as const, label: 'Saturasi O2', unit: '%', lane: 'spo2' as const },
-          ].map((item) => (
-            <div key={item.key} className={getVitalGhostItemClassName(item.lane)}>
-              <div className="vital-label">{item.label}</div>
-              <div className="vital-value">
+          {/* Row 2 — Nadi / Suhu / Gula (3-col) */}
+          <div className="vitals-row vitals-row--3col">
+            {[
+              { key: 'hr' as const, label: 'Nadi', lane: 'hr' as const },
+              { key: 'temp' as const, label: 'Suhu', lane: 'temp' as const },
+              { key: 'glucose' as const, label: 'Gula', lane: 'glucose' as const },
+            ].map((item) => (
+              <div key={item.key} className={getVitalGhostItemClassName(item.lane)}>
+                <span className="vital-label-inline">{item.label}</span>
                 <input
                   type="text"
-                  className="vital-input"
+                  className="vital-input vital-input--centered"
                   placeholder="---"
                   value={displayedVitalValue(item.key)}
                   onChange={(event) => updateField(item.key, event.target.value)}
                   aria-label={item.label}
                   disabled={isGhostFillAnimating}
                 />
-                <span className="vital-unit">{item.unit}</span>
               </div>
+            ))}
+          </div>
+
+          {/* Row 3 — Pernafasan / Saturasi O2 (2-col) */}
+          <div className="vitals-row vitals-row--2col">
+            {[
+              { key: 'rr' as const, label: 'Pernafasan', lane: 'rr' as const },
+              { key: 'spo2' as const, label: 'Saturasi O₂', lane: 'spo2' as const },
+            ].map((item) => (
+              <div key={item.key} className={getVitalGhostItemClassName(item.lane)}>
+                <span className="vital-label-inline">{item.label}</span>
+                <input
+                  type="text"
+                  className="vital-input vital-input--centered"
+                  placeholder="---"
+                  value={displayedVitalValue(item.key)}
+                  onChange={(event) => updateField(item.key, event.target.value)}
+                  aria-label={item.label}
+                  disabled={isGhostFillAnimating}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* GAP-001: Clinical Assessment Row */}
+        <div className="vital-assessment-row">
+          <div className="vital-assessment-group">
+            <div className="vital-assessment-label">AVPU</div>
+            <div className="vital-assessment-controls">
+              {AVPU_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`avpu-btn ${state.avpu === option ? 'avpu-btn--active' : ''}`}
+                  onClick={() => updateField('avpu', option)}
+                  title={AVPU_LABELS[option]}
+                  aria-label={`AVPU ${AVPU_LABELS[option]}`}
+                  disabled={isGhostFillAnimating}
+                >
+                  {option}
+                </button>
+              ))}
             </div>
-          ))}
+          </div>
+          <div className="vital-assessment-group">
+            <div className="vital-assessment-label">O2 Suplemen</div>
+            <label className="vital-assessment-toggle">
+              <input
+                type="checkbox"
+                checked={state.supplemental_o2}
+                onChange={(e) => updateField('supplemental_o2', e.target.checked)}
+                aria-label="Pasien sedang mendapat suplementasi oksigen"
+              />
+              <span className="vital-assessment-toggle__track" />
+            </label>
+          </div>
+          <div className="vital-assessment-group">
+            <div className="vital-assessment-label">Nyeri (0-10)</div>
+            <div className="vital-value">
+              <input
+                type="number"
+                min={0}
+                max={10}
+                step={1}
+                className="vital-input vital-input--narrow"
+                placeholder="--"
+                value={state.pain_score}
+                onChange={(e) => updateField('pain_score', e.target.value)}
+                aria-label="Skor nyeri 0 sampai 10"
+                disabled={isGhostFillAnimating}
+              />
+              <span className="vital-unit">/10</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2182,11 +2446,11 @@ export function TTVInferenceUI({
 
           <div className="doctor-picker-panel__list">
             {sortedDoctors.map((doctor) => {
-              const isSelected = doctor.id === selectedDoctorId;
-              const presence = doctor.availability_status || 'online';
-              const location = [doctor.location_name, doctor.room_name].filter(Boolean).join(' • ');
-              const isMatchedPoli = matchesPreferredPoli(doctor, preferredPoliKeywords);
-              const isSameFacility = matchesPreferredFacility(doctor, extractedFacilityName);
+              const isSelected = doctor.id === selectedDoctorId
+              const presence = doctor.availability_status || 'online'
+              const location = [doctor.location_name, doctor.room_name].filter(Boolean).join(' • ')
+              const isMatchedPoli = matchesPreferredPoli(doctor, preferredPoliKeywords)
+              const isSameFacility = matchesPreferredFacility(doctor, extractedFacilityName)
 
               return (
                 <button
@@ -2225,7 +2489,7 @@ export function TTVInferenceUI({
                     </div>
                   ) : null}
                 </button>
-              );
+              )
             })}
 
             {!isLoadingDoctors && sortedDoctors.length === 0 ? (
@@ -2314,8 +2578,8 @@ export function TTVInferenceUI({
               type="button"
               className="icon-btn"
               onClick={() => {
-                setOutput('');
-                setOutputMode(null);
+                setOutput('')
+                setOutputMode(null)
               }}
               title="Clear output"
               aria-label="Hapus hasil analisis"
@@ -2337,13 +2601,14 @@ export function TTVInferenceUI({
         <div className="output-content">
           {output || (
             <span className="placeholder-text">
-              Output AutoComplete+ anamnesis atau vital sign akan muncul di sini setelah tombol yang sesuai dijalankan.
+              Output AutoComplete+ anamnesis atau vital sign akan muncul di sini setelah tombol yang
+              sesuai dijalankan.
             </span>
           )}
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export { TTVInferenceUI as default };
+export { TTVInferenceUI as default }

@@ -4251,3 +4251,58 @@ textarea:read-only,
   opacity: var(--power-state);
   transition: opacity 0.5s ease calc(1.5s * var(--power-state));
 }
+
+/* ── Task 2: Vitals Grid Redesign ── */
+.vitals-grid--redesign {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.vitals-row {
+  display: grid;
+  gap: 5px;
+}
+
+.vitals-row--2col {
+  grid-template-columns: 1fr 1fr;
+}
+
+.vitals-row--3col {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.vitals-row--tensi > div {
+  border-color: rgba(107, 155, 138, 0.3) !important;
+}
+
+.vitals-grid--redesign .vital-ghost-item,
+.vitals-grid--redesign [class*="vital-ghost-item"] {
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+}
+
+.vital-label-inline {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted, #737373);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.vital-input--centered {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-main, #F4EFE6);
+}
+
+.vitals-row--tensi .vital-input--centered {
+  font-size: 15px;
+}

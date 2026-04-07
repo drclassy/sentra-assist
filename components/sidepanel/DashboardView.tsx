@@ -4,7 +4,6 @@
 
 import React, { useState } from 'react';
 import type { AuthUser } from '@/lib/api/auth-store';
-import logoSrc from '~/public/icon/Logo-fix.png';
 
 interface DashboardViewProps {
   user: AuthUser | null;
@@ -42,7 +41,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Header */}
         <div className="dash-header">
           <div className="dash-logo-icon" aria-hidden="true">
-            <img src={logoSrc} alt="Sentra" width="44" height="44" />
+            <svg width="44" height="52" viewBox="0 0 120 140" fill="#F4EFE6">
+              <rect x="8" y="10" width="70" height="28" rx="14" transform="rotate(-35 43 24)" />
+              <rect x="42" y="102" width="70" height="28" rx="14" transform="rotate(-35 77 116)" />
+              <path d="M72 8 C105 8 120 30 120 55 C120 72 112 84 98 90 L88 68 C96 64 100 56 100 48 C100 36 90 28 78 28 Z" />
+              <path d="M48 132 C15 132 0 110 0 85 C0 68 8 56 22 50 L32 72 C24 76 20 84 20 92 C20 104 30 112 42 112 Z" />
+            </svg>
           </div>
           <h2 className="dash-title">Sentra Assist</h2>
           <p className="dash-subtitle">Intelligent Clinical Decision Support</p>

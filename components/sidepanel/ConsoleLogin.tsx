@@ -4,7 +4,6 @@
 
 import React, { useCallback, useState } from 'react';
 import type { AuthUser } from '@/lib/api/auth-store';
-import logoSrc from '~/public/icon/Logo-fix.png';
 
 interface ConsoleLoginProps {
   onLoginSuccess: (user: AuthUser) => void;
@@ -75,9 +74,18 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
   return (
     <div className="login-view">
       <div className="login-card">
-        {/* Logo resmi Sentra */}
+        {/* Logo resmi Sentra — filled SVG */}
         <div className="login-logo" aria-hidden="true">
-          <img src={logoSrc} alt="Sentra" width="48" height="48" />
+          <svg width="48" height="56" viewBox="0 0 120 140" fill="#F4EFE6">
+            {/* Upper-left diagonal bar */}
+            <rect x="8" y="10" width="70" height="28" rx="14" transform="rotate(-35 43 24)" />
+            {/* Lower-right diagonal bar */}
+            <rect x="42" y="102" width="70" height="28" rx="14" transform="rotate(-35 77 116)" />
+            {/* Upper-right curve */}
+            <path d="M72 8 C105 8 120 30 120 55 C120 72 112 84 98 90 L88 68 C96 64 100 56 100 48 C100 36 90 28 78 28 Z" />
+            {/* Lower-left curve */}
+            <path d="M48 132 C15 132 0 110 0 85 C0 68 8 56 22 50 L32 72 C24 76 20 84 20 92 C20 104 30 112 42 112 Z" />
+          </svg>
         </div>
         <div className="login-brand">Sentra Assist</div>
 

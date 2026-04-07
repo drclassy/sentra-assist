@@ -181,7 +181,7 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
 
         .login-logo {
           margin: 0 auto 12px;
-          opacity: 0.8;
+          opacity: 1;
         }
 
         .login-brand {

@@ -4328,3 +4328,18 @@ textarea:read-only,
 .autocomplete-bar__btn:hover:not(:disabled) {
   background: rgba(107, 155, 138, 0.14);
 }
+
+.autocomplete-bar__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.autocomplete-bar__btn--pulse {
+  animation: sentra-teal-breathe 1.8s ease-in-out infinite;
+  border-color: rgba(107, 155, 138, 0.55);
+}
+
+@keyframes sentra-teal-breathe {
+  0%, 100% { box-shadow: 0 0 6px rgba(107, 155, 138, 0.2); }
+  50% { box-shadow: 0 0 14px rgba(107, 155, 138, 0.45); }
+}

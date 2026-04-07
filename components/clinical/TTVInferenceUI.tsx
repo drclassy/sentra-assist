@@ -1,13 +1,20 @@
 // Designed and constructed by Claudesy.
 import { TextEffect } from '@/components/ui/text-effect'
+import { createLogger } from '@/utils/logger'
 import {
+  extractClinicalAnamnesis,
   evaluateCanonicalClinicalEngine,
   getOnlineDoctors,
   sendConsultToDoctor,
   type CanonicalClinicalEngineOutput,
   type OnlineDoctor,
 } from '@/lib/api/bridge-client'
-import { composeAnamnesaDraft, type ComposedAnamnesaDraft } from '@/lib/clinical/anamnesa-composer'
+import {
+  buildAnamnesisShadowSuggestion,
+  composeAnamnesaDraft,
+  composeAnamnesaDraftFromExtraction,
+  type ComposedAnamnesaDraft,
+} from '@/lib/clinical/anamnesa-composer'
 import { AutosenPreset, DisabilityType, ObesityConfirmation } from '@/lib/clinical/autosen-types'
 import {
   buildCanonicalRequestId,
@@ -23,6 +30,7 @@ import {
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store'
 import { AlertTriangle, ChevronDown, RefreshCw, SendHorizontal, ShieldAlert } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { AnamnesisExtractionResult, AnamnesisMissingField } from '@/utils/types'
 
 export interface ScreeningAlert {
   id: string
@@ -244,6 +252,9 @@ const AVAILABILITY_RANK: Record<NonNullable<OnlineDoctor['availability_status']>
 }
 
 const normalizeText = (value?: string): string => (value || '').trim().toLowerCase()
+
+const HYBRID_AUTOTEXT_ENABLED = import.meta.env.VITE_ENABLE_HYBRID_AUTOTEXT !== 'false'
+const ttvLog = createLogger('TTVInferenceUI', 'content')
 
 const GERIATRIC_ORTHOSTATIC_KEYWORDS = [
   'pusing',
@@ -1011,6 +1022,11 @@ export function TTVInferenceUI({
   const [isDisabilityOpen, setIsDisabilityOpen] = useState(false)
   const [isObesityOpen, setIsObesityOpen] = useState(false)
   const [isPresetOpen, setIsPresetOpen] = useState(false)
+  const [extractedAnamnesis, setExtractedAnamnesis] = useState<AnamnesisExtractionResult | null>(null)
+  const [anamnesisMissingFields, setAnamnesisMissingFields] = useState<AnamnesisMissingField[]>([])
+  const [shadowSuggestion, setShadowSuggestion] = useState('')
+  const [autoTextSource, setAutoTextSource] = useState<'backend' | 'fallback-local' | null>(null)
+  const [isHybridExtracting, setIsHybridExtracting] = useState(false)
   const [onlineDoctors, setOnlineDoctors] = useState<OnlineDoctor[]>([])
   const [selectedDoctorId, setSelectedDoctorId] = useState('')
   const [isLoadingDoctors, setIsLoadingDoctors] = useState(false)
@@ -1275,6 +1291,10 @@ export function TTVInferenceUI({
       state.temp,
     ]
   )
+
+  useEffect(() => {
+    setShadowSuggestion(buildAnamnesisShadowSuggestion(anamnesisMissingFields))
+  }, [anamnesisMissingFields])
   const preferredPoliKeywords = useMemo(
     () =>
       derivePreferredPoliKeywords(chronicHistoryLabels, state.autosenPreset, state.pregnancyStatus),
@@ -1405,7 +1425,39 @@ export function TTVInferenceUI({
     setLastProcessedSymptomText('')
     setAnimatedDraftText('')
     setIsDraftTyping(false)
+    setExtractedAnamnesis(null)
+    setAnamnesisMissingFields([])
+    setShadowSuggestion('')
+    setAutoTextSource(null)
   }, [patientRM])
+
+  useEffect(() => {
+    if (!HYBRID_AUTOTEXT_ENABLED) return
+
+    const raw = state.symptomText.trim()
+    if (raw.length < 8 || isAnalyzing || isDraftTyping) return
+
+    const timerId = window.setTimeout(() => {
+      void (async () => {
+        const extractionStart = Date.now()
+        try {
+          const extraction = await extractClinicalAnamnesis(raw)
+          setExtractedAnamnesis(extraction)
+          setAnamnesisMissingFields(extraction.data_belum_lengkap)
+          setAutoTextSource('backend')
+          ttvLog.debug('Hybrid preview extraction updated', {
+            source: 'backend',
+            missingCount: extraction.data_belum_lengkap.length,
+            latencyMs: Date.now() - extractionStart,
+          })
+        } catch {
+          setAutoTextSource('fallback-local')
+        }
+      })()
+    }, 220)
+
+    return () => window.clearTimeout(timerId)
+  }, [state.symptomText, isAnalyzing, isDraftTyping])
 
   useEffect(() => {
     if (!sortedDoctors.length) {
@@ -1527,6 +1579,16 @@ export function TTVInferenceUI({
       ...prev,
       [field]: value,
     }))
+  }
+
+  const applyShadowSuggestion = () => {
+    if (!shadowSuggestion.trim()) return
+
+    const current = state.symptomText.trim()
+    const nextText = current ? `${current} ${shadowSuggestion}` : shadowSuggestion
+    applySymptomText(nextText)
+    setLastProcessedSymptomText(nextText)
+    setAnamnesisMissingFields([])
   }
 
   const toggleAllergy = (label: string) => {
@@ -1679,54 +1741,108 @@ export function TTVInferenceUI({
     setIsAnalyzing(true)
 
     window.setTimeout(() => {
-      const draftedSymptomText = anamnesaDraft.payload.keluhan_tambahan
-      const summary = buildSummary(state, alerts, effectiveHistoryFlags, {
-        patientName,
-        patientGender,
-        patientAge,
-        patientRM,
-      })
-      const senautoOutput = buildSenautoOutput(anamnesaDraft, summary)
-      const payload: TTVInferenceData = {
-        patient: {
-          name: patientName,
-          gender: patientGender,
-          age: patientAge,
-          rm: patientRM,
-          dob: patientDOB,
-          bloodType: patientBloodType,
-          bpjsStatus: patientBPJSStatus,
-          kelurahan: patientKelurahan,
-        },
-        vitals: {
-          sbp: parseNumber(state.sbp),
-          dbp: parseNumber(state.dbp),
-          hr: parseNumber(state.hr),
-          rr: parseNumber(state.rr),
-          temp: parseNumber(state.temp),
-          spo2: parseNumber(state.spo2),
-          glucose: parseNumber(state.glucose),
-        },
-        symptomText: draftedSymptomText,
-        allergies: state.allergies,
-        pregnancyStatus: state.pregnancyStatus,
-        disabilityType: state.disabilityType,
-        obesityConfirmation: state.obesityConfirmation,
-        autosenPreset: state.autosenPreset,
-        alerts,
-        summary,
-        anamnesaDraft,
-        generatedAt: new Date().toISOString(),
-      }
+      void (async () => {
+        let activeDraft = anamnesaDraft
+        let extractionLatencyMs = 0
 
-      setIsDraftTyping(true)
-      setAnimatedDraftText(draftedSymptomText)
-      applySymptomText('')
+        if (HYBRID_AUTOTEXT_ENABLED) {
+          const extractionStart = Date.now()
+          setIsHybridExtracting(true)
+          try {
+            const extraction = await extractClinicalAnamnesis(state.symptomText.trim())
+            extractionLatencyMs = Date.now() - extractionStart
+            setExtractedAnamnesis(extraction)
+            setAnamnesisMissingFields(extraction.data_belum_lengkap)
+            setAutoTextSource('backend')
+            activeDraft = composeAnamnesaDraftFromExtraction(extraction, {
+              symptomText: state.symptomText,
+              patientGender,
+              chronicDiseases: chronicHistoryLabels,
+              allergies: state.allergies,
+              pregnancyStatus: state.pregnancyStatus,
+              specialConditions: extractedSpecialConditions,
+              pregnancyRisk: extractedPregnancyRisk,
+              vitals: {
+                sbp: parseNumber(state.sbp),
+                dbp: parseNumber(state.dbp),
+                hr: parseNumber(state.hr),
+                rr: parseNumber(state.rr),
+                temp: parseNumber(state.temp),
+                spo2: parseNumber(state.spo2),
+                glucose: parseNumber(state.glucose),
+              },
+              disabilityType: state.disabilityType,
+              obesityConfirmation: state.obesityConfirmation,
+              autosenPresetLabel: presetLabels[state.autosenPreset],
+            })
+            ttvLog.debug('Hybrid extraction applied', {
+              source: 'backend',
+              missingCount: extraction.data_belum_lengkap.length,
+              latencyMs: extractionLatencyMs,
+            })
+          } catch (error) {
+            setExtractedAnamnesis(null)
+            setAnamnesisMissingFields([])
+            setAutoTextSource('fallback-local')
+            ttvLog.warn('Hybrid extraction fallback to local composer', {
+              source: 'fallback-local',
+              reason: error instanceof Error ? error.message : 'unknown',
+              latencyMs: Date.now() - extractionStart,
+            })
+          } finally {
+            setIsHybridExtracting(false)
+          }
+        }
 
-      setOutput(senautoOutput)
-      setOutputMode('anamnesis')
-      onComplete?.(payload)
-      setIsAnalyzing(false)
+        const draftedSymptomText = activeDraft.payload.keluhan_tambahan
+        const summary = buildSummary(state, alerts, effectiveHistoryFlags, {
+          patientName,
+          patientGender,
+          patientAge,
+          patientRM,
+        })
+        const senautoOutput = buildSenautoOutput(activeDraft, summary)
+        const payload: TTVInferenceData = {
+          patient: {
+            name: patientName,
+            gender: patientGender,
+            age: patientAge,
+            rm: patientRM,
+            dob: patientDOB,
+            bloodType: patientBloodType,
+            bpjsStatus: patientBPJSStatus,
+            kelurahan: patientKelurahan,
+          },
+          vitals: {
+            sbp: parseNumber(state.sbp),
+            dbp: parseNumber(state.dbp),
+            hr: parseNumber(state.hr),
+            rr: parseNumber(state.rr),
+            temp: parseNumber(state.temp),
+            spo2: parseNumber(state.spo2),
+            glucose: parseNumber(state.glucose),
+          },
+          symptomText: draftedSymptomText,
+          allergies: state.allergies,
+          pregnancyStatus: state.pregnancyStatus,
+          disabilityType: state.disabilityType,
+          obesityConfirmation: state.obesityConfirmation,
+          autosenPreset: state.autosenPreset,
+          alerts,
+          summary,
+          anamnesaDraft: activeDraft,
+          generatedAt: new Date().toISOString(),
+        }
+
+        setIsDraftTyping(true)
+        setAnimatedDraftText(draftedSymptomText)
+        applySymptomText('')
+
+        setOutput(senautoOutput)
+        setOutputMode('anamnesis')
+        onComplete?.(payload)
+        setIsAnalyzing(false)
+      })()
     }, 320)
   }
 
@@ -1937,11 +2053,33 @@ export function TTVInferenceUI({
           <textarea
             value={state.symptomText}
             onChange={(event) => updateField('symptomText', event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Tab' && shadowSuggestion.trim()) {
+                event.preventDefault()
+                applyShadowSuggestion()
+              }
+            }}
             placeholder="Ketik keluhan utama, durasi, dan konteks klinis singkat..."
             className="neu-textarea"
             aria-label="Keluhan utama pasien"
           />
         )}
+        {shadowSuggestion ? (
+          <div className="field-context-note text-[10px] text-[var(--text-muted)]">
+            Suggestion: {shadowSuggestion} (Tekan Tab untuk terapkan)
+          </div>
+        ) : null}
+        {autoTextSource ? (
+          <div className="field-context-note text-[10px] text-[var(--text-muted)]">
+            Auto-text source: {autoTextSource === 'backend' ? 'hybrid-backend' : 'fallback-local'}
+            {isHybridExtracting ? ' • extracting...' : ''}
+          </div>
+        ) : null}
+        {extractedAnamnesis ? (
+          <div className="field-context-note text-[10px] text-[var(--text-muted)]">
+            Hybrid gaps: {extractedAnamnesis.data_belum_lengkap.length}
+          </div>
+        ) : null}
       </div>
 
       <div className="form-row-dual">
@@ -2393,14 +2531,13 @@ export function TTVInferenceUI({
         <button
           type="button"
           onClick={() => {
-            void handleAnalyze()
-            void handleAnalyzeVitals()
+            void Promise.all([handleAnalyze(), handleAnalyzeVitals()])
           }}
           disabled={isAnalyzing || isAnalyzingVitals || isCanonicalLoading}
-          className={`autocomplete-bar__btn engine-btn--autocomplete disabled:cursor-not-allowed disabled:opacity-50${hasSymptomDraftPending ? ' engine-btn--pulse' : ''}`}
+          className={`autocomplete-bar__btn${hasSymptomDraftPending ? ' autocomplete-bar__btn--pulse' : ''}`}
           aria-label="Jalankan AutoComplete+"
         >
-          <span>
+          <span className={hasSymptomDraftPending ? 'engine-btn__text--pulse' : ''}>
             {isAnalyzing || isAnalyzingVitals || isCanonicalLoading
               ? 'Processing...'
               : '✨ AutoComplete+ — Isi otomatis dari konteks'}

@@ -1019,7 +1019,7 @@ export function TTVInferenceUI({
     Partial<Record<VitalFieldKey, string>>
   >({})
   const [outputMode, setOutputMode] = useState<'anamnesis' | 'vital' | null>(null)
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+
   const [isAllergyOpen, setIsAllergyOpen] = useState(false)
   const [isDisabilityOpen, setIsDisabilityOpen] = useState(false)
   const [isObesityOpen, setIsObesityOpen] = useState(false)
@@ -1061,7 +1061,6 @@ export function TTVInferenceUI({
       setIsUplinkLoading(false)
     }
   }, [onSentraUplink])
-  const historyDropdownRef = useRef<HTMLDivElement | null>(null)
   const allergyDropdownRef = useRef<HTMLDivElement | null>(null)
   const disabilityDropdownRef = useRef<HTMLDivElement | null>(null)
   const obesityDropdownRef = useRef<HTMLDivElement | null>(null)
@@ -1247,11 +1246,9 @@ export function TTVInferenceUI({
 
   const hasMinimalVitals = Boolean(state.sbp && state.dbp && state.hr && state.rr && state.temp)
   const physiologyProfile = useMemo(() => getVitalScreeningProfile(patientAge || 0), [patientAge])
-  const hasExtractedHistory = historyItems.some((item) => normalizedPrefilledHistoryFlags[item.id])
   const chronicHistoryLabels = getSelectedHistoryLabels(effectiveHistoryFlags)
   const chronicHistorySummary = chronicHistoryLabels.join(', ')
   const allergySummary = state.allergies.join(', ')
-  const chronicHistoryPlaceholder = chronicHistorySummary || 'Pilih di sini'
   const allergyPlaceholder = allergySummary || 'Pilih di sini'
   const disabilityPlaceholder = state.disabilityType || 'Pilih di sini'
   const obesityPlaceholder =
@@ -1495,26 +1492,6 @@ export function TTVInferenceUI({
       sortedDoctors.some((doctor) => doctor.id === current) ? current : sortedDoctors[0].id
     )
   }, [sortedDoctors])
-
-  useEffect(() => {
-    if (!isHistoryOpen) {
-      return
-    }
-
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target
-      if (!(target instanceof Node)) {
-        return
-      }
-
-      if (!historyDropdownRef.current?.contains(target)) {
-        setIsHistoryOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handlePointerDown)
-    return () => document.removeEventListener('mousedown', handlePointerDown)
-  }, [isHistoryOpen])
 
   useEffect(() => {
     if (!isAllergyOpen) {
@@ -2001,55 +1978,6 @@ export function TTVInferenceUI({
   return (
     <div className="clinical-form-stack flex flex-col gap-3">
       <div className="form-group">
-        <div className="form-group-header">
-          <div className="console-label console-label-prominent">Riwayat Penyakit Kronis</div>
-          {hasExtractedHistory ? (
-            <span className="field-extracted-indicator">extracted</span>
-          ) : null}
-        </div>
-        <div ref={historyDropdownRef} className="history-dropdown">
-          <button
-            type="button"
-            onClick={() => setIsHistoryOpen((prev) => !prev)}
-            className={`collapsible-trigger neu-select font-mono text-[12px] ${
-              isHistoryOpen ? 'collapsible-trigger-open' : ''
-            }`}
-            aria-expanded={isHistoryOpen}
-            aria-controls="riwayat-penyakit-kronis-panel"
-          >
-            <span
-              className="collapsible-trigger__summary field-summary-prominent"
-              title={chronicHistoryPlaceholder}
-            >
-              {chronicHistoryPlaceholder}
-            </span>
-            <ChevronDown
-              className={`collapsible-trigger__icon ${isHistoryOpen ? 'collapsible-trigger__icon-open' : ''}`}
-            />
-          </button>
-          {isHistoryOpen ? (
-            <div id="riwayat-penyakit-kronis-panel" className="history-dropdown__panel option-grid">
-              {historyItems.map((item) => (
-                <label key={item.id} className="option-item">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(effectiveHistoryFlags[item.id])}
-                    onChange={() =>
-                      setHistoryFlags((prev) => ({
-                        ...prev,
-                        [item.id]: !prev[item.id],
-                      }))
-                    }
-                  />
-                  <span>{item.label}</span>
-                </label>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="form-group">
         <div className="form-group-header form-group-header--cta">
           <div className="form-group-header__title-block">
             <div className="console-label console-label-prominent">Gejala / Keluhan</div>
@@ -2057,6 +1985,15 @@ export function TTVInferenceUI({
               <div className="screening-mode-indicator">Pediatric screening mode</div>
             ) : null}
           </div>
+          <button
+            type="button"
+            className={`btn-ac-inline${hasSymptomDraftPending ? ' engine-btn--pulse' : ''}`}
+            onClick={() => void handleAnalyze()}
+            disabled={isAnalyzing || isCanonicalLoading}
+            aria-label="AutoComplete+ Gejala"
+          >
+            {isAnalyzing ? '...' : '✨ AutoComplete+'}
+          </button>
         </div>
         {isDraftTyping && animatedDraftText ? (
           <div
@@ -2383,6 +2320,15 @@ export function TTVInferenceUI({
               Vital Signs - Cardiopulmonary Metrics
             </div>
           </div>
+          <button
+            type="button"
+            className="btn-ac-inline"
+            onClick={() => void handleAnalyzeVitals()}
+            disabled={isAnalyzingVitals || isCanonicalLoading}
+            aria-label="AutoComplete+ Vital Signs"
+          >
+            {isAnalyzingVitals ? '...' : '✨ AutoComplete+'}
+          </button>
         </div>
         <div
           className={`vitals-grid vitals-grid--redesign ${isGhostFillAnimating ? 'vitals-grid--ghosting' : ''}`}
@@ -2480,18 +2426,6 @@ export function TTVInferenceUI({
             </div>
           </div>
           <div className="vital-assessment-group">
-            <div className="vital-assessment-label">O2 Suplemen</div>
-            <label className="vital-assessment-toggle">
-              <input
-                type="checkbox"
-                checked={state.supplemental_o2}
-                onChange={(e) => updateField('supplemental_o2', e.target.checked)}
-                aria-label="Pasien sedang mendapat suplementasi oksigen"
-              />
-              <span className="vital-assessment-toggle__track" />
-            </label>
-          </div>
-          <div className="vital-assessment-group">
             <div className="vital-assessment-label">Nyeri (0-10)</div>
             <div className="vital-value">
               <input
@@ -2544,24 +2478,6 @@ export function TTVInferenceUI({
         </div>
       ) : null}
 
-      {/* AutoComplete — single consolidated button, bottom of form */}
-      <div className="autocomplete-bar">
-        <button
-          type="button"
-          onClick={() => {
-            void Promise.all([handleAnalyze(), handleAnalyzeVitals()])
-          }}
-          disabled={isAnalyzing || isAnalyzingVitals || isCanonicalLoading}
-          className={`autocomplete-bar__btn${hasSymptomDraftPending ? ' autocomplete-bar__btn--pulse' : ''}`}
-          aria-label="Jalankan AutoComplete+"
-        >
-          <span className={hasSymptomDraftPending ? 'engine-btn__text--pulse' : ''}>
-            {isAnalyzing || isAnalyzingVitals || isCanonicalLoading
-              ? 'Processing...'
-              : '✨ AutoComplete+ — Isi otomatis dari konteks'}
-          </span>
-        </button>
-      </div>
 
       <div className="form-group">
         <div className="form-group-header">

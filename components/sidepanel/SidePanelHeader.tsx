@@ -157,38 +157,37 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
       </div>
 
       {/* Status bar — Inisialisasi | Demograf | Dokter */}
-      <div className="status-bar" role="group" aria-label="Status sistem">
+      <div className="hdr-statusbar" role="group" aria-label="Status sistem">
         <button
           type="button"
-          className="status-chip status-chip--action"
+          className="hdr-chip hdr-chip--action"
           onClick={onInitialisasi}
-          disabled={!onInitialisasi}
           aria-label="Inisialisasi — reset dan muat ulang data RME"
         >
-          <span className="status-chip__icon" aria-hidden="true">🔄</span>
-          <span className="status-chip__label">Inisialisasi</span>
+          <span aria-hidden="true">🔄</span>
+          <span className="hdr-chip__label">Inisialisasi</span>
         </button>
 
         <div
-          className={`status-chip ${isReady ? 'status-chip--ready' : 'status-chip--syn'}`}
+          className={`hdr-chip ${isReady ? 'hdr-chip--ready' : 'hdr-chip--syn'}`}
           aria-label={`Demografi: ${isReady ? 'Siap' : 'Sinkronisasi'}`}
           role="status"
         >
-          <span className="status-chip__icon status-chip__icon--text">
+          <span className={`hdr-chip__status ${isReady ? 'hdr-chip__status--ready' : 'hdr-chip__status--syn'}`}>
             {isReady ? 'OK' : 'SYN'}
           </span>
-          <span className="status-chip__label">Demograf</span>
+          <span className="hdr-chip__label">Demograf</span>
         </div>
 
         <div
-          className={`status-chip ${doctorOnline ? 'status-chip--ready' : 'status-chip--offline'}`}
+          className={`hdr-chip ${doctorOnline ? 'hdr-chip--ready' : 'hdr-chip--offline'}`}
           aria-label={`Dokter: ${doctorOnline ? 'Online' : 'Offline'}`}
           role="status"
         >
-          <span className="status-chip__icon status-chip__icon--text">
+          <span className={`hdr-chip__status ${doctorOnline ? 'hdr-chip__status--ready' : 'hdr-chip__status--offline'}`}>
             {doctorOnline ? 'ON' : 'OFF'}
           </span>
-          <span className="status-chip__label">Dokter</span>
+          <span className="hdr-chip__label">Dokter</span>
         </div>
       </div>
 

@@ -148,23 +148,39 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
         .login-view {
           width: 100%;
           min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #050505;
           animation: loginFadeIn 0.6s ease;
         }
 
         @keyframes loginFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from { opacity: 0; transform: scale(0.98); }
+          to { opacity: 1; transform: scale(1); }
         }
 
         .login-card {
           width: 100%;
-          padding: 0 32px;
-          text-align: center;
+          min-height: 100vh;
+          background: #0A0A0C;
+          border: 1px solid rgba(255,255,255,0.03);
+          box-shadow: 0 40px 80px rgba(0,0,0,0.4);
           position: relative;
+          text-align: center;
+          /* Card fills the page, content centered vertically */
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 32px;
+        }
+
+        .login-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 40px;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
         }
 
         .login-logo {

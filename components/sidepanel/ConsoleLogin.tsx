@@ -159,7 +159,7 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
         .login-card {
           width: 100%;
           min-height: 100vh;
-          background: #0A0A0C;
+          background: #0F1012;
           border: 1px solid rgba(255,255,255,0.03);
           box-shadow: 0 40px 80px rgba(0,0,0,0.4);
           position: relative;

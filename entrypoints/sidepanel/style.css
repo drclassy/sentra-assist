@@ -4323,3 +4323,53 @@ textarea:read-only,
   0%, 100% { box-shadow: 0 0 6px rgba(107, 155, 138, 0.2); }
   50% { box-shadow: 0 0 14px rgba(107, 155, 138, 0.45); }
 }
+
+/* Sequential action bar */
+.action-bar--sequential {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.action-btn--primary {
+  background: rgba(107, 155, 138, 0.12);
+  border: 1px solid rgba(107, 155, 138, 0.45);
+  color: #6B9B8A;
+}
+
+.action-btn--secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #b7ab98;
+}
+
+.action-btn--disabled,
+.action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.action-bar__sep {
+  color: #444;
+  font-size: 16px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.action-bar__hint {
+  font-size: 9px;
+  color: #555;
+  text-align: center;
+  margin-top: 4px;
+}

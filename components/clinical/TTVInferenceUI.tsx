@@ -29,8 +29,8 @@ import {
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store'
 import { createLogger } from '@/utils/logger'
 import type { AnamnesisExtractionResult, AnamnesisMissingField } from '@/utils/types'
-import { AlertTriangle, ChevronDown, RefreshCw, SendHorizontal, ShieldAlert } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, ChevronDown, RefreshCw, ShieldAlert } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export interface ScreeningAlert {
   id: string
@@ -142,6 +142,7 @@ interface TTVInferenceUIProps {
   extractedPregnancyStatus?: boolean | null
   canonicalOutput?: CanonicalClinicalEngineOutput | null
   prefetchedVisits?: VisitRecord[]
+  onSentraUplink?: () => void | Promise<void>
 }
 
 const DEFAULT_STATE: TTVStateShape = {
@@ -997,6 +998,7 @@ export function TTVInferenceUI({
   extractedPregnancyStatus = null,
   canonicalOutput: canonicalOutputProp = null,
   prefetchedVisits,
+  onSentraUplink,
 }: TTVInferenceUIProps): JSX.Element {
   const [localState, setLocalState] = useState<TTVStateShape>(DEFAULT_STATE)
   const [historyFlags, setHistoryFlags] = useState<Record<string, boolean>>(createEmptyHistoryFlags)
@@ -1036,6 +1038,13 @@ export function TTVInferenceUI({
   const [doctorPickerError, setDoctorPickerError] = useState('')
   const [doctorPickerNotice, setDoctorPickerNotice] = useState('')
   const [isConsultFooterOpen, setIsConsultFooterOpen] = useState(false)
+  const [uplinkDone, setUplinkDone] = useState(false)
+
+  const handleSentraUplink = useCallback(async () => {
+    if (!onSentraUplink) return
+    await onSentraUplink()
+    setUplinkDone(true)
+  }, [onSentraUplink])
   const historyDropdownRef = useRef<HTMLDivElement | null>(null)
   const allergyDropdownRef = useRef<HTMLDivElement | null>(null)
   const disabilityDropdownRef = useRef<HTMLDivElement | null>(null)
@@ -2666,17 +2675,30 @@ export function TTVInferenceUI({
         </div>
       </div>
 
-      <div className="action-bar">
+      <div className="action-bar action-bar--sequential">
         <button
           type="button"
-          className="btn btn-secondary flex flex-1 items-center justify-center gap-2"
-          onClick={() => void handleForwardToDoctor()}
-          disabled={!canForwardToDoctor}
+          className="action-btn action-btn--primary"
+          onClick={() => void handleSentraUplink()}
+          disabled={!onSentraUplink}
+          aria-label="Sentra Uplink — isi RME otomatis"
         >
-          <SendHorizontal className={`h-4 w-4 ${isSendingConsult ? 'animate-pulse' : ''}`} />
-          Forward to Doctor
+          📡 Sentra Uplink →
+        </button>
+        <span className="action-bar__sep" aria-hidden="true">›</span>
+        <button
+          type="button"
+          className={`action-btn action-btn--secondary${!uplinkDone ? ' action-btn--disabled' : ''}`}
+          onClick={() => void handleForwardToDoctor()}
+          disabled={!canForwardToDoctor || !uplinkDone}
+          aria-label="Kirim konsultasi ke dokter"
+        >
+          → Kirim Dokter
         </button>
       </div>
+      {!uplinkDone && onSentraUplink ? (
+        <p className="action-bar__hint">Selesaikan Uplink untuk mengaktifkan Kirim Dokter</p>
+      ) : null}
 
       {doctorPickerNotice ? (
         <div className="doctor-picker-panel__feedback doctor-picker-panel__feedback--success">

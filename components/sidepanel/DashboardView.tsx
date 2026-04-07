@@ -227,7 +227,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         .dash-logo-icon {
           margin: 0 auto 10px;
-          opacity: 1;
+        }
+
+        .dash-logo-icon img {
+          filter: brightness(0.95) sepia(0.08) saturate(0.8);
         }
 
         .dash-title {

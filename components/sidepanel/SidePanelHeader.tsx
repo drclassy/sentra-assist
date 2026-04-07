@@ -62,8 +62,7 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
   const resolvedAgeText = patientAge > 0 ? `${patientAge} tahun` : '--'
   const isReady = demographicStatus === 'ready'
   const statusLabel = isLoadingPatient ? 'Syncing' : isReady ? 'Ready' : 'Standby'
-  const demogReady = demographicStatus === 'ready'
-  const doctorOnline = (doctorOnlineCount ?? 0) > 0
+  const doctorOnline = doctorOnlineCount > 0
 
   const skipFocusSyncRef = useRef(true)
 
@@ -171,12 +170,12 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
         </button>
 
         <div
-          className={`status-chip ${demogReady ? 'status-chip--ready' : 'status-chip--syn'}`}
-          aria-label={`Demografi: ${demogReady ? 'Siap' : 'Sinkronisasi'}`}
+          className={`status-chip ${isReady ? 'status-chip--ready' : 'status-chip--syn'}`}
+          aria-label={`Demografi: ${isReady ? 'Siap' : 'Sinkronisasi'}`}
           role="status"
         >
           <span className="status-chip__icon status-chip__icon--text">
-            {demogReady ? 'OK' : 'SYN'}
+            {isReady ? 'OK' : 'SYN'}
           </span>
           <span className="status-chip__label">Demograf</span>
         </div>

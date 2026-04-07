@@ -4379,14 +4379,15 @@ textarea:read-only,
 }
 
 /* Status bar chips */
-.status-bar {
+/* Header status bar — scoped to .card-header to avoid colliding with existing .status-bar rules */
+.card-header .status-bar {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 5px;
   padding: 6px 0 2px;
 }
 
-.status-chip {
+.card-header .status-chip {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -4398,61 +4399,61 @@ textarea:read-only,
   user-select: none;
 }
 
-.status-chip--action {
+.card-header .status-chip--action {
   cursor: pointer;
 }
 
-.status-chip--action:hover:not(:disabled) {
+.card-header .status-chip--action:hover:not(:disabled) {
   background: #1e1e1e;
 }
 
-.status-chip--action:disabled {
+.card-header .status-chip--action:disabled {
   opacity: 0.5;
 }
 
-.status-chip--ready {
+.card-header .status-chip--ready {
   background: rgba(107, 155, 138, 0.08);
   border-color: rgba(107, 155, 138, 0.35);
 }
 
-.status-chip--syn {
+.card-header .status-chip--syn {
   border-color: rgba(184, 134, 11, 0.4);
 }
 
-.status-chip--offline {
+.card-header .status-chip--offline {
   border-color: rgba(204, 85, 85, 0.4);
 }
 
-.status-chip__icon {
+.card-header .status-chip__icon {
   font-size: 13px;
   flex-shrink: 0;
   line-height: 1;
 }
 
-.status-chip__icon--text {
+.card-header .status-chip__icon--text {
   font-size: 10px;
   font-weight: 700;
 }
 
-.status-chip--ready .status-chip__icon--text {
+.card-header .status-chip--ready .status-chip__icon--text {
   color: #6B9B8A;
 }
 
-.status-chip--syn .status-chip__icon--text {
+.card-header .status-chip--syn .status-chip__icon--text {
   color: #b8860b;
 }
 
-.status-chip--offline .status-chip__icon--text {
+.card-header .status-chip--offline .status-chip__icon--text {
   color: #cc5555;
 }
 
-.status-chip__label {
+.card-header .status-chip__label {
   font-size: 8.5px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   color: #888;
 }
 
-.status-chip--ready .status-chip__label {
+.card-header .status-chip--ready .status-chip__label {
   color: rgba(107, 155, 138, 0.7);
 }

@@ -2,8 +2,10 @@
 // Pixel-perfect port of page1-login.html into React component.
 // Wired to auth-client.ts for production authentication.
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import type { AuthUser } from '@/lib/api/auth-store';
+
+const LOGO_URL = browser.runtime.getURL('/icon/Logo-fix.png');
 
 interface ConsoleLoginProps {
   onLoginSuccess: (user: AuthUser) => void;
@@ -76,7 +78,7 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
       <div className="login-card">
         {/* Logo resmi Sentra */}
         <div className="login-logo" aria-hidden="true">
-          <img src="/icon/Logo-fix.png" alt="Sentra" width="48" height="48" />
+          <img src={LOGO_URL} alt="Sentra" width="48" height="48" />
         </div>
         <div className="login-brand">Sentra Assist</div>
 

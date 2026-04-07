@@ -1235,7 +1235,6 @@ export function TTVInferenceUI({
         : 'Pilih di sini'
   const presetPlaceholder = presetLabels[state.autosenPreset]
   const isFemalePatient = patientGender === 'P'
-  const isPregnancyStatusRequired = isFemalePatient && state.pregnancyStatus === null
   const hasLoadedPatientContext =
     patientAge > 0 &&
     Boolean(patientRM && patientRM !== '-') &&
@@ -2133,12 +2132,10 @@ export function TTVInferenceUI({
         <div className="form-group form-group--inline">
           <div className="form-group-header">
             <div className="console-label console-label-prominent">Status Kehamilan</div>
-            {isFemalePatient ? (
-              extractedPregnancyRisk ? (
-                <span className="field-extracted-indicator">risiko terdeteksi</span>
-              ) : isPregnancyStatusRequired ? (
-                <span className="field-required-indicator">wajib</span>
-              ) : null
+            {isFemalePatient && !extractedPregnancyRisk && !state.pregnancyStatus ? (
+              <span className="field-placeholder-hint">Mohon diisi</span>
+            ) : isFemalePatient && extractedPregnancyRisk ? (
+              <span className="field-extracted-indicator">risiko terdeteksi</span>
             ) : null}
           </div>
           {isFemalePatient ? (
@@ -2160,9 +2157,7 @@ export function TTVInferenceUI({
                       : null
                 )
               }
-              className={`neu-select field-summary-prominent select-prominent ${
-                isPregnancyStatusRequired ? 'pregnancy-select--required' : ''
-              }`}
+              className="neu-select field-summary-prominent select-prominent"
               aria-label="Pilih status kehamilan"
               aria-required
             >
@@ -2178,14 +2173,8 @@ export function TTVInferenceUI({
               Tidak relevan
             </div>
           )}
-          {isFemalePatient ? (
-            extractedPregnancyRisk ? (
-              <div className="field-context-note">RME: {extractedPregnancyRisk}</div>
-            ) : isPregnancyStatusRequired ? (
-              <div className="field-context-note field-context-note--required">
-                Pilih hamil atau tidak hamil
-              </div>
-            ) : null
+          {isFemalePatient && extractedPregnancyRisk ? (
+            <div className="field-context-note">RME: {extractedPregnancyRisk}</div>
           ) : null}
         </div>
       </div>

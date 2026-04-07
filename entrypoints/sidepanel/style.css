@@ -2421,11 +2421,13 @@ textarea:read-only,
 }
 
 .field-required-indicator {
-  color: rgba(244, 114, 182, 0.9);
+  display: none;
+}
+
+.field-placeholder-hint {
   font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: lowercase;
+  font-style: italic;
+  color: var(--text-muted, #737373);
 }
 
 .field-muted-indicator {
@@ -2445,7 +2447,7 @@ textarea:read-only,
 }
 
 .field-context-note--required {
-  color: rgba(244, 114, 182, 0.84);
+  display: none;
 }
 
 .field-context-note--muted {
@@ -2457,13 +2459,7 @@ textarea:read-only,
 }
 
 .pregnancy-select--required {
-  border-color: rgba(244, 114, 182, 0.26) !important;
-  box-shadow:
-    inset 4px 4px 8px rgba(6, 10, 20, 0.56),
-    inset -1px -1px 2px rgba(255,255,255,0.02),
-    0 0 0 1px rgba(244, 114, 182, 0.08),
-    0 0 16px rgba(244, 114, 182, 0.08);
-  animation: sentra-pink-breathe 2.1s ease-in-out infinite;
+  /* removed: pink required indicator */
 }
 
 .pregnancy-select--inactive {
@@ -3235,23 +3231,7 @@ textarea:read-only,
   }
 }
 
-@keyframes sentra-pink-breathe {
-  0%,
-  100% {
-    box-shadow:
-      inset 4px 4px 8px rgba(6, 10, 20, 0.56),
-      inset -1px -1px 2px rgba(255,255,255,0.02),
-      0 0 0 1px rgba(244, 114, 182, 0.06),
-      0 0 10px rgba(244, 114, 182, 0.05);
-  }
-  50% {
-    box-shadow:
-      inset 4px 4px 8px rgba(6, 10, 20, 0.56),
-      inset -1px -1px 2px rgba(255,255,255,0.02),
-      0 0 0 1px rgba(244, 114, 182, 0.12),
-      0 0 18px rgba(244, 114, 182, 0.12);
-  }
-}
+/* @keyframes sentra-pink-breathe removed — pink female indicator deprecated */
 
 /* Footer — shell status strip */
 .footer {

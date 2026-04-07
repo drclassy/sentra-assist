@@ -13,9 +13,16 @@
       --text-main: #F4EFE6;
       --text-muted: #737373;
       --accent-med: #10B981;
-      
+
       /* POWER STATE - 0 = off, 1 = on */
       --power-state: 0;
+
+      /* Aluminium Edge System */
+      --alum-light:     #F4F6F7;
+      --alum-mid:       #C9CDD0;
+      --alum-dark:      #9CA1A6;
+      --alum-highlight: rgba(255, 255, 255, 0.9);
+      --alum-shadow:    rgba(0, 0, 0, 0.08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -133,20 +140,31 @@
       background: var(--bg-card);
       border-radius: 16px;
       padding: 18px 22px 20px;
-      border: 1px solid rgba(255,255,255,calc(0.04 + var(--power-state) * 0.08));
+      border: 1px solid rgba(201, 205, 208, calc(0.04 + var(--power-state) * 0.14));
       position: relative;
       overflow: hidden;
       margin: 0 20px;
-      
-      /* Shadows muncul saat nyala */
-      box-shadow: 
-        0 0 0 1px rgba(255,255,255,calc(0.02 * var(--power-state))),
-        0 calc(20px * var(--power-state)) calc(40px * var(--power-state)) rgba(0,0,0,calc(0.8 * var(--power-state))),
-        inset 0 1px 0 rgba(255,255,255,calc(0.03 * var(--power-state)));
-      
+
+      /* Aluminium edge shadows — directional metallic lighting */
+      box-shadow:
+        /* Outer aluminium rim */
+        0 0 0 0.5px rgba(156, 161, 166, calc(0.12 * var(--power-state))),
+        /* Top-left catch light */
+        calc(-1px * var(--power-state)) calc(-1px * var(--power-state)) calc(2px * var(--power-state)) rgba(244, 246, 247, calc(0.06 * var(--power-state))),
+        /* Bottom-right shadow edge */
+        calc(1px * var(--power-state)) calc(1px * var(--power-state)) calc(3px * var(--power-state)) rgba(0, 0, 0, calc(0.25 * var(--power-state))),
+        /* Deep drop */
+        0 calc(20px * var(--power-state)) calc(40px * var(--power-state)) rgba(0, 0, 0, calc(0.8 * var(--power-state))),
+        /* Inner aluminium reflections */
+        inset 0 1px 0 rgba(244, 246, 247, calc(0.08 * var(--power-state))),
+        inset 1px 0 0 rgba(244, 246, 247, calc(0.04 * var(--power-state))),
+        inset 0 -1px 0 rgba(0, 0, 0, calc(0.12 * var(--power-state))),
+        inset -1px 0 0 rgba(0, 0, 0, calc(0.06 * var(--power-state)));
+
       transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
+    /* Top shimmer — aluminium highlight strip */
     .sentra-card::before {
       content: '';
       position: absolute;
@@ -154,12 +172,38 @@
       left: 0;
       right: 0;
       height: 1px;
-      background: linear-gradient(90deg, 
-        transparent, 
-        rgba(255,255,255,calc(0.2 * var(--power-state))) 50%, 
-        transparent
+      background: linear-gradient(90deg,
+        transparent 5%,
+        rgba(201, 205, 208, calc(0.25 * var(--power-state))) 30%,
+        rgba(244, 246, 247, calc(0.35 * var(--power-state))) 50%,
+        rgba(201, 205, 208, calc(0.25 * var(--power-state))) 70%,
+        transparent 95%
       );
       transition: background 0.6s ease;
+    }
+
+    /* Aluminium gradient ring — full perimeter */
+    .sentra-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(
+        145deg,
+        rgba(244, 246, 247, calc(0.22 * var(--power-state))) 0%,
+        rgba(201, 205, 208, calc(0.14 * var(--power-state))) 35%,
+        rgba(156, 161, 166, calc(0.08 * var(--power-state))) 65%,
+        rgba(60, 63, 66, calc(0.12 * var(--power-state))) 100%
+      );
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 11;
+      transition: opacity 0.6s ease;
     }
 
     /* ============================================

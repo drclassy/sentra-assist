@@ -25,6 +25,16 @@
 
   /* Boot sequence — 0 = off, 1 = on */
   --power-state: 0;
+
+  /* ── ALUMINIUM EDGE SYSTEM ───────────────────────────────────────────────
+   * Replaces flat white borders with directional metallic edge.
+   * Light source: top-left → bottom-right (simulates overhead panel light).
+   * ─────────────────────────────────────────────────────────────────────── */
+  --alum-light:      #F4F6F7;
+  --alum-mid:        #C9CDD0;
+  --alum-dark:       #9CA1A6;
+  --alum-highlight:  rgba(255, 255, 255, 0.9);
+  --alum-shadow:     rgba(0, 0, 0, 0.08);
 }
 
 /* Global Reset */
@@ -223,7 +233,7 @@ input::placeholder, textarea::placeholder {
    Source: prototype/sentra-wxt-ready/entrypoints/sidepanel/style.css
    ============================================================================ */
 
-/* Card Container */
+/* Card Container — Aluminium Edge (Variant A: Subtle — default) */
 .sentra-card {
   width: 100%;
   max-width: 400px;
@@ -231,11 +241,22 @@ input::placeholder, textarea::placeholder {
   background: var(--bg-card);
   border-radius: 16px;
   padding: 18px 22px 20px;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(201, 205, 208, 0.18);
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.05),
-    0 20px 40px -10px rgba(0,0,0,0.8),
-    inset 0 1px 0 rgba(255,255,255,0.03);
+    /* Outer aluminium rim — directional light from top-left */
+    0 0 0 0.5px rgba(156, 161, 166, 0.12),
+    /* Top-left catch light */
+    -1px -1px 2px rgba(244, 246, 247, 0.06),
+    /* Bottom-right shadow edge */
+    1px 1px 3px rgba(0, 0, 0, 0.25),
+    /* Deep drop shadow */
+    0 20px 40px -10px rgba(0, 0, 0, 0.8),
+    /* Inner top highlight — aluminium reflection */
+    inset 0 1px 0 rgba(244, 246, 247, 0.08),
+    inset 1px 0 0 rgba(244, 246, 247, 0.04),
+    /* Inner bottom shadow — depth */
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    inset -1px 0 0 rgba(0, 0, 0, 0.06);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -243,6 +264,7 @@ input::placeholder, textarea::placeholder {
   min-height: calc(100vh - 24px);
 }
 
+/* Top shimmer — aluminium highlight strip */
 .sentra-card::before {
   content: '';
   position: absolute;
@@ -250,8 +272,135 @@ input::placeholder, textarea::placeholder {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg,
+    transparent 5%,
+    rgba(201, 205, 208, 0.25) 30%,
+    rgba(244, 246, 247, 0.35) 50%,
+    rgba(201, 205, 208, 0.25) 70%,
+    transparent 95%
+  );
   z-index: 10;
+}
+
+/* Aluminium ring — gradient border via ::after + mask */
+.sentra-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgba(244, 246, 247, 0.22) 0%,
+    rgba(201, 205, 208, 0.14) 35%,
+    rgba(156, 161, 166, 0.08) 65%,
+    rgba(60, 63, 66, 0.12) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 11;
+}
+
+/* ── VARIANT B: Pronounced Aluminium ─────────────────────────────────────
+ * More visible metallic frame with stronger directional lighting.
+ * Use: .sentra-card.alum-pronounced
+ * ──────────────────────────────────────────────────────────────────────── */
+.sentra-card.alum-pronounced {
+  border: 1px solid rgba(201, 205, 208, 0.28);
+  box-shadow:
+    0 0 0 0.5px rgba(201, 205, 208, 0.18),
+    -1px -1px 3px rgba(244, 246, 247, 0.10),
+    1px 1px 4px rgba(0, 0, 0, 0.35),
+    0 20px 40px -10px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(244, 246, 247, 0.14),
+    inset 1px 0 0 rgba(244, 246, 247, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    inset -1px 0 0 rgba(0, 0, 0, 0.10);
+}
+
+.sentra-card.alum-pronounced::after {
+  padding: 1.5px;
+  background: linear-gradient(
+    145deg,
+    rgba(244, 246, 247, 0.35) 0%,
+    rgba(201, 205, 208, 0.22) 30%,
+    rgba(156, 161, 166, 0.12) 60%,
+    rgba(50, 53, 56, 0.18) 100%
+  );
+}
+
+.sentra-card.alum-pronounced::before {
+  background: linear-gradient(90deg,
+    transparent 2%,
+    rgba(201, 205, 208, 0.35) 25%,
+    rgba(244, 246, 247, 0.50) 50%,
+    rgba(201, 205, 208, 0.35) 75%,
+    transparent 98%
+  );
+}
+
+/* ── VARIANT C: Animated Sheen ───────────────────────────────────────────
+ * Subtle sweeping light on hover — simulates light catching brushed metal.
+ * Use: .sentra-card.alum-sheen
+ * ──────────────────────────────────────────────────────────────────────── */
+.sentra-card.alum-sheen::after {
+  padding: 1.5px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(244, 246, 247, 0.30) 0%,
+      rgba(201, 205, 208, 0.18) 35%,
+      rgba(156, 161, 166, 0.10) 65%,
+      rgba(50, 53, 56, 0.15) 100%
+    );
+  transition: opacity 0.4s ease;
+}
+
+/* Sweep highlight — additional pseudo on parent wrapper */
+@keyframes alum-sweep {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.sentra-card.alum-sheen {
+  border: 1px solid rgba(201, 205, 208, 0.22);
+}
+
+.sentra-card.alum-sheen:hover {
+  border-color: rgba(201, 205, 208, 0.30);
+  box-shadow:
+    0 0 0 0.5px rgba(201, 205, 208, 0.20),
+    -1px -1px 3px rgba(244, 246, 247, 0.09),
+    1px 1px 4px rgba(0, 0, 0, 0.30),
+    0 20px 40px -10px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(244, 246, 247, 0.12),
+    inset 1px 0 0 rgba(244, 246, 247, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    inset -1px 0 0 rgba(0, 0, 0, 0.08);
+  transition: all 0.4s ease;
+}
+
+.sentra-card.alum-sheen:hover::before {
+  background:
+    linear-gradient(90deg,
+      transparent 5%,
+      rgba(244, 246, 247, 0.05) 20%,
+      rgba(255, 255, 255, 0.50) 50%,
+      rgba(244, 246, 247, 0.05) 80%,
+      transparent 95%
+    );
+  background-size: 400px 1px;
+  animation: alum-sweep 1.5s ease-out;
+}
+
+/* ── Focus-visible — keyboard accessibility preserved ────────────────── */
+.sentra-card:focus-visible {
+  outline: 2px solid var(--accent-med);
+  outline-offset: 2px;
 }
 
 /* Logo */
@@ -2411,21 +2560,40 @@ input::placeholder, textarea::placeholder {
 /* ── BOOT-AWARE CARD OVERRIDES ───────────────────────────────────────────── */
 
 .sentra-card--boot {
-  border-color: rgba(255, 255, 255, calc(0.04 + var(--power-state) * 0.08));
+  border-color: rgba(201, 205, 208, calc(0.04 + var(--power-state) * 0.14));
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, calc(0.02 * var(--power-state))),
+    /* Outer aluminium rim */
+    0 0 0 0.5px rgba(156, 161, 166, calc(0.12 * var(--power-state))),
+    /* Top-left catch light */
+    calc(-1px * var(--power-state)) calc(-1px * var(--power-state)) calc(2px * var(--power-state)) rgba(244, 246, 247, calc(0.06 * var(--power-state))),
+    /* Bottom-right shadow edge */
+    calc(1px * var(--power-state)) calc(1px * var(--power-state)) calc(3px * var(--power-state)) rgba(0, 0, 0, calc(0.25 * var(--power-state))),
+    /* Deep drop */
     0 calc(20px * var(--power-state)) calc(40px * var(--power-state)) rgba(0, 0, 0, calc(0.8 * var(--power-state))),
-    inset 0 1px 0 rgba(255, 255, 255, calc(0.03 * var(--power-state)));
+    /* Inner aluminium reflections */
+    inset 0 1px 0 rgba(244, 246, 247, calc(0.08 * var(--power-state))),
+    inset 1px 0 0 rgba(244, 246, 247, calc(0.04 * var(--power-state))),
+    inset 0 -1px 0 rgba(0, 0, 0, calc(0.12 * var(--power-state))),
+    inset -1px 0 0 rgba(0, 0, 0, calc(0.06 * var(--power-state)));
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Boot-aware shimmer — aluminium gradient */
 .sentra-card--boot::before {
   background: linear-gradient(90deg,
-    transparent,
-    rgba(255, 255, 255, calc(0.2 * var(--power-state))) 50%,
-    transparent
+    transparent 5%,
+    rgba(201, 205, 208, calc(0.25 * var(--power-state))) 30%,
+    rgba(244, 246, 247, calc(0.35 * var(--power-state))) 50%,
+    rgba(201, 205, 208, calc(0.25 * var(--power-state))) 70%,
+    transparent 95%
   );
   transition: background 0.6s ease;
+}
+
+/* Boot-aware gradient ring — fades with power-state */
+.sentra-card--boot::after {
+  opacity: var(--power-state);
+  transition: opacity 0.6s ease calc(0.3s * var(--power-state));
 }
 
 /* ── BOOT-AWARE HEADER ───────────────────────────────────────────────────── */

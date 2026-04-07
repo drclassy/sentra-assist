@@ -12,8 +12,8 @@
  * @version 1.0.0
  */
 
-import type { AnonymizedClinicalContext, ChatMessage } from './deepseek-types';
-import type { RAGSearchResult } from '../rag/types';
+import type { RAGSearchResult } from '../rag/types'
+import type { AnonymizedClinicalContext, ChatMessage } from './deepseek-types'
 
 // =============================================================================
 // SYSTEM PROMPT
@@ -69,7 +69,7 @@ PRIORITAS DIAGNOSIS:
 3. Diagnosis banding yang perlu disingkirkan
 4. Kondisi umum di Puskesmas
 
-Berikan maksimal 5 saran diagnosis, diurutkan dari yang paling mungkin.`;
+Berikan maksimal 5 saran diagnosis, diurutkan dari yang paling mungkin.`
 
 // =============================================================================
 // USER PROMPT BUILDER
@@ -82,146 +82,146 @@ export function buildUserPrompt(
   context: AnonymizedClinicalContext,
   ragResults: RAGSearchResult[]
 ): string {
-  const sections: string[] = [];
+  const sections: string[] = []
 
   // Header
-  sections.push('=== DATA KLINIS PASIEN ===');
+  sections.push('=== DATA KLINIS PASIEN ===')
 
   // Demographics
-  const gender = context.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan';
-  sections.push(`Usia: ${context.usia_tahun} tahun`);
-  sections.push(`Jenis Kelamin: ${gender}`);
+  const gender = context.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'
+  sections.push(`Usia: ${context.usia_tahun} tahun`)
+  sections.push(`Jenis Kelamin: ${gender}`)
 
   if (context.is_pregnant) {
-    sections.push('Status: Hamil');
+    sections.push('Status: Hamil')
   }
 
   // Chief complaint
-  sections.push('');
-  sections.push('=== KELUHAN ===');
-  sections.push(`Keluhan Utama: ${context.keluhan_utama}`);
+  sections.push('')
+  sections.push('=== KELUHAN ===')
+  sections.push(`Keluhan Utama: ${context.keluhan_utama}`)
 
   if (context.keluhan_tambahan) {
-    sections.push(`Keluhan Tambahan: ${context.keluhan_tambahan}`);
+    sections.push(`Keluhan Tambahan: ${context.keluhan_tambahan}`)
   }
 
   // Duration
   if (context.lama_sakit) {
-    const duration = formatDuration(context.lama_sakit);
+    const duration = formatDuration(context.lama_sakit)
     if (duration) {
-      sections.push(`Lama Sakit: ${duration}`);
+      sections.push(`Lama Sakit: ${duration}`)
     }
   }
 
   // Vital signs
   if (context.vital_signs) {
-    const vitals = formatVitalSigns(context.vital_signs);
+    const vitals = formatVitalSigns(context.vital_signs)
     if (vitals.length > 0) {
-      sections.push('');
-      sections.push('=== TANDA VITAL ===');
-      sections.push(vitals.join(', '));
+      sections.push('')
+      sections.push('=== TANDA VITAL ===')
+      sections.push(vitals.join(', '))
     }
   }
 
   // Physical examination
   if (context.pemeriksaan_fisik) {
-    sections.push('');
-    sections.push('=== PEMERIKSAAN FISIK ===');
-    sections.push(context.pemeriksaan_fisik);
+    sections.push('')
+    sections.push('=== PEMERIKSAAN FISIK ===')
+    sections.push(context.pemeriksaan_fisik)
   }
 
   // Lab results
   if (context.lab_results) {
-    sections.push('');
-    sections.push('=== HASIL LABORATORIUM ===');
-    sections.push(context.lab_results);
+    sections.push('')
+    sections.push('=== HASIL LABORATORIUM ===')
+    sections.push(context.lab_results)
   }
 
   // Medical history
   if (context.chronic_diseases && context.chronic_diseases.length > 0) {
-    sections.push('');
-    sections.push('=== RIWAYAT PENYAKIT ===');
-    sections.push(`Penyakit Kronis: ${context.chronic_diseases.join(', ')}`);
+    sections.push('')
+    sections.push('=== RIWAYAT PENYAKIT ===')
+    sections.push(`Penyakit Kronis: ${context.chronic_diseases.join(', ')}`)
   }
 
   // Allergies
   if (context.allergies && context.allergies.length > 0) {
-    sections.push('');
-    sections.push('=== ALERGI ===');
-    sections.push(context.allergies.join(', '));
+    sections.push('')
+    sections.push('=== ALERGI ===')
+    sections.push(context.allergies.join(', '))
   }
 
   // RAG context
-  sections.push('');
-  sections.push('=== REFERENSI KODE ICD-10 ===');
-  sections.push('Gunakan HANYA kode dari daftar berikut:');
-  sections.push('');
+  sections.push('')
+  sections.push('=== REFERENSI KODE ICD-10 ===')
+  sections.push('Gunakan HANYA kode dari daftar berikut:')
+  sections.push('')
 
   if (ragResults.length > 0) {
     ragResults.forEach((result, index) => {
-      const entry = result.entry;
-      sections.push(`${index + 1}. ${entry.code} - ${entry.name_id} (${entry.name_en})`);
-    });
+      const entry = result.entry
+      sections.push(`${index + 1}. ${entry.code} - ${entry.name_id} (${entry.name_en})`)
+    })
   } else {
-    sections.push('(Tidak ada kode ICD-10 yang ditemukan dalam database lokal)');
+    sections.push('(Tidak ada kode ICD-10 yang ditemukan dalam database lokal)')
   }
 
   // Instruction
-  sections.push('');
-  sections.push('=== INSTRUKSI ===');
-  sections.push('Berdasarkan data klinis di atas, berikan saran diagnosis dalam format JSON.');
-  sections.push('Pastikan semua kode ICD-10 berasal dari daftar referensi yang diberikan.');
+  sections.push('')
+  sections.push('=== INSTRUKSI ===')
+  sections.push('Berdasarkan data klinis di atas, berikan saran diagnosis dalam format JSON.')
+  sections.push('Pastikan semua kode ICD-10 berasal dari daftar referensi yang diberikan.')
 
-  return sections.join('\n');
+  return sections.join('\n')
 }
 
 /**
  * Format duration object to readable string
  */
 function formatDuration(lama: { hari: number; bulan: number; tahun: number }): string {
-  const parts: string[] = [];
+  const parts: string[] = []
 
   if (lama.tahun > 0) {
-    parts.push(`${lama.tahun} tahun`);
+    parts.push(`${lama.tahun} tahun`)
   }
   if (lama.bulan > 0) {
-    parts.push(`${lama.bulan} bulan`);
+    parts.push(`${lama.bulan} bulan`)
   }
   if (lama.hari > 0) {
-    parts.push(`${lama.hari} hari`);
+    parts.push(`${lama.hari} hari`)
   }
 
-  return parts.join(' ');
+  return parts.join(' ')
 }
 
 /**
  * Format vital signs to readable string
  */
 function formatVitalSigns(vitals: AnonymizedClinicalContext['vital_signs']): string[] {
-  if (!vitals) return [];
+  if (!vitals) return []
 
-  const formatted: string[] = [];
+  const formatted: string[] = []
 
   if (vitals.systolic && vitals.diastolic) {
-    formatted.push(`TD: ${vitals.systolic}/${vitals.diastolic} mmHg`);
+    formatted.push(`TD: ${vitals.systolic}/${vitals.diastolic} mmHg`)
   }
   if (vitals.heart_rate) {
-    formatted.push(`Nadi: ${vitals.heart_rate} x/menit`);
+    formatted.push(`Nadi: ${vitals.heart_rate} x/menit`)
   }
   if (vitals.respiratory_rate) {
-    formatted.push(`RR: ${vitals.respiratory_rate} x/menit`);
+    formatted.push(`RR: ${vitals.respiratory_rate} x/menit`)
   }
   if (vitals.temperature) {
-    formatted.push(`Suhu: ${vitals.temperature}°C`);
+    formatted.push(`Suhu: ${vitals.temperature}°C`)
   }
   if (vitals.spo2) {
-    formatted.push(`SpO2: ${vitals.spo2}%`);
+    formatted.push(`SpO2: ${vitals.spo2}%`)
   }
   if (vitals.gcs) {
-    formatted.push(`GCS: ${vitals.gcs}`);
+    formatted.push(`GCS: ${vitals.gcs}`)
   }
 
-  return formatted;
+  return formatted
 }
 
 // =============================================================================
@@ -244,7 +244,7 @@ export function buildMessages(
       role: 'user',
       content: buildUserPrompt(context, ragResults),
     },
-  ];
+  ]
 }
 
 // =============================================================================
@@ -256,40 +256,40 @@ export function buildMessages(
  * Handles various response formats and extracts JSON
  */
 export function parseAIResponse(responseText: string): {
-  success: boolean;
+  success: boolean
   data?: {
     suggestions: Array<{
-      rank: number;
-      diagnosis_name: string;
-      icd10_code: string;
-      confidence: number;
-      reasoning: string;
-      red_flags: string[];
-      recommended_actions: string[];
-    }>;
-    data_quality_note?: string;
-  };
-  error?: string;
+      rank: number
+      diagnosis_name: string
+      icd10_code: string
+      confidence: number
+      reasoning: string
+      red_flags: string[]
+      recommended_actions: string[]
+    }>
+    data_quality_note?: string
+  }
+  error?: string
 } {
   try {
     // Try to extract JSON from response
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/)
 
     if (!jsonMatch) {
       return {
         success: false,
         error: 'No JSON found in response',
-      };
+      }
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = JSON.parse(jsonMatch[0])
 
     // Validate structure
     if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) {
       return {
         success: false,
         error: 'Invalid response structure: missing suggestions array',
-      };
+      }
     }
 
     // Normalize suggestions
@@ -301,7 +301,7 @@ export function parseAIResponse(responseText: string): {
       reasoning: (s.reasoning as string) || (s.rationale as string) || '',
       red_flags: Array.isArray(s.red_flags) ? s.red_flags : [],
       recommended_actions: Array.isArray(s.recommended_actions) ? s.recommended_actions : [],
-    }));
+    }))
 
     return {
       success: true,
@@ -309,12 +309,12 @@ export function parseAIResponse(responseText: string): {
         suggestions,
         data_quality_note: parsed.data_quality_note,
       },
-    };
+    }
   } catch (error) {
     return {
       success: false,
       error: `Failed to parse response: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    };
+    }
   }
 }
 
@@ -323,15 +323,15 @@ export function parseAIResponse(responseText: string): {
  */
 function normalizeConfidence(value: unknown): number {
   if (typeof value !== 'number') {
-    return 0.5; // Default middle confidence
+    return 0.5 // Default middle confidence
   }
 
   // Handle percentage (0-100) vs decimal (0-1)
   if (value > 1) {
-    return Math.min(1, value / 100);
+    return Math.min(1, value / 100)
   }
 
-  return Math.max(0, Math.min(1, value));
+  return Math.max(0, Math.min(1, value))
 }
 
 // =============================================================================
@@ -348,5 +348,5 @@ Usia: ${context.usia_tahun} tahun, ${context.jenis_kelamin === 'L' ? 'Laki-laki'
 Berikan 3 kemungkinan diagnosis dalam format sederhana:
 1. [Kode ICD-10] - [Nama Diagnosis]
 2. [Kode ICD-10] - [Nama Diagnosis]
-3. [Kode ICD-10] - [Nama Diagnosis]`;
+3. [Kode ICD-10] - [Nama Diagnosis]`
 }

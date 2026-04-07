@@ -167,12 +167,7 @@
         "tifoid)",
         "atau infeksi organ lain, tidak Hodgkin)"
       ],
-      "diagnosis_banding": [
-        "Mumps",
-        "Kista Duktus Tiroglosus",
-        "Kista Dermoid",
-        "Hemangioma"
-      ],
+      "diagnosis_banding": ["Mumps", "Kista Duktus Tiroglosus", "Kista Dermoid", "Hemangioma"],
       "komplikasi": [
         "ICPC II: B90 HIV-infection/AIDS",
         "ICD X: Z21 Asymptomatic human immunodeficiency virus (HIV) infection status",
@@ -221,10 +216,7 @@
         "Pemeriksaan daya ingat jangka pendek dan fungsi mental pasien juga dilakukan dengan",
         "Pemeriksaan ini dilakukan untuk menyingkirkan berbagai"
       ],
-      "diagnosis_banding": [
-        "Migren",
-        "Cluster-type hedache (nyeri kepala kluster)"
-      ],
+      "diagnosis_banding": ["Migren", "Cluster-type hedache (nyeri kepala kluster)"],
       "komplikasi": [],
       "red_flags": [],
       "terapi": [
@@ -269,10 +261,7 @@
         "Cahaya kilat atau berkelip.",
         "Banyak tidur atau kurang tidur"
       ],
-      "pemeriksaan_fisik": [
-        "Temuan-",
-        "sebab sekunder, yang memerlukan pendekatan"
-      ],
+      "pemeriksaan_fisik": ["Temuan-", "sebab sekunder, yang memerlukan pendekatan"],
       "diagnosis_banding": [
         "Arteriovenous Malformations",
         "Atypical Facial Pain",
@@ -471,10 +460,7 @@
       "gejala_klinis": [
         "Sulit masuk tidur, sering terbangun di malam hari atau mempertahankan tidur yang optimal,\natau kualitas tidur yang buruk."
       ],
-      "pemeriksaan_fisik": [
-        "Bila terdapat gangguan organik,",
-        "3 15"
-      ],
+      "pemeriksaan_fisik": ["Bila terdapat gangguan organik,", "3 15"],
       "diagnosis_banding": [
         "Gangguan psikiatri.",
         "Gangguan medik umum.",
@@ -609,11 +595,7 @@
         "Debris pada tear film",
         "Berkurangnya meniskus air mata di tepi kelopak bawah"
       ],
-      "diagnosis_banding": [
-        "Konjungtivitis alergi",
-        "Blefaritis",
-        "Konjungtivitis viral"
-      ],
+      "diagnosis_banding": ["Konjungtivitis alergi", "Blefaritis", "Konjungtivitis viral"],
       "komplikasi": [
         "Keratitis",
         "Penipisan kornea",
@@ -659,16 +641,8 @@
         "Tidak diperlukan pemeriksaan penunjang"
       ],
       "diagnosis_banding": [],
-      "komplikasi": [
-        "Blefarokonjungtivitis",
-        "Madarosis",
-        "Trikiasis"
-      ],
-      "red_flags": [
-        "Blefarokonjungtivitis",
-        "Madarosis",
-        "Trikiasis"
-      ],
+      "komplikasi": ["Blefarokonjungtivitis", "Madarosis", "Trikiasis"],
+      "red_flags": ["Blefarokonjungtivitis", "Madarosis", "Trikiasis"],
       "terapi": [
         {
           "obat": "eritromisin",
@@ -693,19 +667,9 @@
         "Gejala utama hordeolum adalah kelopak yang bengkak dengan rasa sakit dan mengganjal,"
       ],
       "pemeriksaan_fisik": [],
-      "diagnosis_banding": [
-        "Selulitis preseptal",
-        "Kalazion",
-        "Granuloma piogenik"
-      ],
-      "komplikasi": [
-        "Selulitis palpebra.",
-        "Abses palpebra."
-      ],
-      "red_flags": [
-        "Selulitis palpebra.",
-        "Abses palpebra."
-      ],
+      "diagnosis_banding": ["Selulitis preseptal", "Kalazion", "Granuloma piogenik"],
+      "komplikasi": ["Selulitis palpebra.", "Abses palpebra."],
+      "red_flags": ["Selulitis palpebra.", "Abses palpebra."],
       "terapi": [
         {
           "obat": "eritromisin",
@@ -726,12 +690,7 @@
       "body_system": "SISTEM INDERA",
       "can_refer": false,
       "definisi": "Pertumbuhan bulu mata yang abnormal ke arah dalam sehingga menggores kornea",
-      "gejala_klinis": [
-        "Iritasi mata",
-        "Mata merah",
-        "Epifora",
-        "Sensasi benda asing"
-      ],
+      "gejala_klinis": ["Iritasi mata", "Mata merah", "Epifora", "Sensasi benda asing"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -756,11 +715,7 @@
       "body_system": "SISTEM INDERA",
       "can_refer": false,
       "definisi": "Peradangan pada episklera, lapisan antara sklera dan konjungtiva",
-      "gejala_klinis": [
-        "Mata merah sektoral",
-        "Nyeri ringan",
-        "Fotofobia ringan"
-      ],
+      "gejala_klinis": ["Mata merah sektoral", "Nyeri ringan", "Fotofobia ringan"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -832,9 +787,7 @@
       "body_system": "SISTEM INDERA",
       "can_refer": false,
       "definisi": "Miopia ringan adalahkelainan refraksi dimana sinar sejajar yang masuk ke mata dalam\nkeadaan istirahat (tanpa akomodasi) akan dibiaskan membentuk bayangan di depan retina.\nDapat dikoreksi dengan lensa sferis negative S – 0.25 sampai S – 3.00 D",
-      "gejala_klinis": [
-        "Tidak terdapat riwayat kelainan sistemik seperti;"
-      ],
+      "gejala_klinis": ["Tidak terdapat riwayat kelainan sistemik seperti;"],
       "pemeriksaan_fisik": [
         "Penderita duduk menghadap kartu snellen pada jarak 6 meter.",
         "Pada mata dipasang bingkai percobaan. Satu mata ditutup, biasanya mata kiri ditutup",
@@ -888,11 +841,7 @@
         "Membaca dilakukan dengan",
         "Terdapat gangguan pekerjaan terutama pada malam hari dan"
       ],
-      "pemeriksaan_fisik": [
-        "Pasien diminta untuk",
-        "Target koreksi sebesar",
-        "/30."
-      ],
+      "pemeriksaan_fisik": ["Pasien diminta untuk", "Target koreksi sebesar", "/30."],
       "diagnosis_banding": [],
       "komplikasi": [],
       "red_flags": [],
@@ -996,20 +945,9 @@
         "Bila telah terjadi perforasi, maka sekret akan berkurang dan",
         " Pada pemeriksaan penala yang dilakukan pada anak yang lebih besar dapat ditemukan tuli"
       ],
-      "diagnosis_banding": [
-        "Otitis media serosa akut",
-        "Otitis eksterna"
-      ],
-      "komplikasi": [
-        "Otitis Media Supuratif Kronik",
-        "Abses sub-periosteal",
-        "Mastoiditis akut"
-      ],
-      "red_flags": [
-        "Otitis Media Supuratif Kronik",
-        "Abses sub-periosteal",
-        "Mastoiditis akut"
-      ],
+      "diagnosis_banding": ["Otitis media serosa akut", "Otitis eksterna"],
+      "komplikasi": ["Otitis Media Supuratif Kronik", "Abses sub-periosteal", "Mastoiditis akut"],
+      "red_flags": ["Otitis Media Supuratif Kronik", "Abses sub-periosteal", "Mastoiditis akut"],
       "terapi": [
         {
           "obat": "Eritromisin",
@@ -1056,10 +994,7 @@
         "Beberapa pasien",
         "Rasa nyeri timbul apabila serumen keras membatu"
       ],
-      "pemeriksaan_fisik": [
-        "Konsistensi dari serumen dapat bervariasi.",
-        "2 13"
-      ],
+      "pemeriksaan_fisik": ["Konsistensi dari serumen dapat bervariasi.", "2 13"],
       "diagnosis_banding": [],
       "komplikasi": [],
       "red_flags": [],
@@ -1077,13 +1012,7 @@
       "body_system": "SISTEM INDERA",
       "can_refer": false,
       "definisi": "Motion sickness akibat konflik sensorik vestibular-visual",
-      "gejala_klinis": [
-        "Mual",
-        "Muntah",
-        "Pusing",
-        "Berkeringat dingin",
-        "Pucat"
-      ],
+      "gejala_klinis": ["Mual", "Muntah", "Pusing", "Berkeringat dingin", "Pucat"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -1111,9 +1040,7 @@
       "gejala_klinis": [
         "Gejala adanya bisul di dalam hidung kadang disertai rasa nyeri dan perasaan tidak nyaman."
       ],
-      "pemeriksaan_fisik": [
-        "Paling sering terdapat pada lateral vestibulum nasi"
-      ],
+      "pemeriksaan_fisik": ["Paling sering terdapat pada lateral vestibulum nasi"],
       "diagnosis_banding": [],
       "komplikasi": [
         "Furunkel pada hidung potensial berbahaya karena infeksi dapat menyebar ke vena",
@@ -1278,20 +1205,9 @@
         "Dengan dekongestan topikal, polip dan hipertrofi konkatidak akan menyusut,",
         " Pada kulit kemungkinan terdapat dermatitis atopi."
       ],
-      "diagnosis_banding": [
-        "Rhinitis vasomotor",
-        "Rhinitis akut"
-      ],
-      "komplikasi": [
-        "Polip hidung",
-        "Sinusitis paranasal",
-        "Otitis media"
-      ],
-      "red_flags": [
-        "Polip hidung",
-        "Sinusitis paranasal",
-        "Otitis media"
-      ],
+      "diagnosis_banding": ["Rhinitis vasomotor", "Rhinitis akut"],
+      "komplikasi": ["Polip hidung", "Sinusitis paranasal", "Otitis media"],
+      "red_flags": ["Polip hidung", "Sinusitis paranasal", "Otitis media"],
       "terapi": [
         {
           "obat": "difenhidramin",
@@ -1355,11 +1271,7 @@
         "Penting mendapatkan riwayat trauma terperinci. Riwayat",
         "Riwayat penyakit sistemik seperti riwayat alergi"
       ],
-      "pemeriksaan_fisik": [
-        "Vestibulum,",
-        " Rinoskopi posterior:",
-        " Pengukuran tekanan darah:"
-      ],
+      "pemeriksaan_fisik": ["Vestibulum,", " Rinoskopi posterior:", " Pengukuran tekanan darah:"],
       "diagnosis_banding": [],
       "komplikasi": [
         "Akibat pemasangan tampon anterior dapat timbul sinusitis (karena ostium sinus",
@@ -1388,24 +1300,10 @@
       "gejala_klinis": [
         "Keluhan yang sering muncul adalah demam, bersin, batuk, sakit tenggorokan, hidung meler,\nnyeri sendi dan badan, sakit kepala, lemah badan."
       ],
-      "pemeriksaan_fisik": [
-        "Febris.",
-        "Rinore.",
-        "Mukosa hidung edema."
-      ],
-      "diagnosis_banding": [
-        "Faringitis",
-        "Tonsilitis",
-        "Laringitis"
-      ],
-      "komplikasi": [
-        "Infeksi sekunder oleh bakteri",
-        "Pneumonia"
-      ],
-      "red_flags": [
-        "Infeksi sekunder oleh bakteri",
-        "Pneumonia"
-      ],
+      "pemeriksaan_fisik": ["Febris.", "Rinore.", "Mukosa hidung edema."],
+      "diagnosis_banding": ["Faringitis", "Tonsilitis", "Laringitis"],
+      "komplikasi": ["Infeksi sekunder oleh bakteri", "Pneumonia"],
+      "red_flags": ["Infeksi sekunder oleh bakteri", "Pneumonia"],
       "terapi": [
         {
           "obat": "parasetamol",
@@ -1463,16 +1361,8 @@
         "Sianosis"
       ],
       "diagnosis_banding": [],
-      "komplikasi": [
-        "Pneumonia",
-        "Encephalitis",
-        "Malnutrisi"
-      ],
-      "red_flags": [
-        "Pneumonia",
-        "Encephalitis",
-        "Malnutrisi"
-      ],
+      "komplikasi": ["Pneumonia", "Encephalitis", "Malnutrisi"],
+      "red_flags": ["Pneumonia", "Encephalitis", "Malnutrisi"],
       "terapi": [
         {
           "obat": "Eritromisin",
@@ -1604,18 +1494,9 @@
         "uvula sampai ½ jarak pilar anterior-uvula.",
         ": 50-75% volume tonsil dibandingkan dengan volume orofaring atau batas medial"
       ],
-      "diagnosis_banding": [
-        "Faringitis.",
-        "Tumor tonsil."
-      ],
-      "komplikasi": [
-        "Komplikasi lokal",
-        "Komplikasi sistemik"
-      ],
-      "red_flags": [
-        "Komplikasi lokal",
-        "Komplikasi sistemik"
-      ],
+      "diagnosis_banding": ["Faringitis.", "Tumor tonsil."],
+      "komplikasi": ["Komplikasi lokal", "Komplikasi sistemik"],
+      "red_flags": ["Komplikasi lokal", "Komplikasi sistemik"],
       "terapi": [
         {
           "obat": "Amoksisilin",
@@ -1665,14 +1546,8 @@
         "Pneumonia",
         "Tumor pada laring"
       ],
-      "komplikasi": [
-        "Pneumonia",
-        "Bronkhitis"
-      ],
-      "red_flags": [
-        "Pneumonia",
-        "Bronkhitis"
-      ],
+      "komplikasi": ["Pneumonia", "Bronkhitis"],
+      "red_flags": ["Pneumonia", "Bronkhitis"],
       "terapi": [
         {
           "obat": "ibuprofen",
@@ -1709,11 +1584,7 @@
         "Padaseranganberatdigunakanotot bantu napas (retraksi supraklavikula, interkostal, dan",
         "Faktor Predisposisi"
       ],
-      "diagnosis_banding": [
-        "Obstruksi jalan napas.",
-        "Bronkitis kronik.",
-        "Bronkiektasis."
-      ],
+      "diagnosis_banding": ["Obstruksi jalan napas.", "Bronkitis kronik.", "Bronkiektasis."],
       "komplikasi": [
         "Pneumotoraks.",
         "Pneumomediastinum.",
@@ -1842,11 +1713,7 @@
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "SpO2 < 90%",
-        "RR > 30x/menit",
-        "Penurunan kesadaran"
-      ],
+      "red_flags": ["SpO2 < 90%", "RR > 30x/menit", "Penurunan kesadaran"],
       "terapi": [
         {
           "obat": "Amoxicillin",
@@ -1889,12 +1756,7 @@
         "tifoid)",
         "atau infeksi organ lain, tidak Hodgkin)"
       ],
-      "diagnosis_banding": [
-        "Mumps",
-        "Kista Duktus Tiroglosus",
-        "Kista Dermoid",
-        "Hemangioma"
-      ],
+      "diagnosis_banding": ["Mumps", "Kista Duktus Tiroglosus", "Kista Dermoid", "Hemangioma"],
       "komplikasi": [
         "ICPC II: B90 HIV-infection/AIDS",
         "ICD X: Z21 Asymptomatic human immunodeficiency virus (HIV) infection status",
@@ -1928,20 +1790,11 @@
       "body_system": "KARDIOVASKULAR",
       "can_refer": false,
       "definisi": "Peningkatan tekanan darah sistolik >= 140 mmHg dan/atau diastolik >= 90 mmHg",
-      "gejala_klinis": [
-        "Sering asimptomatik",
-        "Nyeri kepala pagi",
-        "Pusing",
-        "Pandangan kabur"
-      ],
+      "gejala_klinis": ["Sering asimptomatik", "Nyeri kepala pagi", "Pusing", "Pandangan kabur"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "TD > 180/120",
-        "Nyeri dada",
-        "Defisit neurologis"
-      ],
+      "red_flags": ["TD > 180/120", "Nyeri dada", "Defisit neurologis"],
       "terapi": [
         {
           "obat": "Amlodipine",
@@ -1962,11 +1815,7 @@
       "body_system": "SALURAN PENCERNAAN",
       "can_refer": false,
       "definisi": "Infeksi jamur Candida albicans pada mukosa mulut",
-      "gejala_klinis": [
-        "Plak putih di lidah/mukosa",
-        "Nyeri mulut",
-        "Sulit menelan"
-      ],
+      "gejala_klinis": ["Plak putih di lidah/mukosa", "Nyeri mulut", "Sulit menelan"],
       "pemeriksaan_fisik": [
         " Guam atau oral thrush yang diselaputi pseudomembran pada mukosa mulut."
       ],
@@ -1993,11 +1842,7 @@
       "body_system": "SALURAN PENCERNAAN",
       "can_refer": false,
       "definisi": "Lesi ulseratif pada mukosa mulut yang nyeri",
-      "gejala_klinis": [
-        "Luka di mulut",
-        "Nyeri saat makan",
-        "Batas jelas dengan dasar kekuningan"
-      ],
+      "gejala_klinis": ["Luka di mulut", "Nyeri saat makan", "Batas jelas dengan dasar kekuningan"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -2046,14 +1891,8 @@
         "Neoplasma kelenjar saliva",
         "Pembesaran kelenjar getah bening karena penyebab lain"
       ],
-      "komplikasi": [
-        "Infeksi gigi dan karies",
-        "Infeksi ke kelenjar gonad"
-      ],
-      "red_flags": [
-        "Infeksi gigi dan karies",
-        "Infeksi ke kelenjar gonad"
-      ],
+      "komplikasi": ["Infeksi gigi dan karies", "Infeksi ke kelenjar gonad"],
+      "red_flags": ["Infeksi gigi dan karies", "Infeksi ke kelenjar gonad"],
       "terapi": [],
       "kriteria_rujukan": "Bila kasus tidak membaik dengan pengobatan adekuat di layanan primer, segera rujuk ke\nlayanan sekunder dengan dokter spesialis anak atau dokter spesialis penyakit dalam.",
       "source": "PPK IDI 2013 + 144 Diagnosis KKI"
@@ -2068,9 +1907,7 @@
       "body_system": "SALURAN PENCERNAAN",
       "can_refer": false,
       "definisi": "Infeksi saluran kemih merupakan salah satu masalah kesehatan akut yang sering terjadi pada\nperempuan. Masalah infeksi saluran kemih tersering adalah sistitis akut, sistitis kronik, dan\nuretritis. Sebagai tambahan, pielonefritis diklasifikasikan sebagai kasus komplikasi.",
-      "gejala_klinis": [
-        "anyangan, nyeri pinggang dan nyeri suprapubik."
-      ],
+      "gejala_klinis": ["anyangan, nyeri pinggang dan nyeri suprapubik."],
       "pemeriksaan_fisik": [
         "Demam",
         "„Flank pain‟ (Nyeri ketok pinggang belakang/costovertebral angle)",
@@ -2110,21 +1947,11 @@
       "body_system": "SALURAN PENCERNAAN",
       "can_refer": false,
       "definisi": "Inflamasi mukosa lambung yang dapat akut atau kronik",
-      "gejala_klinis": [
-        "Nyeri ulu hati",
-        "Mual",
-        "Muntah",
-        "Kembung",
-        "Cepat kenyang"
-      ],
+      "gejala_klinis": ["Nyeri ulu hati", "Mual", "Muntah", "Kembung", "Cepat kenyang"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "Hematemesis",
-        "Melena",
-        "Penurunan BB"
-      ],
+      "red_flags": ["Hematemesis", "Melena", "Penurunan BB"],
       "terapi": [
         {
           "obat": "Omeprazole",
@@ -2145,21 +1972,11 @@
       "body_system": "SALURAN PENCERNAAN",
       "can_refer": false,
       "definisi": "Peradangan saluran cerna dengan diare dan/atau muntah",
-      "gejala_klinis": [
-        "Diare cair",
-        "Mual muntah",
-        "Nyeri perut",
-        "Demam",
-        "Dehidrasi"
-      ],
+      "gejala_klinis": ["Diare cair", "Mual muntah", "Nyeri perut", "Demam", "Dehidrasi"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "Dehidrasi berat",
-        "Diare berdarah",
-        "Tidak bisa minum"
-      ],
+      "red_flags": ["Dehidrasi berat", "Diare berdarah", "Tidak bisa minum"],
       "terapi": [
         {
           "obat": "Oralit",
@@ -2185,12 +2002,7 @@
       "body_system": "SALURAN PENCERNAAN",
       "can_refer": false,
       "definisi": "Aliran balik isi lambung ke esofagus yang menyebabkan gejala",
-      "gejala_klinis": [
-        "Heartburn",
-        "Regurgitasi",
-        "Disfagia",
-        "Batuk kronik"
-      ],
+      "gejala_klinis": ["Heartburn", "Regurgitasi", "Disfagia", "Batuk kronik"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -2215,20 +2027,11 @@
       "body_system": "SALURAN PENCERNAAN",
       "can_refer": false,
       "definisi": "Infeksi sistemik akut oleh Salmonella typhi",
-      "gejala_klinis": [
-        "Demam step ladder",
-        "Nyeri kepala",
-        "Lidah kotor",
-        "Hepatosplenomegali"
-      ],
+      "gejala_klinis": ["Demam step ladder", "Nyeri kepala", "Lidah kotor", "Hepatosplenomegali"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "Perdarahan GI",
-        "Perforasi usus",
-        "Penurunan kesadaran"
-      ],
+      "red_flags": ["Perdarahan GI", "Perforasi usus", "Penurunan kesadaran"],
       "terapi": [
         {
           "obat": "Cefixime",
@@ -2249,15 +2052,8 @@
       "body_system": "SALURAN PENCERNAAN",
       "can_refer": false,
       "definisi": "Reaksi non-imunologis terhadap makanan tertentu",
-      "gejala_klinis": [
-        "Kembung",
-        "Diare",
-        "Nyeri perut",
-        "Mual"
-      ],
-      "pemeriksaan_fisik": [
-        "tanda dehidrasi."
-      ],
+      "gejala_klinis": ["Kembung", "Diare", "Nyeri perut", "Mual"],
+      "pemeriksaan_fisik": ["tanda dehidrasi."],
       "diagnosis_banding": [
         "Pankreatitis",
         "Penyakitt Chrons pada illeum terminalis",
@@ -2380,11 +2176,7 @@
         "Malnutrisi",
         "Gangguan pertumbuhan pada anak"
       ],
-      "red_flags": [
-        "Anemia berat (Hb <7 g/dL)",
-        "Gagal jantung",
-        "Gangguan pertumbuhan pada anak"
-      ],
+      "red_flags": ["Anemia berat (Hb <7 g/dL)", "Gagal jantung", "Gangguan pertumbuhan pada anak"],
       "terapi": [
         {
           "obat": "Albendazole",
@@ -2571,18 +2363,8 @@
         "Sirrosishepar",
         "Hepatitis virus lainnya"
       ],
-      "komplikasi": [
-        "Hepatitis A Fulminan",
-        "Sirosis Hati",
-        "Ensefalopati Hepatik",
-        "Koagulopati"
-      ],
-      "red_flags": [
-        "Hepatitis A Fulminan",
-        "Sirosis Hati",
-        "Ensefalopati Hepatik",
-        "Koagulopati"
-      ],
+      "komplikasi": ["Hepatitis A Fulminan", "Sirosis Hati", "Ensefalopati Hepatik", "Koagulopati"],
+      "red_flags": ["Hepatitis A Fulminan", "Sirosis Hati", "Ensefalopati Hepatik", "Koagulopati"],
       "terapi": [
         {
           "obat": "Domperidon",
@@ -2670,12 +2452,7 @@
       "body_system": "SALURAN PENCERNAAN",
       "can_refer": false,
       "definisi": "Pelebaran vena hemoroidalis dengan atau tanpa prolaps",
-      "gejala_klinis": [
-        "Perdarahan saat BAB",
-        "Gatal anus",
-        "Benjolan di anus",
-        "Nyeri"
-      ],
+      "gejala_klinis": ["Perdarahan saat BAB", "Gatal anus", "Benjolan di anus", "Nyeri"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -2700,9 +2477,7 @@
       "body_system": "SISTEM GINJAL",
       "can_refer": false,
       "definisi": "Infeksi saluran kemih merupakan salah satu masalah kesehatan akut yang sering terjadi pada\nperempuan. Masalah infeksi saluran kemih tersering adalah sistitis akut, sistitis kronik, dan\nuretritis. Sebagai tambahan, pielonefritis diklasifikasikan sebagai kasus komplikasi.",
-      "gejala_klinis": [
-        "anyangan, nyeri pinggang dan nyeri suprapubik."
-      ],
+      "gejala_klinis": ["anyangan, nyeri pinggang dan nyeri suprapubik."],
       "pemeriksaan_fisik": [
         "Demam",
         "„Flank pain‟ (Nyeri ketok pinggang belakang/costovertebral angle)",
@@ -2804,12 +2579,7 @@
         "tifoid)",
         "atau infeksi organ lain, tidak Hodgkin)"
       ],
-      "diagnosis_banding": [
-        "Mumps",
-        "Kista Duktus Tiroglosus",
-        "Kista Dermoid",
-        "Hemangioma"
-      ],
+      "diagnosis_banding": ["Mumps", "Kista Duktus Tiroglosus", "Kista Dermoid", "Hemangioma"],
       "komplikasi": [
         "ICPC II: B90 HIV-infection/AIDS",
         "ICD X: Z21 Asymptomatic human immunodeficiency virus (HIV) infection status",
@@ -2843,11 +2613,7 @@
       "body_system": "SISTEM GINJAL",
       "can_refer": false,
       "definisi": "Ketidakmampuan prepusium untuk diretraksi ke belakang glans penis",
-      "gejala_klinis": [
-        "Prepusium tidak bisa ditarik",
-        "Nyeri saat ereksi",
-        "Ballooning saat BAK"
-      ],
+      "gejala_klinis": ["Prepusium tidak bisa ditarik", "Nyeri saat ereksi", "Ballooning saat BAK"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -2872,18 +2638,11 @@
       "body_system": "SISTEM GINJAL",
       "can_refer": false,
       "definisi": "Prepusium yang tertarik tidak dapat dikembalikan dan menyebabkan konstriksi",
-      "gejala_klinis": [
-        "Nyeri hebat",
-        "Edema glans",
-        "Konstriksi penis"
-      ],
+      "gejala_klinis": ["Nyeri hebat", "Edema glans", "Konstriksi penis"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "Iskemia glans",
-        "Gangren"
-      ],
+      "red_flags": ["Iskemia glans", "Gangren"],
       "terapi": [
         {
           "obat": "Manual reduction",
@@ -2944,9 +2703,7 @@
       "body_system": "SISTEM REPRODUKSI",
       "can_refer": false,
       "definisi": "Infeksi saluran kemih merupakan salah satu masalah kesehatan akut yang sering terjadi pada\nperempuan. Masalah infeksi saluran kemih tersering adalah sistitis akut, sistitis kronik, dan\nuretritis. Sebagai tambahan, pielonefritis diklasifikasikan sebagai kasus komplikasi.",
-      "gejala_klinis": [
-        "anyangan, nyeri pinggang dan nyeri suprapubik."
-      ],
+      "gejala_klinis": ["anyangan, nyeri pinggang dan nyeri suprapubik."],
       "pemeriksaan_fisik": [
         "Demam",
         "„Flank pain‟ (Nyeri ketok pinggang belakang/costovertebral angle)",
@@ -2993,20 +2750,10 @@
         "Kemerahan dan iritasi",
         "Keputihan"
       ],
-      "pemeriksaan_fisik": [
-        "Adanya cairan kental dan berbau yang keluar dari vagina."
-      ],
+      "pemeriksaan_fisik": ["Adanya cairan kental dan berbau yang keluar dari vagina."],
       "diagnosis_banding": [],
-      "komplikasi": [
-        "Infertilitas",
-        "Infeksi sekunder karena sering digaruk",
-        "Vulva distrofi"
-      ],
-      "red_flags": [
-        "Infertilitas",
-        "Infeksi sekunder karena sering digaruk",
-        "Vulva distrofi"
-      ],
+      "komplikasi": ["Infertilitas", "Infeksi sekunder karena sering digaruk", "Vulva distrofi"],
+      "red_flags": ["Infertilitas", "Infeksi sekunder karena sering digaruk", "Vulva distrofi"],
       "terapi": [],
       "kriteria_rujukan": "Pasien dirujuk ke dokter spesialis kulit dan kelamin jika pemberian salep Kortison tidak\nmemberikan respon.",
       "source": "PPK IDI 2013 + 144 Diagnosis KKI"
@@ -3028,9 +2775,7 @@
         "Dispareunia",
         "Disuria"
       ],
-      "pemeriksaan_fisik": [
-        "Mungkin serviks juga dapat tampak eritematous."
-      ],
+      "pemeriksaan_fisik": ["Mungkin serviks juga dapat tampak eritematous."],
       "diagnosis_banding": [
         "Vaginosis Bakterialis",
         "Vaginosis Trikomonas",
@@ -3058,11 +2803,7 @@
       "body_system": "SISTEM REPRODUKSI",
       "can_refer": false,
       "definisi": "Ketidakseimbangan flora vagina dengan dominasi bakteri anaerob",
-      "gejala_klinis": [
-        "Discharge berbau amis",
-        "Gatal ringan",
-        "pH vagina > 4.5"
-      ],
+      "gejala_klinis": ["Discharge berbau amis", "Gatal ringan", "pH vagina > 4.5"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -3087,19 +2828,11 @@
       "body_system": "SISTEM REPRODUKSI",
       "can_refer": false,
       "definisi": "Infeksi pada tuba fallopii, sering bagian dari PID",
-      "gejala_klinis": [
-        "Nyeri perut bawah",
-        "Demam",
-        "Discharge abnormal",
-        "Dispareunia"
-      ],
+      "gejala_klinis": ["Nyeri perut bawah", "Demam", "Discharge abnormal", "Dispareunia"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "Peritonitis",
-        "Abses tubo-ovarian"
-      ],
+      "red_flags": ["Peritonitis", "Abses tubo-ovarian"],
       "terapi": [
         {
           "obat": "Ceftriaxone",
@@ -3125,12 +2858,7 @@
       "body_system": "SISTEM REPRODUKSI",
       "can_refer": false,
       "definisi": "Kehamilan fisiologis tanpa komplikasi",
-      "gejala_klinis": [
-        "Amenorrhea",
-        "Mual pagi",
-        "Pembesaran perut",
-        "Gerakan janin"
-      ],
+      "gejala_klinis": ["Amenorrhea", "Mual pagi", "Pembesaran perut", "Gerakan janin"],
       "pemeriksaan_fisik": [
         "Pada trimester 1, bila LLA> 33 cm, maka diduga obesitas, memiliki risiko Pre-eklampsia dan",
         "cm, maka diduga undernutrisi atau memiliki penyakit kronis, biasanya memiliki bayi yang",
@@ -3242,11 +2970,7 @@
       "body_system": "SISTEM REPRODUKSI",
       "can_refer": false,
       "definisi": "Robekan perineum saat persalinan grade 1 (kulit) atau 2 (otot perineum)",
-      "gejala_klinis": [
-        "Laserasi perineum",
-        "Perdarahan",
-        "Nyeri"
-      ],
+      "gejala_klinis": ["Laserasi perineum", "Perdarahan", "Nyeri"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -3271,11 +2995,7 @@
       "body_system": "SISTEM REPRODUKSI",
       "can_refer": false,
       "definisi": "Infeksi supuratif pada folikel rambut atau kelenjar sebasea",
-      "gejala_klinis": [
-        "Benjolan merah nyeri",
-        "Fluktuasi",
-        "Discharge purulen"
-      ],
+      "gejala_klinis": ["Benjolan merah nyeri", "Fluktuasi", "Discharge purulen"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -3340,11 +3060,7 @@
       "body_system": "SISTEM REPRODUKSI",
       "can_refer": false,
       "definisi": "Luka/fisura pada puting susu, sering terjadi saat menyusui",
-      "gejala_klinis": [
-        "Nyeri puting",
-        "Luka/pecah-pecah",
-        "Perdarahan minimal"
-      ],
+      "gejala_klinis": ["Nyeri puting", "Luka/pecah-pecah", "Perdarahan minimal"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -3369,10 +3085,7 @@
       "body_system": "SISTEM REPRODUKSI",
       "can_refer": false,
       "definisi": "Puting yang tertarik ke dalam, dapat mengganggu menyusui",
-      "gejala_klinis": [
-        "Puting masuk ke dalam",
-        "Kesulitan menyusui"
-      ],
+      "gejala_klinis": ["Puting masuk ke dalam", "Kesulitan menyusui"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -3397,20 +3110,11 @@
       "body_system": "SISTEM ENDOKRIN",
       "can_refer": false,
       "definisi": "Diabetes akibat destruksi sel beta pankreas, ketergantungan insulin",
-      "gejala_klinis": [
-        "Poliuri",
-        "Polidipsi",
-        "Polifagi",
-        "Penurunan BB",
-        "Ketoasidosis"
-      ],
+      "gejala_klinis": ["Poliuri", "Polidipsi", "Polifagi", "Penurunan BB", "Ketoasidosis"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "Ketoasidosis diabetik",
-        "Hipoglikemia berat"
-      ],
+      "red_flags": ["Ketoasidosis diabetik", "Hipoglikemia berat"],
       "terapi": [
         {
           "obat": "Insulin",
@@ -3431,20 +3135,11 @@
       "body_system": "SISTEM ENDOKRIN",
       "can_refer": false,
       "definisi": "Diabetes akibat resistensi insulin dan/atau defek sekresi insulin",
-      "gejala_klinis": [
-        "Poliuri",
-        "Polidipsi",
-        "Polifagi",
-        "Lemas",
-        "Pandangan kabur"
-      ],
+      "gejala_klinis": ["Poliuri", "Polidipsi", "Polifagi", "Lemas", "Pandangan kabur"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "Hiperglikemia berat",
-        "Hipoglikemia"
-      ],
+      "red_flags": ["Hiperglikemia berat", "Hipoglikemia"],
       "terapi": [
         {
           "obat": "Metformin",
@@ -3470,20 +3165,9 @@
         "Pada pasien atau keluarga perlu ditanyakan adanya riwayat penggunan preparat insulin atau"
       ],
       "pemeriksaan_fisik": [],
-      "diagnosis_banding": [
-        "Syncope vagal.",
-        "Stroke/TIA."
-      ],
-      "komplikasi": [
-        "Kerusakan otak.",
-        "Koma.",
-        "Kematian."
-      ],
-      "red_flags": [
-        "Kerusakan otak.",
-        "Koma.",
-        "Kematian."
-      ],
+      "diagnosis_banding": ["Syncope vagal.", "Stroke/TIA."],
+      "komplikasi": ["Kerusakan otak.", "Koma.", "Kematian."],
+      "red_flags": ["Kerusakan otak.", "Koma.", "Kematian."],
       "terapi": [],
       "kriteria_rujukan": "Pasien hipoglikemia dengan penurunan kesadaran harus dirujuk ke layanan sekunder\n(spesialis penyakit dalam) setelah diberikan dekstrose 40% bolus dan infus dekstrose 10%\ndengan tetesan 6 jam per kolf.",
       "source": "PPK IDI 2013 + 144 Diagnosis KKI"
@@ -3509,10 +3193,7 @@
         "atau sendi tarsal",
         "Sendi yang mengalami inflamasi tampak kemerahan dan bengkak."
       ],
-      "diagnosis_banding": [
-        "Sepsis arthritis",
-        "Rheumatoid arthritis"
-      ],
+      "diagnosis_banding": ["Sepsis arthritis", "Rheumatoid arthritis"],
       "komplikasi": [
         "Anoreksia",
         "Pneumonia berat",
@@ -3525,13 +3206,7 @@
         "Hiperpireksia",
         "Penurunan kesadaran"
       ],
-      "red_flags": [
-        "Anoreksia",
-        "Pneumonia berat",
-        "Anemia berat",
-        "Infeksi",
-        "Dehidrasi berat"
-      ],
+      "red_flags": ["Anoreksia", "Pneumonia berat", "Anemia berat", "Infeksi", "Dehidrasi berat"],
       "terapi": [],
       "kriteria_rujukan": "1. Bila terjadi komplikasi, seperti: sepsis, dehidrasi berat, anemia berat, penurunan\nkesadaran.\n2. Bila terdapat penyakit komorbid, seperti: pneumonia berat.",
       "source": "PPK IDI 2013 + 144 Diagnosis KKI"
@@ -3618,22 +3293,11 @@
       "body_system": "SISTEM ENDOKRIN",
       "can_refer": false,
       "definisi": "4 88\n\nDislipidemia adalah kelainan metabolisme lipid yang ditandai dengan peningkatan maupun\npenurunan satu atau lebih fraksi lipid dalam darah. Beberapa kelainan fraksi lipid yang utama\nadalah kenaikan kadar kolesterol total, kolesterol LDL, dan atau trigliserida, serta penurunan\nkolesterol HDL.\nDislipidemia merupakan faktor risiko terjadinya aterosklerosis sehingga dapat menyebabkan\nstroke, Penyakit Jantung Koroner (PJK), Peripheral Arterial Disease (PAD), Sindroma\nKoroner Akut (SKA).",
-      "gejala_klinis": [
-        "Pada umumnya dislipidemia tidak bergejala",
-        "up)."
-      ],
-      "pemeriksaan_fisik": [
-        "Cara pengukuran IMT(kg/m2)= BB(kg)/TB2(m)"
-      ],
+      "gejala_klinis": ["Pada umumnya dislipidemia tidak bergejala", "up)."],
+      "pemeriksaan_fisik": ["Cara pengukuran IMT(kg/m2)= BB(kg)/TB2(m)"],
       "diagnosis_banding": [],
-      "komplikasi": [
-        "Penyakit jantung koroner",
-        "Stroke"
-      ],
-      "red_flags": [
-        "Penyakit jantung koroner",
-        "Stroke"
-      ],
+      "komplikasi": ["Penyakit jantung koroner", "Stroke"],
+      "red_flags": ["Penyakit jantung koroner", "Stroke"],
       "terapi": [],
       "kriteria_rujukan": "Perlu dilakukan rujukan jika terdapat penyakit komorbid yang harus ditangani oleh spesialis.",
       "source": "PPK IDI 2013 + 144 Diagnosis KKI"
@@ -3648,11 +3312,7 @@
       "body_system": "SISTEM ENDOKRIN",
       "can_refer": false,
       "definisi": "Kadar asam urat darah meningkat (>7 mg/dL pria, >6 mg/dL wanita)",
-      "gejala_klinis": [
-        "Sering asimptomatik",
-        "Artritis gout",
-        "Nefrolitiasis"
-      ],
+      "gejala_klinis": ["Sering asimptomatik", "Artritis gout", "Nefrolitiasis"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -3684,9 +3344,7 @@
         "obatan (beberapa obat seperti steroid, KB",
         "depresan memiliki efek samping penambahan berat badan dan retensi"
       ],
-      "pemeriksaan_fisik": [
-        "Risiko meningkat bila laki-laki > 85 cm dan perempuan >80cm."
-      ],
+      "pemeriksaan_fisik": ["Risiko meningkat bila laki-laki > 85 cm dan perempuan >80cm."],
       "diagnosis_banding": [],
       "komplikasi": [
         "Sumber lain mengatakan bahwa hiperurisemia, gangguan",
@@ -3723,9 +3381,7 @@
       "body_system": "HEMATOLOGI DAN IMUNOLOGI",
       "can_refer": false,
       "definisi": "Penurunan kadar Hemoglobin yang menyebabkan penurunan kadar oksigen yang\ndidistribusikan ke seluruh tubuh sehingga menimbulkan berbagai keluhan (sindrom anemia).",
-      "gejala_klinis": [
-        "kunang, pusing, telinga berdenging dan penurunan konsentrasi."
-      ],
+      "gejala_klinis": ["kunang, pusing, telinga berdenging dan penurunan konsentrasi."],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [
         "Anemia defesiensi besi",
@@ -3734,14 +3390,8 @@
         "Anemia Hemolitik",
         "Anemia pada penyakit kronik"
       ],
-      "komplikasi": [
-        "Gagal jantung",
-        "Syncope"
-      ],
-      "red_flags": [
-        "Gagal jantung",
-        "Syncope"
-      ],
+      "komplikasi": ["Gagal jantung", "Syncope"],
+      "red_flags": ["Gagal jantung", "Syncope"],
       "terapi": [],
       "kriteria_rujukan": " Anemia berat dengan indikasi transfusi (Hb < 6 mg%).\n Untuk anemia karena penyebab yang tidak termasuk kompetensi dokter layanan primer,\ndirujuk ke dokter spesialis penyakit dalam.",
       "source": "PPK IDI 2013 + 144 Diagnosis KKI"
@@ -3756,12 +3406,7 @@
       "body_system": "HEMATOLOGI DAN IMUNOLOGI",
       "can_refer": false,
       "definisi": "Peradangan kelenjar getah bening, biasanya akibat infeksi",
-      "gejala_klinis": [
-        "Pembesaran KGB",
-        "Nyeri tekan",
-        "Eritema",
-        "Demam"
-      ],
+      "gejala_klinis": ["Pembesaran KGB", "Nyeri tekan", "Eritema", "Demam"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -3913,12 +3558,7 @@
       "body_system": "HEMATOLOGI DAN IMUNOLOGI",
       "can_refer": false,
       "definisi": "Infeksi Leptospira yang ditularkan melalui kontak dengan urin hewan terinfeksi",
-      "gejala_klinis": [
-        "Demam tinggi mendadak",
-        "Nyeri otot betis",
-        "Mata merah",
-        "Ikterik"
-      ],
+      "gejala_klinis": ["Demam tinggi mendadak", "Nyeri otot betis", "Mata merah", "Ikterik"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [
         "Demam dengue,",
@@ -3936,10 +3576,7 @@
         "bahan yang telah terkontaminasi dengan kemih",
         " Keluarga harus melakukan pencegahan leptospirosis dengan menyimpan makanan dan"
       ],
-      "red_flags": [
-        "Gagal ginjal",
-        "Perdarahan paru"
-      ],
+      "red_flags": ["Gagal ginjal", "Perdarahan paru"],
       "terapi": [
         {
           "obat": "Doxycycline",
@@ -4007,12 +3644,7 @@
       "body_system": "SISTEM MUSKULOSKELETAL",
       "can_refer": false,
       "definisi": "Luka kronik pada tungkai bawah, sering akibat insufisiensi vena atau arterial",
-      "gejala_klinis": [
-        "Luka tidak sembuh",
-        "Nyeri",
-        "Edema tungkai",
-        "Perubahan kulit"
-      ],
+      "gejala_klinis": ["Luka tidak sembuh", "Nyeri", "Edema tungkai", "Perubahan kulit"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4043,12 +3675,7 @@
         "Untuk tempat predileksi seperti di leher bisa menimbulkan keluhan"
       ],
       "pemeriksaan_fisik": [],
-      "diagnosis_banding": [
-        "Epidermoidkista",
-        "Abses",
-        "Liposarcoma",
-        "Limfadenitis tuberkulosis"
-      ],
+      "diagnosis_banding": ["Epidermoidkista", "Abses", "Liposarcoma", "Limfadenitis tuberkulosis"],
       "komplikasi": [],
       "red_flags": [],
       "terapi": [],
@@ -4065,9 +3692,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Veruka vulgaris merupakan hiperplasia epidermis yang disebabkan oleh Human papilloma\nvirus (HPV). Penularan melalui kontak langsung dengan agen penyebab. Veruka ini sering\ndijumpai pada anak-anak dan remaja.",
-      "gejala_klinis": [
-        "Adanya kutil pada kulit dan mukosa."
-      ],
+      "gejala_klinis": ["Adanya kutil pada kulit dan mukosa."],
       "pemeriksaan_fisik": [
         "Papul ini dapat dijumpai",
         "Apabila permukaannya rata, disebut dengan veruka plana."
@@ -4123,11 +3748,7 @@
         "Gambar41.Moluskum kontagiosum",
         "Sumber: http://health.detik.com/read/2009/11/12/105627/1240281/770/"
       ],
-      "diagnosis_banding": [
-        "Komedo",
-        "Milia",
-        "Karsinoma sel basal nodular"
-      ],
+      "diagnosis_banding": ["Komedo", "Milia", "Karsinoma sel basal nodular"],
       "komplikasi": [
         "Jika moluskum mengenai kelopak mata (jarang",
         "Pada individu dengan AIDS, moluskum seringkali"
@@ -4150,10 +3771,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Herpes Zoster adalah infeksi kulit dan mukosa yang disebabkan oleh virus varisela-zoster.\nInfeksi ini merupakan reaktivasi virus yang terjadi setelah infeksi primer.",
-      "gejala_klinis": [
-        "Keluhan dapat disertai dengan gejala",
-        "Setelah itu timbul gejala kulit"
-      ],
+      "gejala_klinis": ["Keluhan dapat disertai dengan gejala", "Setelah itu timbul gejala kulit"],
       "pemeriksaan_fisik": [
         "Lesi bilateral jarang ditemui, namun seringkali, erupsi juga terjadi pada",
         "3 92",
@@ -4207,9 +3825,7 @@
         "Pada demam hari keempat, muncul lesi makula dan papula eritem, yang"
       ],
       "pemeriksaan_fisik": [],
-      "diagnosis_banding": [
-        "pneumoniae."
-      ],
+      "diagnosis_banding": ["pneumoniae."],
       "komplikasi": [
         "Komplikasi berupa otitis media,",
         "Pada anak HIV yang tidak diimunisasi, pneumonia"
@@ -4386,11 +4002,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Infeksi kulit bakteri yang lebih dalam dari impetigo biasa",
-      "gejala_klinis": [
-        "Ulkus dengan krusta tebal",
-        "Nyeri",
-        "Sering di tungkai"
-      ],
+      "gejala_klinis": ["Ulkus dengan krusta tebal", "Nyeri", "Sering di tungkai"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4415,11 +4027,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Infeksi superfisial pada folikel rambut",
-      "gejala_klinis": [
-        "Papul/pustul folikular",
-        "Gatal",
-        "Nyeri ringan"
-      ],
+      "gejala_klinis": ["Papul/pustul folikular", "Gatal", "Nyeri ringan"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4444,11 +4052,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Infeksi dalam folikel rambut (furunkel) atau multiple furunkel (karbunkel)",
-      "gejala_klinis": [
-        "Benjolan merah nyeri",
-        "Fluktuasi",
-        "Demam (karbunkel)"
-      ],
+      "gejala_klinis": ["Benjolan merah nyeri", "Fluktuasi", "Demam (karbunkel)"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4473,11 +4077,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Infeksi kulit superfisial oleh Corynebacterium minutissimum",
-      "gejala_klinis": [
-        "Bercak coklat-merah di lipatan",
-        "Batas tegas",
-        "Skuama halus"
-      ],
+      "gejala_klinis": ["Bercak coklat-merah di lipatan", "Batas tegas", "Skuama halus"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4502,12 +4102,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Infeksi kulit superfisial oleh Streptococcus dengan keterlibatan limfatik",
-      "gejala_klinis": [
-        "Plak eritema berbatas tegas",
-        "Demam tinggi",
-        "Nyeri",
-        "Edema"
-      ],
+      "gejala_klinis": ["Plak eritema berbatas tegas", "Demam tinggi", "Nyeri", "Edema"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4532,12 +4127,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "TB kulit akibat penyebaran dari kelenjar limfe yang terinfeksi",
-      "gejala_klinis": [
-        "Nodul subkutan",
-        "Fistula",
-        "Discharge",
-        "Sikatriks"
-      ],
+      "gejala_klinis": ["Nodul subkutan", "Fistula", "Discharge", "Sikatriks"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4665,9 +4255,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatofitosis adalah infeksi jamur dermatofita yang memiliki sifat mencernakan keratin di\njaringan yang mengandung zat tanduk, misalnya stratum korneum pada epidermis, rambut,\ndan kuku.\nPenularan melalui kontak langsung dengan agen penyebab. Sumber penularan dapat berasal\ndari manusia (jamur antropofilik), binatang (jamur zoofilik) atau dari tanah (jamur geofilik).",
-      "gejala_klinis": [
-        "Adanya riwayat kontak dengan orang yang mengalami dermatofitosis."
-      ],
+      "gejala_klinis": ["Adanya riwayat kontak dengan orang yang mengalami dermatofitosis."],
       "pemeriksaan_fisik": [
         "Lesi dapat dijumpai di daerah kulit",
         "4 04",
@@ -4718,11 +4306,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatofitosis pada daerah janggut dan kumis",
-      "gejala_klinis": [
-        "Papul, pustul folikular",
-        "Krusta",
-        "Alopesia"
-      ],
+      "gejala_klinis": ["Papul, pustul folikular", "Krusta", "Alopesia"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4747,11 +4331,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatofitosis pada wajah di luar area janggut",
-      "gejala_klinis": [
-        "Plak eritematosa",
-        "Tepi aktif",
-        "Central healing"
-      ],
+      "gejala_klinis": ["Plak eritematosa", "Tepi aktif", "Central healing"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4776,9 +4356,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatofitosis adalah infeksi jamur dermatofita yang memiliki sifat mencernakan keratin di\njaringan yang mengandung zat tanduk, misalnya stratum korneum pada epidermis, rambut,\ndan kuku.\nPenularan melalui kontak langsung dengan agen penyebab. Sumber penularan dapat berasal\ndari manusia (jamur antropofilik), binatang (jamur zoofilik) atau dari tanah (jamur geofilik).",
-      "gejala_klinis": [
-        "Adanya riwayat kontak dengan orang yang mengalami dermatofitosis."
-      ],
+      "gejala_klinis": ["Adanya riwayat kontak dengan orang yang mengalami dermatofitosis."],
       "pemeriksaan_fisik": [
         "Lesi dapat dijumpai di daerah kulit",
         "4 04",
@@ -4829,12 +4407,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatofitosis pada tangan",
-      "gejala_klinis": [
-        "Skuama kering",
-        "Fisura",
-        "Gatal",
-        "Unilateral"
-      ],
+      "gejala_klinis": ["Skuama kering", "Fisura", "Gatal", "Unilateral"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4859,12 +4432,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatofitosis pada kuku (onikomikosis)",
-      "gejala_klinis": [
-        "Kuku menebal",
-        "Warna kekuningan",
-        "Rapuh",
-        "Debris subungual"
-      ],
+      "gejala_klinis": ["Kuku menebal", "Warna kekuningan", "Rapuh", "Debris subungual"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4889,12 +4457,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatofitosis pada lipat paha",
-      "gejala_klinis": [
-        "Plak eritematosa",
-        "Tepi aktif",
-        "Gatal",
-        "Bilateral"
-      ],
+      "gejala_klinis": ["Plak eritematosa", "Tepi aktif", "Gatal", "Bilateral"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4919,12 +4482,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatofitosis pada kaki (athlete's foot)",
-      "gejala_klinis": [
-        "Skuama di sela jari",
-        "Maserasi",
-        "Gatal",
-        "Bau"
-      ],
+      "gejala_klinis": ["Skuama di sela jari", "Maserasi", "Gatal", "Bau"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -4994,9 +4552,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Miopia ringan adalahkelainan refraksi dimana sinar sejajar yang masuk ke mata dalam\nkeadaan istirahat (tanpa akomodasi) akan dibiaskan membentuk bayangan di depan retina.\nDapat dikoreksi dengan lensa sferis negative S – 0.25 sampai S – 3.00 D",
-      "gejala_klinis": [
-        "Tidak terdapat riwayat kelainan sistemik seperti;"
-      ],
+      "gejala_klinis": ["Tidak terdapat riwayat kelainan sistemik seperti;"],
       "pemeriksaan_fisik": [
         "Penderita duduk menghadap kartu snellen pada jarak 6 meter.",
         "Pada mata dipasang bingkai percobaan. Satu mata ditutup, biasanya mata kiri ditutup",
@@ -5029,11 +4585,7 @@
         "Keluhan dirasakan muncul sekitar empat hari setelah terpajan."
       ],
       "pemeriksaan_fisik": [],
-      "diagnosis_banding": [
-        "Dermatofitosis",
-        "Dermatitis",
-        "Dermatosis"
-      ],
+      "diagnosis_banding": ["Dermatofitosis", "Dermatitis", "Dermatosis"],
       "komplikasi": [],
       "red_flags": [],
       "terapi": [],
@@ -5104,19 +4656,13 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Pedikulosis kapitis adalah infeksi dan infestasi kulit kepala dan rambut manusia yang\ndisebabkan oleh kutu kepala Pediculus humanus var capitis.\nPenularan melalui kontak langsung dengan agen penyebab.\n- Kontak fisik erat dengan kepala penderita, seperti tidur bersama.\n- Kontak melalui fomite yang terinfestasi, misalnya pemakaian bersama aksesori kepala,\nsisir, dan bantal juga dapat menyebabkan kutu menular.",
-      "gejala_klinis": [
-        "Gejala dapat pula asimptomatik"
-      ],
+      "gejala_klinis": ["Gejala dapat pula asimptomatik"],
       "pemeriksaan_fisik": [
         "Bila terdapat",
         "Gambar28. TelurPediculus humanus capitis",
         "healthhype.com/itchy-scalp-causes-and-treatment.html"
       ],
-      "diagnosis_banding": [
-        "Tinea kapitis",
-        "Impetigo krustosa (pioderma)",
-        "Dermatitis seboroik"
-      ],
+      "diagnosis_banding": ["Tinea kapitis", "Impetigo krustosa (pioderma)", "Dermatitis seboroik"],
       "komplikasi": [],
       "red_flags": [],
       "terapi": [
@@ -5139,19 +4685,13 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Pedikulosis kapitis adalah infeksi dan infestasi kulit kepala dan rambut manusia yang\ndisebabkan oleh kutu kepala Pediculus humanus var capitis.\nPenularan melalui kontak langsung dengan agen penyebab.\n- Kontak fisik erat dengan kepala penderita, seperti tidur bersama.\n- Kontak melalui fomite yang terinfestasi, misalnya pemakaian bersama aksesori kepala,\nsisir, dan bantal juga dapat menyebabkan kutu menular.",
-      "gejala_klinis": [
-        "Gejala dapat pula asimptomatik"
-      ],
+      "gejala_klinis": ["Gejala dapat pula asimptomatik"],
       "pemeriksaan_fisik": [
         "Bila terdapat",
         "Gambar28. TelurPediculus humanus capitis",
         "healthhype.com/itchy-scalp-causes-and-treatment.html"
       ],
-      "diagnosis_banding": [
-        "Tinea kapitis",
-        "Impetigo krustosa (pioderma)",
-        "Dermatitis seboroik"
-      ],
+      "diagnosis_banding": ["Tinea kapitis", "Impetigo krustosa (pioderma)", "Dermatitis seboroik"],
       "komplikasi": [],
       "red_flags": [],
       "terapi": [
@@ -5174,12 +4714,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Infeksi kulit oleh tungau Sarcoptes scabiei",
-      "gejala_klinis": [
-        "Gatal malam hari",
-        "Papul di sela jari",
-        "Terowongan",
-        "Riwayat kontak"
-      ],
+      "gejala_klinis": ["Gatal malam hari", "Papul di sela jari", "Terowongan", "Riwayat kontak"],
       "pemeriksaan_fisik": [
         "abu dengan panjang rata-",
         "cm. Ujung terowongan terdapat papul, vesikel, dan bila terjadi infeksi sekunder, maka",
@@ -5194,13 +4729,8 @@
         "Dermatitis",
         "Pedikulosis korporis"
       ],
-      "komplikasi": [
-        "aureus sering terjadi, terutama pada anak. Komplikasi"
-      ],
-      "red_flags": [
-        "Skabies berkrusta",
-        "Infeksi sekunder"
-      ],
+      "komplikasi": ["aureus sering terjadi, terutama pada anak. Komplikasi"],
+      "red_flags": ["Skabies berkrusta", "Infeksi sekunder"],
       "terapi": [
         {
           "obat": "Permetrin 5% krim",
@@ -5315,14 +4845,8 @@
         "Sindrom imunodefisiensi (misalnya sindrom Wiskott-Aldrich),",
         "Sindrom hiper IgE."
       ],
-      "komplikasi": [
-        "Infeksi sekunder",
-        "Perluasan penyakit (eritroderma)"
-      ],
-      "red_flags": [
-        "Infeksi sekunder",
-        "Perluasan penyakit (eritroderma)"
-      ],
+      "komplikasi": ["Infeksi sekunder", "Perluasan penyakit (eritroderma)"],
+      "red_flags": ["Infeksi sekunder", "Perluasan penyakit (eritroderma)"],
       "terapi": [
         {
           "obat": "Loratadin",
@@ -5343,9 +4867,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatitis numularis adalah dermatitis berbentuk lesi mata uang (koin) atau lonjong,\nberbatas tegas, dengan efloresensi berupa papulovesikel, biasanya mudah pecah sehingga\nbasah (oozing/madidans).",
-      "gejala_klinis": [
-        "Keluhan hilang timbul"
-      ],
+      "gejala_klinis": ["Keluhan hilang timbul"],
       "pemeriksaan_fisik": [
         "Lesi akut berupa vesikel dan papulo vesikel (0.3 – 1.0 cm), berbentuk uang logam,",
         "2. Tanda eksudasi, karena vesikel mudah pecah, kemudian mengering menjadi krusta",
@@ -5399,9 +4921,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Napkin eczema atau sering disebut juga dengan dermatitis popok/ diaper rash adalah\ndermatitis di daerah genito-krural sesuai dengan tempat kontak popok. Umumnya pada bayi\npemakai popok dan juga orang dewasa yang sakit dan memakai popok. Dermatitis ini\nmerupakan salah satu dermatitis kontak iritan akibat isi napkin (popok).",
-      "gejala_klinis": [
-        "kadang membasah dan membentuk luka."
-      ],
+      "gejala_klinis": ["kadang membasah dan membentuk luka."],
       "pemeriksaan_fisik": [
         "Penyakit dimulai dengan lesi pertama (herald patch), umumnya di badan, soliter, berbentuk",
         "cm. Lesi terdiri atas eritema dan skuama halus di",
@@ -5440,9 +4960,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatitis Seboroik (DS) merupakan istilah yang digunakan untuk segolongan kelainan kulit\nyang didasari oleh faktor konstitusi (predileksi di tempat-tempatkelenjar sebum). DS\nberhubungan erat dengan keaktifan glandula sebasea.",
-      "gejala_klinis": [
-        "Kelainan awal hanya"
-      ],
+      "gejala_klinis": ["Kelainan awal hanya"],
       "pemeriksaan_fisik": [
         "Papul sampai plak eritema.",
         "Skuama berminyak agak kekuningan.",
@@ -5536,9 +5054,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Miopia ringan adalahkelainan refraksi dimana sinar sejajar yang masuk ke mata dalam\nkeadaan istirahat (tanpa akomodasi) akan dibiaskan membentuk bayangan di depan retina.\nDapat dikoreksi dengan lensa sferis negative S – 0.25 sampai S – 3.00 D",
-      "gejala_klinis": [
-        "Tidak terdapat riwayat kelainan sistemik seperti;"
-      ],
+      "gejala_klinis": ["Tidak terdapat riwayat kelainan sistemik seperti;"],
       "pemeriksaan_fisik": [
         "Penderita duduk menghadap kartu snellen pada jarak 6 meter.",
         "Pada mata dipasang bingkai percobaan. Satu mata ditutup, biasanya mata kiri ditutup",
@@ -5565,11 +5081,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Inflamasi kronik kelenjar apokrin dengan pembentukan abses",
-      "gejala_klinis": [
-        "Nodul nyeri di aksila/inguinal",
-        "Abses berulang",
-        "Sinus tract"
-      ],
+      "gejala_klinis": ["Nodul nyeri di aksila/inguinal", "Abses berulang", "Sinus tract"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -5594,9 +5106,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Dermatitis Seboroik (DS) merupakan istilah yang digunakan untuk segolongan kelainan kulit\nyang didasari oleh faktor konstitusi (predileksi di tempat-tempatkelenjar sebum). DS\nberhubungan erat dengan keaktifan glandula sebasea.",
-      "gejala_klinis": [
-        "Kelainan awal hanya"
-      ],
+      "gejala_klinis": ["Kelainan awal hanya"],
       "pemeriksaan_fisik": [
         "Papul sampai plak eritema.",
         "Skuama berminyak agak kekuningan.",
@@ -5645,11 +5155,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Obstruksi kelenjar keringat menyebabkan erupsi vesikular",
-      "gejala_klinis": [
-        "Papul/vesikel kecil",
-        "Gatal",
-        "Lokasi predileksi: punggung, dada"
-      ],
+      "gejala_klinis": ["Papul/vesikel kecil", "Gatal", "Lokasi predileksi: punggung, dada"],
       "pemeriksaan_fisik": [
         "Lihat klasifikasi.",
         "Miliaria rubra",
@@ -5750,11 +5256,7 @@
       "body_system": "SISTEM INTEGUMEN",
       "can_refer": false,
       "definisi": "Luka terbuka akibat trauma tajam (laserasi) atau tusuk (punctum)",
-      "gejala_klinis": [
-        "Luka terbuka",
-        "Perdarahan",
-        "Nyeri"
-      ],
+      "gejala_klinis": ["Luka terbuka", "Perdarahan", "Nyeri"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
@@ -5829,19 +5331,11 @@
       "body_system": "FORENSIK DAN MEDIKOLEGAL",
       "can_refer": false,
       "definisi": "Trauma akibat benturan benda tumpul",
-      "gejala_klinis": [
-        "Memar/kontusi",
-        "Hematoma",
-        "Nyeri",
-        "Edema"
-      ],
+      "gejala_klinis": ["Memar/kontusi", "Hematoma", "Nyeri", "Edema"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "Trauma kepala berat",
-        "Perdarahan internal"
-      ],
+      "red_flags": ["Trauma kepala berat", "Perdarahan internal"],
       "terapi": [
         {
           "obat": "Analgesik",
@@ -5862,18 +5356,11 @@
       "body_system": "FORENSIK DAN MEDIKOLEGAL",
       "can_refer": false,
       "definisi": "Trauma akibat benda tajam menyebabkan luka iris/tusuk",
-      "gejala_klinis": [
-        "Luka terbuka",
-        "Perdarahan",
-        "Tepi luka rata"
-      ],
+      "gejala_klinis": ["Luka terbuka", "Perdarahan", "Tepi luka rata"],
       "pemeriksaan_fisik": [],
       "diagnosis_banding": [],
       "komplikasi": [],
-      "red_flags": [
-        "Perdarahan masif",
-        "Cedera organ vital"
-      ],
+      "red_flags": ["Perdarahan masif", "Cedera organ vital"],
       "terapi": [
         {
           "obat": "Wound care + suturing",
@@ -5920,12 +5407,7 @@
         "Bronkitis akut (J20)",
         "Pneumonia (J18)"
       ],
-      "komplikasi": [
-        "Otitis media akut",
-        "Sinusitis",
-        "Bronkitis",
-        "Pneumonia"
-      ],
+      "komplikasi": ["Otitis media akut", "Sinusitis", "Bronkitis", "Pneumonia"],
       "red_flags": [
         "Sesak nafas berat",
         "Stridor",
@@ -5989,11 +5471,7 @@
         "ISPA (J06)",
         "Influenza (J11)"
       ],
-      "komplikasi": [
-        "Sinusitis akut",
-        "Otitis media akut",
-        "Eksaserbasi asma"
-      ],
+      "komplikasi": ["Sinusitis akut", "Otitis media akut", "Eksaserbasi asma"],
       "red_flags": [
         "Demam tinggi >39°C persisten",
         "Sekret hidung purulen >10 hari (curiga sinusitis)",
@@ -6195,11 +5673,7 @@
         "Infeksi virus (dengue, chikungunya)",
         "Hipotiroid"
       ],
-      "komplikasi": [
-        "Nyeri kronik",
-        "Gangguan tidur",
-        "Penurunan produktivitas"
-      ],
+      "komplikasi": ["Nyeri kronik", "Gangguan tidur", "Penurunan produktivitas"],
       "red_flags": [
         "Kelemahan otot progresif",
         "Urine berwarna gelap (curiga rhabdomiolisis)",
@@ -6266,12 +5740,7 @@
         "Sirosis hepatis (K74)",
         "Asma bronkial (J45)"
       ],
-      "komplikasi": [
-        "Edema paru akut",
-        "Syok kardiogenik",
-        "Aritmia",
-        "Gagal ginjal akut"
-      ],
+      "komplikasi": ["Edema paru akut", "Syok kardiogenik", "Aritmia", "Gagal ginjal akut"],
       "red_flags": [
         "Sesak nafas berat saat istirahat",
         "Edema paru akut (sputum berbuih merah muda)",
@@ -6411,12 +5880,7 @@
         "Pneumotoraks (J93)",
         "Emboli paru (I26)"
       ],
-      "komplikasi": [
-        "Infark miokard akut",
-        "Aritmia",
-        "Gagal jantung akut",
-        "Kematian mendadak"
-      ],
+      "komplikasi": ["Infark miokard akut", "Aritmia", "Gagal jantung akut", "Kematian mendadak"],
       "red_flags": [
         "Nyeri dada saat istirahat >20 menit",
         "Nyeri dada disertai keringat dingin dan sesak berat",
@@ -6741,15 +6205,8 @@
         "Abses periodontal (K05.2)",
         "Nekrosis pulpa (K04.1)"
       ],
-      "komplikasi": [
-        "Kehilangan gigi",
-        "Abses periodontal",
-        "Penyebaran infeksi sistemik"
-      ],
-      "red_flags": [
-        "Demam tinggi dengan pembengkakan gusi luas",
-        "Trismus (sulit buka mulut)"
-      ],
+      "komplikasi": ["Kehilangan gigi", "Abses periodontal", "Penyebaran infeksi sistemik"],
+      "red_flags": ["Demam tinggi dengan pembengkakan gusi luas", "Trismus (sulit buka mulut)"],
       "terapi": [
         {
           "obat": "Amoksisilin",
@@ -6799,12 +6256,7 @@
         "Selulitis fasial",
         "Sialadenitis (K11.2)"
       ],
-      "komplikasi": [
-        "Selulitis fasial",
-        "Ludwig angina",
-        "Osteomielitis rahang",
-        "Sepsis"
-      ],
+      "komplikasi": ["Selulitis fasial", "Ludwig angina", "Osteomielitis rahang", "Sepsis"],
       "red_flags": [
         "Pembengkakan wajah menyebar ke leher (curiga Ludwig angina)",
         "Sesak nafas (obstruksi jalan napas)",
@@ -6859,15 +6311,8 @@
         "Abses periapikal (K04.7)",
         "Kista dentigerous"
       ],
-      "komplikasi": [
-        "Perikoronitis berulang",
-        "Kista dentigerous",
-        "Resorpsi gigi sebelahnya"
-      ],
-      "red_flags": [
-        "Trismus berat (buka mulut <2 cm)",
-        "Pembengkakan menyebar ke submandibular"
-      ],
+      "komplikasi": ["Perikoronitis berulang", "Kista dentigerous", "Resorpsi gigi sebelahnya"],
+      "red_flags": ["Trismus berat (buka mulut <2 cm)", "Pembengkakan menyebar ke submandibular"],
       "terapi": [
         {
           "obat": "Amoksisilin",

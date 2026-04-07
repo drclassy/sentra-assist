@@ -1,13 +1,8 @@
 // Designed and constructed by Claudesy.
-/**
- * Precision-Architected. Future-Built by Docsyanpse
- * Sentra Healthcare Artificial Intelligence
- */
 
-import { useState } from 'react';
-import { Plus, Trash2, Zap, Check, X, AlertCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { sendMessage } from '@/utils/messaging';
-import type { ResepFillPayload, FillResult, AturanPakai, Prioritas } from '@/utils/types';
+import type { AturanPakai, FillResult, Prioritas, ResepFillPayload } from '@/utils/types';
 
 interface MedicationRow {
   id: string;
@@ -45,13 +40,14 @@ const createEmptyMedication = (): MedicationRow => ({
   keterangan: '',
 });
 
-/**
- * ResepForm
- * 
- * @remarks
- * TODO: Add detailed description, parameters, and examples
- * Auto-generated on 2026-02-04
- */
+const surfaceClass =
+  'rounded-[12px] border border-[var(--border-glow)] bg-[var(--bg-card)] px-4 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_16px_30px_-16px_rgba(0,0,0,0.75)]';
+
+const insetClass =
+  'rounded-[10px] border border-[var(--border-subtle)] bg-[var(--neu-inset-bg)] px-3 py-3';
+
+const labelClass =
+  'mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]';
 
 export function ResepForm() {
   const [medications, setMedications] = useState<MedicationRow[]>([createEmptyMedication()]);
@@ -62,19 +58,22 @@ export function ResepForm() {
   const [prioritas, setPrioritas] = useState<Prioritas>('0');
   const [status, setStatus] = useState<FillStatus>({ loading: false, result: null, error: null });
 
+  const readyMedicationCount = useMemo(
+    () => medications.filter((item) => item.nama_obat.trim()).length,
+    [medications]
+  );
+
   const addMedication = () => {
-    setMedications([...medications, createEmptyMedication()]);
+    setMedications((prev) => [...prev, createEmptyMedication()]);
   };
 
   const removeMedication = (id: string) => {
-    if (medications.length > 1) {
-      setMedications(medications.filter((m) => m.id !== id));
-    }
+    setMedications((prev) => (prev.length > 1 ? prev.filter((item) => item.id !== id) : prev));
   };
 
   const updateMedication = (id: string, field: keyof MedicationRow, value: string | number) => {
-    setMedications(
-      medications.map((m) => (m.id === id ? { ...m, [field]: value } : m))
+    setMedications((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
     );
   };
 
@@ -91,217 +90,346 @@ export function ResepForm() {
         dokter,
         perawat,
       },
-      medications: medications.map((m) => ({
-        racikan: m.racikan,
-        jumlah_permintaan: m.jumlah_permintaan,
-        nama_obat: m.nama_obat,
-        jumlah: m.jumlah,
-        signa: m.signa,
-        aturan_pakai: m.aturan_pakai,
-        keterangan: m.keterangan,
+      medications: medications.map((medication) => ({
+        racikan: medication.racikan,
+        jumlah_permintaan: medication.jumlah_permintaan,
+        nama_obat: medication.nama_obat,
+        jumlah: medication.jumlah,
+        signa: medication.signa,
+        aturan_pakai: medication.aturan_pakai,
+        keterangan: medication.keterangan,
       })),
       prioritas,
     };
 
     try {
-      console.log('[ResepForm] Sending fillResep:', payload);
       const result = await sendMessage('fillResep', payload);
-      console.log('[ResepForm] Fill result:', result);
       setStatus({ loading: false, result, error: null });
     } catch (error) {
-      console.error('[ResepForm] Fill error:', error);
       setStatus({ loading: false, result: null, error: String(error) });
     }
   };
 
   return (
-    <div className="space-y-4">
-      {/* AJAX Fields */}
-      <div className="neu-card p-4 space-y-3">
-        <p className="text-caption text-muted mb-2">Provider Info</p>
+    <div className="fade-in space-y-4">
+      <section className={surfaceClass}>
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <div className="text-caption">Prescription Uplink</div>
+            <h3 className="mt-1 text-[15px] font-semibold text-[var(--text-main)]">
+              Pharmacy Preparation Surface
+            </h3>
+            <p className="mt-1 text-[11px] leading-5 text-[var(--text-muted)]">
+              Siapkan metadata resep, verifikasi provider, lalu susun item obat sebelum dikirim ke
+              workflow ePuskesmas.
+            </p>
+          </div>
+
+          <div className={`${insetClass} min-w-[112px] px-3 py-2 text-right`}>
+            <div className="text-[9px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+              Ready Items
+            </div>
+            <div className="mt-1 text-[18px] font-semibold text-[var(--text-main)]">
+              {readyMedicationCount}/{medications.length}
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
-          <input
-            type="text"
-            placeholder="Ruangan"
-            value={ruangan}
-            onChange={(e) => setRuangan(e.target.value)}
-            className="neu-input w-full px-3 py-2 text-small text-platinum bg-transparent rounded-lg"
-          />
-          <input
-            type="text"
-            placeholder="Dokter"
-            value={dokter}
-            onChange={(e) => setDokter(e.target.value)}
-            className="neu-input w-full px-3 py-2 text-small text-platinum bg-transparent rounded-lg"
-          />
-        </div>
-        <input
-          type="text"
-          placeholder="Perawat"
-          value={perawat}
-          onChange={(e) => setPerawat(e.target.value)}
-          className="neu-input w-full px-3 py-2 text-small text-platinum bg-transparent rounded-lg"
-        />
-        <textarea
-          placeholder="Alergi (pisah dengan koma)"
-          value={alergi}
-          onChange={(e) => setAlergi(e.target.value)}
-          className="neu-input w-full px-3 py-2 text-small text-platinum bg-transparent rounded-lg resize-none"
-          rows={2}
-        />
-      </div>
+          <div className={insetClass}>
+            <label className={labelClass} htmlFor="ruangan">
+              Ruangan
+            </label>
+            <input
+              id="ruangan"
+              type="text"
+              value={ruangan}
+              onChange={(event) => setRuangan(event.target.value)}
+              className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
+            />
+          </div>
 
-      {/* Medications */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <p className="text-caption text-muted">Medications</p>
+          <div className={insetClass}>
+            <label className={labelClass} htmlFor="dokter">
+              Dokter
+            </label>
+            <input
+              id="dokter"
+              type="text"
+              value={dokter}
+              onChange={(event) => setDokter(event.target.value)}
+              className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
+            />
+          </div>
+
+          <div className={insetClass}>
+            <label className={labelClass} htmlFor="perawat">
+              Perawat
+            </label>
+            <input
+              id="perawat"
+              type="text"
+              value={perawat}
+              onChange={(event) => setPerawat(event.target.value)}
+              className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
+            />
+          </div>
+
+          <div className={insetClass}>
+            <label className={labelClass} htmlFor="alergi">
+              Allergy Note
+            </label>
+            <textarea
+              id="alergi"
+              rows={2}
+              value={alergi}
+              onChange={(event) => setAlergi(event.target.value)}
+              placeholder="Contoh: penicillin, NSAID, seafood"
+              className="neu-input w-full resize-none rounded-lg px-3 py-2 text-small bg-transparent"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className={surfaceClass}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-caption">Medication Matrix</div>
+            <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+              Lengkapi item wajib dulu, lalu tambah baris bila perlu racikan atau obat tambahan.
+            </p>
+          </div>
+
           <button
+            type="button"
             onClick={addMedication}
-            className="neu-circle-btn w-8 h-8 flex items-center justify-center"
+            className="engine-btn min-w-[120px] px-3 py-2 text-[10px]"
           >
-            <Plus className="w-4 h-4 text-pulse-500" />
+            + Add Medication
           </button>
         </div>
 
-        {medications.map((med, idx) => (
-          <div key={med.id} className="neu-card p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-small text-muted">Obat #{idx + 1}</span>
-              {medications.length > 1 && (
+        <div className="space-y-3">
+          {medications.map((medication, index) => (
+            <article key={medication.id} className={`${insetClass} space-y-3`}>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                    Obat #{index + 1}
+                  </div>
+                  <div className="mt-1 text-[12px] font-medium text-[var(--text-main)]">
+                    {medication.nama_obat.trim() || 'Item belum diisi'}
+                  </div>
+                </div>
+
                 <button
-                  onClick={() => removeMedication(med.id)}
-                  className="text-critical hover:text-red-400 transition-colors"
+                  type="button"
+                  onClick={() => removeMedication(medication.id)}
+                  disabled={medications.length === 1}
+                  className="engine-btn px-3 py-2 text-[10px] disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label={`Hapus obat ${index + 1}`}
                 >
-                  <Trash2 className="w-4 h-4" />
+                  Remove
                 </button>
-              )}
-            </div>
+              </div>
 
-            <input
-              type="text"
-              placeholder="Nama Obat *"
-              value={med.nama_obat}
-              onChange={(e) => updateMedication(med.id, 'nama_obat', e.target.value)}
-              className="neu-input w-full px-3 py-2 text-small text-platinum bg-transparent rounded-lg"
-            />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass} htmlFor={`nama-obat-${medication.id}`}>
+                    Nama Obat
+                  </label>
+                  <input
+                    id={`nama-obat-${medication.id}`}
+                    type="text"
+                    value={medication.nama_obat}
+                    onChange={(event) =>
+                      updateMedication(medication.id, 'nama_obat', event.target.value)
+                    }
+                    placeholder="Mis. Amoksisilin 500 mg"
+                    className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
+                  />
+                </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="number"
-                placeholder="Jumlah"
-                value={med.jumlah || ''}
-                onChange={(e) => updateMedication(med.id, 'jumlah', parseInt(e.target.value) || 0)}
-                className="neu-input w-full px-3 py-2 text-small text-platinum bg-transparent rounded-lg"
-                min={1}
-              />
-              <input
-                type="text"
-                placeholder="Signa (1x1)"
-                value={med.signa}
-                onChange={(e) => updateMedication(med.id, 'signa', e.target.value)}
-                className="neu-input w-full px-3 py-2 text-small text-platinum bg-transparent rounded-lg"
-              />
-            </div>
+                <div>
+                  <label className={labelClass} htmlFor={`keterangan-${medication.id}`}>
+                    Keterangan
+                  </label>
+                  <input
+                    id={`keterangan-${medication.id}`}
+                    type="text"
+                    value={medication.keterangan}
+                    onChange={(event) =>
+                      updateMedication(medication.id, 'keterangan', event.target.value)
+                    }
+                    placeholder="Catatan tambahan"
+                    className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
+                  />
+                </div>
 
-            <select
-              value={med.aturan_pakai}
-              onChange={(e) => updateMedication(med.id, 'aturan_pakai', e.target.value)}
-              className="neu-input w-full px-3 py-2 text-small text-platinum bg-carbon-900 rounded-lg"
+                <div>
+                  <label className={labelClass} htmlFor={`jumlah-${medication.id}`}>
+                    Jumlah
+                  </label>
+                  <input
+                    id={`jumlah-${medication.id}`}
+                    type="number"
+                    min={1}
+                    value={medication.jumlah || ''}
+                    onChange={(event) =>
+                      updateMedication(medication.id, 'jumlah', Number.parseInt(event.target.value, 10) || 0)
+                    }
+                    className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass} htmlFor={`permintaan-${medication.id}`}>
+                    Permintaan
+                  </label>
+                  <input
+                    id={`permintaan-${medication.id}`}
+                    type="number"
+                    min={0}
+                    value={medication.jumlah_permintaan || ''}
+                    onChange={(event) =>
+                      updateMedication(
+                        medication.id,
+                        'jumlah_permintaan',
+                        Number.parseInt(event.target.value, 10) || 0
+                      )
+                    }
+                    className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass} htmlFor={`signa-${medication.id}`}>
+                    Signa
+                  </label>
+                  <input
+                    id={`signa-${medication.id}`}
+                    type="text"
+                    value={medication.signa}
+                    onChange={(event) => updateMedication(medication.id, 'signa', event.target.value)}
+                    placeholder="Contoh: 3x1"
+                    className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass} htmlFor={`aturan-${medication.id}`}>
+                    Aturan Pakai
+                  </label>
+                  <select
+                    id={`aturan-${medication.id}`}
+                    value={medication.aturan_pakai}
+                    onChange={(event) =>
+                      updateMedication(medication.id, 'aturan_pakai', event.target.value)
+                    }
+                    className="neu-input w-full rounded-lg px-3 py-2 text-small bg-[var(--neu-inset-bg)]"
+                  >
+                    {Object.entries(ATURAN_PAKAI_OPTIONS).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={surfaceClass}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-caption">Dispatch Priority</div>
+            <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+              Tandai resep cito bila butuh proses cepat di farmasi.
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPrioritas('0')}
+              className={`engine-btn px-4 py-2 text-[10px] ${prioritas === '0' ? 'active' : ''}`}
+              aria-pressed={prioritas === '0'}
             >
-              {Object.entries(ATURAN_PAKAI_OPTIONS).map(([val, label]) => (
-                <option key={val} value={val}>
-                  {label}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="text"
-              placeholder="Keterangan (opsional)"
-              value={med.keterangan}
-              onChange={(e) => updateMedication(med.id, 'keterangan', e.target.value)}
-              className="neu-input w-full px-3 py-2 text-small text-platinum bg-transparent rounded-lg"
-            />
+              Normal
+            </button>
+            <button
+              type="button"
+              onClick={() => setPrioritas('1')}
+              className={`engine-btn px-4 py-2 text-[10px] ${
+                prioritas === '1'
+                  ? 'border-[rgba(239,68,68,0.35)] text-[#ef4444] shadow-[0_0_12px_rgba(239,68,68,0.12)]'
+                  : ''
+              }`}
+              aria-pressed={prioritas === '1'}
+            >
+              CITO
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Priority */}
-      <div className="neu-card p-4">
-        <p className="text-caption text-muted mb-2">Prioritas</p>
-        <div className="flex gap-2">
+        <div className={`${insetClass} flex items-center justify-between gap-3`}>
+          <div className="text-[11px] leading-5 text-[var(--text-muted)]">
+            Status siap kirim:
+            <span className="ml-2 font-semibold text-[var(--text-main)]">
+              {readyMedicationCount > 0 ? 'Ada item siap diproses' : 'Lengkapi minimal satu obat'}
+            </span>
+          </div>
+
           <button
-            onClick={() => setPrioritas('0')}
-            className={`flex-1 py-2 rounded-lg text-small transition-all ${
-              prioritas === '0'
-                ? 'neu-tab-active text-platinum'
-                : 'neu-tab text-muted'
-            }`}
+            type="button"
+            onClick={() => void handleFill()}
+            disabled={status.loading || medications.every((item) => !item.nama_obat.trim())}
+            className="shell-primary-button min-w-[164px]"
           >
-            Normal
-          </button>
-          <button
-            onClick={() => setPrioritas('1')}
-            className={`flex-1 py-2 rounded-lg text-small transition-all ${
-              prioritas === '1'
-                ? 'bg-critical/20 text-critical border border-critical/30'
-                : 'neu-tab text-muted'
-            }`}
-          >
-            CITO
+            {status.loading ? 'Filling...' : 'Fill Prescription'}
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Fill Button */}
-      <button
-        onClick={handleFill}
-        disabled={status.loading || medications.every((m) => !m.nama_obat)}
-        className="neu-action-btn w-full py-3.5 text-subtitle text-platinum flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {status.loading ? (
-          <>
-            <div className="w-5 h-5 border-2 border-pulse-500 border-t-transparent rounded-full animate-spin" />
-            Filling...
-          </>
-        ) : (
-          <>
-            <Zap className="w-5 h-5" />
-            Fill Prescription
-          </>
-        )}
-      </button>
-
-      {/* Result Feedback */}
-      {status.result && (
-        <div className="neu-card p-4 space-y-2">
-          <p className="text-caption text-muted">Fill Result</p>
-          <div className="flex gap-4 text-small">
-            <div className="flex items-center gap-1.5 text-safe">
-              <Check className="w-4 h-4" />
-              <span>{status.result.success.length} success</span>
+      {status.result ? (
+        <section className={surfaceClass}>
+          <div className="text-caption">Fill Result</div>
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <div className={insetClass}>
+              <div className="text-[9px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                Success
+              </div>
+              <div className="mt-1 text-[18px] font-semibold text-[var(--text-main)]">
+                {status.result.success.length}
+              </div>
             </div>
-            {status.result.failed.length > 0 && (
-              <div className="flex items-center gap-1.5 text-critical">
-                <X className="w-4 h-4" />
-                <span>{status.result.failed.length} failed</span>
+            <div className={insetClass}>
+              <div className="text-[9px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                Failed
               </div>
-            )}
-            {status.result.skipped.length > 0 && (
-              <div className="flex items-center gap-1.5 text-caution">
-                <AlertCircle className="w-4 h-4" />
-                <span>{status.result.skipped.length} skipped</span>
+              <div className="mt-1 text-[18px] font-semibold text-[#ef4444]">
+                {status.result.failed.length}
               </div>
-            )}
+            </div>
+            <div className={insetClass}>
+              <div className="text-[9px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+                Skipped
+              </div>
+              <div className="mt-1 text-[18px] font-semibold text-[#f59e0b]">
+                {status.result.skipped.length}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        </section>
+      ) : null}
 
-      {status.error && (
-        <div className="neu-card p-4 border border-critical/30 bg-critical/5">
-          <p className="text-small text-critical">{status.error}</p>
-        </div>
-      )}
+      {status.error ? (
+        <section className="rounded-[12px] border border-[rgba(239,68,68,0.28)] bg-[rgba(239,68,68,0.08)] px-4 py-3 text-[11px] leading-5 text-[#ef4444]">
+          {status.error}
+        </section>
+      ) : null}
     </div>
   );
 }

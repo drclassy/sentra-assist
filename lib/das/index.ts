@@ -37,55 +37,54 @@
 // TYPE EXPORTS
 // ============================================================================
 
+// Phase 3 type re-export from cache-promoter
+export type { PromotionResult, SystemHealthReport } from './cache-promoter'
 export type {
+  CacheStats,
+  ClinicalFieldCategory,
+  FieldAttributes,
+  FieldContext,
+  FieldMapping,
+  FieldMappingHint,
+  FieldPosition,
   // Phase 1 types
   FieldSignature,
   FieldType,
-  FieldAttributes,
-  FieldContext,
-  FieldPosition,
-  ScanResult,
-  ScanOptions,
-  ClinicalFieldCategory,
-  FieldMappingHint,
-  // Phase 2 types
-  PageType,
-  MappingContext,
-  MappingRequest,
-  FieldMapping,
-  MappingAction,
-  MappingResult,
-  MapperOptions,
-  MappingCacheEntry,
-  CacheStats,
-  ValidationResult,
   // Phase 3 types
   FillOutcome,
-  LearningEntry,
-  MappingStats,
-  PromotionCriteria,
-  LearningStoreConfig,
   LearningAnalytics,
-} from './types';
-
-// Phase 3 type re-export from cache-promoter
-export type { PromotionResult, SystemHealthReport } from './cache-promoter';
+  LearningEntry,
+  LearningStoreConfig,
+  MapperOptions,
+  MappingAction,
+  MappingCacheEntry,
+  MappingContext,
+  MappingRequest,
+  MappingResult,
+  MappingStats,
+  // Phase 2 types
+  PageType,
+  PromotionCriteria,
+  ScanOptions,
+  ScanResult,
+  ValidationResult,
+} from './types'
 
 // ============================================================================
 // DOM SCANNER EXPORTS
 // ============================================================================
 
 export {
-  scanPageFields,
   classifyFieldType,
   computeUniqueSelector,
-  getFieldAttributes,
-  findAssociatedLabel,
   extractContext,
+  findAssociatedLabel,
+  getFieldAttributes,
   getFieldPosition,
-  serializeForLogging,
   isInteractiveField,
-} from './dom-scanner';
+  scanPageFields,
+  serializeForLogging,
+} from './dom-scanner'
 
 // ============================================================================
 // FIELD CLASSIFIER EXPORTS
@@ -93,95 +92,92 @@ export {
 
 export {
   classifyClinicalField,
+  EPUSKESMAS_FIELD_PATTERNS,
+  getSelectorsForPayloadKey,
+  matchEpuskesmasField,
   requiresHumanConfirmation,
   requiresStaticMapping,
-  matchEpuskesmasField,
-  getSelectorsForPayloadKey,
-  EPUSKESMAS_FIELD_PATTERNS,
-} from './field-classifier';
+} from './field-classifier'
 
 // ============================================================================
 // PHASE 2: SEMANTIC MAPPER EXPORTS
 // ============================================================================
 
 export {
-  mapPayloadToFields,
-  quickMap,
   mapFresh,
-  reportFillResult,
+  mapPayloadToFields,
   previewMapping,
-} from './semantic-mapper';
+  quickMap,
+  reportFillResult,
+} from './semantic-mapper'
 
 // ============================================================================
 // PHASE 2: GEMINI VISION EXPORTS
 // ============================================================================
 
-export {
-  mapFieldsWithGemini,
-  mapFieldsHeuristic,
-} from './gemini-vision';
+export { mapFieldsHeuristic, mapFieldsWithGemini } from './gemini-vision'
 
 // ============================================================================
 // PHASE 2: MAPPING CACHE EXPORTS
 // ============================================================================
 
 export {
+  clearCache,
   computePageHash,
   getCachedMapping,
-  setCachedMapping,
-  updateCacheResult,
-  clearCache,
   getCacheStats,
   restoreMappingsFromCache,
-} from './mapping-cache';
+  setCachedMapping,
+  updateCacheResult,
+} from './mapping-cache'
 
 // ============================================================================
 // PHASE 2: SAFETY VALIDATOR EXPORTS
 // ============================================================================
 
 export {
-  validateMappings,
   classifyClinicalCategory,
-  isCriticalField,
   enforceConfidenceThresholds,
   filterAutoFillable,
   filterNeedsConfirmation,
   generateValidationSummary,
-} from './safety-validator';
+  isCriticalField,
+  validateMappings,
+} from './safety-validator'
 
 // ============================================================================
 // PHASE 3: LEARNING STORE EXPORTS
 // ============================================================================
 
 export {
-  initLearningStore,
-  recordLearning,
-  getLearningEntries,
-  getMappingStats,
-  getAllMappingStats,
   checkPromotionEligibility,
-  getPromotionCandidates,
-  getLearningAnalytics,
   cleanupOldEntries,
   clearLearningStore,
   closeLearningStore,
-} from './learning-store';
+  getAllMappingStats,
+  getLearningAnalytics,
+  getLearningEntries,
+  getMappingStats,
+  getPromotionCandidates,
+  initLearningStore,
+  recordLearning,
+} from './learning-store'
 
 // ============================================================================
 // PHASE 3: FEEDBACK CAPTURE EXPORTS
 // ============================================================================
 
 export {
-  trackFilledField,
-  trackBatchFill,
-  reportFillSuccess,
-  reportFillFailed,
-  reportMappingRejected,
-  reportBatchSuccess,
   cancelAllTracking,
-  setPageContext,
   getTrackingStatus,
-} from './feedback-capture';
+  reportBatchSuccess,
+  reportFillFailed,
+  reportFillSuccess,
+  reportMappingRejected,
+  setPageContext,
+  trackBatchFill,
+  trackFilledField,
+} from './feedback-capture'
 
 // ============================================================================
 // PHASE 3: CACHE PROMOTER EXPORTS
@@ -190,19 +186,19 @@ export {
 export {
   executePromotion,
   getSystemHealth,
-  runMaintenance,
   resetDAS,
+  runMaintenance,
   startScheduledMaintenance,
   stopScheduledMaintenance,
-} from './cache-promoter';
+} from './cache-promoter'
 
 // ============================================================================
 // CONVENIENCE FUNCTIONS
 // ============================================================================
 
-import { scanPageFields, serializeForLogging } from './dom-scanner';
-import { classifyClinicalField, matchEpuskesmasField } from './field-classifier';
-import type { FieldSignature, ScanOptions, ClinicalFieldCategory } from './types';
+import { scanPageFields, serializeForLogging } from './dom-scanner'
+import { classifyClinicalField, matchEpuskesmasField } from './field-classifier'
+import type { ClinicalFieldCategory, FieldSignature, ScanOptions } from './types'
 
 /**
  * Scan page and return simplified field list for debugging
@@ -211,8 +207,8 @@ import type { FieldSignature, ScanOptions, ClinicalFieldCategory } from './types
  * @returns Array of simplified field objects
  */
 export function scanAndSimplify(options?: ScanOptions): object[] {
-  const result = scanPageFields(options);
-  return result.fields.map(serializeForLogging);
+  const result = scanPageFields(options)
+  return result.fields.map(serializeForLogging)
 }
 
 /**
@@ -221,8 +217,10 @@ export function scanAndSimplify(options?: ScanOptions): object[] {
  * @param options - Scan options
  * @returns Object with fields grouped by category
  */
-export function scanAndClassify(options?: ScanOptions): Record<ClinicalFieldCategory, FieldSignature[]> {
-  const result = scanPageFields(options);
+export function scanAndClassify(
+  options?: ScanOptions
+): Record<ClinicalFieldCategory, FieldSignature[]> {
+  const result = scanPageFields(options)
 
   const grouped: Record<ClinicalFieldCategory, FieldSignature[]> = {
     vital_signs: [],
@@ -231,14 +229,14 @@ export function scanAndClassify(options?: ScanOptions): Record<ClinicalFieldCate
     patient_id: [],
     diagnosis: [],
     general: [],
-  };
-
-  for (const field of result.fields) {
-    const hint = classifyClinicalField(field);
-    grouped[hint.category].push(field);
   }
 
-  return grouped;
+  for (const field of result.fields) {
+    const hint = classifyClinicalField(field)
+    grouped[hint.category].push(field)
+  }
+
+  return grouped
 }
 
 /**
@@ -248,17 +246,17 @@ export function scanAndClassify(options?: ScanOptions): Record<ClinicalFieldCate
  * @returns Map of payload key → field signature
  */
 export function scanAndMatchEpuskesmas(options?: ScanOptions): Map<string, FieldSignature> {
-  const result = scanPageFields(options);
-  const matched = new Map<string, FieldSignature>();
+  const result = scanPageFields(options)
+  const matched = new Map<string, FieldSignature>()
 
   for (const field of result.fields) {
-    const payloadKey = matchEpuskesmasField(field);
+    const payloadKey = matchEpuskesmasField(field)
     if (payloadKey) {
-      matched.set(payloadKey, field);
+      matched.set(payloadKey, field)
     }
   }
 
-  return matched;
+  return matched
 }
 
 /**
@@ -268,29 +266,29 @@ export function scanAndMatchEpuskesmas(options?: ScanOptions): Map<string, Field
  * @returns Scan statistics
  */
 export function getScanStats(options?: ScanOptions): {
-  totalFields: number;
-  byType: Record<string, number>;
-  byCategory: Record<string, number>;
-  matchedToEpuskesmas: number;
-  scanDuration: number;
+  totalFields: number
+  byType: Record<string, number>
+  byCategory: Record<string, number>
+  matchedToEpuskesmas: number
+  scanDuration: number
 } {
-  const result = scanPageFields(options);
+  const result = scanPageFields(options)
 
-  const byType: Record<string, number> = {};
-  const byCategory: Record<string, number> = {};
-  let matchedCount = 0;
+  const byType: Record<string, number> = {}
+  const byCategory: Record<string, number> = {}
+  let matchedCount = 0
 
   for (const field of result.fields) {
     // Count by type
-    byType[field.fieldType] = (byType[field.fieldType] || 0) + 1;
+    byType[field.fieldType] = (byType[field.fieldType] || 0) + 1
 
     // Count by category
-    const hint = classifyClinicalField(field);
-    byCategory[hint.category] = (byCategory[hint.category] || 0) + 1;
+    const hint = classifyClinicalField(field)
+    byCategory[hint.category] = (byCategory[hint.category] || 0) + 1
 
     // Count ePuskesmas matches
     if (matchEpuskesmasField(field)) {
-      matchedCount++;
+      matchedCount++
     }
   }
 
@@ -300,5 +298,5 @@ export function getScanStats(options?: ScanOptions): {
     byCategory,
     matchedToEpuskesmas: matchedCount,
     scanDuration: result.scanDuration,
-  };
+  }
 }

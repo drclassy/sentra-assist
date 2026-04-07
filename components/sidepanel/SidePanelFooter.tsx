@@ -1,26 +1,29 @@
 // Designed and constructed by Claudesy.
-/**
- * Ghost Protocols - Side Panel Footer Component
- */
+// A.C.E. Design System — Footer with workspace info
+
+import React from 'react';
 
 interface SidePanelFooterProps {
-  variant?: 'full' | 'minimal';
-  institutionName?: string;
-  showConnectionStatus?: boolean;
+  workspace: string;
+  section: string;
+  loadingPatient?: boolean;
 }
 
-/**
- * SidePanelFooter
- * 
- * @remarks
- * TODO: Add detailed description, parameters, and examples
- * Auto-generated on 2026-03-12
- */
+export const SidePanelFooter: React.FC<SidePanelFooterProps> = ({
+  workspace,
+  section,
+  loadingPatient = false,
+}) => {
+  const workspaceCode = workspace.replace(/^Puskesmas\s+/i, '').trim() || 'Balowerti';
+  const sectionCode = section.replace(/\s+/g, '-');
+  const shellState = loadingPatient ? 'LOADING' : 'READY';
 
-export function SidePanelFooter({
-  variant: _variant = 'full',
-  institutionName: _institutionName = 'Puskesmas Balowerti',
-  showConnectionStatus: _showConnectionStatus = true,
-}: SidePanelFooterProps) {
-  return null;
-}
+  return (
+    <div className="footer">
+      <div className="footer-author">SENTRA-ASSIST v1.9.2-beta TRIAL | Clinical Validation</div>
+      <div className="footer-text">{`WS:${workspaceCode} ${sectionCode} Shell:${shellState}`}</div>
+    </div>
+  );
+};
+
+export { SidePanelFooter as default };

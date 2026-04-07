@@ -12,18 +12,14 @@
  * @version 1.0.0
  */
 
-import { icd10DB } from './icd10-db';
-import type {
-  ICD10Entry,
-  RAGSearchResult,
-  RAGSearchOptions,
-} from './types';
+import { icd10DB } from './icd10-db'
+import type { ICD10Entry, RAGSearchOptions, RAGSearchResult } from './types'
 import {
   DEFAULT_SEARCH_OPTIONS,
+  isValidICD10Code,
   PUSKESMAS_COMMON_CODES,
   SYMPTOM_KEYWORDS,
-  isValidICD10Code,
-} from './types';
+} from './types'
 
 // =============================================================================
 // SEARCH ENGINE
@@ -37,62 +33,62 @@ export async function searchICD10(
   query: string,
   options: RAGSearchOptions = {}
 ): Promise<RAGSearchResult[]> {
-  const opts = { ...DEFAULT_SEARCH_OPTIONS, ...options };
-  const normalizedQuery = query.toLowerCase().trim();
+  const opts = { ...DEFAULT_SEARCH_OPTIONS, ...options }
+  const normalizedQuery = query.toLowerCase().trim()
 
   if (!normalizedQuery) {
-    return [];
+    return []
   }
 
-  const results: RAGSearchResult[] = [];
+  const results: RAGSearchResult[] = []
 
   // Strategy 1: Exact code match
   if (isValidICD10Code(query.toUpperCase())) {
-    const exactMatch = await icd10DB.getByCode(query);
+    const exactMatch = await icd10DB.getByCode(query)
     if (exactMatch) {
       results.push({
         entry: exactMatch,
         relevance_score: 1.0,
         match_type: 'exact_code',
-      });
+      })
     }
   }
 
   // Strategy 2: Code prefix match
   if (/^[A-Z]\d{0,2}$/i.test(query)) {
-    const prefixMatches = await icd10DB.searchByCodePrefix(query, opts.limit);
+    const prefixMatches = await icd10DB.searchByCodePrefix(query, opts.limit)
     prefixMatches.forEach(entry => {
       if (!results.some(r => r.entry.code === entry.code)) {
         results.push({
           entry,
           relevance_score: 0.9,
           match_type: 'category',
-        });
+        })
       }
-    });
+    })
   }
 
   // Strategy 3: Symptom keyword expansion
-  const expandedCategories = expandSymptomKeywords(normalizedQuery);
+  const expandedCategories = expandSymptomKeywords(normalizedQuery)
   if (expandedCategories.length > 0) {
-    const categoryEntries = await fetchCategoryEntries(expandedCategories);
+    const categoryEntries = await fetchCategoryEntries(expandedCategories)
     categoryEntries.forEach(entry => {
       if (!results.some(r => r.entry.code === entry.code)) {
-        const matchedKeywords = findMatchedKeywords(normalizedQuery, entry);
+        const matchedKeywords = findMatchedKeywords(normalizedQuery, entry)
         results.push({
           entry,
           relevance_score: calculateKeywordScore(normalizedQuery, entry, matchedKeywords),
           match_type: 'keyword',
           matched_keywords: matchedKeywords,
-        });
+        })
       }
-    });
+    })
   }
 
   // Strategy 4: Direct keyword index lookup
-  const keywords = extractSearchKeywords(normalizedQuery);
+  const keywords = extractSearchKeywords(normalizedQuery)
   for (const keyword of keywords) {
-    const keywordMatches = await icd10DB.getByKeyword(keyword);
+    const keywordMatches = await icd10DB.getByKeyword(keyword)
     keywordMatches.forEach(entry => {
       if (!results.some(r => r.entry.code === entry.code)) {
         results.push({
@@ -100,39 +96,37 @@ export async function searchICD10(
           relevance_score: calculateKeywordScore(normalizedQuery, entry, [keyword]),
           match_type: 'keyword',
           matched_keywords: [keyword],
-        });
+        })
       }
-    });
+    })
   }
 
   // Strategy 5: Fuzzy text search in descriptions
   if (results.length < opts.limit) {
-    const fuzzyResults = await fuzzySearchDescriptions(normalizedQuery, opts.limit - results.length);
+    const fuzzyResults = await fuzzySearchDescriptions(normalizedQuery, opts.limit - results.length)
     fuzzyResults.forEach(result => {
       if (!results.some(r => r.entry.code === result.entry.code)) {
-        results.push(result);
+        results.push(result)
       }
-    });
+    })
   }
 
   // Apply filters and scoring adjustments
   let filtered = results
     .filter(r => r.relevance_score >= opts.min_score)
     .filter(r => !opts.leaf_only || r.entry.is_leaf)
-    .filter(r => !opts.chapter_filter || r.entry.chapter === opts.chapter_filter);
+    .filter(r => !opts.chapter_filter || r.entry.chapter === opts.chapter_filter)
 
   // Boost common Puskesmas diagnoses
   if (opts.boost_common) {
     filtered = filtered.map(r => ({
       ...r,
       relevance_score: boostCommonScore(r),
-    }));
+    }))
   }
 
   // Sort by relevance and limit
-  return filtered
-    .sort((a, b) => b.relevance_score - a.relevance_score)
-    .slice(0, opts.limit);
+  return filtered.sort((a, b) => b.relevance_score - a.relevance_score).slice(0, opts.limit)
 }
 
 /**
@@ -145,9 +139,7 @@ export async function searchForDiagnosisSuggestions(
   limit = 15
 ): Promise<RAGSearchResult[]> {
   // Combine complaints for better coverage
-  const fullQuery = [chiefComplaint, additionalSymptoms]
-    .filter(Boolean)
-    .join(' ');
+  const fullQuery = [chiefComplaint, additionalSymptoms].filter(Boolean).join(' ')
 
   // Search with boosted common diagnoses
   const results = await searchICD10(fullQuery, {
@@ -155,9 +147,9 @@ export async function searchForDiagnosisSuggestions(
     leaf_only: true,
     boost_common: true,
     min_score: 0.2,
-  });
+  })
 
-  return results;
+  return results
 }
 
 /**
@@ -165,22 +157,22 @@ export async function searchForDiagnosisSuggestions(
  * Used for validation layer
  */
 export async function verifyICD10Codes(codes: string[]): Promise<{
-  valid: string[];
-  invalid: string[];
+  valid: string[]
+  invalid: string[]
 }> {
-  const valid: string[] = [];
-  const invalid: string[] = [];
+  const valid: string[] = []
+  const invalid: string[] = []
 
   for (const code of codes) {
-    const exists = await icd10DB.exists(code);
+    const exists = await icd10DB.exists(code)
     if (exists) {
-      valid.push(code);
+      valid.push(code)
     } else {
-      invalid.push(code);
+      invalid.push(code)
     }
   }
 
-  return { valid, invalid };
+  return { valid, invalid }
 }
 
 /**
@@ -188,7 +180,7 @@ export async function verifyICD10Codes(codes: string[]): Promise<{
  * Used for displaying diagnosis details
  */
 export async function getICD10Details(codes: string[]): Promise<ICD10Entry[]> {
-  return icd10DB.getByCodes(codes);
+  return icd10DB.getByCodes(codes)
 }
 
 // =============================================================================
@@ -199,46 +191,46 @@ export async function getICD10Details(codes: string[]): Promise<ICD10Entry[]> {
  * Expand symptom keywords to ICD-10 categories
  */
 function expandSymptomKeywords(query: string): string[] {
-  const categories: Set<string> = new Set();
+  const categories: Set<string> = new Set()
 
   for (const [symptom, cats] of Object.entries(SYMPTOM_KEYWORDS)) {
     if (query.includes(symptom)) {
-      cats.forEach(c => categories.add(c));
+      cats.forEach(c => categories.add(c))
     }
   }
 
   // Also check individual words
-  const words = query.split(/\s+/);
+  const words = query.split(/\s+/)
   for (const word of words) {
     for (const [symptom, cats] of Object.entries(SYMPTOM_KEYWORDS)) {
       if (symptom.includes(word) || word.includes(symptom)) {
-        cats.forEach(c => categories.add(c));
+        cats.forEach(c => categories.add(c))
       }
     }
   }
 
-  return Array.from(categories);
+  return Array.from(categories)
 }
 
 /**
  * Fetch entries for multiple categories
  */
 async function fetchCategoryEntries(categories: string[]): Promise<ICD10Entry[]> {
-  const entries: ICD10Entry[] = [];
+  const entries: ICD10Entry[] = []
 
   for (const category of categories) {
     if (category.length === 3) {
       // Full category code
-      const categoryEntries = await icd10DB.getByCategory(category);
-      entries.push(...categoryEntries);
+      const categoryEntries = await icd10DB.getByCategory(category)
+      entries.push(...categoryEntries)
     } else {
       // Code prefix
-      const prefixEntries = await icd10DB.searchByCodePrefix(category, 10);
-      entries.push(...prefixEntries);
+      const prefixEntries = await icd10DB.searchByCodePrefix(category, 10)
+      entries.push(...prefixEntries)
     }
   }
 
-  return entries;
+  return entries
 }
 
 /**
@@ -249,15 +241,15 @@ function extractSearchKeywords(query: string): string[] {
     .toLowerCase()
     .replace(/[^\w\s]/g, ' ')
     .split(/\s+/)
-    .filter(w => w.length >= 3);
+    .filter(w => w.length >= 3)
 }
 
 /**
  * Find matched keywords between query and entry
  */
 function findMatchedKeywords(query: string, entry: ICD10Entry): string[] {
-  const queryWords = new Set(extractSearchKeywords(query));
-  return entry.keywords.filter(k => queryWords.has(k));
+  const queryWords = new Set(extractSearchKeywords(query))
+  return entry.keywords.filter(k => queryWords.has(k))
 }
 
 /**
@@ -268,86 +260,86 @@ function calculateKeywordScore(
   entry: ICD10Entry,
   matchedKeywords: string[]
 ): number {
-  const queryWords = extractSearchKeywords(query);
+  const queryWords = extractSearchKeywords(query)
 
-  if (queryWords.length === 0) return 0.1;
+  if (queryWords.length === 0) return 0.1
 
   // Base score from keyword matches
-  const keywordScore = matchedKeywords.length / Math.max(queryWords.length, 1);
+  const keywordScore = matchedKeywords.length / Math.max(queryWords.length, 1)
 
   // Boost for description matches
-  const descScore = calculateDescriptionMatch(query, entry);
+  const descScore = calculateDescriptionMatch(query, entry)
 
   // Combine scores
-  return Math.min(0.95, (keywordScore * 0.6) + (descScore * 0.4));
+  return Math.min(0.95, keywordScore * 0.6 + descScore * 0.4)
 }
 
 /**
  * Calculate description match score
  */
 function calculateDescriptionMatch(query: string, entry: ICD10Entry): number {
-  const queryLower = query.toLowerCase();
-  const nameLower = (entry.name_id + ' ' + entry.name_en).toLowerCase();
+  const queryLower = query.toLowerCase()
+  const nameLower = (entry.name_id + ' ' + entry.name_en).toLowerCase()
 
   // Check for substring matches
-  const words = extractSearchKeywords(queryLower);
-  let matches = 0;
+  const words = extractSearchKeywords(queryLower)
+  let matches = 0
 
   for (const word of words) {
     if (nameLower.includes(word)) {
-      matches++;
+      matches++
     }
   }
 
-  return words.length > 0 ? matches / words.length : 0;
+  return words.length > 0 ? matches / words.length : 0
 }
 
 /**
  * Boost score for common Puskesmas diagnoses
  */
 function boostCommonScore(result: RAGSearchResult): number {
-  const commonBoost = PUSKESMAS_COMMON_CODES[result.entry.code] || 0;
+  const commonBoost = PUSKESMAS_COMMON_CODES[result.entry.code] || 0
   // Add up to 0.15 bonus for common codes
-  return Math.min(1.0, result.relevance_score + (commonBoost * 0.15));
+  return Math.min(1.0, result.relevance_score + commonBoost * 0.15)
 }
 
 /**
  * Fuzzy search in descriptions (fallback)
  */
-async function fuzzySearchDescriptions(
-  query: string,
-  limit: number
-): Promise<RAGSearchResult[]> {
+async function fuzzySearchDescriptions(query: string, limit: number): Promise<RAGSearchResult[]> {
   // For now, use prefix search on common chapters
   // Future: implement proper fuzzy matching
-  const results: RAGSearchResult[] = [];
+  const results: RAGSearchResult[] = []
 
   // Search in common chapters for Puskesmas
-  const commonChapters = ['J00-J99', 'A00-B99', 'K00-K93', 'R00-R99'];
+  const commonChapters = ['J00-J99', 'A00-B99', 'K00-K93', 'R00-R99']
 
   for (const chapter of commonChapters) {
-    if (results.length >= limit) break;
+    if (results.length >= limit) break
 
-    const entries = await icd10DB.getByChapter(chapter);
+    const entries = await icd10DB.getByChapter(chapter)
 
     for (const entry of entries) {
-      if (results.length >= limit) break;
+      if (results.length >= limit) break
 
-      const descLower = (entry.name_id + ' ' + entry.name_en).toLowerCase();
-      const queryLower = query.toLowerCase();
+      const descLower = (entry.name_id + ' ' + entry.name_en).toLowerCase()
+      const queryLower = query.toLowerCase()
 
       // Simple contains check
-      if (descLower.includes(queryLower) || queryLower.split(' ').some(w => descLower.includes(w))) {
+      if (
+        descLower.includes(queryLower) ||
+        queryLower.split(' ').some(w => descLower.includes(w))
+      ) {
         results.push({
           entry,
           relevance_score: 0.3, // Lower score for fuzzy matches
           match_type: 'fuzzy',
-        });
+        })
       }
     }
   }
 
-  return results;
+  return results
 }
 
 // =============================================================================
@@ -360,15 +352,15 @@ async function fuzzySearchDescriptions(
  */
 export function buildRAGContext(results: RAGSearchResult[]): string {
   if (results.length === 0) {
-    return 'Tidak ada kode ICD-10 yang ditemukan dalam database.';
+    return 'Tidak ada kode ICD-10 yang ditemukan dalam database.'
   }
 
   const lines = results.map((r, i) => {
-    const entry = r.entry;
-    return `${i + 1}. ${entry.code} - ${entry.name_id} (${entry.name_en})`;
-  });
+    const entry = r.entry
+    return `${i + 1}. ${entry.code} - ${entry.name_id} (${entry.name_en})`
+  })
 
-  return `Kode ICD-10 yang relevan dari database:\n${lines.join('\n')}`;
+  return `Kode ICD-10 yang relevan dari database:\n${lines.join('\n')}`
 }
 
 /**
@@ -376,13 +368,13 @@ export function buildRAGContext(results: RAGSearchResult[]): string {
  */
 export function buildDetailedRAGContext(results: RAGSearchResult[]): string {
   if (results.length === 0) {
-    return 'Tidak ada kode ICD-10 yang ditemukan dalam database.';
+    return 'Tidak ada kode ICD-10 yang ditemukan dalam database.'
   }
 
   const lines = results.map((r, i) => {
-    const entry = r.entry;
-    const keywords = entry.keywords.slice(0, 5).join(', ');
-    const confidence = (r.relevance_score * 100).toFixed(0);
+    const entry = r.entry
+    const keywords = entry.keywords.slice(0, 5).join(', ')
+    const confidence = (r.relevance_score * 100).toFixed(0)
 
     return [
       `${i + 1}. Kode: ${entry.code}`,
@@ -390,8 +382,8 @@ export function buildDetailedRAGContext(results: RAGSearchResult[]): string {
       `   English: ${entry.name_en}`,
       `   Keywords: ${keywords}`,
       `   Relevance: ${confidence}%`,
-    ].join('\n');
-  });
+    ].join('\n')
+  })
 
-  return `Kode ICD-10 yang relevan dari database lokal:\n\n${lines.join('\n\n')}`;
+  return `Kode ICD-10 yang relevan dari database lokal:\n\n${lines.join('\n\n')}`
 }

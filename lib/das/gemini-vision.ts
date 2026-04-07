@@ -14,12 +14,12 @@
  */
 
 import type {
-  FieldSignature,
   FieldMapping,
+  FieldSignature,
+  MappingAction,
   MappingContext,
   MappingResult,
-  MappingAction,
-} from './types';
+} from './types'
 
 // ============================================================================
 // CONFIGURATION
@@ -29,12 +29,12 @@ import type {
  * Gemini configuration type
  */
 interface GeminiConfig {
-  projectId: string;
-  location: string;
-  model: string;
-  maxTokens: number;
-  temperature: number;
-  timeout: number;
+  projectId: string
+  location: string
+  model: string
+  maxTokens: number
+  temperature: number
+  timeout: number
 }
 
 /**
@@ -47,7 +47,7 @@ const DEFAULT_GEMINI_CONFIG: GeminiConfig = {
   maxTokens: 4096,
   temperature: 0.1,
   timeout: 30000,
-};
+}
 
 /**
  * Get Gemini config from storage or environment
@@ -55,39 +55,39 @@ const DEFAULT_GEMINI_CONFIG: GeminiConfig = {
 async function getGeminiConfig(): Promise<GeminiConfig> {
   try {
     // Try chrome.storage first
-    const result = await browser.storage.local.get('das:gemini:config');
-    const stored = result['das:gemini:config'] as Partial<GeminiConfig> | undefined;
+    const result = await browser.storage.local.get('das:gemini:config')
+    const stored = result['das:gemini:config'] as Partial<GeminiConfig> | undefined
 
     if (stored?.projectId) {
-      return { ...DEFAULT_GEMINI_CONFIG, ...stored };
+      return { ...DEFAULT_GEMINI_CONFIG, ...stored }
     }
 
     // Fallback to existing vertex-ai config
-    const vertexResult = await browser.storage.sync.get('sentra:vertex:config');
+    const vertexResult = await browser.storage.sync.get('sentra:vertex:config')
     const vertexConfig = vertexResult['sentra:vertex:config'] as
       | { projectId?: string; location?: string }
-      | undefined;
+      | undefined
 
     if (vertexConfig?.projectId) {
       return {
         ...DEFAULT_GEMINI_CONFIG,
         projectId: vertexConfig.projectId,
         location: vertexConfig.location || DEFAULT_GEMINI_CONFIG.location,
-      };
+      }
     }
 
     // Final fallback - use default project (should be configured)
-    console.warn('[DAS:Gemini] No config found, using fallback');
+    console.warn('[DAS:Gemini] No config found, using fallback')
     return {
       ...DEFAULT_GEMINI_CONFIG,
       projectId: 'sentra-healthcare-solution', // Fallback only
-    };
+    }
   } catch (error) {
-    console.error('[DAS:Gemini] Config error:', error);
+    console.error('[DAS:Gemini] Config error:', error)
     return {
       ...DEFAULT_GEMINI_CONFIG,
       projectId: 'sentra-healthcare-solution',
-    };
+    }
   }
 }
 
@@ -100,45 +100,47 @@ async function getGeminiConfig(): Promise<GeminiConfig> {
  * Removes newlines, control characters, and limits length
  */
 function sanitizeForPrompt(input: string | null | undefined, maxLength = 100): string {
-  if (!input) return '';
+  if (!input) return ''
 
-  return input
-    // Remove newlines and carriage returns (prevent instruction injection)
-    .replace(/[\n\r]/g, ' ')
-    // Remove control characters
-    .replace(/[\p{Cc}\p{Cf}]/gu, '')
-    // Remove potential prompt delimiters
-    .replace(/```/g, '')
-    .replace(/---/g, '')
-    // Collapse multiple spaces
-    .replace(/\s+/g, ' ')
-    // Trim and limit length
-    .trim()
-    .substring(0, maxLength);
+  return (
+    input
+      // Remove newlines and carriage returns (prevent instruction injection)
+      .replace(/[\n\r]/g, ' ')
+      // Remove control characters
+      .replace(/[\p{Cc}\p{Cf}]/gu, '')
+      // Remove potential prompt delimiters
+      .replace(/```/g, '')
+      .replace(/---/g, '')
+      // Collapse multiple spaces
+      .replace(/\s+/g, ' ')
+      // Trim and limit length
+      .trim()
+      .substring(0, maxLength)
+  )
 }
 
 /**
  * Sanitize payload for AI prompt
  */
 function sanitizePayload(payload: Record<string, unknown>): Record<string, unknown> {
-  const sanitized: Record<string, unknown> = {};
+  const sanitized: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(payload)) {
-    const sanitizedKey = sanitizeForPrompt(key, 50);
+    const sanitizedKey = sanitizeForPrompt(key, 50)
 
     if (typeof value === 'string') {
-      sanitized[sanitizedKey] = sanitizeForPrompt(value, 200);
+      sanitized[sanitizedKey] = sanitizeForPrompt(value, 200)
     } else if (typeof value === 'number' || typeof value === 'boolean') {
-      sanitized[sanitizedKey] = value;
+      sanitized[sanitizedKey] = value
     } else if (value === null || value === undefined) {
-      sanitized[sanitizedKey] = null;
+      sanitized[sanitizedKey] = null
     } else {
       // For complex objects, stringify and sanitize
-      sanitized[sanitizedKey] = sanitizeForPrompt(JSON.stringify(value), 200);
+      sanitized[sanitizedKey] = sanitizeForPrompt(JSON.stringify(value), 200)
     }
   }
 
-  return sanitized;
+  return sanitized
 }
 
 /**
@@ -153,7 +155,7 @@ function sanitizeFieldForPrompt(field: FieldSignature): Record<string, unknown> 
     placeholder: sanitizeForPrompt(field.attributes.placeholder, 100),
     label: sanitizeForPrompt(field.label, 100),
     ariaLabel: sanitizeForPrompt(field.attributes.ariaLabel, 100),
-  };
+  }
 }
 
 // ============================================================================
@@ -166,16 +168,16 @@ function sanitizeFieldForPrompt(field: FieldSignature): Record<string, unknown> 
  */
 async function getAuthToken(): Promise<string> {
   return new Promise((resolve, reject) => {
-    chrome.runtime.sendMessage({ type: 'GET_AUTH_TOKEN' }, (response) => {
+    chrome.runtime.sendMessage({ type: 'GET_AUTH_TOKEN' }, response => {
       if (response?.error) {
-        reject(new Error(response.error));
+        reject(new Error(response.error))
       } else if (response?.token) {
-        resolve(response.token);
+        resolve(response.token)
       } else {
-        reject(new Error('No token received from background'));
+        reject(new Error('No token received from background'))
       }
-    });
-  });
+    })
+  })
 }
 
 // ============================================================================
@@ -192,15 +194,14 @@ function buildMappingPrompt(
   context: MappingContext
 ): string {
   // SECURITY: Sanitize all user-controlled data before injection
-  const sanitizedPayload = sanitizePayload(payload);
-  const sanitizedFields = fields.map(sanitizeFieldForPrompt);
+  const sanitizedPayload = sanitizePayload(payload)
+  const sanitizedFields = fields.map(sanitizeFieldForPrompt)
 
   // Sanitize context values
-  const sanitizedPageType = sanitizeForPrompt(context.pageType, 30);
-  const sanitizedAge = context.patientAge ? String(context.patientAge) : 'tidak diketahui';
-  const sanitizedMedicalContext = context.medicalContext
-    ?.map((c) => sanitizeForPrompt(c, 50))
-    .join(', ') || 'umum';
+  const sanitizedPageType = sanitizeForPrompt(context.pageType, 30)
+  const sanitizedAge = context.patientAge ? String(context.patientAge) : 'tidak diketahui'
+  const sanitizedMedicalContext =
+    context.medicalContext?.map(c => sanitizeForPrompt(c, 50)).join(', ') || 'umum'
 
   return `Anda adalah AI semantic mapper untuk sistem rekam medis elektronik Indonesia (ePuskesmas).
 
@@ -253,7 +254,7 @@ OUTPUT FORMAT (JSON only, no markdown):
   ],
   "unmapped": ["string"],
   "warnings": ["string"]
-}`;
+}`
 }
 
 // ============================================================================
@@ -262,48 +263,46 @@ OUTPUT FORMAT (JSON only, no markdown):
 
 interface GeminiMappingResponse {
   mappings: Array<{
-    payloadKey: string;
-    fieldId: string;
-    confidence: number;
-    reasoning: string;
-  }>;
-  unmapped: string[];
-  warnings: string[];
+    payloadKey: string
+    fieldId: string
+    confidence: number
+    reasoning: string
+  }>
+  unmapped: string[]
+  warnings: string[]
 }
 
 /**
  * Parse Gemini response into FieldMapping array
  */
-function parseGeminiResponse(
-  responseText: string
-): GeminiMappingResponse {
+function parseGeminiResponse(responseText: string): GeminiMappingResponse {
   try {
     // Clean response (remove markdown code blocks if present)
-    let cleaned = responseText.trim();
+    let cleaned = responseText.trim()
     if (cleaned.startsWith('```json')) {
-      cleaned = cleaned.slice(7);
+      cleaned = cleaned.slice(7)
     }
     if (cleaned.startsWith('```')) {
-      cleaned = cleaned.slice(3);
+      cleaned = cleaned.slice(3)
     }
     if (cleaned.endsWith('```')) {
-      cleaned = cleaned.slice(0, -3);
+      cleaned = cleaned.slice(0, -3)
     }
 
-    const parsed = JSON.parse(cleaned.trim());
+    const parsed = JSON.parse(cleaned.trim())
 
     return {
       mappings: Array.isArray(parsed.mappings) ? parsed.mappings : [],
       unmapped: Array.isArray(parsed.unmapped) ? parsed.unmapped : [],
       warnings: Array.isArray(parsed.warnings) ? parsed.warnings : [],
-    };
+    }
   } catch (error) {
-    console.error('[DAS:GeminiVision] Parse error:', error);
+    console.error('[DAS:GeminiVision] Parse error:', error)
     return {
       mappings: [],
       unmapped: [],
       warnings: [`Parse error: ${error instanceof Error ? error.message : 'Unknown'}`],
-    };
+    }
   }
 }
 
@@ -311,9 +310,9 @@ function parseGeminiResponse(
  * Convert confidence to action
  */
 function confidenceToAction(confidence: number): MappingAction {
-  if (confidence >= 0.95) return 'AUTO_FILL';
-  if (confidence >= 0.80) return 'CAUTIOUS_FILL';
-  return 'HUMAN_REQUIRED';
+  if (confidence >= 0.95) return 'AUTO_FILL'
+  if (confidence >= 0.8) return 'CAUTIOUS_FILL'
+  return 'HUMAN_REQUIRED'
 }
 
 // ============================================================================
@@ -333,20 +332,20 @@ export async function mapFieldsWithGemini(
   fields: FieldSignature[],
   context: MappingContext
 ): Promise<MappingResult> {
-  const startTime = Date.now();
+  const startTime = Date.now()
 
   try {
     // 1. Get Config (from storage, not hardcoded)
-    const config = await getGeminiConfig();
+    const config = await getGeminiConfig()
 
     // 2. Get Auth Token
-    const token = await getAuthToken();
+    const token = await getAuthToken()
 
     // 3. Build Prompt
-    const prompt = buildMappingPrompt(payload, fields, context);
+    const prompt = buildMappingPrompt(payload, fields, context)
 
     // 4. Prepare Request
-    const url = `https://${config.location}-aiplatform.googleapis.com/v1/projects/${config.projectId}/locations/${config.location}/publishers/google/models/${config.model}:generateContent`;
+    const url = `https://${config.location}-aiplatform.googleapis.com/v1/projects/${config.projectId}/locations/${config.location}/publishers/google/models/${config.model}:generateContent`
 
     const requestBody = {
       contents: [
@@ -360,7 +359,7 @@ export async function mapFieldsWithGemini(
         temperature: config.temperature,
         responseMimeType: 'application/json',
       },
-    };
+    }
 
     // 5. Execute Request
     const response = await fetch(url, {
@@ -372,25 +371,25 @@ export async function mapFieldsWithGemini(
       },
       body: JSON.stringify(requestBody),
       signal: AbortSignal.timeout(config.timeout),
-    });
+    })
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API error (${response.status}): ${errorText}`);
+      const errorText = await response.text()
+      throw new Error(`Gemini API error (${response.status}): ${errorText}`)
     }
 
-    const data = await response.json();
+    const data = await response.json()
 
     // 5. Parse Response
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const parsed = parseGeminiResponse(responseText);
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    const parsed = parseGeminiResponse(responseText)
 
     // 6. Build FieldMapping array
-    const fieldMap = new Map(fields.map((f) => [f.id, f]));
-    const mappings: FieldMapping[] = [];
+    const fieldMap = new Map(fields.map(f => [f.id, f]))
+    const mappings: FieldMapping[] = []
 
     for (const mapping of parsed.mappings) {
-      const targetField = fieldMap.get(mapping.fieldId);
+      const targetField = fieldMap.get(mapping.fieldId)
       if (targetField) {
         mappings.push({
           payloadKey: mapping.payloadKey,
@@ -398,7 +397,7 @@ export async function mapFieldsWithGemini(
           confidence: mapping.confidence,
           reasoning: mapping.reasoning,
           action: confidenceToAction(mapping.confidence),
-        });
+        })
       }
     }
 
@@ -408,9 +407,9 @@ export async function mapFieldsWithGemini(
       warnings: parsed.warnings,
       fromCache: false,
       latencyMs: Date.now() - startTime,
-    };
+    }
   } catch (error) {
-    console.error('[DAS:GeminiVision] Mapping error:', error);
+    console.error('[DAS:GeminiVision] Mapping error:', error)
 
     // Return empty result on error
     return {
@@ -419,7 +418,7 @@ export async function mapFieldsWithGemini(
       warnings: [`Gemini error: ${error instanceof Error ? error.message : 'Unknown'}`],
       fromCache: false,
       latencyMs: Date.now() - startTime,
-    };
+    }
   }
 }
 
@@ -436,50 +435,50 @@ export function mapFieldsHeuristic(
   payload: Record<string, unknown>,
   fields: FieldSignature[]
 ): MappingResult {
-  const startTime = Date.now();
-  const mappings: FieldMapping[] = [];
-  const unmapped: string[] = [];
+  const startTime = Date.now()
+  const mappings: FieldMapping[] = []
+  const unmapped: string[] = []
 
   for (const payloadKey of Object.keys(payload)) {
-    const normalizedKey = payloadKey.toLowerCase().replace(/[_-]/g, '');
+    const normalizedKey = payloadKey.toLowerCase().replace(/[_-]/g, '')
 
     // Try to find matching field
-    let bestMatch: FieldSignature | null = null;
-    let bestScore = 0;
+    let bestMatch: FieldSignature | null = null
+    let bestScore = 0
 
     for (const field of fields) {
-      let score = 0;
+      let score = 0
 
       // Check name attribute
-      const name = field.attributes.name?.toLowerCase().replace(/[_[\]-]/g, '') || '';
-      if (name === normalizedKey) score = 0.95;
-      else if (name.includes(normalizedKey) || normalizedKey.includes(name)) score = 0.75;
+      const name = field.attributes.name?.toLowerCase().replace(/[_[\]-]/g, '') || ''
+      if (name === normalizedKey) score = 0.95
+      else if (name.includes(normalizedKey) || normalizedKey.includes(name)) score = 0.75
 
       // Check label
-      const label = field.label?.toLowerCase().replace(/[_-]/g, '') || '';
-      if (label === normalizedKey) score = Math.max(score, 0.90);
-      else if (label.includes(normalizedKey)) score = Math.max(score, 0.70);
+      const label = field.label?.toLowerCase().replace(/[_-]/g, '') || ''
+      if (label === normalizedKey) score = Math.max(score, 0.9)
+      else if (label.includes(normalizedKey)) score = Math.max(score, 0.7)
 
       // Check placeholder
-      const placeholder = field.attributes.placeholder?.toLowerCase() || '';
-      if (placeholder.includes(normalizedKey)) score = Math.max(score, 0.60);
+      const placeholder = field.attributes.placeholder?.toLowerCase() || ''
+      if (placeholder.includes(normalizedKey)) score = Math.max(score, 0.6)
 
       if (score > bestScore) {
-        bestScore = score;
-        bestMatch = field;
+        bestScore = score
+        bestMatch = field
       }
     }
 
-    if (bestMatch && bestScore >= 0.50) {
+    if (bestMatch && bestScore >= 0.5) {
       mappings.push({
         payloadKey,
         targetField: bestMatch,
         confidence: bestScore,
         reasoning: 'Heuristic match (AI unavailable)',
         action: confidenceToAction(bestScore),
-      });
+      })
     } else {
-      unmapped.push(payloadKey);
+      unmapped.push(payloadKey)
     }
   }
 
@@ -489,5 +488,5 @@ export function mapFieldsHeuristic(
     warnings: ['Using heuristic fallback (Gemini unavailable)'],
     fromCache: false,
     latencyMs: Date.now() - startTime,
-  };
+  }
 }

@@ -1,14 +1,14 @@
 // Designed and constructed by Claudesy.
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DiagnosisRequestContext } from '@/types/api';
-import type { Encounter } from '~/utils/types';
-import { runGetSuggestionsFlow } from './get-suggestions-flow';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { DiagnosisRequestContext } from '@/types/api'
+import type { Encounter } from '~/utils/types'
+import { runGetSuggestionsFlow } from './get-suggestions-flow'
 
-const runDiagnosisEngineMock = vi.fn();
+const runDiagnosisEngineMock = vi.fn()
 
 vi.mock('./engine', () => ({
   runDiagnosisEngine: (...args: unknown[]) => runDiagnosisEngineMock(...args),
-}));
+}))
 
 const encounter: Encounter = {
   id: 'enc-fallback-1',
@@ -32,7 +32,7 @@ const encounter: Encounter = {
     penyakit_kronis: [],
   },
   resep: [],
-};
+}
 
 const context: DiagnosisRequestContext = {
   keluhan_utama: 'Nyeri dada',
@@ -45,12 +45,12 @@ const context: DiagnosisRequestContext = {
     respiratory_rate: 17,
     temperature: 36.3,
   },
-};
+}
 
 describe('runGetSuggestionsFlow fallback differential', () => {
   beforeEach(() => {
-    runDiagnosisEngineMock.mockReset();
-  });
+    runDiagnosisEngineMock.mockReset()
+  })
 
   it('returns complaint-based fallback when engine suggestions are empty', async () => {
     runDiagnosisEngineMock.mockResolvedValue({
@@ -66,18 +66,16 @@ describe('runGetSuggestionsFlow fallback differential', () => {
         unverified_codes: [],
         warnings: [],
       },
-    });
+    })
 
-    const result = await runGetSuggestionsFlow(encounter, context);
+    const result = await runGetSuggestionsFlow(encounter, context)
 
-    expect(result.success).toBe(true);
-    expect(result.data?.diagnosis_suggestions.length).toBeGreaterThan(0);
-    expect(result.data?.diagnosis_suggestions[0]?.icd_x).toBe('I20.9');
-    expect(result.data?.alerts.some((alert) => alert.id.startsWith('fallback-'))).toBe(true);
-    expect(result.data?.validation_summary?.warnings.some((w) => w.includes('fallback'))).toBe(
-      true,
-    );
-  });
+    expect(result.success).toBe(true)
+    expect(result.data?.diagnosis_suggestions.length).toBeGreaterThan(0)
+    expect(result.data?.diagnosis_suggestions[0]?.icd_x).toBe('I20.9')
+    expect(result.data?.alerts.some(alert => alert.id.startsWith('fallback-'))).toBe(true)
+    expect(result.data?.validation_summary?.warnings.some(w => w.includes('fallback'))).toBe(true)
+  })
 
   it('keeps engine suggestions when available', async () => {
     runDiagnosisEngineMock.mockResolvedValue({
@@ -103,14 +101,14 @@ describe('runGetSuggestionsFlow fallback differential', () => {
         unverified_codes: [],
         warnings: [],
       },
-    });
+    })
 
-    const result = await runGetSuggestionsFlow(encounter, context);
+    const result = await runGetSuggestionsFlow(encounter, context)
 
-    expect(result.success).toBe(true);
-    expect(result.data?.diagnosis_suggestions[0]?.icd_x).toBe('A41.9');
-    expect(result.data?.alerts.some((alert) => alert.id.startsWith('fallback-'))).toBe(false);
-  });
+    expect(result.success).toBe(true)
+    expect(result.data?.diagnosis_suggestions[0]?.icd_x).toBe('A41.9')
+    expect(result.data?.alerts.some(alert => alert.id.startsWith('fallback-'))).toBe(false)
+  })
 
   it('normalizes OCR-like ICD and numeric diagnosis label into readable chronic name', async () => {
     runDiagnosisEngineMock.mockResolvedValue({
@@ -136,12 +134,12 @@ describe('runGetSuggestionsFlow fallback differential', () => {
         unverified_codes: [],
         warnings: [],
       },
-    });
+    })
 
-    const result = await runGetSuggestionsFlow(encounter, context);
+    const result = await runGetSuggestionsFlow(encounter, context)
 
-    expect(result.success).toBe(true);
-    expect(result.data?.diagnosis_suggestions[0]?.icd_x).toBe('I50');
-    expect(result.data?.diagnosis_suggestions[0]?.nama).toBe('Gagal Jantung');
-  });
-});
+    expect(result.success).toBe(true)
+    expect(result.data?.diagnosis_suggestions[0]?.icd_x).toBe('I50')
+    expect(result.data?.diagnosis_suggestions[0]?.nama).toBe('Gagal Jantung')
+  })
+})

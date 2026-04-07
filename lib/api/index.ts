@@ -10,13 +10,12 @@
  * @module lib/api
  */
 
-export { SentraAPI, calculateQuantity, mapAturanPakaiToValue } from './sentra-api';
+// Pieces Integration
+export { PiecesClient, piecesClient } from './pieces-client'
+export * from './pieces-types'
 export type {
   CDSSResponse,
   DiagnosisRequestContext,
   PrescriptionRequestContext,
-} from './sentra-api';
-
-// Pieces Integration
-export { PiecesClient, piecesClient } from './pieces-client';
-export * from './pieces-types';
+} from './sentra-api'
+export { calculateQuantity, mapAturanPakaiToValue, SentraAPI } from './sentra-api'

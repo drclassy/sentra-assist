@@ -13,12 +13,7 @@
  * @module lib/das/safety-validator
  */
 
-import type {
-  FieldMapping,
-  FieldSignature,
-  ValidationResult,
-  ClinicalFieldCategory,
-} from './types';
+import type { ClinicalFieldCategory, FieldMapping, FieldSignature, ValidationResult } from './types'
 
 // ============================================================================
 // CLINICAL FIELD PATTERNS
@@ -62,14 +57,7 @@ const CRITICAL_FIELD_PATTERNS: Record<ClinicalFieldCategory, RegExp[]> = {
     /frekuensi/i,
     /frequency/i,
   ],
-  allergy: [
-    /alergi/i,
-    /allergy/i,
-    /allergic/i,
-    /intoleran/i,
-    /reaksi.*obat/i,
-    /drug.*reaction/i,
-  ],
+  allergy: [/alergi/i, /allergy/i, /allergic/i, /intoleran/i, /reaksi.*obat/i, /drug.*reaction/i],
   patient_id: [
     /no.*rm/i,
     /rekam.*medis/i,
@@ -80,29 +68,22 @@ const CRITICAL_FIELD_PATTERNS: Record<ClinicalFieldCategory, RegExp[]> = {
     /pasien.*id/i,
     /patient.*id/i,
   ],
-  diagnosis: [
-    /icd/i,
-    /diagnos/i,
-    /penyakit/i,
-    /disease/i,
-    /kondisi/i,
-    /condition/i,
-  ],
+  diagnosis: [/icd/i, /diagnos/i, /penyakit/i, /disease/i, /kondisi/i, /condition/i],
   general: [], // Catch-all, no specific patterns
-};
+}
 
 /**
  * Confidence thresholds by field category
  * Critical fields require higher confidence
  */
 const CATEGORY_THRESHOLDS: Record<ClinicalFieldCategory, number> = {
-  vital_signs: 0.90,    // High threshold for vitals
-  medication: 0.95,     // Highest for medications
-  allergy: 0.95,        // Highest for allergies
-  patient_id: 0.99,     // Almost always require exact match
-  diagnosis: 0.85,      // Moderate for diagnosis
-  general: 0.80,        // Standard threshold
-};
+  vital_signs: 0.9, // High threshold for vitals
+  medication: 0.95, // Highest for medications
+  allergy: 0.95, // Highest for allergies
+  patient_id: 0.99, // Almost always require exact match
+  diagnosis: 0.85, // Moderate for diagnosis
+  general: 0.8, // Standard threshold
+}
 
 // ============================================================================
 // FIELD CLASSIFICATION
@@ -114,9 +95,7 @@ const CATEGORY_THRESHOLDS: Record<ClinicalFieldCategory, number> = {
  * @param field - Field to classify
  * @returns Clinical category
  */
-export function classifyClinicalCategory(
-  field: FieldSignature
-): ClinicalFieldCategory {
+export function classifyClinicalCategory(field: FieldSignature): ClinicalFieldCategory {
   // Build search text from all field attributes
   const searchText = [
     field.attributes.name,
@@ -128,20 +107,20 @@ export function classifyClinicalCategory(
   ]
     .filter(Boolean)
     .join(' ')
-    .toLowerCase();
+    .toLowerCase()
 
   // Check each category
   for (const [category, patterns] of Object.entries(CRITICAL_FIELD_PATTERNS)) {
-    if (category === 'general') continue;
+    if (category === 'general') continue
 
     for (const pattern of patterns) {
       if (pattern.test(searchText)) {
-        return category as ClinicalFieldCategory;
+        return category as ClinicalFieldCategory
       }
     }
   }
 
-  return 'general';
+  return 'general'
 }
 
 /**
@@ -151,8 +130,8 @@ export function classifyClinicalCategory(
  * @returns True if field is critical
  */
 export function isCriticalField(field: FieldSignature): boolean {
-  const category = classifyClinicalCategory(field);
-  return category !== 'general' && category !== 'diagnosis';
+  const category = classifyClinicalCategory(field)
+  return category !== 'general' && category !== 'diagnosis'
 }
 
 // ============================================================================
@@ -166,39 +145,39 @@ export function isCriticalField(field: FieldSignature): boolean {
  * @returns Validation result with approved/blocked mappings
  */
 export function validateMappings(mappings: FieldMapping[]): ValidationResult {
-  const approved: FieldMapping[] = [];
-  const needsReview: FieldMapping[] = [];
-  const blocked: FieldMapping[] = [];
-  const warnings: string[] = [];
+  const approved: FieldMapping[] = []
+  const needsReview: FieldMapping[] = []
+  const blocked: FieldMapping[] = []
+  const warnings: string[] = []
 
   for (const mapping of mappings) {
-    const category = classifyClinicalCategory(mapping.targetField);
-    const threshold = CATEGORY_THRESHOLDS[category];
+    const category = classifyClinicalCategory(mapping.targetField)
+    const threshold = CATEGORY_THRESHOLDS[category]
 
     // Check confidence against category threshold
     if (mapping.confidence >= threshold) {
       // High confidence - approve
       if (mapping.confidence >= 0.95) {
-        approved.push(mapping);
+        approved.push(mapping)
       } else {
         // Moderate confidence - needs review
-        needsReview.push(mapping);
+        needsReview.push(mapping)
         warnings.push(
           `Field "${mapping.payloadKey}" mapped with ${Math.round(mapping.confidence * 100)}% confidence - review recommended`
-        );
+        )
       }
     } else {
       // Below threshold - block or require review based on criticality
       if (isCriticalField(mapping.targetField)) {
-        blocked.push(mapping);
+        blocked.push(mapping)
         warnings.push(
           `BLOCKED: Critical field "${mapping.payloadKey}" (${category}) has low confidence (${Math.round(mapping.confidence * 100)}%)`
-        );
+        )
       } else {
-        needsReview.push(mapping);
+        needsReview.push(mapping)
         warnings.push(
           `Field "${mapping.payloadKey}" has low confidence (${Math.round(mapping.confidence * 100)}%) - human confirmation required`
-        );
+        )
       }
     }
   }
@@ -209,7 +188,7 @@ export function validateMappings(mappings: FieldMapping[]): ValidationResult {
     needsReview,
     blocked,
     warnings,
-  };
+  }
 }
 
 /**
@@ -219,31 +198,29 @@ export function validateMappings(mappings: FieldMapping[]): ValidationResult {
  * @param mappings - Field mappings to process
  * @returns Mappings with updated actions
  */
-export function enforceConfidenceThresholds(
-  mappings: FieldMapping[]
-): FieldMapping[] {
-  return mappings.map((mapping) => {
-    const category = classifyClinicalCategory(mapping.targetField);
-    const threshold = CATEGORY_THRESHOLDS[category];
+export function enforceConfidenceThresholds(mappings: FieldMapping[]): FieldMapping[] {
+  return mappings.map(mapping => {
+    const category = classifyClinicalCategory(mapping.targetField)
+    const threshold = CATEGORY_THRESHOLDS[category]
 
     // Determine action based on confidence and category
-    let action = mapping.action;
+    let action = mapping.action
 
     if (mapping.confidence >= 0.95 && mapping.confidence >= threshold) {
-      action = 'AUTO_FILL';
+      action = 'AUTO_FILL'
     } else if (mapping.confidence >= threshold) {
-      action = 'CAUTIOUS_FILL';
+      action = 'CAUTIOUS_FILL'
     } else {
-      action = 'HUMAN_REQUIRED';
+      action = 'HUMAN_REQUIRED'
     }
 
     // Critical fields always require at least CAUTIOUS_FILL
     if (isCriticalField(mapping.targetField) && action === 'AUTO_FILL') {
-      action = 'CAUTIOUS_FILL';
+      action = 'CAUTIOUS_FILL'
     }
 
-    return { ...mapping, action };
-  });
+    return { ...mapping, action }
+  })
 }
 
 /**
@@ -253,7 +230,7 @@ export function enforceConfidenceThresholds(
  * @returns Only mappings safe for auto-fill
  */
 export function filterAutoFillable(mappings: FieldMapping[]): FieldMapping[] {
-  return mappings.filter((m) => m.action === 'AUTO_FILL');
+  return mappings.filter(m => m.action === 'AUTO_FILL')
 }
 
 /**
@@ -262,12 +239,8 @@ export function filterAutoFillable(mappings: FieldMapping[]): FieldMapping[] {
  * @param mappings - All mappings
  * @returns Mappings requiring confirmation
  */
-export function filterNeedsConfirmation(
-  mappings: FieldMapping[]
-): FieldMapping[] {
-  return mappings.filter(
-    (m) => m.action === 'CAUTIOUS_FILL' || m.action === 'HUMAN_REQUIRED'
-  );
+export function filterNeedsConfirmation(mappings: FieldMapping[]): FieldMapping[] {
+  return mappings.filter(m => m.action === 'CAUTIOUS_FILL' || m.action === 'HUMAN_REQUIRED')
 }
 
 // ============================================================================
@@ -294,24 +267,24 @@ export function logSafetyDecision(
     category: classifyClinicalCategory(mapping.targetField),
     decision,
     reason,
-  };
+  }
 
   // Log to console (can be extended to send to analytics)
-  console.log('[DAS:Safety] Decision:', logEntry);
+  console.log('[DAS:Safety] Decision:', logEntry)
 
   // Store in session for debugging (optional)
   try {
-    const sessionKey = 'das:safety:log';
-    const existing = sessionStorage.getItem(sessionKey);
-    const logs = existing ? JSON.parse(existing) : [];
-    logs.push(logEntry);
+    const sessionKey = 'das:safety:log'
+    const existing = sessionStorage.getItem(sessionKey)
+    const logs = existing ? JSON.parse(existing) : []
+    logs.push(logEntry)
 
     // Keep only last 100 entries
     if (logs.length > 100) {
-      logs.shift();
+      logs.shift()
     }
 
-    sessionStorage.setItem(sessionKey, JSON.stringify(logs));
+    sessionStorage.setItem(sessionKey, JSON.stringify(logs))
   } catch {
     // Ignore storage errors
   }
@@ -328,16 +301,16 @@ export function logSafetyDecision(
  * @returns Summary string
  */
 export function generateValidationSummary(result: ValidationResult): string {
-  const parts: string[] = [];
+  const parts: string[] = []
 
-  parts.push(`Validation: ${result.isValid ? 'PASSED' : 'FAILED'}`);
-  parts.push(`Approved: ${result.approved.length}`);
-  parts.push(`Needs Review: ${result.needsReview.length}`);
-  parts.push(`Blocked: ${result.blocked.length}`);
+  parts.push(`Validation: ${result.isValid ? 'PASSED' : 'FAILED'}`)
+  parts.push(`Approved: ${result.approved.length}`)
+  parts.push(`Needs Review: ${result.needsReview.length}`)
+  parts.push(`Blocked: ${result.blocked.length}`)
 
   if (result.warnings.length > 0) {
-    parts.push(`Warnings: ${result.warnings.length}`);
+    parts.push(`Warnings: ${result.warnings.length}`)
   }
 
-  return parts.join(' | ');
+  return parts.join(' | ')
 }

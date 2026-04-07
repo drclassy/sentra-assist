@@ -10,8 +10,21 @@ import {
   type VitalTrend,
 } from '@/lib/iskandar-diagnosis-engine/trajectory-analyzer';
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store';
+import {
+  evaluateCanonicalClinicalEngine,
+  type CanonicalClinicalEngineOutput,
+} from '@/lib/api/bridge-client';
 import { sendMessage } from '@/utils/messaging';
 import React, { useEffect, useMemo, useState } from 'react';
+import {
+  buildCanonicalRequestId,
+  buildCanonicalTriageInput,
+} from '@/lib/clinical/canonical-triage-builder';
+import type {
+  AutosenPreset,
+  DisabilityType,
+  ObesityConfirmation,
+} from '@/lib/clinical/autosen-types';
 import type { ScreeningAlert } from './TTVInferenceUI';
 import { CTHeader } from './CTHeader';
 import { DosageCalculator } from './DosageCalculator';
@@ -21,7 +34,7 @@ const Chart = React.lazy(() => import('react-apexcharts'));
 
 /**
  * ClinicalTrajectoryProps interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-03-12
@@ -34,6 +47,7 @@ export interface ClinicalTrajectoryProps {
     hr: number;
     rr: number;
     temp: number;
+    spo2: number;
     glucose: number;
   };
   keluhanUtama: string;
@@ -49,9 +63,30 @@ export interface ClinicalTrajectoryProps {
   patientGender: 'L' | 'P';
   patientName: string;
   patientRM: string;
+  patientDOB?: string;
+  patientBPJSStatus?: 'aktif' | 'nonaktif' | 'mandiri' | null;
+  patientKelurahan?: string;
+  patientFacilityName?: string;
+  patientPayerLabel?: string;
+  allergies?: string[];
+  pregnancyStatus?: boolean | null;
+  chronicHistorySummary?: string;
+  extractedPregnancyRisk?: string;
+  extractedSpecialConditions?: string[];
+  disabilityType?: DisabilityType;
+  obesityConfirmation?: ObesityConfirmation;
+  autosenPreset?: AutosenPreset;
+  symptomTextRaw?: string;
   encounterId?: string;
+  prefetchedVisits?: VisitRecord[];
+  prefetchedDiagnostics?: string[];
+  prefetchedVisitStatus?: 'ready' | 'insufficient';
   onBack: () => void;
-  onNextDifferential?: (trajectory: TrajectoryAnalysis, visitCount: number) => void;
+  onNextDifferential?: (
+    trajectory: TrajectoryAnalysis,
+    visitCount: number,
+    canonicalOutput: CanonicalClinicalEngineOutput | null
+  ) => void;
 }
 
 type Phase = 'loading' | 'error' | 'ready';
@@ -85,33 +120,35 @@ const RISK_STYLE: Record<RiskLevel, { color: string; bg: string; border: string 
   critical: { color: '#DC2626', bg: 'rgba(220,38,38,0.15)', border: 'rgba(220,38,38,0.5)' },
 };
 
-const URGENCY_STYLE: Record<ClinicalUrgencyTier, { color: string; bg: string; border: string; label: string }> =
-  {
-    low: {
-      color: '#10B981',
-      bg: 'rgba(16,185,129,0.12)',
-      border: 'rgba(16,185,129,0.35)',
-      label: 'ROUTINE 24H',
-    },
-    moderate: {
-      color: '#F59E0B',
-      bg: 'rgba(245,158,11,0.12)',
-      border: 'rgba(245,158,11,0.35)',
-      label: 'REVIEW SAME DAY',
-    },
-    high: {
-      color: '#EF4444',
-      bg: 'rgba(239,68,68,0.12)',
-      border: 'rgba(239,68,68,0.35)',
-      label: 'URGENT <6H',
-    },
-    immediate: {
-      color: '#DC2626',
-      bg: 'rgba(220,38,38,0.16)',
-      border: 'rgba(220,38,38,0.5)',
-      label: 'EMERGENCY NOW',
-    },
-  };
+const URGENCY_STYLE: Record<
+  ClinicalUrgencyTier,
+  { color: string; bg: string; border: string; label: string }
+> = {
+  low: {
+    color: '#10B981',
+    bg: 'rgba(16,185,129,0.12)',
+    border: 'rgba(16,185,129,0.35)',
+    label: 'ROUTINE 24H',
+  },
+  moderate: {
+    color: '#F59E0B',
+    bg: 'rgba(245,158,11,0.12)',
+    border: 'rgba(245,158,11,0.35)',
+    label: 'REVIEW SAME DAY',
+  },
+  high: {
+    color: '#EF4444',
+    bg: 'rgba(239,68,68,0.12)',
+    border: 'rgba(239,68,68,0.35)',
+    label: 'URGENT <6H',
+  },
+  immediate: {
+    color: '#DC2626',
+    bg: 'rgba(220,38,38,0.16)',
+    border: 'rgba(220,38,38,0.5)',
+    label: 'EMERGENCY NOW',
+  },
+};
 
 const DETERIORATION_STYLE: Record<
   GlobalDeteriorationState,
@@ -164,8 +201,7 @@ const PAGE_BG_STYLE = {
 } as React.CSSProperties;
 
 const PAGE_TOP_GLOW_STYLE: React.CSSProperties = {
-  background:
-    'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,69,0,0.03) 0%, transparent 60%)',
+  background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,69,0,0.03) 0%, transparent 60%)',
 };
 
 function humanizeToken(value: string): string {
@@ -175,13 +211,30 @@ function humanizeToken(value: string): string {
 export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   vitals,
   keluhanUtama,
-  narrative: _narrative,
+  keluhanTambahan,
   alerts,
-  patientAge: _patientAge,
-  patientGender: _patientGender,
-  patientName: _patientName,
+  patientAge,
+  patientGender,
+  patientName,
   patientRM,
+  patientDOB,
+  patientBPJSStatus,
+  patientKelurahan,
+  patientFacilityName,
+  patientPayerLabel,
+  allergies,
+  pregnancyStatus,
+  chronicHistorySummary,
+  extractedPregnancyRisk,
+  extractedSpecialConditions,
+  disabilityType,
+  obesityConfirmation,
+  autosenPreset,
+  symptomTextRaw,
   encounterId,
+  prefetchedVisits,
+  prefetchedDiagnostics,
+  prefetchedVisitStatus,
   onBack,
   onNextDifferential,
 }) => {
@@ -190,6 +243,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [visitCount, setVisitCount] = useState(0);
   const [scrapeLog, setScrapeLog] = useState<string[]>([]);
+  const [canonicalOutput, setCanonicalOutput] = useState<CanonicalClinicalEngineOutput | null>(null);
+  const [canonicalError, setCanonicalError] = useState('');
+  const [isCanonicalLoading, setIsCanonicalLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -197,9 +253,37 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
     const loadTrajectory = async () => {
       console.log('[Trajectory] Loading visit history...');
       setPhase('loading');
+      setCanonicalError('');
+      setCanonicalOutput(null);
+      setIsCanonicalLoading(true);
 
       try {
-        const result = await sendMessage('scanVisitHistory', undefined);
+        if (prefetchedVisitStatus === 'insufficient') {
+          const diagLines = prefetchedDiagnostics && prefetchedDiagnostics.length > 0
+            ? prefetchedDiagnostics
+            : ['INSUFFICIENT_HISTORY: kurang dari 3 kunjungan historis'];
+          setScrapeLog(diagLines);
+          setVisitCount(prefetchedVisits?.length ?? 0);
+          setErrorMsg('Data not available');
+          setPhase('error');
+          setIsCanonicalLoading(false);
+          return;
+        }
+
+        const result =
+          prefetchedVisitStatus === 'ready' && prefetchedVisits && prefetchedDiagnostics
+            ? {
+                success: true,
+                diagnostics: prefetchedDiagnostics,
+                visits: prefetchedVisits.map((visit) => ({
+                  encounter_id: visit.encounter_id,
+                  date: visit.timestamp,
+                  vitals: visit.vitals,
+                  keluhan_utama: visit.keluhan_utama,
+                  diagnosa: visit.diagnosa ?? null,
+                })),
+              }
+            : await sendMessage('scanVisitHistory', undefined);
         if (cancelled) return;
 
         // Capture diagnostics
@@ -245,19 +329,67 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         setVisitCount(allVisits.length);
 
         const trajectoryAnalysis = analyzeTrajectory(allVisits);
-        console.log(`[Trajectory] ANALYZED: trend=${trajectoryAnalysis.overallTrend}, risk=${trajectoryAnalysis.overallRisk}`);
+        console.log(
+          `[Trajectory] ANALYZED: trend=${trajectoryAnalysis.overallTrend}, risk=${trajectoryAnalysis.overallRisk}`
+        );
 
         setAnalysis(trajectoryAnalysis);
         setPhase('ready');
+
+        const requestId = buildCanonicalRequestId(patientRM);
+        const requestTime = new Date().toISOString();
+        const canonicalInput = buildCanonicalTriageInput({
+          requestId,
+          requestTime,
+          patientName,
+          patientGender,
+          patientAge,
+          patientRM,
+          patientDOB,
+          patientBPJSStatus,
+          patientKelurahan,
+          patientFacilityName,
+          patientPayerLabel,
+          vitals,
+          symptomTextRaw,
+          keluhanUtama,
+          keluhanTambahan,
+          chronicHistorySummary,
+          allergies,
+          pregnancyStatus,
+          extractedPregnancyRisk,
+          extractedSpecialConditions,
+          disabilityType,
+          obesityConfirmation,
+          autosenPreset,
+          prefetchedVisits: pastVisits,
+        });
+
+        try {
+          const canonical = await evaluateCanonicalClinicalEngine(canonicalInput);
+          if (!cancelled) {
+            setCanonicalOutput(canonical);
+          }
+        } catch (error) {
+          if (!cancelled) {
+            const message =
+              error instanceof Error ? error.message : 'Gagal memuat trajectory canonical';
+            console.error('[Trajectory] Canonical evaluate error:', message);
+            setCanonicalError(message);
+          }
+        } finally {
+          if (!cancelled) {
+            setIsCanonicalLoading(false);
+          }
+        }
       } catch (error) {
         if (cancelled) return;
         const errStr = error instanceof Error ? error.message : String(error);
         console.error('[Trajectory] Load error:', errStr);
         setErrorMsg(errStr);
-        setScrapeLog((prev) =>
-          prev.length > 0 ? prev : [`PIPELINE_ERROR: ${errStr}`],
-        );
+        setScrapeLog((prev) => (prev.length > 0 ? prev : [`PIPELINE_ERROR: ${errStr}`]));
         setPhase('error');
+        setIsCanonicalLoading(false);
       }
     };
 
@@ -265,7 +397,33 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [patientRM, encounterId, vitals, keluhanUtama]);
+  }, [
+    patientRM,
+    encounterId,
+    vitals,
+    keluhanUtama,
+    prefetchedVisits,
+    prefetchedDiagnostics,
+    prefetchedVisitStatus,
+    patientName,
+    patientGender,
+    patientAge,
+    patientDOB,
+    patientBPJSStatus,
+    patientKelurahan,
+    patientFacilityName,
+    patientPayerLabel,
+    allergies,
+    pregnancyStatus,
+    chronicHistorySummary,
+    extractedPregnancyRisk,
+    extractedSpecialConditions,
+    disabilityType,
+    obesityConfirmation,
+    autosenPreset,
+    symptomTextRaw,
+    keluhanTambahan,
+  ]);
 
   // Chart config with EXACT TTVInferenceUI aesthetic
   const chartConfig = useMemo(() => {
@@ -300,7 +458,8 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       },
       theme: { mode: 'dark' },
       colors: [
-        getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() || '#FF4500',
+        getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() ||
+          '#FF4500',
         getComputedStyle(document.documentElement).getPropertyValue('--cream').trim() || '#dcd7cc',
         getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#c0bbb2',
       ],
@@ -313,7 +472,10 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         categories: bpTrend.dates,
         labels: {
           style: {
-            colors: getComputedStyle(document.documentElement).getPropertyValue('--text-tertiary').trim() || '#9a9aa2',
+            colors:
+              getComputedStyle(document.documentElement)
+                .getPropertyValue('--text-tertiary')
+                .trim() || '#9a9aa2',
             fontSize: '9px',
             fontFamily: "'JetBrains Mono', monospace",
           },
@@ -324,7 +486,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       yaxis: {
         labels: {
           style: {
-            colors: getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#c0bbb2',
+            colors:
+              getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() ||
+              '#c0bbb2',
             fontSize: '10px',
             fontFamily: "'JetBrains Mono', monospace",
           },
@@ -364,8 +528,17 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   if (phase === 'loading') {
     return (
       <div className="ct-neu-shell relative min-h-screen w-full p-5" style={PAGE_BG_STYLE}>
-        <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none" style={PAGE_TOP_GLOW_STYLE} />
-        <CTHeader />
+        <div
+          className="absolute top-0 left-0 right-0 h-40 pointer-events-none"
+          style={PAGE_TOP_GLOW_STYLE}
+        />
+        <CTHeader
+          title="Sentra Assist"
+          subtitle="Architected by dr Ferdi Iskandar"
+          sectionLabel="Clinical Trajectory"
+          meta="Analisis perjalanan klinis dan risiko perburukan pasien"
+          onBack={onBack}
+        />
         <div className="neu-card-inset p-1.5 mb-7 relative z-10">
           <div className="flex gap-1.5">
             <button
@@ -374,9 +547,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             >
               Satellite Processing
             </button>
-            <button
-              className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab-active text-platinum font-semibold"
-            >
+            <button className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab-active text-platinum font-semibold">
               Clinical Trajectory
             </button>
           </div>
@@ -393,8 +564,17 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   if (phase === 'error') {
     return (
       <div className="ct-neu-shell relative min-h-screen w-full p-5" style={PAGE_BG_STYLE}>
-        <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none" style={PAGE_TOP_GLOW_STYLE} />
-        <CTHeader />
+        <div
+          className="absolute top-0 left-0 right-0 h-40 pointer-events-none"
+          style={PAGE_TOP_GLOW_STYLE}
+        />
+        <CTHeader
+          title="Sentra Assist"
+          subtitle="Architected by dr Ferdi Iskandar"
+          sectionLabel="Clinical Trajectory"
+          meta="Analisis perjalanan klinis dan risiko perburukan pasien"
+          onBack={onBack}
+        />
         <div className="neu-card-inset p-1.5 mb-7 relative z-10">
           <div className="flex gap-1.5">
             <button
@@ -403,9 +583,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             >
               Satellite Processing
             </button>
-            <button
-              className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab-active text-platinum font-semibold"
-            >
+            <button className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab-active text-platinum font-semibold">
               Clinical Trajectory
             </button>
           </div>
@@ -424,9 +602,13 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         </div>
         {scrapeLog.length > 0 && (
           <div className="neu-card-inset mt-4 p-4">
-            <div className="ttv-label mb-2" style={{ color: '#F59E0B' }}>ERROR DIAGNOSTICS</div>
+            <div className="ttv-label mb-2" style={{ color: '#F59E0B' }}>
+              ERROR DIAGNOSTICS
+            </div>
             {scrapeLog.map((line, i) => (
-              <div key={i} className="text-tiny text-muted font-mono mb-1">{line}</div>
+              <div key={i} className="text-tiny text-muted font-mono mb-1">
+                {line}
+              </div>
             ))}
           </div>
         )}
@@ -440,6 +622,24 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   const activeTrends = analysis.vitalTrends.filter(
     (t) => t.values.length > 0 && !t.values.every((v) => v === 0)
   );
+  const canonicalTrajectory = canonicalOutput?.trajectory;
+  const canonicalNews2 = canonicalOutput?.scoring.news2;
+  const canonicalAlertCount = canonicalOutput?.alerts.length ?? 0;
+  const canonicalImmediateActions = canonicalOutput?.recommendations.immediate_actions ?? [];
+  const canonicalMonitoringActions = canonicalOutput?.recommendations.monitoring_actions ?? [];
+  const canonicalReferralActions = canonicalOutput?.recommendations.referral_actions ?? [];
+  const canonicalOverallTrend = canonicalTrajectory?.overall_trend
+    ? TREND_LABEL[canonicalTrajectory.overall_trend]
+    : 'TIDAK TERSEDIA';
+  const canonicalOverallRisk = canonicalTrajectory?.overall_risk
+    ? humanizeToken(canonicalTrajectory.overall_risk).toUpperCase()
+    : 'TIDAK TERSEDIA';
+  const canonicalDeteriorationState = canonicalTrajectory?.deterioration_state
+    ? humanizeToken(canonicalTrajectory.deterioration_state).toUpperCase()
+    : 'TIDAK TERSEDIA';
+  const canonicalMomentum = canonicalTrajectory?.momentum_level
+    ? humanizeToken(canonicalTrajectory.momentum_level).toUpperCase()
+    : 'TIDAK TERSEDIA';
   const urgencyStyle = URGENCY_STYLE[analysis.mortality_proxy.clinical_urgency_tier];
   const acuteRiskCards = [
     { label: 'HT Crisis', value: analysis.acute_attack_risk_24h.hypertensive_crisis_risk },
@@ -466,7 +666,10 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   const criticalEtaCount = etaEntries.filter(([, value]) => (value ?? 999) <= 24).length;
   const breachCards = [
     { label: 'SBP >= 160', count: analysis.early_warning_burden.breach_breakdown.sbp_ge_160_count },
-    { label: 'TEMP >= 38.5', count: analysis.early_warning_burden.breach_breakdown.temp_ge_38_5_count },
+    {
+      label: 'TEMP >= 38.5',
+      count: analysis.early_warning_burden.breach_breakdown.temp_ge_38_5_count,
+    },
     { label: 'GDS >= 300', count: analysis.early_warning_burden.breach_breakdown.gds_ge_300_count },
     { label: 'HR ekstrem', count: analysis.early_warning_burden.breach_breakdown.hr_extreme_count },
     { label: 'RR ekstrem', count: analysis.early_warning_burden.breach_breakdown.rr_extreme_count },
@@ -474,9 +677,21 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   const activeBreaches = breachCards.filter((item) => item.count > 0);
 
   return (
-    <div className="ct-neu-shell relative min-h-screen w-full p-5 flex flex-col gap-4" style={PAGE_BG_STYLE}>
-      <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none" style={PAGE_TOP_GLOW_STYLE} />
-      <CTHeader />
+    <div
+      className="ct-neu-shell relative min-h-screen w-full p-5 flex flex-col gap-4"
+      style={PAGE_BG_STYLE}
+    >
+      <div
+        className="absolute top-0 left-0 right-0 h-40 pointer-events-none"
+        style={PAGE_TOP_GLOW_STYLE}
+      />
+      <CTHeader
+        title="Sentra Assist"
+        subtitle="Architected by dr Ferdi Iskandar"
+        sectionLabel="Clinical Trajectory"
+        meta="Analisis perjalanan klinis dan risiko perburukan pasien"
+        onBack={onBack}
+      />
 
       {/* Top Tab Navigation */}
       <div className="neu-card-inset p-1.5 mb-7 relative z-10">
@@ -487,19 +702,149 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           >
             Satellite Processing
           </button>
-          <button
-            className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab-active text-platinum font-semibold"
-          >
+          <button className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab-active text-platinum font-semibold">
             Clinical Trajectory
           </button>
         </div>
+      </div>
+
+      <div className="ttv-section p-4">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div>
+            <h3 className="ttv-section-title mb-2">CANONICAL ENGINE</h3>
+            <p className="text-small text-muted leading-relaxed">
+              Dashboard engine menjadi source of truth. Analisis trajectory lokal di bawah tetap
+              ditampilkan sebagai preview transisi agar workflow bedside tidak putus.
+            </p>
+          </div>
+          <span
+            className="ct-neu-chip"
+            style={{
+              color: canonicalOutput ? '#10B981' : canonicalError ? '#F59E0B' : '#c0bbb2',
+              borderColor: canonicalOutput ? 'rgba(16,185,129,0.35)' : 'rgba(255,255,255,0.08)',
+              fontSize: '10px',
+              padding: '4px 10px',
+            }}
+          >
+            {isCanonicalLoading ? 'SYNCING' : canonicalOutput ? 'CANONICAL READY' : 'PREVIEW ONLY'}
+          </span>
+        </div>
+
+        {isCanonicalLoading ? (
+          <div className="text-small text-muted">Meminta hasil canonical dari dashboard...</div>
+        ) : canonicalOutput ? (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="neu-card-inset p-3">
+              <div className="ttv-label text-tertiary mb-1">NEWS2 Canonical</div>
+              <div className="text-small font-mono text-platinum">
+                {canonicalNews2
+                  ? `${canonicalNews2.score} • ${canonicalNews2.risk_level.toUpperCase()}`
+                  : 'Tidak tersedia'}
+              </div>
+            </div>
+            <div className="neu-card-inset p-3">
+              <div className="ttv-label text-tertiary mb-1">Alert Canonical</div>
+              <div className="text-small font-mono text-platinum">{canonicalAlertCount} alert</div>
+            </div>
+            <div className="neu-card-inset p-3">
+              <div className="ttv-label text-tertiary mb-1">Trend Canonical</div>
+              <div className="text-small font-mono text-platinum">{canonicalOverallTrend}</div>
+            </div>
+            <div className="neu-card-inset p-3">
+              <div className="ttv-label text-tertiary mb-1">Risk Canonical</div>
+              <div className="text-small font-mono text-platinum">{canonicalOverallRisk}</div>
+            </div>
+            <div className="neu-card-inset p-3">
+              <div className="ttv-label text-tertiary mb-1">Deterioration</div>
+              <div className="text-small font-mono text-platinum">{canonicalDeteriorationState}</div>
+            </div>
+            <div className="neu-card-inset p-3">
+              <div className="ttv-label text-tertiary mb-1">Momentum</div>
+              <div className="text-small font-mono text-platinum">{canonicalMomentum}</div>
+            </div>
+            <div className="neu-card-inset p-3 col-span-2">
+              <div className="ttv-label text-tertiary mb-1">Trajectory Canonical</div>
+              <div className="text-small text-platinum leading-relaxed">
+                {canonicalTrajectory?.available
+                  ? canonicalTrajectory.narrative ||
+                    'Trajectory canonical tersedia tanpa narasi tambahan.'
+                  : 'Trajectory canonical belum tersedia untuk data kunjungan ini.'}
+              </div>
+              {canonicalImmediateActions.length > 0 ? (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {canonicalImmediateActions.slice(0, 3).map((item, index) => (
+                    <span
+                      key={`${item}-${index}`}
+                      className="ct-neu-chip text-muted"
+                      style={{
+                        borderColor: 'rgba(255,255,255,0.06)',
+                        fontSize: '10px',
+                        padding: '4px 10px',
+                      }}
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {canonicalMonitoringActions.length > 0 ? (
+              <div className="neu-card-inset p-3 col-span-2">
+                <div className="ttv-label text-tertiary mb-2">Monitoring Actions</div>
+                <div className="flex flex-wrap gap-1">
+                  {canonicalMonitoringActions.slice(0, 3).map((item, index) => (
+                    <span
+                      key={`${item}-${index}`}
+                      className="ct-neu-chip text-muted"
+                      style={{
+                        borderColor: 'rgba(255,255,255,0.06)',
+                        fontSize: '10px',
+                        padding: '4px 10px',
+                      }}
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {canonicalReferralActions.length > 0 ? (
+              <div className="neu-card-inset p-3 col-span-2">
+                <div className="ttv-label text-tertiary mb-2">Referral Actions</div>
+                <div className="flex flex-wrap gap-1">
+                  {canonicalReferralActions.slice(0, 3).map((item, index) => (
+                    <span
+                      key={`${item}-${index}`}
+                      className="ct-neu-chip text-muted"
+                      style={{
+                        borderColor: 'rgba(255,255,255,0.06)',
+                        fontSize: '10px',
+                        padding: '4px 10px',
+                      }}
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <div className="neu-card-inset p-3">
+            <div className="text-small text-muted leading-relaxed">
+              {canonicalError
+                ? `Canonical engine belum tersedia: ${canonicalError}`
+                : 'Canonical engine belum memberikan hasil. Preview lokal tetap ditampilkan untuk continuity UX.'}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* TREND VISUALIZATION - Moved to top */}
       {chartConfig && (
         <div className="ttv-section p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="ttv-section-title">TREND VISUALIZATION</h3>
+            <h3 className="ttv-section-title">TREND VISUALIZATION (PREVIEW LOKAL)</h3>
             <span
               className="ct-neu-chip text-muted"
               style={{
@@ -512,7 +857,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             </span>
           </div>
           <div className="rounded overflow-hidden">
-            <React.Suspense fallback={<div className="text-small text-muted p-4">Memuat chart...</div>}>
+            <React.Suspense
+              fallback={<div className="text-small text-muted p-4">Memuat chart...</div>}
+            >
               <Chart
                 options={chartConfig.options}
                 series={chartConfig.series}
@@ -530,7 +877,10 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           <h3 className="ttv-section-title mb-3">SCREENING ALERTS</h3>
           <div className="flex flex-col gap-2">
             {alerts.slice(0, 3).map((alert) => (
-              <div key={alert.id} className="neu-card-inset px-3 py-2 flex items-center gap-2 border-l-2 border-critical">
+              <div
+                key={alert.id}
+                className="neu-card-inset px-3 py-2 flex items-center gap-2 border-l-2 border-critical"
+              >
                 <span className="ttv-label text-critical">{alert.severity}</span>
                 <span className="text-small text-platinum">{alert.title}</span>
               </div>
@@ -570,6 +920,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
               </span>
             </div>
             <div className="text-body text-muted leading-relaxed">{analysis.summary}</div>
+            <div className="text-tiny text-muted mt-2">
+              Preview lokal untuk continuity UX. Severity canonical mengikuti hasil `CANONICAL ENGINE`.
+            </div>
           </div>
         </div>
 
@@ -577,11 +930,16 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <div className="neu-card-inset p-3">
             <div className="ttv-label text-tertiary mb-1">Overall Trend</div>
-            <div className="text-small font-mono text-platinum">{TREND_LABEL[analysis.overallTrend]}</div>
+            <div className="text-small font-mono text-platinum">
+              {TREND_LABEL[analysis.overallTrend]}
+            </div>
           </div>
           <div className="neu-card-inset p-3">
             <div className="ttv-label text-tertiary mb-1">Risk Level</div>
-            <div className="text-small font-mono" style={{ color: RISK_STYLE[analysis.overallRisk].color }}>
+            <div
+              className="text-small font-mono"
+              style={{ color: RISK_STYLE[analysis.overallRisk].color }}
+            >
               {humanizeToken(analysis.overallRisk).toUpperCase()}
             </div>
           </div>
@@ -593,7 +951,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
           <div>
             <h3 className="ttv-section-title mb-2">CLINICAL COMMAND PANEL (24H)</h3>
-            <p className="text-small text-platinum mt-1">{analysis.clinical_safe_output.recommended_action}</p>
+            <p className="text-small text-platinum mt-1">
+              {analysis.clinical_safe_output.recommended_action}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span
@@ -652,7 +1012,11 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
               <span
                 key={i}
                 className="ct-neu-chip text-muted"
-                style={{ borderColor: 'rgba(255,255,255,0.06)', fontSize: '10px', padding: '4px 10px' }}
+                style={{
+                  borderColor: 'rgba(255,255,255,0.06)',
+                  fontSize: '10px',
+                  padding: '4px 10px',
+                }}
               >
                 {humanizeToken(driver)}
               </span>
@@ -670,7 +1034,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-muted text-sm">▸</span>
-              <h3 className="text-small font-bold text-platinum uppercase tracking-wide">ACUTE ATTACK RISK (24H)</h3>
+              <h3 className="text-small font-bold text-platinum uppercase tracking-wide">
+                ACUTE ATTACK RISK (24H)
+              </h3>
             </div>
             <span className="font-mono text-muted" style={{ fontSize: '9px' }}>
               high/critical: {highAcuteRiskCount}/5
@@ -682,11 +1048,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             const level = scoreToRiskLevel(risk.value);
             const style = RISK_STYLE[level];
             return (
-              <div
-                key={risk.label}
-                className="ct-neu-cell"
-                style={{ borderColor: style.border }}
-              >
+              <div key={risk.label} className="ct-neu-cell" style={{ borderColor: style.border }}>
                 <div className="ct-neu-cell-label">{risk.label}</div>
                 <div className="text-small font-mono font-bold mt-1" style={{ color: style.color }}>
                   {risk.value}
@@ -721,7 +1083,10 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           />
           <div className="neu-card-inset p-2.5">
             <div className="ttv-label text-tertiary">Stability Label</div>
-            <div className="text-small font-mono font-bold mt-1" style={{ color: stabilityStyle.color }}>
+            <div
+              className="text-small font-mono font-bold mt-1"
+              style={{ color: stabilityStyle.color }}
+            >
               {stabilityStyle.label}
             </div>
           </div>
@@ -729,13 +1094,19 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
 
         {activeBreaches.length > 0 && (
           <div className="mb-3">
-            <div className="text-tiny font-bold text-muted uppercase tracking-wide mb-1">BREACH BREAKDOWN</div>
+            <div className="text-tiny font-bold text-muted uppercase tracking-wide mb-1">
+              BREACH BREAKDOWN
+            </div>
             <div className="flex flex-wrap gap-1">
               {activeBreaches.map((item) => (
                 <span
                   key={item.label}
                   className="ct-neu-chip text-muted"
-                  style={{ borderColor: 'rgba(255,255,255,0.06)', fontSize: '10px', padding: '4px 10px' }}
+                  style={{
+                    borderColor: 'rgba(255,255,255,0.06)',
+                    fontSize: '10px',
+                    padding: '4px 10px',
+                  }}
                 >
                   {item.label}: {item.count}
                 </span>
@@ -747,7 +1118,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         {etaEntries.length > 0 && (
           <div>
             <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="text-tiny font-bold text-muted uppercase tracking-wide">TIME-TO-CRITICAL ESTIMATE</div>
+              <div className="text-tiny font-bold text-muted uppercase tracking-wide">
+                TIME-TO-CRITICAL ESTIMATE
+              </div>
               <div className="text-tiny font-mono text-muted">within 24h: {criticalEtaCount}</div>
             </div>
             <div className="flex flex-wrap gap-1">
@@ -755,7 +1128,11 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                 <span
                   key={key}
                   className="ct-neu-chip text-muted"
-                  style={{ borderColor: 'rgba(255,255,255,0.06)', fontSize: '10px', padding: '4px 10px' }}
+                  style={{
+                    borderColor: 'rgba(255,255,255,0.06)',
+                    fontSize: '10px',
+                    padding: '4px 10px',
+                  }}
                 >
                   {humanizeToken(key.replace('_hours_to_critical', '')).toUpperCase()}: {value}h
                 </span>
@@ -766,40 +1143,56 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       </details>
 
       {/* Progressive disclosure: explanatory data safety */}
-      {(analysis.clinical_safe_output.missing_data.length > 0 || analysis.clinical_safe_output.drivers.length > 0) && (
+      {(analysis.clinical_safe_output.missing_data.length > 0 ||
+        analysis.clinical_safe_output.drivers.length > 0) && (
         <details className="ttv-section p-4">
           <summary className="cursor-pointer list-none">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-muted text-sm">▸</span>
-                <h3 className="text-small font-bold text-platinum uppercase tracking-wide">RISK DRIVERS + DATA GAPS</h3>
+                <h3 className="text-small font-bold text-platinum uppercase tracking-wide">
+                  RISK DRIVERS + DATA GAPS
+                </h3>
               </div>
               <span className="font-mono text-muted" style={{ fontSize: '9px' }}>
                 drivers: {analysis.clinical_safe_output.drivers.length} | missing:{' '}
                 {analysis.clinical_safe_output.missing_data.length}
               </span>
-          </div>
-        </summary>
+            </div>
+          </summary>
           <div className="mt-3">
             {analysis.clinical_safe_output.drivers.length > 0 && (
               <div className="mb-3">
-                <div className="text-tiny font-bold text-muted uppercase tracking-wide mb-1">TOP DRIVERS</div>
+                <div className="text-tiny font-bold text-muted uppercase tracking-wide mb-1">
+                  TOP DRIVERS
+                </div>
                 <div className="flex flex-col gap-1">
                   {analysis.clinical_safe_output.drivers.map((driver, i) => (
-                    <div key={i} className="text-small text-muted">• {humanizeToken(driver)}</div>
+                    <div key={i} className="text-small text-muted">
+                      • {humanizeToken(driver)}
+                    </div>
                   ))}
                 </div>
               </div>
             )}
             {analysis.clinical_safe_output.missing_data.length > 0 && (
               <div>
-                <div className="text-tiny font-bold uppercase tracking-wide mb-1" style={{ color: '#F59E0B' }}>MISSING DATA</div>
+                <div
+                  className="text-tiny font-bold uppercase tracking-wide mb-1"
+                  style={{ color: '#F59E0B' }}
+                >
+                  MISSING DATA
+                </div>
                 <div className="flex flex-wrap gap-1">
                   {analysis.clinical_safe_output.missing_data.slice(0, 8).map((item, i) => (
                     <span
                       key={i}
                       className="ct-neu-chip text-muted"
-                      style={{ borderColor: 'rgba(255,255,255,0.06)', fontSize: '10px', padding: '4px 10px' }}
+                      style={{
+                        borderColor: 'rgba(255,255,255,0.06)',
+                        fontSize: '10px',
+                        padding: '4px 10px',
+                      }}
                     >
                       {humanizeToken(item)}
                     </span>
@@ -829,9 +1222,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-muted text-sm">▸</span>
-              <h3 className="text-small font-bold text-platinum uppercase tracking-wide">
-                SenCal
-              </h3>
+              <h3 className="text-small font-bold text-platinum uppercase tracking-wide">SenCal</h3>
             </div>
             <span className="font-mono text-muted" style={{ fontSize: '9px' }}>
               kalkulator medis
@@ -839,10 +1230,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           </div>
         </summary>
         <div className="mt-0">
-          <DosageCalculator
-            patientAge={_patientAge}
-            patientWeight={undefined}
-          />
+          <DosageCalculator patientAge={patientAge} patientWeight={undefined} />
         </div>
       </details>
 
@@ -866,7 +1254,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                 >
                   {rec.priority}
                 </span>
-                <span className="text-small text-platinum" style={{ lineHeight: '1.5' }}>{rec.text}</span>
+                <span className="text-small text-platinum" style={{ lineHeight: '1.5' }}>
+                  {rec.text}
+                </span>
               </div>
             ))}
           </div>
@@ -876,9 +1266,13 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       {/* Scraper Diagnostics (only when ≤1 visit) */}
       {scrapeLog.length > 0 && visitCount <= 1 && (
         <div className="neu-card-inset p-4">
-          <div className="ttv-label mb-2" style={{ color: '#F59E0B' }}>SCRAPER DIAGNOSTICS</div>
+          <div className="ttv-label mb-2" style={{ color: '#F59E0B' }}>
+            SCRAPER DIAGNOSTICS
+          </div>
           {scrapeLog.map((line, i) => (
-            <div key={i} className="text-tiny text-muted font-mono mb-1">{line}</div>
+            <div key={i} className="text-tiny text-muted font-mono mb-1">
+              {line}
+            </div>
           ))}
         </div>
       )}
@@ -887,7 +1281,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       {onNextDifferential && analysis && (
         <div className="neu-card-inset p-1.5 relative z-10">
           <button
-            onClick={() => onNextDifferential(analysis, visitCount)}
+            onClick={() => onNextDifferential(analysis, visitCount, canonicalOutput)}
             className="motion-press w-full py-2 px-2 rounded-lg text-body relative neu-tab text-muted font-medium hover:text-platinum transition-all flex items-center justify-center gap-2"
           >
             <span className="text-base">⚕</span>
@@ -953,7 +1347,8 @@ function TrendCard({ trend }: { trend: VitalTrend }) {
           {trend.risk.toUpperCase()}
         </span>
         <span className="text-small font-mono font-bold text-muted">
-          {trend.changePercent > 0 ? '+' : ''}{trend.changePercent.toFixed(0)}%
+          {trend.changePercent > 0 ? '+' : ''}
+          {trend.changePercent.toFixed(0)}%
         </span>
       </div>
     </div>

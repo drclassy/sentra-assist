@@ -1,13 +1,13 @@
 // Designed and constructed by Claudesy.
-import { describe, expect, it } from 'vitest';
-import type { DiagnosisSuggestion } from '@/types/api';
+import { describe, expect, it } from 'vitest'
+import type { DiagnosisSuggestion } from '@/types/api'
 import {
   buildDifferentialInsight,
   deriveSupportingExamPlan,
   deriveVitalDrivers,
   extractComplaintSignals,
   matchSuggestionSignals,
-} from './differential-diagnosis';
+} from './differential-diagnosis'
 
 const baseSuggestion: DiagnosisSuggestion = {
   rank: 1,
@@ -17,22 +17,22 @@ const baseSuggestion: DiagnosisSuggestion = {
   rationale: 'Tekanan darah tinggi menetap dengan keluhan sakit kepala dan pusing.',
   red_flags: [],
   recommended_actions: ['Konfirmasi tekanan darah serial'],
-};
+}
 
 describe('differential-diagnosis helpers', () => {
   it('extracts complaint signals and keeps compound symptom phrases', () => {
-    const result = extractComplaintSignals('Pasien nyeri dada dan sesak napas, pusing sejak pagi');
-    expect(result).toContain('nyeri dada');
-    expect(result).toContain('sesak napas');
-    expect(result).toContain('pusing');
-  });
+    const result = extractComplaintSignals('Pasien nyeri dada dan sesak napas, pusing sejak pagi')
+    expect(result).toContain('nyeri dada')
+    expect(result).toContain('sesak napas')
+    expect(result).toContain('pusing')
+  })
 
   it('matches complaint signals against suggestion rationale', () => {
-    const signals = ['nyeri dada', 'pusing', 'demam'];
-    const matched = matchSuggestionSignals(baseSuggestion, signals);
-    expect(matched).toContain('pusing');
-    expect(matched).not.toContain('demam');
-  });
+    const signals = ['nyeri dada', 'pusing', 'demam']
+    const matched = matchSuggestionSignals(baseSuggestion, signals)
+    expect(matched).toContain('pusing')
+    expect(matched).not.toContain('demam')
+  })
 
   it('derives vital drivers for severe abnormalities', () => {
     const drivers = deriveVitalDrivers({
@@ -42,12 +42,12 @@ describe('differential-diagnosis helpers', () => {
       rr: 26,
       temp: 39.1,
       glucose: 320,
-    });
+    })
 
-    expect(drivers.some((line) => line.includes('krisis hipertensi'))).toBe(true);
-    expect(drivers.some((line) => line.includes('takikardia'))).toBe(true);
-    expect(drivers.some((line) => line.includes('dekompensasi metabolik'))).toBe(true);
-  });
+    expect(drivers.some(line => line.includes('krisis hipertensi'))).toBe(true)
+    expect(drivers.some(line => line.includes('takikardia'))).toBe(true)
+    expect(drivers.some(line => line.includes('dekompensasi metabolik'))).toBe(true)
+  })
 
   it('marks exam plan as required for high-risk metabolic profile', () => {
     const plan = deriveSupportingExamPlan(
@@ -65,12 +65,12 @@ describe('differential-diagnosis helpers', () => {
         glucose: 348,
       },
       ['poliuria', 'polidipsia']
-    );
+    )
 
-    expect(plan.needLevel).toBe('required');
-    expect(plan.tests.some((test) => test.includes('HbA1c'))).toBe(true);
-    expect(plan.tests.some((test) => test.includes('Keton'))).toBe(true);
-  });
+    expect(plan.needLevel).toBe('required')
+    expect(plan.tests.some(test => test.includes('HbA1c'))).toBe(true)
+    expect(plan.tests.some(test => test.includes('Keton'))).toBe(true)
+  })
 
   it('builds complete differential insight payload', () => {
     const insight = buildDifferentialInsight({
@@ -90,9 +90,9 @@ describe('differential-diagnosis helpers', () => {
         temp: 37.8,
         glucose: 108,
       },
-    });
+    })
 
-    expect(insight.matchedSymptoms.length).toBeGreaterThan(0);
-    expect(insight.supportingExamPlan.tests.length).toBeGreaterThan(0);
-  });
-});
+    expect(insight.matchedSymptoms.length).toBeGreaterThan(0)
+    expect(insight.supportingExamPlan.tests.length).toBeGreaterThan(0)
+  })
+})

@@ -1,63 +1,16 @@
-<!-- Claudesy's vision, brought to life. -->
-## Summary
+﻿<!-- Architected and built by Claudesy. -->
+## PR Summary — Sentra Assist
+**Type:** feat / fix / refactor / test / docs / chore
 
-<!-- Describe what this PR does and why. Link to related issues. -->
-
-Closes #
-
-## Type of Change
-
-- [ ] `feat` — New feature
-- [ ] `fix` — Bug fix
-- [ ] `chore` — Maintenance / dependency update
-- [ ] `docs` — Documentation change
-- [ ] `refactor` — Code restructuring (no behavior change)
-- [ ] `test` — Test additions or modifications
-- [ ] `perf` — Performance improvement
-- [ ] `ci` — CI/CD configuration change
-
-## Changes Made
-
-<!-- List the key changes in this PR -->
-
--
--
+## Changes
 -
 
-## Testing
+## Checklist
+- [ ] enableGuardrails still true
+- [ ] No PHI in any file
+- [ ] pnpm lint + typecheck + test pass
+- [ ] Brand signature present in new files
+- [ ] Cognitorium log written
 
-<!-- Describe how you tested the changes -->
-
-- [ ] Unit tests added/updated (`pnpm test`)
-- [ ] TypeScript compiles without errors (`pnpm typecheck`)
-- [ ] Linting passes (`pnpm lint`)
-- [ ] Manual testing on ePuskesmas (if applicable)
-
-## Clinical Safety Review
-
-<!-- Complete this section for ANY changes to clinical logic -->
-
-- [ ] No clinical logic changed (skip this section)
-- [ ] Clinical logic changed — evidence-based references provided:
-  -
-- [ ] Advisory-only mode maintained (no auto-actions in EMR)
-- [ ] Confidence levels shown for all clinical suggestions
-- [ ] DDI severity hierarchy respected (contraindicated > major > moderate > minor)
-- [ ] Principal engineer review requested
-
-## Security Checklist
-
-- [ ] No hardcoded secrets or API keys
-- [ ] No PII in `console.log` or storage
-- [ ] No `eval()` or unsafe `innerHTML`
-- [ ] Input validation applied where needed
-
-## Documentation
-
-- [ ] `CHANGELOG.md` updated under `[Unreleased]`
-- [ ] API/type changes documented with JSDoc
-- [ ] README updated (if setup/usage changed)
-
-## Screenshots (if applicable)
-
-<!-- Add screenshots for UI changes -->
+> ⚠️ Production requires Gate 5 Chief approval.
+<sub>Abyss v3 — Sentra Healthcare AI · Architected by Claudesy</sub>

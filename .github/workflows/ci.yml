@@ -3,9 +3,12 @@ name: CI — Lint, Typecheck, Test & Build
 
 on:
   push:
-    branches: [main, master, develop, 'feature/**', 'fix/**']
+    branches: [main, master, develop, feature/**, fix/**]
   pull_request:
     branches: [main, master]
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

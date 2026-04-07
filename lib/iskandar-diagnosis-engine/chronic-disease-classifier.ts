@@ -34,26 +34,26 @@ export enum ChronicDiseaseType {
  * - critical: Red (#EF4444) - life-threatening, immediate attention
  * - moderate: Orange (#F59E0B) - chronic management required
  */
-export type ChronicDiseaseSeverity = 'critical' | 'moderate';
+export type ChronicDiseaseSeverity = 'critical' | 'moderate'
 
 /**
  * Classification result for a chronic disease
  */
 export interface ChronicDiseaseClassification {
-  type: ChronicDiseaseType;
-  shortLabel: string;
-  fullName: string;
-  severity: ChronicDiseaseSeverity;
-  icdCode: string;
+  type: ChronicDiseaseType
+  shortLabel: string
+  fullName: string
+  severity: ChronicDiseaseSeverity
+  icdCode: string
 }
 
 /**
  * Badge styling configuration
  */
 export interface BadgeConfig {
-  color: string;
-  bgColor: string;
-  borderColor: string;
+  color: string
+  bgColor: string
+  borderColor: string
 }
 
 // ============================================================================
@@ -66,52 +66,52 @@ export interface BadgeConfig {
  */
 const ICD_DISEASE_MAP: Record<string, ChronicDiseaseType> = {
   // Hipertensi (I10.x, I11.x, I12.x, I13.x, I15.x)
-  'I10': ChronicDiseaseType.HYPERTENSION,
-  'I11': ChronicDiseaseType.HYPERTENSION,
-  'I12': ChronicDiseaseType.HYPERTENSION,
-  'I13': ChronicDiseaseType.HYPERTENSION,
-  'I15': ChronicDiseaseType.HYPERTENSION,
+  I10: ChronicDiseaseType.HYPERTENSION,
+  I11: ChronicDiseaseType.HYPERTENSION,
+  I12: ChronicDiseaseType.HYPERTENSION,
+  I13: ChronicDiseaseType.HYPERTENSION,
+  I15: ChronicDiseaseType.HYPERTENSION,
 
   // Diabetes Mellitus (E10.x, E11.x, E13.x, E14.x)
-  'E10': ChronicDiseaseType.DIABETES,
-  'E11': ChronicDiseaseType.DIABETES,
-  'E13': ChronicDiseaseType.DIABETES,
-  'E14': ChronicDiseaseType.DIABETES,
+  E10: ChronicDiseaseType.DIABETES,
+  E11: ChronicDiseaseType.DIABETES,
+  E13: ChronicDiseaseType.DIABETES,
+  E14: ChronicDiseaseType.DIABETES,
 
   // Gagal Jantung (I50.x)
-  'I50': ChronicDiseaseType.HEART_FAILURE,
+  I50: ChronicDiseaseType.HEART_FAILURE,
 
   // Penyakit Jantung Koroner (I20.x, I25.x)
-  'I20': ChronicDiseaseType.CORONARY_HEART,
-  'I25': ChronicDiseaseType.CORONARY_HEART,
+  I20: ChronicDiseaseType.CORONARY_HEART,
+  I25: ChronicDiseaseType.CORONARY_HEART,
 
   // Stroke (I60.x, I61.x, I63.x, I64.x)
-  'I60': ChronicDiseaseType.STROKE,
-  'I61': ChronicDiseaseType.STROKE,
-  'I63': ChronicDiseaseType.STROKE,
-  'I64': ChronicDiseaseType.STROKE,
+  I60: ChronicDiseaseType.STROKE,
+  I61: ChronicDiseaseType.STROKE,
+  I63: ChronicDiseaseType.STROKE,
+  I64: ChronicDiseaseType.STROKE,
 
   // Gagal Ginjal Kronik (N18.x)
-  'N18': ChronicDiseaseType.CHRONIC_KIDNEY,
+  N18: ChronicDiseaseType.CHRONIC_KIDNEY,
 
   // Asma Kronis (J45.x)
-  'J45': ChronicDiseaseType.CHRONIC_ASTHMA,
+  J45: ChronicDiseaseType.CHRONIC_ASTHMA,
 
   // PPOK (J44.x)
-  'J44': ChronicDiseaseType.COPD,
+  J44: ChronicDiseaseType.COPD,
 
   // GERD (K21.x)
-  'K21': ChronicDiseaseType.GERD,
+  K21: ChronicDiseaseType.GERD,
 
   // Hipotiroidisme/Hipertiroidisme (E03.x, E05.x)
-  'E03': ChronicDiseaseType.THYROID,
-  'E05': ChronicDiseaseType.THYROID,
-};
+  E03: ChronicDiseaseType.THYROID,
+  E05: ChronicDiseaseType.THYROID,
+}
 
 /**
  * Cancer code pattern (C00-C97)
  */
-const CANCER_CODE_PATTERN = /^C[0-8][0-9]|^C9[0-7]/;
+const CANCER_CODE_PATTERN = /^C[0-8][0-9]|^C9[0-7]/
 
 /**
  * Disease severity classification
@@ -129,7 +129,7 @@ const DISEASE_SEVERITY: Record<ChronicDiseaseType, ChronicDiseaseSeverity> = {
   [ChronicDiseaseType.COPD]: 'moderate',
   [ChronicDiseaseType.GERD]: 'moderate',
   [ChronicDiseaseType.THYROID]: 'moderate',
-};
+}
 
 /**
  * Full Indonesian disease names for tooltips
@@ -146,7 +146,7 @@ const DISEASE_FULL_NAMES: Record<ChronicDiseaseType, string> = {
   [ChronicDiseaseType.COPD]: 'PPOK',
   [ChronicDiseaseType.GERD]: 'GERD',
   [ChronicDiseaseType.THYROID]: 'Gangguan Tiroid',
-};
+}
 
 /**
  * Badge color configurations by severity
@@ -163,7 +163,7 @@ const BADGE_COLORS: Record<ChronicDiseaseSeverity, BadgeConfig> = {
     bgColor: 'rgba(245, 158, 11, 0.15)',
     borderColor: 'rgba(245, 158, 11, 0.2)',
   },
-};
+}
 
 // ============================================================================
 // FUNCTIONS
@@ -182,11 +182,11 @@ const BADGE_COLORS: Record<ChronicDiseaseSeverity, BadgeConfig> = {
  */
 export function classifyChronicDisease(icdCode: string): ChronicDiseaseClassification | null {
   if (!icdCode || typeof icdCode !== 'string') {
-    return null;
+    return null
   }
 
-  const normalizedCode = icdCode.toUpperCase().trim();
-  const baseCode = normalizedCode.split('.')[0]; // Extract base code (e.g., 'I10' from 'I10.0')
+  const normalizedCode = icdCode.toUpperCase().trim()
+  const baseCode = normalizedCode.split('.')[0] // Extract base code (e.g., 'I10' from 'I10.0')
 
   // Check cancer range first (C00-C97)
   if (CANCER_CODE_PATTERN.test(baseCode)) {
@@ -196,13 +196,13 @@ export function classifyChronicDisease(icdCode: string): ChronicDiseaseClassific
       fullName: DISEASE_FULL_NAMES[ChronicDiseaseType.CANCER],
       severity: DISEASE_SEVERITY[ChronicDiseaseType.CANCER],
       icdCode: normalizedCode,
-    };
+    }
   }
 
   // Check standard mapping
-  const diseaseType = ICD_DISEASE_MAP[baseCode];
+  const diseaseType = ICD_DISEASE_MAP[baseCode]
   if (!diseaseType) {
-    return null;
+    return null
   }
 
   return {
@@ -211,7 +211,7 @@ export function classifyChronicDisease(icdCode: string): ChronicDiseaseClassific
     fullName: DISEASE_FULL_NAMES[diseaseType],
     severity: DISEASE_SEVERITY[diseaseType],
     icdCode: normalizedCode,
-  };
+  }
 }
 
 /**
@@ -221,7 +221,7 @@ export function classifyChronicDisease(icdCode: string): ChronicDiseaseClassific
  * @returns Badge color configuration
  */
 export function getBadgeConfig(severity: ChronicDiseaseSeverity): BadgeConfig {
-  return BADGE_COLORS[severity];
+  return BADGE_COLORS[severity]
 }
 
 /**
@@ -231,8 +231,8 @@ export function getBadgeConfig(severity: ChronicDiseaseSeverity): BadgeConfig {
  * @returns Badge color configuration
  */
 export function getBadgeConfigForDisease(diseaseType: ChronicDiseaseType): BadgeConfig {
-  const severity = DISEASE_SEVERITY[diseaseType];
-  return BADGE_COLORS[severity];
+  const severity = DISEASE_SEVERITY[diseaseType]
+  return BADGE_COLORS[severity]
 }
 
 /**
@@ -242,7 +242,7 @@ export function getBadgeConfigForDisease(diseaseType: ChronicDiseaseType): Badge
  * @returns true if the code is a recognized chronic disease
  */
 export function isChronicDisease(icdCode: string): boolean {
-  return classifyChronicDisease(icdCode) !== null;
+  return classifyChronicDisease(icdCode) !== null
 }
 
 /**
@@ -251,7 +251,7 @@ export function isChronicDisease(icdCode: string): boolean {
  * @returns Array of all ChronicDiseaseType values
  */
 export function getSupportedDiseaseTypes(): ChronicDiseaseType[] {
-  return Object.values(ChronicDiseaseType);
+  return Object.values(ChronicDiseaseType)
 }
 
 /**
@@ -261,5 +261,5 @@ export function getSupportedDiseaseTypes(): ChronicDiseaseType[] {
  * @returns Full Indonesian name
  */
 export function getDiseaseFullName(diseaseType: ChronicDiseaseType): string {
-  return DISEASE_FULL_NAMES[diseaseType];
+  return DISEASE_FULL_NAMES[diseaseType]
 }

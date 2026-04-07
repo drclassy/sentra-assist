@@ -13,13 +13,7 @@
  * @module lib/das/mapping-cache
  */
 
-import type {
-  MappingCacheEntry,
-  CacheStats,
-  FieldMapping,
-  PageType,
-  FieldSignature,
-} from './types';
+import type { CacheStats, FieldMapping, FieldSignature, MappingCacheEntry, PageType } from './types'
 
 // ============================================================================
 // CONFIGURATION
@@ -36,7 +30,7 @@ const CACHE_CONFIG = {
   minSuccessRate: 0.95,
   /** Minimum hits before considering stable */
   minHitsForStable: 5,
-};
+}
 
 // ============================================================================
 // HASH COMPUTATION
@@ -49,30 +43,27 @@ const CACHE_CONFIG = {
  * - Page URL (normalized)
  * - Form field structure (names, types)
  */
-export function computePageHash(
-  pageUrl: string,
-  fields: FieldSignature[]
-): string {
+export function computePageHash(pageUrl: string, fields: FieldSignature[]): string {
   // Normalize URL (remove query params, hash)
-  const url = new URL(pageUrl);
-  const normalizedPath = url.pathname.toLowerCase();
+  const url = new URL(pageUrl)
+  const normalizedPath = url.pathname.toLowerCase()
 
   // Create field signature string (sorted for consistency)
   const fieldSig = fields
-    .map((f) => `${f.attributes.name || f.id}:${f.fieldType}`)
+    .map(f => `${f.attributes.name || f.id}:${f.fieldType}`)
     .sort()
-    .join('|');
+    .join('|')
 
   // Simple hash function
-  const str = `${normalizedPath}::${fieldSig}`;
-  let hash = 0;
+  const str = `${normalizedPath}::${fieldSig}`
+  let hash = 0
   for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+    const char = str.charCodeAt(i)
+    hash = (hash << 5) - hash + char
+    hash = hash & hash // Convert to 32bit integer
   }
 
-  return `h${Math.abs(hash).toString(36)}`;
+  return `h${Math.abs(hash).toString(36)}`
 }
 
 // ============================================================================
@@ -85,33 +76,31 @@ export function computePageHash(
  * @param pageHash - Hash of page + form structure
  * @returns Cache entry or null if not found/expired
  */
-export async function getCachedMapping(
-  pageHash: string
-): Promise<MappingCacheEntry | null> {
+export async function getCachedMapping(pageHash: string): Promise<MappingCacheEntry | null> {
   try {
-    const key = `${CACHE_CONFIG.keyPrefix}${pageHash}`;
-    const result = await browser.storage.local.get(key);
-    const entry = result[key] as MappingCacheEntry | undefined;
+    const key = `${CACHE_CONFIG.keyPrefix}${pageHash}`
+    const result = await browser.storage.local.get(key)
+    const entry = result[key] as MappingCacheEntry | undefined
 
     if (!entry) {
-      return null;
+      return null
     }
 
     // Check expiration
     if (Date.now() > entry.expiresAt) {
       // Remove expired entry
-      await browser.storage.local.remove(key);
-      return null;
+      await browser.storage.local.remove(key)
+      return null
     }
 
     // Increment hit count
-    entry.hitCount += 1;
-    await browser.storage.local.set({ [key]: entry });
+    entry.hitCount += 1
+    await browser.storage.local.set({ [key]: entry })
 
-    return entry;
+    return entry
   } catch (error) {
-    console.error('[DAS:Cache] Get error:', error);
-    return null;
+    console.error('[DAS:Cache] Get error:', error)
+    return null
   }
 }
 
@@ -128,14 +117,14 @@ export async function setCachedMapping(
   mappings: FieldMapping[]
 ): Promise<void> {
   try {
-    const key = `${CACHE_CONFIG.keyPrefix}${pageHash}`;
+    const key = `${CACHE_CONFIG.keyPrefix}${pageHash}`
 
     // Convert FieldMapping to cacheable format (don't store full targetField)
-    const cacheableMappings = mappings.map((m) => ({
+    const cacheableMappings = mappings.map(m => ({
       payloadKey: m.payloadKey,
       fieldSelector: m.targetField.selector,
       confidence: m.confidence,
-    }));
+    }))
 
     const entry: MappingCacheEntry = {
       pageHash,
@@ -145,14 +134,14 @@ export async function setCachedMapping(
       successRate: 1.0, // Start optimistic
       hitCount: 0,
       expiresAt: Date.now() + CACHE_CONFIG.ttl,
-    };
+    }
 
-    await browser.storage.local.set({ [key]: entry });
+    await browser.storage.local.set({ [key]: entry })
 
     // Cleanup old entries if needed
-    await cleanupOldEntries();
+    await cleanupOldEntries()
   } catch (error) {
-    console.error('[DAS:Cache] Set error:', error);
+    console.error('[DAS:Cache] Set error:', error)
   }
 }
 
@@ -162,32 +151,31 @@ export async function setCachedMapping(
  * @param pageHash - Hash of page
  * @param success - Whether fill was successful
  */
-export async function updateCacheResult(
-  pageHash: string,
-  success: boolean
-): Promise<void> {
+export async function updateCacheResult(pageHash: string, success: boolean): Promise<void> {
   try {
-    const key = `${CACHE_CONFIG.keyPrefix}${pageHash}`;
-    const result = await browser.storage.local.get(key);
-    const entry = result[key] as MappingCacheEntry | undefined;
+    const key = `${CACHE_CONFIG.keyPrefix}${pageHash}`
+    const result = await browser.storage.local.get(key)
+    const entry = result[key] as MappingCacheEntry | undefined
 
-    if (!entry) return;
+    if (!entry) return
 
     // Update success rate (exponential moving average)
-    const alpha = 0.2; // Weight for new result
-    entry.successRate = alpha * (success ? 1 : 0) + (1 - alpha) * entry.successRate;
+    const alpha = 0.2 // Weight for new result
+    entry.successRate = alpha * (success ? 1 : 0) + (1 - alpha) * entry.successRate
 
     // Remove if success rate drops too low
-    if (entry.hitCount >= CACHE_CONFIG.minHitsForStable &&
-        entry.successRate < CACHE_CONFIG.minSuccessRate) {
-      await browser.storage.local.remove(key);
-      console.log(`[DAS:Cache] Removed low-success entry: ${pageHash}`);
-      return;
+    if (
+      entry.hitCount >= CACHE_CONFIG.minHitsForStable &&
+      entry.successRate < CACHE_CONFIG.minSuccessRate
+    ) {
+      await browser.storage.local.remove(key)
+      console.log(`[DAS:Cache] Removed low-success entry: ${pageHash}`)
+      return
     }
 
-    await browser.storage.local.set({ [key]: entry });
+    await browser.storage.local.set({ [key]: entry })
   } catch (error) {
-    console.error('[DAS:Cache] Update error:', error);
+    console.error('[DAS:Cache] Update error:', error)
   }
 }
 
@@ -196,18 +184,16 @@ export async function updateCacheResult(
  */
 export async function clearCache(): Promise<void> {
   try {
-    const all = await browser.storage.local.get(null);
-    const keysToRemove = Object.keys(all).filter((k) =>
-      k.startsWith(CACHE_CONFIG.keyPrefix)
-    );
+    const all = await browser.storage.local.get(null)
+    const keysToRemove = Object.keys(all).filter(k => k.startsWith(CACHE_CONFIG.keyPrefix))
 
     if (keysToRemove.length > 0) {
-      await browser.storage.local.remove(keysToRemove);
+      await browser.storage.local.remove(keysToRemove)
     }
 
-    console.log(`[DAS:Cache] Cleared ${keysToRemove.length} entries`);
+    console.log(`[DAS:Cache] Cleared ${keysToRemove.length} entries`)
   } catch (error) {
-    console.error('[DAS:Cache] Clear error:', error);
+    console.error('[DAS:Cache] Clear error:', error)
   }
 }
 
@@ -216,26 +202,22 @@ export async function clearCache(): Promise<void> {
  */
 export async function getCacheStats(): Promise<CacheStats> {
   try {
-    const all = await browser.storage.local.get(null);
-    const entries = Object.entries(all).filter(([k]) =>
-      k.startsWith(CACHE_CONFIG.keyPrefix)
-    );
+    const all = await browser.storage.local.get(null)
+    const entries = Object.entries(all).filter(([k]) => k.startsWith(CACHE_CONFIG.keyPrefix))
 
-    let totalHits = 0;
-    let oldestEntry = Date.now();
+    let totalHits = 0
+    let oldestEntry = Date.now()
 
     for (const [, value] of entries) {
-      const entry = value as MappingCacheEntry;
-      totalHits += entry.hitCount;
+      const entry = value as MappingCacheEntry
+      totalHits += entry.hitCount
       if (entry.timestamp < oldestEntry) {
-        oldestEntry = entry.timestamp;
+        oldestEntry = entry.timestamp
       }
     }
 
     // Estimate storage used
-    const storageUsed = JSON.stringify(
-      Object.fromEntries(entries)
-    ).length;
+    const storageUsed = JSON.stringify(Object.fromEntries(entries)).length
 
     return {
       totalEntries: entries.length,
@@ -244,9 +226,9 @@ export async function getCacheStats(): Promise<CacheStats> {
       hitRate: entries.length > 0 ? (totalHits / (totalHits + entries.length)) * 100 : 0,
       oldestEntry: entries.length > 0 ? oldestEntry : 0,
       storageUsed,
-    };
+    }
   } catch (error) {
-    console.error('[DAS:Cache] Stats error:', error);
+    console.error('[DAS:Cache] Stats error:', error)
     return {
       totalEntries: 0,
       hits: 0,
@@ -254,7 +236,7 @@ export async function getCacheStats(): Promise<CacheStats> {
       hitRate: 0,
       oldestEntry: 0,
       storageUsed: 0,
-    };
+    }
   }
 }
 
@@ -267,24 +249,24 @@ export async function getCacheStats(): Promise<CacheStats> {
  */
 async function cleanupOldEntries(): Promise<void> {
   try {
-    const all = await browser.storage.local.get(null);
+    const all = await browser.storage.local.get(null)
     const entries = Object.entries(all)
       .filter(([k]) => k.startsWith(CACHE_CONFIG.keyPrefix))
       .map(([key, value]) => ({
         key,
         entry: value as MappingCacheEntry,
       }))
-      .sort((a, b) => a.entry.timestamp - b.entry.timestamp);
+      .sort((a, b) => a.entry.timestamp - b.entry.timestamp)
 
     // Remove oldest entries if over limit
-    const toRemove = entries.length - CACHE_CONFIG.maxEntries;
+    const toRemove = entries.length - CACHE_CONFIG.maxEntries
     if (toRemove > 0) {
-      const keysToRemove = entries.slice(0, toRemove).map((e) => e.key);
-      await browser.storage.local.remove(keysToRemove);
-      console.log(`[DAS:Cache] Cleaned up ${toRemove} old entries`);
+      const keysToRemove = entries.slice(0, toRemove).map(e => e.key)
+      await browser.storage.local.remove(keysToRemove)
+      console.log(`[DAS:Cache] Cleaned up ${toRemove} old entries`)
     }
   } catch (error) {
-    console.error('[DAS:Cache] Cleanup error:', error);
+    console.error('[DAS:Cache] Cleanup error:', error)
   }
 }
 
@@ -299,22 +281,26 @@ export function restoreMappingsFromCache(
   cacheEntry: MappingCacheEntry,
   fields: FieldSignature[]
 ): FieldMapping[] {
-  const fieldBySelector = new Map(fields.map((f) => [f.selector, f]));
-  const mappings: FieldMapping[] = [];
+  const fieldBySelector = new Map(fields.map(f => [f.selector, f]))
+  const mappings: FieldMapping[] = []
 
   for (const cached of cacheEntry.mappings) {
-    const targetField = fieldBySelector.get(cached.fieldSelector);
+    const targetField = fieldBySelector.get(cached.fieldSelector)
     if (targetField) {
       mappings.push({
         payloadKey: cached.payloadKey,
         targetField,
         confidence: cached.confidence,
         reasoning: 'Restored from cache',
-        action: cached.confidence >= 0.95 ? 'AUTO_FILL' :
-                cached.confidence >= 0.80 ? 'CAUTIOUS_FILL' : 'HUMAN_REQUIRED',
-      });
+        action:
+          cached.confidence >= 0.95
+            ? 'AUTO_FILL'
+            : cached.confidence >= 0.8
+              ? 'CAUTIOUS_FILL'
+              : 'HUMAN_REQUIRED',
+      })
     }
   }
 
-  return mappings;
+  return mappings
 }

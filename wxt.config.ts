@@ -1,8 +1,10 @@
 // Designed and constructed by Claudesy.
-import { defineConfig } from 'wxt';
+import { defineConfig } from 'wxt'
 
 export default defineConfig({
-  outDir: 'dev',
+  outDir: '.output',
+  outDirTemplate: 'chrome-mv3-dev',
+  entrypointsDir: 'entrypoints',
   manifest: {
     name: 'Ghost Protocols — Iskandar Diagnosis Engine V1',
     description:
@@ -25,6 +27,7 @@ export default defineConfig({
     ],
     action: {
       default_title: 'Open Ghost Protocols',
+      default_popup: 'login.html',
       default_icon: {
         16: 'icon/16.png',
         32: 'icon/32.png',
@@ -40,6 +43,12 @@ export default defineConfig({
       extension_pages:
         "script-src 'self'; object-src 'self'; font-src 'self' https://*.vscode-cdn.net data:;",
     },
+    web_accessible_resources: [
+      {
+        resources: ['icon/*', 'assets/*', 'assets/sounds/*'],
+        matches: ['<all_urls>'],
+      },
+    ],
   },
   modules: ['@wxt-dev/module-react'],
   webExt: {
@@ -50,4 +59,4 @@ export default defineConfig({
       chunkSizeWarningLimit: 2000,
     },
   }),
-});
+})

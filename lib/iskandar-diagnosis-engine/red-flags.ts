@@ -21,8 +21,8 @@
  * - Preeclampsia: ACOG Practice Bulletin 222
  */
 
-import type { VitalSigns } from '@/types/api';
-import type { AnonymizedClinicalContext } from '../api/deepseek-types';
+import type { VitalSigns } from '@/types/api'
+import type { AnonymizedClinicalContext } from '../api/deepseek-types'
 
 // =============================================================================
 // RED FLAG TYPES
@@ -33,25 +33,25 @@ import type { AnonymizedClinicalContext } from '../api/deepseek-types';
  */
 export interface RedFlag {
   /** Unique identifier */
-  id: string;
+  id: string
 
   /** Severity level */
-  severity: 'emergency' | 'urgent' | 'warning';
+  severity: 'emergency' | 'urgent' | 'warning'
 
   /** Condition name */
-  condition: string;
+  condition: string
 
   /** Required action */
-  action: string;
+  action: string
 
   /** Related ICD-10 codes */
-  icd_codes: string[];
+  icd_codes: string[]
 
   /** Clinical criteria met */
-  criteria_met: string[];
+  criteria_met: string[]
 
   /** Evidence source */
-  source?: string;
+  source?: string
 }
 
 /**
@@ -59,25 +59,25 @@ export interface RedFlag {
  */
 export interface RedFlagContext {
   /** Chief complaint text */
-  keluhan: string;
+  keluhan: string
 
   /** Vital signs */
-  vitals?: VitalSigns;
+  vitals?: VitalSigns
 
   /** Patient age in years */
-  age?: number;
+  age?: number
 
   /** Patient gender */
-  gender?: 'L' | 'P';
+  gender?: 'L' | 'P'
 
   /** Pregnancy status */
-  pregnant?: boolean;
+  pregnant?: boolean
 
   /** Known chronic diseases */
-  chronic_diseases?: string[];
+  chronic_diseases?: string[]
 
   /** Known allergies */
-  allergies?: string[];
+  allergies?: string[]
 }
 
 // =============================================================================
@@ -97,27 +97,27 @@ export interface RedFlagContext {
  * @reference Singer M, et al. JAMA 2016;315:801-810
  */
 export function checkSepsis(vitals: VitalSigns | undefined): RedFlag | null {
-  if (!vitals) return null;
+  if (!vitals) return null
 
-  let score = 0;
-  const criteria: string[] = [];
+  let score = 0
+  const criteria: string[] = []
 
   // Check respiratory rate
   if (vitals.respiratory_rate && vitals.respiratory_rate >= 22) {
-    score++;
-    criteria.push(`RR ${vitals.respiratory_rate} x/menit (>=22)`);
+    score++
+    criteria.push(`RR ${vitals.respiratory_rate} x/menit (>=22)`)
   }
 
   // Check systolic blood pressure
   if (vitals.systolic && vitals.systolic <= 100) {
-    score++;
-    criteria.push(`Sistolik ${vitals.systolic} mmHg (<=100)`);
+    score++
+    criteria.push(`Sistolik ${vitals.systolic} mmHg (<=100)`)
   }
 
   // Check altered mental status (GCS < 15)
   if (vitals.gcs && vitals.gcs < 15) {
-    score++;
-    criteria.push(`GCS ${vitals.gcs} (<15)`);
+    score++
+    criteria.push(`GCS ${vitals.gcs} (<15)`)
   }
 
   if (score >= 2) {
@@ -125,14 +125,15 @@ export function checkSepsis(vitals: VitalSigns | undefined): RedFlag | null {
       id: 'RF-SEPSIS',
       severity: 'emergency',
       condition: `SUSPEK SEPSIS - qSOFA Score ${score}/3`,
-      action: 'RUJUK SEGERA ke IGD RS. Pasang IV line, ambil kultur darah, berikan antibiotik empiris.',
+      action:
+        'RUJUK SEGERA ke IGD RS. Pasang IV line, ambil kultur darah, berikan antibiotik empiris.',
       icd_codes: ['A41.9', 'R65.20'],
       criteria_met: criteria,
       source: 'qSOFA (JAMA 2016)',
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 // =============================================================================
@@ -153,7 +154,7 @@ const ACS_KEYWORDS = [
   'keringat dingin',
   'sesak napas',
   'dada seperti terbakar',
-];
+]
 
 /**
  * Check for Acute Coronary Syndrome (ACS)
@@ -166,35 +167,35 @@ const ACS_KEYWORDS = [
  * @reference AHA/ACC Guidelines 2021
  */
 export function checkACS(keluhan: string, vitals: VitalSigns | undefined): RedFlag | null {
-  const keluhanLower = keluhan.toLowerCase();
-  const criteria: string[] = [];
+  const keluhanLower = keluhan.toLowerCase()
+  const criteria: string[] = []
 
   // Check for chest pain keywords
   const hasChestPainKeyword = ACS_KEYWORDS.some(keyword => {
     if (keluhanLower.includes(keyword)) {
-      criteria.push(`Keluhan: "${keyword}"`);
-      return true;
+      criteria.push(`Keluhan: "${keyword}"`)
+      return true
     }
-    return false;
-  });
+    return false
+  })
 
-  if (!hasChestPainKeyword) return null;
+  if (!hasChestPainKeyword) return null
 
   // Check for concerning vital signs
-  let vitalConcern = false;
+  let vitalConcern = false
 
   if (vitals) {
     if (vitals.heart_rate && vitals.heart_rate > 100) {
-      criteria.push(`Takikardia (HR ${vitals.heart_rate} bpm)`);
-      vitalConcern = true;
+      criteria.push(`Takikardia (HR ${vitals.heart_rate} bpm)`)
+      vitalConcern = true
     }
     if (vitals.systolic && vitals.systolic > 160) {
-      criteria.push(`Hipertensi (TD ${vitals.systolic} mmHg)`);
-      vitalConcern = true;
+      criteria.push(`Hipertensi (TD ${vitals.systolic} mmHg)`)
+      vitalConcern = true
     }
     if (vitals.spo2 && vitals.spo2 < 94) {
-      criteria.push(`Hipoksia (SpO2 ${vitals.spo2}%)`);
-      vitalConcern = true;
+      criteria.push(`Hipoksia (SpO2 ${vitals.spo2}%)`)
+      vitalConcern = true
     }
   }
 
@@ -204,14 +205,15 @@ export function checkACS(keluhan: string, vitals: VitalSigns | undefined): RedFl
       id: 'RF-ACS',
       severity: 'emergency',
       condition: 'SUSPEK SINDROM KORONER AKUT (ACS)',
-      action: 'EKG 12-lead SEGERA. Aspirin 320mg kunyah (jika tidak alergi). Oksigen jika SpO2 <94%. RUJUK RS dengan fasilitas kateterisasi.',
+      action:
+        'EKG 12-lead SEGERA. Aspirin 320mg kunyah (jika tidak alergi). Oksigen jika SpO2 <94%. RUJUK RS dengan fasilitas kateterisasi.',
       icd_codes: ['I21.9', 'I20.0', 'I20.9'],
       criteria_met: criteria,
       source: 'AHA/ACC Guidelines 2021',
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 // =============================================================================
@@ -234,7 +236,7 @@ const PREECLAMPSIA_SYMPTOMS = [
   'bengkak wajah',
   'bengkak tangan',
   'edema',
-];
+]
 
 /**
  * Check for Preeclampsia
@@ -251,31 +253,29 @@ export function checkPreeclampsia(
   isPregnant: boolean
 ): RedFlag | null {
   // Only applicable to pregnant patients
-  if (!isPregnant) return null;
+  if (!isPregnant) return null
 
-  const keluhanLower = keluhan.toLowerCase();
-  const criteria: string[] = ['Status: Hamil'];
+  const keluhanLower = keluhan.toLowerCase()
+  const criteria: string[] = ['Status: Hamil']
 
   // Check for hypertension
-  let hasHTN = false;
+  let hasHTN = false
   if (vitals) {
     if (vitals.systolic && vitals.systolic >= 140) {
-      criteria.push(`Hipertensi sistolik (${vitals.systolic} mmHg)`);
-      hasHTN = true;
+      criteria.push(`Hipertensi sistolik (${vitals.systolic} mmHg)`)
+      hasHTN = true
     }
     if (vitals.diastolic && vitals.diastolic >= 90) {
-      criteria.push(`Hipertensi diastolik (${vitals.diastolic} mmHg)`);
-      hasHTN = true;
+      criteria.push(`Hipertensi diastolik (${vitals.diastolic} mmHg)`)
+      hasHTN = true
     }
   }
 
   // Check for warning symptoms
-  const symptoms = PREECLAMPSIA_SYMPTOMS.filter(symptom =>
-    keluhanLower.includes(symptom)
-  );
+  const symptoms = PREECLAMPSIA_SYMPTOMS.filter(symptom => keluhanLower.includes(symptom))
 
   if (symptoms.length > 0) {
-    symptoms.forEach(s => criteria.push(`Gejala: ${s}`));
+    symptoms.forEach(s => criteria.push(`Gejala: ${s}`))
   }
 
   // Trigger if pregnant + HTN + symptoms
@@ -284,28 +284,33 @@ export function checkPreeclampsia(
       id: 'RF-PREEC',
       severity: 'emergency',
       condition: 'SUSPEK PREEKLAMPSIA',
-      action: 'Pasang IV line. Cek proteinuria. Berikan MgSO4 loading dose jika tersedia. RUJUK SEGERA ke RS dengan fasilitas obstetri.',
+      action:
+        'Pasang IV line. Cek proteinuria. Berikan MgSO4 loading dose jika tersedia. RUJUK SEGERA ke RS dengan fasilitas obstetri.',
       icd_codes: ['O14.9', 'O14.1', 'O15.0'],
       criteria_met: criteria,
       source: 'ACOG Practice Bulletin No. 222',
-    };
+    }
   }
 
   // Also flag severe hypertension in pregnancy even without symptoms
-  if (vitals && (vitals.systolic && vitals.systolic >= 160) || (vitals?.diastolic && vitals.diastolic >= 110)) {
-    criteria.push('Hipertensi berat dalam kehamilan');
+  if (
+    (vitals && vitals.systolic && vitals.systolic >= 160) ||
+    (vitals?.diastolic && vitals.diastolic >= 110)
+  ) {
+    criteria.push('Hipertensi berat dalam kehamilan')
     return {
       id: 'RF-PREEC-HTN',
       severity: 'emergency',
       condition: 'HIPERTENSI BERAT DALAM KEHAMILAN',
-      action: 'Berikan antihipertensi (Nifedipine 10mg oral atau Labetalol IV). Monitor ketat. RUJUK SEGERA.',
+      action:
+        'Berikan antihipertensi (Nifedipine 10mg oral atau Labetalol IV). Monitor ketat. RUJUK SEGERA.',
       icd_codes: ['O14.1', 'O13'],
       criteria_met: criteria,
       source: 'ACOG Practice Bulletin No. 222',
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 // =============================================================================
@@ -320,23 +325,23 @@ const STROKE_KEYWORDS = {
   arm: ['lengan lemah', 'tangan lemah', 'tidak bisa angkat tangan', 'kelemahan satu sisi'],
   speech: ['bicara pelo', 'bicara tidak jelas', 'sulit bicara', 'cadel mendadak'],
   time: ['mendadak', 'tiba-tiba', 'secara tiba-tiba'],
-};
+}
 
 /**
  * Check for Stroke using FAST criteria
  */
 export function checkStroke(keluhan: string): RedFlag | null {
-  const keluhanLower = keluhan.toLowerCase();
-  const criteria: string[] = [];
+  const keluhanLower = keluhan.toLowerCase()
+  const criteria: string[] = []
 
   // Check each FAST component
-  let fastScore = 0;
+  let fastScore = 0
 
   for (const [component, keywords] of Object.entries(STROKE_KEYWORDS)) {
-    const matched = keywords.filter(k => keluhanLower.includes(k));
+    const matched = keywords.filter(k => keluhanLower.includes(k))
     if (matched.length > 0) {
-      fastScore++;
-      criteria.push(`${component.toUpperCase()}: ${matched.join(', ')}`);
+      fastScore++
+      criteria.push(`${component.toUpperCase()}: ${matched.join(', ')}`)
     }
   }
 
@@ -346,14 +351,15 @@ export function checkStroke(keluhan: string): RedFlag | null {
       id: 'RF-STROKE',
       severity: 'emergency',
       condition: 'SUSPEK STROKE AKUT',
-      action: 'Catat waktu onset gejala (PENTING untuk trombolisis). JANGAN berikan makan/minum. RUJUK SEGERA ke RS Stroke Center.',
+      action:
+        'Catat waktu onset gejala (PENTING untuk trombolisis). JANGAN berikan makan/minum. RUJUK SEGERA ke RS Stroke Center.',
       icd_codes: ['I63.9', 'I64', 'I61.9'],
       criteria_met: criteria,
       source: 'AHA/ASA Stroke Guidelines',
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 // =============================================================================
@@ -371,7 +377,7 @@ const HYPOGLYCEMIA_KEYWORDS = [
   'bingung',
   'tidak sadar',
   'kejang',
-];
+]
 
 /**
  * Check for Severe Hypoglycemia
@@ -381,34 +387,33 @@ export function checkHypoglycemia(
   chronicDiseases: string[] | undefined
 ): RedFlag | null {
   // Only concern if diabetic patient
-  const isDiabetic = chronicDiseases?.some(d =>
-    d.toLowerCase().includes('diabetes') || d.toLowerCase().includes('dm')
-  );
+  const isDiabetic = chronicDiseases?.some(
+    d => d.toLowerCase().includes('diabetes') || d.toLowerCase().includes('dm')
+  )
 
-  if (!isDiabetic) return null;
+  if (!isDiabetic) return null
 
-  const keluhanLower = keluhan.toLowerCase();
-  const criteria: string[] = ['Riwayat: Diabetes'];
+  const keluhanLower = keluhan.toLowerCase()
+  const criteria: string[] = ['Riwayat: Diabetes']
 
-  const matchedSymptoms = HYPOGLYCEMIA_KEYWORDS.filter(k =>
-    keluhanLower.includes(k)
-  );
+  const matchedSymptoms = HYPOGLYCEMIA_KEYWORDS.filter(k => keluhanLower.includes(k))
 
   if (matchedSymptoms.length >= 2) {
-    matchedSymptoms.forEach(s => criteria.push(`Gejala: ${s}`));
+    matchedSymptoms.forEach(s => criteria.push(`Gejala: ${s}`))
 
     return {
       id: 'RF-HYPOGLYCEMIA',
       severity: 'emergency',
       condition: 'SUSPEK HIPOGLIKEMIA BERAT',
-      action: 'Cek GDS SEGERA. Jika GDS <70 mg/dL: berikan D40% 25mL IV atau glukosa oral jika sadar. Jika tidak sadar: Glucagon 1mg IM.',
+      action:
+        'Cek GDS SEGERA. Jika GDS <70 mg/dL: berikan D40% 25mL IV atau glukosa oral jika sadar. Jika tidak sadar: Glucagon 1mg IM.',
       icd_codes: ['E16.2', 'E11.65'],
       criteria_met: criteria,
       source: 'ADA Diabetes Care 2024',
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 // =============================================================================
@@ -428,7 +433,7 @@ const ANAPHYLAXIS_KEYWORDS = [
   'gatal seluruh badan',
   'mual muntah',
   'pusing',
-];
+]
 
 /**
  * Check for Anaphylaxis
@@ -438,29 +443,27 @@ export function checkAnaphylaxis(
   vitals: VitalSigns | undefined,
   allergies: string[] | undefined
 ): RedFlag | null {
-  const keluhanLower = keluhan.toLowerCase();
-  const criteria: string[] = [];
+  const keluhanLower = keluhan.toLowerCase()
+  const criteria: string[] = []
 
   // Check if has known allergies
   if (allergies && allergies.length > 0) {
-    criteria.push(`Riwayat alergi: ${allergies.slice(0, 3).join(', ')}`);
+    criteria.push(`Riwayat alergi: ${allergies.slice(0, 3).join(', ')}`)
   }
 
   // Check for anaphylaxis symptoms
-  const matchedSymptoms = ANAPHYLAXIS_KEYWORDS.filter(k =>
-    keluhanLower.includes(k)
-  );
+  const matchedSymptoms = ANAPHYLAXIS_KEYWORDS.filter(k => keluhanLower.includes(k))
 
   if (matchedSymptoms.length >= 2) {
-    matchedSymptoms.forEach(s => criteria.push(`Gejala: ${s}`));
+    matchedSymptoms.forEach(s => criteria.push(`Gejala: ${s}`))
 
     // Check vital signs for shock
     if (vitals) {
       if (vitals.systolic && vitals.systolic < 90) {
-        criteria.push(`Hipotensi (TD ${vitals.systolic} mmHg)`);
+        criteria.push(`Hipotensi (TD ${vitals.systolic} mmHg)`)
       }
       if (vitals.heart_rate && vitals.heart_rate > 120) {
-        criteria.push(`Takikardia (HR ${vitals.heart_rate} bpm)`);
+        criteria.push(`Takikardia (HR ${vitals.heart_rate} bpm)`)
       }
     }
 
@@ -468,14 +471,15 @@ export function checkAnaphylaxis(
       id: 'RF-ANAPHYLAXIS',
       severity: 'emergency',
       condition: 'SUSPEK REAKSI ANAFILAKSIS',
-      action: 'Epinefrin 0.3-0.5mg IM (paha lateral) SEGERA. Posisi trendelenburg. Oksigen. Pasang IV line. Siapkan resusitasi.',
+      action:
+        'Epinefrin 0.3-0.5mg IM (paha lateral) SEGERA. Posisi trendelenburg. Oksigen. Pasang IV line. Siapkan resusitasi.',
       icd_codes: ['T78.2', 'T88.6'],
       criteria_met: criteria,
       source: 'EAACI Anaphylaxis Guidelines 2021',
-    };
+    }
   }
 
-  return null;
+  return null
 }
 
 // =============================================================================
@@ -487,40 +491,32 @@ export function checkAnaphylaxis(
  * Returns array of triggered red flags, sorted by severity
  */
 export function runRedFlagChecks(context: RedFlagContext): RedFlag[] {
-  const flags: RedFlag[] = [];
+  const flags: RedFlag[] = []
 
   // Run all checks
-  const sepsis = checkSepsis(context.vitals);
-  if (sepsis) flags.push(sepsis);
+  const sepsis = checkSepsis(context.vitals)
+  if (sepsis) flags.push(sepsis)
 
-  const acs = checkACS(context.keluhan, context.vitals);
-  if (acs) flags.push(acs);
+  const acs = checkACS(context.keluhan, context.vitals)
+  if (acs) flags.push(acs)
 
-  const preeclampsia = checkPreeclampsia(
-    context.keluhan,
-    context.vitals,
-    context.pregnant || false
-  );
-  if (preeclampsia) flags.push(preeclampsia);
+  const preeclampsia = checkPreeclampsia(context.keluhan, context.vitals, context.pregnant || false)
+  if (preeclampsia) flags.push(preeclampsia)
 
-  const stroke = checkStroke(context.keluhan);
-  if (stroke) flags.push(stroke);
+  const stroke = checkStroke(context.keluhan)
+  if (stroke) flags.push(stroke)
 
-  const hypoglycemia = checkHypoglycemia(context.keluhan, context.chronic_diseases);
-  if (hypoglycemia) flags.push(hypoglycemia);
+  const hypoglycemia = checkHypoglycemia(context.keluhan, context.chronic_diseases)
+  if (hypoglycemia) flags.push(hypoglycemia)
 
-  const anaphylaxis = checkAnaphylaxis(
-    context.keluhan,
-    context.vitals,
-    context.allergies
-  );
-  if (anaphylaxis) flags.push(anaphylaxis);
+  const anaphylaxis = checkAnaphylaxis(context.keluhan, context.vitals, context.allergies)
+  if (anaphylaxis) flags.push(anaphylaxis)
 
   // Sort by severity (emergency first)
-  const severityOrder = { emergency: 0, urgent: 1, warning: 2 };
-  flags.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+  const severityOrder = { emergency: 0, urgent: 1, warning: 2 }
+  flags.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
 
-  return flags;
+  return flags
 }
 
 /**
@@ -535,5 +531,5 @@ export function runRedFlagChecksFromContext(context: AnonymizedClinicalContext):
     pregnant: context.is_pregnant,
     chronic_diseases: context.chronic_diseases,
     allergies: context.allergies,
-  });
+  })
 }

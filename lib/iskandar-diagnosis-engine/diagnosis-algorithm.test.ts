@@ -1,9 +1,9 @@
 // Designed and constructed by Claudesy.
-import { describe, expect, it } from 'vitest';
-import type { DiagnosisSuggestion } from '@/types/api';
-import { ChronicDiseaseType } from './chronic-disease-classifier';
-import type { TrajectoryAnalysis } from './trajectory-analyzer';
-import { runDiagnosisAlgorithm } from './diagnosis-algorithm';
+import { describe, expect, it } from 'vitest'
+import type { DiagnosisSuggestion } from '@/types/api'
+import { ChronicDiseaseType } from './chronic-disease-classifier'
+import { runDiagnosisAlgorithm } from './diagnosis-algorithm'
+import type { TrajectoryAnalysis } from './trajectory-analyzer'
 
 const vitalsCriticalMetabolic = {
   sbp: 168,
@@ -12,7 +12,7 @@ const vitalsCriticalMetabolic = {
   rr: 24,
   temp: 38.6,
   glucose: 338,
-};
+}
 
 const baseSuggestions: DiagnosisSuggestion[] = [
   {
@@ -42,7 +42,7 @@ const baseSuggestions: DiagnosisSuggestion[] = [
     red_flags: [],
     recommended_actions: ['Kontrol tekanan darah'],
   },
-];
+]
 
 const chronicConfirmedTrajectory: TrajectoryAnalysis = {
   overallTrend: 'stable',
@@ -106,7 +106,7 @@ const chronicConfirmedTrajectory: TrajectoryAnalysis = {
       confirmed_at: '2026-02-09T10:00:00.000Z',
     },
   ],
-};
+}
 
 describe('runDiagnosisAlgorithm', () => {
   it('returns empty array on empty suggestions', () => {
@@ -114,10 +114,10 @@ describe('runDiagnosisAlgorithm', () => {
       suggestions: [],
       keluhanUtama: 'demam',
       vitals: vitalsCriticalMetabolic,
-    });
+    })
 
-    expect(result).toEqual([]);
-  });
+    expect(result).toEqual([])
+  })
 
   it('prioritizes diagnosis that fits symptom + vital context', () => {
     const result = runDiagnosisAlgorithm({
@@ -125,12 +125,12 @@ describe('runDiagnosisAlgorithm', () => {
       keluhanUtama: 'Sering kencing, haus terus, lemas, mual',
       keluhanTambahan: 'demam',
       vitals: vitalsCriticalMetabolic,
-    });
+    })
 
-    expect(result[0]?.suggestion.icd_x).toBe('E11.65');
-    expect(result[0]?.diagnosisScore).toBeGreaterThan(result[1]?.diagnosisScore ?? 0);
-    expect(result[0]?.scoreBreakdown.vitalFit).toBeGreaterThan(60);
-  });
+    expect(result[0]?.suggestion.icd_x).toBe('E11.65')
+    expect(result[0]?.diagnosisScore).toBeGreaterThan(result[1]?.diagnosisScore ?? 0)
+    expect(result[0]?.scoreBreakdown.vitalFit).toBeGreaterThan(60)
+  })
 
   it('keeps score in 0..100 and adjustedConfidence in 0..1', () => {
     const result = runDiagnosisAlgorithm({
@@ -144,15 +144,15 @@ describe('runDiagnosisAlgorithm', () => {
         temp: 36.8,
         glucose: 102,
       },
-    });
+    })
 
     for (const item of result) {
-      expect(item.diagnosisScore).toBeGreaterThanOrEqual(0);
-      expect(item.diagnosisScore).toBeLessThanOrEqual(100);
-      expect(item.adjustedConfidence).toBeGreaterThanOrEqual(0);
-      expect(item.adjustedConfidence).toBeLessThanOrEqual(1);
+      expect(item.diagnosisScore).toBeGreaterThanOrEqual(0)
+      expect(item.diagnosisScore).toBeLessThanOrEqual(100)
+      expect(item.adjustedConfidence).toBeGreaterThanOrEqual(0)
+      expect(item.adjustedConfidence).toBeLessThanOrEqual(1)
     }
-  });
+  })
 
   it('respects maxResults', () => {
     const result = runDiagnosisAlgorithm({
@@ -160,12 +160,12 @@ describe('runDiagnosisAlgorithm', () => {
       keluhanUtama: 'demam',
       vitals: vitalsCriticalMetabolic,
       maxResults: 2,
-    });
+    })
 
-    expect(result).toHaveLength(2);
-    expect(result[0].rank).toBe(1);
-    expect(result[1].rank).toBe(2);
-  });
+    expect(result).toHaveLength(2)
+    expect(result[0].rank).toBe(1)
+    expect(result[1].rank).toBe(2)
+  })
 
   it('prioritizes exact chronic confirmed diagnosis as top differential', () => {
     const result = runDiagnosisAlgorithm({
@@ -199,12 +199,12 @@ describe('runDiagnosisAlgorithm', () => {
         glucose: 110,
       },
       trajectory: chronicConfirmedTrajectory,
-    });
+    })
 
-    expect(result[0]?.suggestion.icd_x).toBe('I10');
-    expect(result[0]?.scoreBreakdown.confirmedChronicFit).toBe(100);
-    expect(result[0]?.scoreBreakdown.chronicPriorityBonus).toBe(35);
-  });
+    expect(result[0]?.suggestion.icd_x).toBe('I10')
+    expect(result[0]?.scoreBreakdown.confirmedChronicFit).toBe(100)
+    expect(result[0]?.scoreBreakdown.chronicPriorityBonus).toBe(35)
+  })
 
   it('penalizes helminth differential when CKD is confirmed and complaint lacks GI/parasitic clues', () => {
     const ckdTrajectory: TrajectoryAnalysis = {
@@ -217,7 +217,7 @@ describe('runDiagnosisAlgorithm', () => {
           confirmed_at: '2026-02-09T10:00:00.000Z',
         },
       ],
-    };
+    }
 
     const result = runDiagnosisAlgorithm({
       suggestions: [
@@ -250,9 +250,9 @@ describe('runDiagnosisAlgorithm', () => {
         glucose: 118,
       },
       trajectory: ckdTrajectory,
-    });
+    })
 
-    expect(result[0]?.suggestion.icd_x).toBe('N18.5');
-    expect(result.some((item) => item.suggestion.icd_x === 'B76')).toBe(false);
-  });
-});
+    expect(result[0]?.suggestion.icd_x).toBe('N18.5')
+    expect(result.some(item => item.suggestion.icd_x === 'B76')).toBe(false)
+  })
+})

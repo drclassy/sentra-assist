@@ -13,26 +13,21 @@
  * @module lib/das/semantic-mapper
  */
 
-import type {
-  MappingResult,
-  MappingContext,
-  MapperOptions,
-  PageType,
-} from './types';
-import { scanPageFields } from './dom-scanner';
-import { mapFieldsWithGemini, mapFieldsHeuristic } from './gemini-vision';
+import { scanPageFields } from './dom-scanner'
+import { mapFieldsHeuristic, mapFieldsWithGemini } from './gemini-vision'
 import {
   computePageHash,
   getCachedMapping,
-  setCachedMapping,
   restoreMappingsFromCache,
+  setCachedMapping,
   updateCacheResult,
-} from './mapping-cache';
+} from './mapping-cache'
 import {
-  validateMappings,
   enforceConfidenceThresholds,
   generateValidationSummary,
-} from './safety-validator';
+  validateMappings,
+} from './safety-validator'
+import type { MapperOptions, MappingContext, MappingResult, PageType } from './types'
 
 // ============================================================================
 // DEFAULT OPTIONS
@@ -40,10 +35,10 @@ import {
 
 const DEFAULT_OPTIONS: Required<MapperOptions> = {
   bypassCache: false,
-  minConfidence: 0.80,
+  minConfidence: 0.8,
   includeUnmapped: true,
   pageType: 'unknown',
-};
+}
 
 // ============================================================================
 // PAGE TYPE DETECTION
@@ -53,29 +48,22 @@ const DEFAULT_OPTIONS: Required<MapperOptions> = {
  * Detect page type from URL
  */
 function detectPageType(url: string): PageType {
-  const lowerUrl = url.toLowerCase();
+  const lowerUrl = url.toLowerCase()
 
   if (
     lowerUrl.includes('/anamnesa') ||
     lowerUrl.includes('/anamnesis') ||
     lowerUrl.includes('/pemeriksaan')
   ) {
-    return 'anamnesa';
+    return 'anamnesa'
   }
 
-  if (
-    lowerUrl.includes('/resep') ||
-    lowerUrl.includes('/terapi') ||
-    lowerUrl.includes('/obat')
-  ) {
-    return 'resep';
+  if (lowerUrl.includes('/resep') || lowerUrl.includes('/terapi') || lowerUrl.includes('/obat')) {
+    return 'resep'
   }
 
-  if (
-    lowerUrl.includes('/soap') ||
-    lowerUrl.includes('/subjektif')
-  ) {
-    return 'soap';
+  if (lowerUrl.includes('/soap') || lowerUrl.includes('/subjektif')) {
+    return 'soap'
   }
 
   if (
@@ -84,10 +72,10 @@ function detectPageType(url: string): PageType {
     lowerUrl.includes('/icd10') ||
     lowerUrl.includes('/icd-10')
   ) {
-    return 'diagnosa';
+    return 'diagnosa'
   }
 
-  return 'unknown';
+  return 'unknown'
 }
 
 // ============================================================================
@@ -115,13 +103,13 @@ export async function mapPayloadToFields(
   payload: Record<string, unknown>,
   options?: MapperOptions
 ): Promise<MappingResult> {
-  const startTime = Date.now();
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const startTime = Date.now()
+  const opts = { ...DEFAULT_OPTIONS, ...options }
 
   try {
     // 1. Scan page fields
-    const scanResult = scanPageFields({ includeHidden: false });
-    const { fields } = scanResult;
+    const scanResult = scanPageFields({ includeHidden: false })
+    const { fields } = scanResult
 
     if (fields.length === 0) {
       return {
@@ -130,36 +118,34 @@ export async function mapPayloadToFields(
         warnings: ['No form fields found on page'],
         fromCache: false,
         latencyMs: Date.now() - startTime,
-      };
+      }
     }
 
     // 2. Compute page hash for cache lookup
-    const pageUrl = window.location.href;
-    const pageHash = computePageHash(pageUrl, fields);
-    const pageType = opts.pageType !== 'unknown' ? opts.pageType : detectPageType(pageUrl);
+    const pageUrl = window.location.href
+    const pageHash = computePageHash(pageUrl, fields)
+    const pageType = opts.pageType !== 'unknown' ? opts.pageType : detectPageType(pageUrl)
 
     // 3. Check cache (unless bypassed)
     if (!opts.bypassCache) {
-      const cached = await getCachedMapping(pageHash);
+      const cached = await getCachedMapping(pageHash)
 
       if (cached) {
-        console.log('[DAS:Mapper] Cache hit:', pageHash);
+        console.log('[DAS:Mapper] Cache hit:', pageHash)
 
         // Restore mappings from cache
-        const restoredMappings = restoreMappingsFromCache(cached, fields);
+        const restoredMappings = restoreMappingsFromCache(cached, fields)
 
         // Filter by payload keys (only map keys that exist in payload)
-        const payloadKeys = new Set(Object.keys(payload));
-        const relevantMappings = restoredMappings.filter((m) =>
-          payloadKeys.has(m.payloadKey)
-        );
+        const payloadKeys = new Set(Object.keys(payload))
+        const relevantMappings = restoredMappings.filter(m => payloadKeys.has(m.payloadKey))
 
         // Find unmapped keys
-        const mappedKeys = new Set(relevantMappings.map((m) => m.payloadKey));
-        const unmapped = Object.keys(payload).filter((k) => !mappedKeys.has(k));
+        const mappedKeys = new Set(relevantMappings.map(m => m.payloadKey))
+        const unmapped = Object.keys(payload).filter(k => !mappedKeys.has(k))
 
         // Apply safety thresholds
-        const safeMappings = enforceConfidenceThresholds(relevantMappings);
+        const safeMappings = enforceConfidenceThresholds(relevantMappings)
 
         return {
           mappings: safeMappings,
@@ -167,7 +153,7 @@ export async function mapPayloadToFields(
           warnings: [],
           fromCache: true,
           latencyMs: Date.now() - startTime,
-        };
+        }
       }
     }
 
@@ -175,45 +161,38 @@ export async function mapPayloadToFields(
     const context: MappingContext = {
       pageType,
       pageUrl,
-    };
+    }
 
     // 5. Call Gemini Vision for mapping
-    console.log('[DAS:Mapper] Cache miss, calling Gemini...');
-    let result: MappingResult;
+    console.log('[DAS:Mapper] Cache miss, calling Gemini...')
+    let result: MappingResult
 
     try {
-      result = await mapFieldsWithGemini(payload, fields, context);
+      result = await mapFieldsWithGemini(payload, fields, context)
     } catch {
-      console.warn('[DAS:Mapper] Gemini failed, using heuristic fallback');
-      result = mapFieldsHeuristic(payload, fields);
+      console.warn('[DAS:Mapper] Gemini failed, using heuristic fallback')
+      result = mapFieldsHeuristic(payload, fields)
     }
 
     // 6. Apply safety validation
-    const safeMappings = enforceConfidenceThresholds(result.mappings);
-    const validation = validateMappings(safeMappings);
+    const safeMappings = enforceConfidenceThresholds(result.mappings)
+    const validation = validateMappings(safeMappings)
 
-    console.log('[DAS:Mapper] Validation:', generateValidationSummary(validation));
+    console.log('[DAS:Mapper] Validation:', generateValidationSummary(validation))
 
     // 7. Filter by confidence threshold
-    const qualifiedMappings = safeMappings.filter(
-      (m) => m.confidence >= opts.minConfidence
-    );
+    const qualifiedMappings = safeMappings.filter(m => m.confidence >= opts.minConfidence)
 
     // 8. Store successful mappings in cache (only high-confidence ones)
-    const cacheableMappings = qualifiedMappings.filter(
-      (m) => m.confidence >= 0.90
-    );
+    const cacheableMappings = qualifiedMappings.filter(m => m.confidence >= 0.9)
 
     if (cacheableMappings.length > 0 && !opts.bypassCache) {
-      await setCachedMapping(pageHash, pageType, cacheableMappings);
-      console.log('[DAS:Mapper] Cached', cacheableMappings.length, 'mappings');
+      await setCachedMapping(pageHash, pageType, cacheableMappings)
+      console.log('[DAS:Mapper] Cached', cacheableMappings.length, 'mappings')
     }
 
     // 9. Combine warnings
-    const allWarnings = [
-      ...result.warnings,
-      ...validation.warnings,
-    ];
+    const allWarnings = [...result.warnings, ...validation.warnings]
 
     return {
       mappings: qualifiedMappings,
@@ -221,9 +200,9 @@ export async function mapPayloadToFields(
       warnings: allWarnings,
       fromCache: false,
       latencyMs: Date.now() - startTime,
-    };
+    }
   } catch (error) {
-    console.error('[DAS:Mapper] Error:', error);
+    console.error('[DAS:Mapper] Error:', error)
 
     return {
       mappings: [],
@@ -231,7 +210,7 @@ export async function mapPayloadToFields(
       warnings: [`Mapper error: ${error instanceof Error ? error.message : 'Unknown'}`],
       fromCache: false,
       latencyMs: Date.now() - startTime,
-    };
+    }
   }
 }
 
@@ -242,19 +221,15 @@ export async function mapPayloadToFields(
 /**
  * Quick map with default options
  */
-export async function quickMap(
-  payload: Record<string, unknown>
-): Promise<MappingResult> {
-  return mapPayloadToFields(payload);
+export async function quickMap(payload: Record<string, unknown>): Promise<MappingResult> {
+  return mapPayloadToFields(payload)
 }
 
 /**
  * Map with cache bypass (force AI)
  */
-export async function mapFresh(
-  payload: Record<string, unknown>
-): Promise<MappingResult> {
-  return mapPayloadToFields(payload, { bypassCache: true });
+export async function mapFresh(payload: Record<string, unknown>): Promise<MappingResult> {
+  return mapPayloadToFields(payload, { bypassCache: true })
 }
 
 /**
@@ -262,12 +237,10 @@ export async function mapFresh(
  *
  * Call this after executing fill to improve cache accuracy
  */
-export async function reportFillResult(
-  success: boolean
-): Promise<void> {
-  const scanResult = scanPageFields();
-  const pageHash = computePageHash(window.location.href, scanResult.fields);
-  await updateCacheResult(pageHash, success);
+export async function reportFillResult(success: boolean): Promise<void> {
+  const scanResult = scanPageFields()
+  const pageHash = computePageHash(window.location.href, scanResult.fields)
+  await updateCacheResult(pageHash, success)
 }
 
 // ============================================================================
@@ -279,30 +252,28 @@ export async function reportFillResult(
  *
  * Useful for UI to show user what will be filled
  */
-export async function previewMapping(
-  payload: Record<string, unknown>
-): Promise<{
-  totalFields: number;
-  matchedFields: number;
-  unmatchedKeys: string[];
+export async function previewMapping(payload: Record<string, unknown>): Promise<{
+  totalFields: number
+  matchedFields: number
+  unmatchedKeys: string[]
   mappings: Array<{
-    key: string;
-    field: string;
-    confidence: number;
-    action: string;
-  }>;
+    key: string
+    field: string
+    confidence: number
+    action: string
+  }>
 }> {
-  const result = await mapPayloadToFields(payload);
+  const result = await mapPayloadToFields(payload)
 
   return {
     totalFields: result.mappings.length + result.unmapped.length,
     matchedFields: result.mappings.length,
     unmatchedKeys: result.unmapped,
-    mappings: result.mappings.map((m) => ({
+    mappings: result.mappings.map(m => ({
       key: m.payloadKey,
       field: m.targetField.label || m.targetField.attributes.name || m.targetField.id,
       confidence: Math.round(m.confidence * 100),
       action: m.action,
     })),
-  };
+  }
 }

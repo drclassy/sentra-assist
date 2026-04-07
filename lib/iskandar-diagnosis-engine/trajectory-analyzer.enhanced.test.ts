@@ -1,7 +1,7 @@
 // Designed and constructed by Claudesy.
-import { describe, expect, it } from 'vitest';
-import { analyzeTrajectory } from './trajectory-analyzer';
-import type { VisitRecord } from './visit-history-store';
+import { describe, expect, it } from 'vitest'
+import { analyzeTrajectory } from './trajectory-analyzer'
+import type { VisitRecord } from './visit-history-store'
 
 function makeVisit(
   index: number,
@@ -9,8 +9,8 @@ function makeVisit(
   keluhan = 'Kontrol rutin',
   diagnosa: VisitRecord['diagnosa'] = { icd_x: 'I10', nama: 'Hipertensi' }
 ): VisitRecord {
-  const base = new Date('2026-01-01T08:00:00.000Z').getTime();
-  const timestamp = new Date(base + index * 24 * 60 * 60 * 1000).toISOString();
+  const base = new Date('2026-01-01T08:00:00.000Z').getTime()
+  const timestamp = new Date(base + index * 24 * 60 * 60 * 1000).toISOString()
 
   return {
     patient_id: 'RM-001',
@@ -20,7 +20,7 @@ function makeVisit(
     keluhan_utama: keluhan,
     diagnosa,
     source: 'scrape',
-  };
+  }
 }
 
 describe('trajectory-analyzer enhanced output', () => {
@@ -32,18 +32,18 @@ describe('trajectory-analyzer enhanced output', () => {
       makeVisit(4, { sbp: 136, dbp: 87, hr: 85, rr: 19, temp: 37, glucose: 155 }),
       makeVisit(5, { sbp: 138, dbp: 88, hr: 86, rr: 19, temp: 37.1, glucose: 160 }),
       makeVisit(6, { sbp: 140, dbp: 89, hr: 88, rr: 20, temp: 37.2, glucose: 165 }),
-    ];
+    ]
 
-    const result = analyzeTrajectory(visits);
+    const result = analyzeTrajectory(visits)
 
-    expect(result.visitCount).toBe(5);
-    expect(result.global_deterioration.deterioration_score).toBeGreaterThanOrEqual(0);
-    expect(result.global_deterioration.deterioration_score).toBeLessThanOrEqual(100);
-    expect(result.clinical_safe_output.review_window).toBe('24h');
-    expect(result.clinical_safe_output.confidence).toBeGreaterThan(0);
-    expect(result.clinical_safe_output.confidence).toBeLessThanOrEqual(1);
-    expect(result.early_warning_burden.total_breaches_last5).toBeGreaterThanOrEqual(0);
-  });
+    expect(result.visitCount).toBe(5)
+    expect(result.global_deterioration.deterioration_score).toBeGreaterThanOrEqual(0)
+    expect(result.global_deterioration.deterioration_score).toBeLessThanOrEqual(100)
+    expect(result.clinical_safe_output.review_window).toBe('24h')
+    expect(result.clinical_safe_output.confidence).toBeGreaterThan(0)
+    expect(result.clinical_safe_output.confidence).toBeLessThanOrEqual(1)
+    expect(result.early_warning_burden.total_breaches_last5).toBeGreaterThanOrEqual(0)
+  })
 
   it('raises high acute risk and mortality proxy for severe trend', () => {
     const visits: VisitRecord[] = [
@@ -72,49 +72,44 @@ describe('trajectory-analyzer enhanced output', () => {
         { sbp: 192, dbp: 124, hr: 132, rr: 29, temp: 39.3, glucose: 360 },
         'nyeri dada berat dan sesak'
       ),
-    ];
+    ]
 
-    const result = analyzeTrajectory(visits);
+    const result = analyzeTrajectory(visits)
 
-    expect(result.global_deterioration.state).toBe('critical');
-    expect(result.acute_attack_risk_24h.hypertensive_crisis_risk).toBeGreaterThanOrEqual(80);
-    expect(result.acute_attack_risk_24h.stroke_acs_suspicion_risk).toBeGreaterThanOrEqual(60);
-    expect(['high', 'very_high']).toContain(result.mortality_proxy.mortality_proxy_tier);
-    expect(['high', 'immediate']).toContain(result.mortality_proxy.clinical_urgency_tier);
-  });
+    expect(result.global_deterioration.state).toBe('critical')
+    expect(result.acute_attack_risk_24h.hypertensive_crisis_risk).toBeGreaterThanOrEqual(80)
+    expect(result.acute_attack_risk_24h.stroke_acs_suspicion_risk).toBeGreaterThanOrEqual(60)
+    expect(['high', 'very_high']).toContain(result.mortality_proxy.mortality_proxy_tier)
+    expect(['high', 'immediate']).toContain(result.mortality_proxy.clinical_urgency_tier)
+  })
 
   it('marks missing data and lowers confidence when history is sparse', () => {
     const visits: VisitRecord[] = [
-      makeVisit(
-        1,
-        { sbp: 150, dbp: 95, hr: 0, rr: 0, temp: 0, glucose: 0 },
-        '',
-        undefined
-      ),
-    ];
+      makeVisit(1, { sbp: 150, dbp: 95, hr: 0, rr: 0, temp: 0, glucose: 0 }, '', undefined),
+    ]
 
-    const result = analyzeTrajectory(visits);
+    const result = analyzeTrajectory(visits)
 
-    expect(result.clinical_safe_output.missing_data).toContain('insufficient_history_lt2');
-    expect(result.clinical_safe_output.missing_data).toContain('latest_vital_hr_missing');
-    expect(result.clinical_safe_output.missing_data).toContain('latest_keluhan_utama_missing');
-    expect(result.clinical_safe_output.confidence).toBeLessThan(0.7);
-  });
+    expect(result.clinical_safe_output.missing_data).toContain('insufficient_history_lt2')
+    expect(result.clinical_safe_output.missing_data).toContain('latest_vital_hr_missing')
+    expect(result.clinical_safe_output.missing_data).toContain('latest_keluhan_utama_missing')
+    expect(result.clinical_safe_output.confidence).toBeLessThan(0.7)
+  })
 
   it('computes time-to-critical estimate when trajectory is moving toward threshold', () => {
     const visits: VisitRecord[] = [
       makeVisit(1, { sbp: 170, dbp: 98, hr: 90, rr: 18, temp: 36.8, glucose: 180 }),
       makeVisit(2, { sbp: 175, dbp: 102, hr: 92, rr: 19, temp: 36.9, glucose: 190 }),
       makeVisit(3, { sbp: 178, dbp: 108, hr: 95, rr: 20, temp: 37, glucose: 210 }),
-    ];
+    ]
 
-    const result = analyzeTrajectory(visits);
-    const eta = result.time_to_critical_estimate.sbp_hours_to_critical;
+    const result = analyzeTrajectory(visits)
+    const eta = result.time_to_critical_estimate.sbp_hours_to_critical
 
-    expect(eta).not.toBeNull();
-    expect(eta as number).toBeGreaterThanOrEqual(0);
-    expect(eta as number).toBeLessThanOrEqual(168);
-  });
+    expect(eta).not.toBeNull()
+    expect(eta as number).toBeGreaterThanOrEqual(0)
+    expect(eta as number).toBeLessThanOrEqual(168)
+  })
 
   it('ignores one-off noisy chronic code when diagnosis name is non-readable numeric', () => {
     const visits: VisitRecord[] = [
@@ -126,10 +121,10 @@ describe('trajectory-analyzer enhanced output', () => {
         icd_x: 'I10',
         nama: 'Hipertensi',
       }),
-    ];
+    ]
 
-    const result = analyzeTrajectory(visits);
-    expect(result.confirmed_chronic_diagnoses.some((item) => item.icd_x === 'C50')).toBe(false);
-    expect(result.confirmed_chronic_diagnoses.some((item) => item.icd_x === 'I10')).toBe(true);
-  });
-});
+    const result = analyzeTrajectory(visits)
+    expect(result.confirmed_chronic_diagnoses.some(item => item.icd_x === 'C50')).toBe(false)
+    expect(result.confirmed_chronic_diagnoses.some(item => item.icd_x === 'I10')).toBe(true)
+  })
+})

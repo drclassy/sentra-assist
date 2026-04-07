@@ -4,25 +4,39 @@
  * Updated with TTV Inference UI + Emergency Dashboard
  */
 
-import { ClinicalDifferential } from '@/components/clinical/ClinicalDifferential';
-import { ClinicalTrajectory } from '@/components/clinical/ClinicalTrajectory';
-import {
-  TTVInferenceUI,
-  type AutosenPreset,
-  type ScreeningAlert,
-  type TTVInferenceData,
+import type {
+  ScreeningAlert,
+  TTVInferenceData,
 } from '@/components/clinical/TTVInferenceUI';
+import type { ComposedAnamnesaDraft } from '@/lib/clinical/anamnesa-composer';
+import type { CanonicalClinicalEngineOutput } from '@/lib/api/bridge-client';
+import type {
+  AutosenPreset,
+  DisabilityType,
+  ObesityConfirmation,
+} from '@/lib/clinical/autosen-types';
 import { SidePanelHeader } from '@/components/sidepanel/SidePanelHeader';
 import { SidePanelFooter } from '@/components/sidepanel/SidePanelFooter';
-import {
-  getBridgeConfig,
-  saveBridgeConfig,
-  getOnlineDoctors,
-  type BridgeConfig,
-} from '@/lib/api/bridge-client';
-import React, { useCallback, useEffect, useState } from 'react';
+import { PowerButton } from '@/components/sidepanel/PowerButton';
+import { ConsoleLogin } from '@/components/sidepanel/ConsoleLogin';
+import type { BridgeConfig } from '@/lib/api/bridge-client';
+import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store';
+import { sendMessage } from '@/utils/messaging';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import './style.css';
+import './globals.css';
+
+// Dynamic imports → separate chunks (ClinicalDifferential, ClinicalTrajectory, bridge-client)
+const ClinicalDifferential = React.lazy(() =>
+  import('@/components/clinical/ClinicalDifferential').then((m) => ({ default: m.ClinicalDifferential }))
+);
+const ClinicalTrajectory = React.lazy(() =>
+  import('@/components/clinical/ClinicalTrajectory').then((m) => ({ default: m.ClinicalTrajectory }))
+);
+const TTVInferenceUI = React.lazy(() =>
+  import('@/components/clinical/TTVInferenceUI').then((m) => ({ default: m.TTVInferenceUI }))
+);
 
 // ============================================================================
 // PATIENT DATA TYPE
@@ -38,10 +52,85 @@ interface PatientData {
   kelurahan: string;
 }
 
+type MedicalHistoryEntry = {
+  code: string;
+  description: string;
+  shortLabel: string;
+};
+
+type PrefilledHistoryFlags = Record<string, boolean>;
+
+type PrefetchedVisitHistory = {
+  visits: VisitRecord[];
+  diagnostics: string[];
+  status: 'ready' | 'insufficient';
+};
+
+type ExtractedClinicalContext = {
+  facilityName: string;
+  payerLabel: string;
+  specialConditions: string[];
+  pregnancyRisk: string;
+  allergies: string[];
+  pregnancyStatus: boolean | null;
+};
+
+const CHRONIC_FLAG_ORDER = ['dm', 'ht', 'jantung', 'stroke', 'ginjal', 'asma'] as const;
+
+const HISTORY_FLAG_META: Record<(typeof CHRONIC_FLAG_ORDER)[number], { labels: string[]; display: string }> = {
+  dm: { labels: ['DM'], display: 'DM' },
+  ht: { labels: ['HT'], display: 'HT' },
+  jantung: { labels: ['HF', 'CHD', 'JANTUNG'], display: 'Jantung' },
+  stroke: { labels: ['STROKE'], display: 'Stroke' },
+  ginjal: { labels: ['CKD', 'GINJAL'], display: 'Ginjal' },
+  asma: { labels: ['ASTHMA', 'ASMA'], display: 'Asma' },
+};
+
+function mapMedicalHistoryToFlags(entries: MedicalHistoryEntry[]): PrefilledHistoryFlags {
+  const flags: PrefilledHistoryFlags = {};
+  const labels = new Set(entries.map((entry) => entry.shortLabel.toUpperCase().trim()));
+
+  for (const key of CHRONIC_FLAG_ORDER) {
+    flags[key] = HISTORY_FLAG_META[key].labels.some((label) => labels.has(label));
+  }
+
+  return flags;
+}
+
+function createEmptyHistoryFlags(): PrefilledHistoryFlags {
+  return CHRONIC_FLAG_ORDER.reduce((accumulator, key) => {
+    accumulator[key] = false;
+    return accumulator;
+  }, {} as PrefilledHistoryFlags);
+}
+
+function buildHistorySummary(flags: PrefilledHistoryFlags): string {
+  const selected = CHRONIC_FLAG_ORDER.filter((key) => flags[key]).map(
+    (key) => HISTORY_FLAG_META[key].display
+  );
+  return selected.length > 0 ? selected.join(', ') : 'Menunggu Input';
+}
+
+const normalizePatientNameForDisplay = (name?: string): string => {
+  const normalized = name?.trim();
+
+  if (
+    !normalized ||
+    normalized === 'Error memuat data' ||
+    normalized === 'Data tidak ditemukan' ||
+    normalized === 'Tidak ditemukan'
+  ) {
+    return '---';
+  }
+
+  return normalized;
+};
+
 console.log('[SidePanel] main.tsx loading...');
 
 type TabType = 'ttv' | 'emergency' | 'agent';
 type ViewState = 'main' | 'trajectory' | 'differential';
+type EngineId = 'vs' | 'emergency' | 'settings' | 'sentratype' | 'movi' | 'uplink';
 
 // ============================================================================
 // TTV STATE (Lifted to parent to persist across tab switches)
@@ -52,11 +141,13 @@ export interface TTVFormState {
   hr: string;
   rr: string;
   temp: string;
-  spo2: string; // ✅ SPO2 field
+  spo2: string;
   glucose: string;
   symptomText: string;
   allergies: string[];
   pregnancyStatus: boolean | null;
+  disabilityType: DisabilityType;
+  obesityConfirmation: ObesityConfirmation;
   autosenPreset: AutosenPreset;
 }
 
@@ -66,12 +157,14 @@ const initialTTVState: TTVFormState = {
   hr: '',
   rr: '',
   temp: '',
-  spo2: '', // ✅ SPO2 initial value
+  spo2: '',
   glucose: '',
   symptomText: '',
   allergies: [],
   pregnancyStatus: null,
-  autosenPreset: 'normal',
+  disabilityType: '',
+  obesityConfirmation: '',
+  autosenPreset: 'adl',
 };
 
 // Default patient data (shown while loading)
@@ -86,11 +179,33 @@ const defaultPatient: PatientData = {
   kelurahan: '',
 };
 
+const defaultClinicalContext: ExtractedClinicalContext = {
+  facilityName: '',
+  payerLabel: '',
+  specialConditions: [],
+  pregnancyRisk: '',
+  allergies: [],
+  pregnancyStatus: null,
+};
+
+const engineConfig: Record<EngineId, { section: string }> = {
+  vs: { section: 'VS Inference' },
+  emergency: { section: 'Emergency' },
+  settings: { section: 'Pengaturan' },
+  sentratype: { section: 'SentraType' },
+  movi: { section: 'MOVI' },
+  uplink: { section: 'Uplink' },
+};
 
 function App() {
+  // Boot sequence state
+  const [isPowered, setIsPowered] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   const [activeTab, setActiveTab] = useState<TabType>('ttv');
   const [viewState, setViewState] = useState<ViewState>('main');
   const [emergencyAlerts, setEmergencyAlerts] = useState<ScreeningAlert[]>([]);
+  const [activeEngine, setActiveEngine] = useState<EngineId>('vs');
 
   // Lifted TTV state - persists across tab switches
   const [ttvState, setTTVState] = useState<TTVFormState>(initialTTVState);
@@ -98,15 +213,65 @@ function App() {
   // Patient data state (fetched from ePuskesmas page)
   const [patientData, setPatientData] = useState<PatientData>(defaultPatient);
   const [isLoadingPatient, setIsLoadingPatient] = useState(true);
+  const [patientHistorySummary, setPatientHistorySummary] = useState('Menunggu Input');
+  const [prefilledHistoryFlags, setPrefilledHistoryFlags] = useState<PrefilledHistoryFlags>(createEmptyHistoryFlags);
+  const [clinicalContext, setClinicalContext] = useState<ExtractedClinicalContext>(defaultClinicalContext);
+  const [prefetchedVisitHistory, setPrefetchedVisitHistory] = useState<PrefetchedVisitHistory | null>(
+    null
+  );
+  const [anamnesaDraft, setAnamnesaDraft] = useState<ComposedAnamnesaDraft | null>(null);
 
   // Trajectory state - passed from ClinicalTrajectory to ClinicalDifferential
-  const [trajectoryData, setTrajectoryData] = useState<import('@/lib/iskandar-diagnosis-engine/trajectory-analyzer').TrajectoryAnalysis | undefined>(undefined);
+  const [trajectoryData, setTrajectoryData] = useState<
+    import('@/lib/iskandar-diagnosis-engine/trajectory-analyzer').TrajectoryAnalysis | undefined
+  >(undefined);
+  const [canonicalTrajectoryData, setCanonicalTrajectoryData] =
+    useState<CanonicalClinicalEngineOutput | null>(null);
   const [visitCount, setVisitCount] = useState<number>(0);
+  const visiblePatientName = normalizePatientNameForDisplay(patientData.name);
+  const demographicStatus =
+    isLoadingPatient ? 'syncing' : visiblePatientName !== '---' && patientData.rm !== '-' ? 'ready' : 'standby';
+  const historyStatus = isLoadingPatient
+    ? 'syncing'
+    : prefetchedVisitHistory?.status === 'ready'
+      ? 'ready'
+      : prefetchedVisitHistory?.status === 'insufficient'
+        ? 'insufficient'
+        : 'standby';
 
-  // Check if there's any critical/high alert
-  const hasEmergency = emergencyAlerts.some(
-    (alert) => alert.severity === 'critical' || alert.severity === 'high'
-  );
+  // Boot sequence — drive --power-state CSS variable
+  useEffect(() => {
+    document.documentElement.style.setProperty('--power-state', isPowered ? '1' : '0');
+  }, [isPowered]);
+
+  const handlePowerToggle = useCallback(() => {
+    const next = !isPowered;
+    setIsPowered(next);
+    if (!next) {
+      setIsLoggedIn(false);
+    }
+  }, [isPowered]);
+
+  const handleLoginSuccess = useCallback(() => {
+    setIsLoggedIn(true);
+  }, []);
+
+  const handleEngineChange = useCallback((engineId: string) => {
+    const nextEngine = engineId as EngineId;
+    setActiveEngine(nextEngine);
+
+    if (nextEngine === 'emergency') {
+      setActiveTab('emergency');
+      return;
+    }
+
+    if (nextEngine === 'settings') {
+      setActiveTab('agent');
+      return;
+    }
+
+    setActiveTab('ttv');
+  }, []);
 
   // ========================================
   // Fetch patient data from ePuskesmas page
@@ -114,8 +279,14 @@ function App() {
   const fetchPatientData = useCallback(async () => {
     console.log('[SidePanel] Fetching patient data...');
     setIsLoadingPatient(true);
+    setPrefilledHistoryFlags(createEmptyHistoryFlags());
+    setPatientHistorySummary('Menunggu Input');
+    setClinicalContext(defaultClinicalContext);
+    setAnamnesaDraft(null);
 
     try {
+      let resolvedPatientRm = '-';
+
       // Get active tab
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id) {
@@ -124,28 +295,128 @@ function App() {
         return;
       }
 
-      // Send message to content script
-      const response = await chrome.tabs.sendMessage(tab.id, { type: 'getPatientInfo' });
-      console.log('[SidePanel] Patient info response:', response);
+      const [patientResponse, medicalHistoryResponse, visitHistoryResponse, clinicalContextResponse] =
+        await Promise.allSettled([
+        chrome.tabs.sendMessage(tab.id, { type: 'getPatientInfo' }),
+        sendMessage('scanMedicalHistory', undefined),
+        sendMessage('scanVisitHistory', undefined),
+        sendMessage('scanClinicalContext', undefined),
+      ]);
 
-      if (response?.success && response.patient) {
-        const p = response.patient;
-        setPatientData({
-          name: p.name || 'Tidak ditemukan',
-          gender: p.gender || 'L',
-          age: p.age || 0,
-          rm: p.rm || '-',
-          dob: p.dob || '',
-          bloodType: '', // Not usually in ePuskesmas header
-          bpjsStatus: p.bpjsStatus || null,
-          kelurahan: p.kelurahan || '',
-        });
+      if (patientResponse.status === 'fulfilled') {
+        const response = patientResponse.value;
+        console.log('[SidePanel] Patient info response:', response);
+
+        if (response?.success && response.patient) {
+          const p = response.patient;
+          resolvedPatientRm = p.rm || '-';
+          setPatientData({
+            name: p.name || 'Tidak ditemukan',
+            gender: p.gender || 'L',
+            age: p.age || 0,
+            rm: p.rm || '-',
+            dob: p.dob || '',
+            bloodType: '',
+            bpjsStatus: p.bpjsStatus || null,
+            kelurahan: p.kelurahan || '',
+          });
+        } else {
+          console.warn('[SidePanel] Failed to get patient info:', response?.error);
+          setPatientData({
+            ...defaultPatient,
+            name: 'Data tidak ditemukan',
+          });
+        }
       } else {
-        console.warn('[SidePanel] Failed to get patient info:', response?.error);
+        console.error('[SidePanel] Error fetching patient info:', patientResponse.reason);
         setPatientData({
           ...defaultPatient,
-          name: 'Data tidak ditemukan',
+          name: 'Error memuat data',
         });
+      }
+
+      if (medicalHistoryResponse.status === 'fulfilled') {
+        const response = medicalHistoryResponse.value;
+        console.log('[SidePanel] Medical history response:', response);
+
+        if (response.success) {
+          const nextFlags = mapMedicalHistoryToFlags(response.history);
+          setPrefilledHistoryFlags(nextFlags);
+          setPatientHistorySummary(buildHistorySummary(nextFlags));
+        } else {
+          console.warn('[SidePanel] scanMedicalHistory failed:', response.error);
+          setPrefilledHistoryFlags(createEmptyHistoryFlags());
+          setPatientHistorySummary('Menunggu Input');
+        }
+      } else {
+        console.error('[SidePanel] Error fetching medical history:', medicalHistoryResponse.reason);
+        setPrefilledHistoryFlags(createEmptyHistoryFlags());
+        setPatientHistorySummary('Menunggu Input');
+      }
+
+      if (visitHistoryResponse.status === 'fulfilled') {
+        const response = visitHistoryResponse.value;
+        console.log('[SidePanel] Visit history response:', response);
+
+        if (response.success) {
+          const visits: VisitRecord[] = (response.visits || [])
+            .slice(0, 5)
+            .map((visit) => ({
+            patient_id: resolvedPatientRm,
+            encounter_id: visit.encounter_id,
+            timestamp: visit.date,
+            vitals: visit.vitals,
+            keluhan_utama: visit.keluhan_utama,
+            diagnosa: visit.diagnosa || undefined,
+            source: 'scrape',
+            }));
+
+          const diagnostics = [...(response.diagnostics || [])];
+          const status = visits.length >= 3 ? 'ready' : 'insufficient';
+          if (status === 'insufficient') {
+            diagnostics.unshift(`INSUFFICIENT_HISTORY: hanya ${visits.length} kunjungan tersedia`);
+          }
+
+          setPrefetchedVisitHistory({
+            visits,
+            diagnostics,
+            status,
+          });
+        } else {
+          console.warn('[SidePanel] scanVisitHistory failed:', response.error);
+          setPrefetchedVisitHistory(null);
+        }
+      } else {
+        console.error('[SidePanel] Error fetching visit history:', visitHistoryResponse.reason);
+        setPrefetchedVisitHistory(null);
+      }
+
+      if (clinicalContextResponse.status === 'fulfilled') {
+        const response = clinicalContextResponse.value as {
+          success?: boolean;
+          context?: Partial<ExtractedClinicalContext>;
+          error?: string;
+        };
+
+        if (response.success && response.context) {
+          setClinicalContext({
+            facilityName: response.context.facilityName || '',
+            payerLabel: response.context.payerLabel || '',
+            specialConditions: response.context.specialConditions || [],
+            pregnancyRisk: response.context.pregnancyRisk || '',
+            allergies: response.context.allergies || [],
+            pregnancyStatus:
+              typeof response.context.pregnancyStatus === 'boolean'
+                ? response.context.pregnancyStatus
+                : null,
+          });
+        } else {
+          console.warn('[SidePanel] scanClinicalContext failed:', response.error);
+          setClinicalContext(defaultClinicalContext);
+        }
+      } else {
+        console.error('[SidePanel] Error fetching clinical context:', clinicalContextResponse.reason);
+        setClinicalContext(defaultClinicalContext);
       }
     } catch (error) {
       console.error('[SidePanel] Error fetching patient data:', error);
@@ -168,9 +439,13 @@ function App() {
     return () => clearTimeout(timer);
   }, [fetchPatientData]);
 
+  useEffect(() => {
+    setAnamnesaDraft(null);
+  }, [patientData.rm, ttvState.autosenPreset, ttvState.pregnancyStatus, ttvState.symptomText, ttvState.allergies]);
+
   const handleTTVComplete = (data: TTVInferenceData) => {
     console.log('[SidePanel] TTV Data:', data);
-    // TODO: Send to ePuskesmas
+    setAnamnesaDraft(data.anamnesaDraft);
   };
 
   // Callback to receive alerts from TTVInferenceUI
@@ -195,6 +470,7 @@ function App() {
   if (viewState === 'trajectory') {
     return (
       <div className="view-transition">
+        <Suspense fallback={<div className="ct-loading-bar">Memuat...</div>}>
         <ClinicalTrajectory
           vitals={{
             sbp: parseInt(ttvState.sbp) || 0,
@@ -202,27 +478,50 @@ function App() {
             hr: parseInt(ttvState.hr) || 0,
             rr: parseInt(ttvState.rr) || 0,
             temp: parseFloat(ttvState.temp) || 0,
+            spo2: parseInt(ttvState.spo2) || 0,
             glucose: parseInt(ttvState.glucose) || 0,
           }}
-          keluhanUtama={ttvState.symptomText || '-'}
+          keluhanUtama={anamnesaDraft?.payload.keluhan_utama || ttvState.symptomText || '-'}
+          keluhanTambahan={anamnesaDraft?.payload.keluhan_tambahan || ''}
           narrative={{
-            keluhan_utama: ttvState.symptomText || '-',
-            lama_sakit: '',
-            is_akut: true,
-            confidence: 0.5,
+            keluhan_utama: anamnesaDraft?.payload.keluhan_utama || ttvState.symptomText || '-',
+            lama_sakit: anamnesaDraft?.metadata.durationLabel || '',
+            is_akut:
+              !anamnesaDraft?.metadata.durationLabel ||
+              !/(bulan|tahun|kronik)/i.test(anamnesaDraft.metadata.durationLabel),
+            confidence: anamnesaDraft ? 0.9 : 0.5,
           }}
           alerts={emergencyAlerts}
           patientAge={patientData.age}
           patientGender={patientData.gender}
           patientName={patientData.name}
           patientRM={patientData.rm}
+          patientDOB={patientData.dob}
+          patientBPJSStatus={patientData.bpjsStatus}
+          patientKelurahan={patientData.kelurahan}
+          patientFacilityName={clinicalContext.facilityName}
+          patientPayerLabel={clinicalContext.payerLabel}
+          allergies={ttvState.allergies}
+          pregnancyStatus={patientData.gender === 'L' ? false : ttvState.pregnancyStatus}
+          chronicHistorySummary={patientHistorySummary}
+          extractedPregnancyRisk={clinicalContext.pregnancyRisk}
+          extractedSpecialConditions={clinicalContext.specialConditions}
+          disabilityType={ttvState.disabilityType}
+          obesityConfirmation={ttvState.obesityConfirmation}
+          autosenPreset={ttvState.autosenPreset}
+          symptomTextRaw={ttvState.symptomText}
           onBack={() => setViewState('main')}
-          onNextDifferential={(trajectory, count) => {
+          prefetchedVisits={prefetchedVisitHistory?.visits}
+          prefetchedDiagnostics={prefetchedVisitHistory?.diagnostics}
+          prefetchedVisitStatus={prefetchedVisitHistory?.status}
+          onNextDifferential={(trajectory, count, canonicalOutput) => {
             setTrajectoryData(trajectory);
+            setCanonicalTrajectoryData(canonicalOutput);
             setVisitCount(count);
             setViewState('differential');
           }}
         />
+        </Suspense>
       </div>
     );
   }
@@ -231,9 +530,10 @@ function App() {
   if (viewState === 'differential') {
     return (
       <div className="view-transition">
+        <Suspense fallback={<div className="ct-loading-bar">Memuat...</div>}>
         <ClinicalDifferential
-          keluhanUtama={ttvState.symptomText || '-'}
-          keluhanTambahan=""
+          keluhanUtama={anamnesaDraft?.payload.keluhan_utama || ttvState.symptomText || '-'}
+          keluhanTambahan={anamnesaDraft?.payload.keluhan_tambahan || ''}
           patientAge={patientData.age}
           patientGender={patientData.gender}
           patientRM={patientData.rm}
@@ -248,113 +548,97 @@ function App() {
             glucose: parseInt(ttvState.glucose) || 0,
           }}
           trajectory={trajectoryData}
+          canonicalOutput={canonicalTrajectoryData}
           hasVisitHistory={visitCount > 1}
           onBack={() => setViewState('main')}
         />
+        </Suspense>
       </div>
     );
   }
 
   return (
-    <div
-      key={`main-${activeTab}`}
-      className="doctor-static-ui view-transition w-full min-h-screen p-6 relative"
-      style={{
-        background:
-          'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,107,53,0.04) 0%, transparent 60%), linear-gradient(180deg, #1e1e24 0%, #16161a 100%)',
-      }}
-    >
-      {/* Ambient glow effect */}
-      <div
-        className="absolute top-0 left-0 right-0 h-48 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse 85% 55% at 50% -12%, rgba(255,107,53,0.06) 0%, rgba(74,158,255,0.02) 40%, transparent 75%)',
-          filter: 'blur(20px)',
-        }}
-      />
+    <div key={`main-${activeTab}`} className="sidepanel-shell view-transition">
+      <div className="sidepanel-shell__ambient" aria-hidden="true" />
 
-      {/* Header */}
-      <SidePanelHeader variant="full" />
+      {/* Power Button — always visible */}
+      <PowerButton isPowered={isPowered} onToggle={handlePowerToggle} />
 
-      {/* Tab Navigation */}
-      <div className="neu-card-inset p-1.5 mb-7 relative z-10">
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => setActiveTab('ttv')}
-            className={`motion-press flex-1 py-2 px-2 rounded-lg text-body relative ${
-              activeTab === 'ttv'
-                ? 'neu-tab-active text-platinum font-semibold'
-                : 'neu-tab text-muted font-medium'
-            }`}
-          >
-            VS Inference
-          </button>
-          <button
-            onClick={() => setActiveTab('emergency')}
-            className={`motion-press flex-1 py-2 px-2 rounded-lg text-body flex items-center justify-center gap-2 relative ${
-              activeTab === 'emergency'
-                ? 'neu-tab-active text-platinum font-semibold'
-                : 'neu-tab text-muted font-medium'
-            } ${hasEmergency ? 'emergency-tab-active' : ''}`}
-          >
-            <span className={hasEmergency ? 'emergency-blink' : ''}>Emergency</span>
-            {hasEmergency && <span className="emergency-dot" />}
-          </button>
-          <button
-            onClick={() => setActiveTab('agent')}
-            className={`motion-press flex-1 py-2 px-2 rounded-lg text-body relative ${
-              activeTab === 'agent'
-                ? 'neu-tab-active text-platinum font-semibold'
-                : 'neu-tab text-muted font-medium'
-            }`}
-          >
-            Pengaturan
-          </button>
-        </div>
-      </div>
+      <div className="sidepanel-shell__container">
+        <div className={`sentra-card ${isPowered ? 'sentra-card--boot' : 'sentra-card--boot'}`}>
+          {/* Off overlay — dims card when powered off */}
+          <div className="off-overlay" />
 
-      {/* Content - Use CSS visibility instead of conditional rendering to preserve state */}
-      <div
-        className="space-y-3"
-        style={{
-          position: 'relative',
-          zIndex: 10,
-          isolation: 'isolate',
-          minHeight: 'fit-content',
-          paddingBottom: '20px',
-        }}
-      >
-        <div className={activeTab === 'ttv' ? 'tab-panel-active' : 'tab-panel-hidden'}>
-          <TTVInferenceUI
-            patientName={patientData.name}
-            patientGender={patientData.gender}
+          <SidePanelHeader
+            activeEngine={activeEngine}
+            onEngineChange={handleEngineChange}
+            patientName={visiblePatientName}
             patientAge={patientData.age}
-            patientRM={patientData.rm}
-            patientDOB={patientData.dob}
-            patientBloodType={patientData.bloodType}
-            patientBPJSStatus={patientData.bpjsStatus}
-            patientKelurahan={patientData.kelurahan}
-            onComplete={handleTTVComplete}
-            onAlertsChange={handleAlertsChange}
-            showMaskedName={false}
-            ttvState={ttvState}
-            onTTVStateChange={setTTVState}
+            chronicHistorySummary={patientHistorySummary}
             onRefreshPatient={fetchPatientData}
             isLoadingPatient={isLoadingPatient}
-            onNavigateToTrajectory={() => setViewState('trajectory')}
+            demographicStatus={demographicStatus}
+            historyStatus={historyStatus}
+            bootMode
           />
-        </div>
-        <div className={activeTab === 'emergency' ? 'tab-panel-active' : 'tab-panel-hidden'}>
-          <EmergencyDashboard alerts={emergencyAlerts} />
-        </div>
-        <div className={activeTab === 'agent' ? 'tab-panel-active' : 'tab-panel-hidden'}>
-          <AgentPanel />
+
+          <div className="console-divider" />
+
+          {/* Login Section — visible when powered but not logged in */}
+          {!isLoggedIn && (
+            <ConsoleLogin isPowered={isPowered} onLoginSuccess={handleLoginSuccess} />
+          )}
+
+          {/* Clinical content — visible after login */}
+          <div className={`console-section--boot ${isLoggedIn ? 'console-section--visible' : ''}`}>
+            <section className="sidepanel-shell-content" aria-label="Konten side panel aktif">
+              <div className={activeTab === 'ttv' ? 'tab-panel-active' : 'tab-panel-hidden'}>
+                <Suspense fallback={<div className="ct-loading-bar">Memuat...</div>}>
+                <TTVInferenceUI
+                  patientName={visiblePatientName}
+                  patientGender={patientData.gender}
+                  patientAge={patientData.age}
+                  patientRM={patientData.rm}
+                  patientDOB={patientData.dob}
+                  patientBloodType={patientData.bloodType}
+                  patientBPJSStatus={patientData.bpjsStatus}
+                  patientKelurahan={patientData.kelurahan}
+                  onComplete={handleTTVComplete}
+                  onAlertsChange={handleAlertsChange}
+                  showMaskedName={false}
+                  ttvState={ttvState}
+                  onTTVStateChange={setTTVState}
+                  onRefreshPatient={fetchPatientData}
+                  isLoadingPatient={isLoadingPatient}
+                  onNavigateToTrajectory={() => setViewState('trajectory')}
+                  onChronicHistoryChange={setPatientHistorySummary}
+                  prefilledHistoryFlags={prefilledHistoryFlags}
+                  extractedSpecialConditions={clinicalContext.specialConditions}
+                  extractedPregnancyRisk={clinicalContext.pregnancyRisk}
+                  extractedFacilityName={clinicalContext.facilityName}
+                  extractedPayerLabel={clinicalContext.payerLabel}
+                  extractedAllergies={clinicalContext.allergies}
+                  extractedPregnancyStatus={clinicalContext.pregnancyStatus}
+                  canonicalOutput={canonicalTrajectoryData}
+                />
+                </Suspense>
+              </div>
+              <div className={activeTab === 'emergency' ? 'tab-panel-active' : 'tab-panel-hidden'}>
+                <EmergencyDashboard alerts={emergencyAlerts} />
+              </div>
+              <div className={activeTab === 'agent' ? 'tab-panel-active' : 'tab-panel-hidden'}>
+                <AgentPanel />
+              </div>
+            </section>
+
+            <SidePanelFooter
+              workspace="Puskesmas Balowerti"
+              section={engineConfig[activeEngine].section}
+              loadingPatient={isLoadingPatient}
+            />
+          </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <SidePanelFooter variant="full" institutionName="Puskesmas Balowerti" />
     </div>
   );
 }
@@ -368,20 +652,38 @@ function EmergencyDashboard({ alerts }: EmergencyDashboardProps) {
   const criticalAlerts = alerts.filter((a) => a.severity === 'critical');
   const highAlerts = alerts.filter((a) => a.severity === 'high');
   const warningAlerts = alerts.filter((a) => a.severity === 'warning');
+  const totalActionItems = alerts.reduce((sum, alert) => sum + alert.recommendations.length, 0);
 
   return (
     <div className="emergency-dashboard">
       {/* Emergency Header */}
       <div className="emergency-header">
-        <h2>Emergency Alerts</h2>
-        <span className="emergency-count">{alerts.length}</span>
+        <div className="emergency-header__copy">
+          <span className="emergency-header__eyebrow">Clinical Priority Board</span>
+          <h2>Emergency Alerts</h2>
+          <p className="emergency-header__description">
+            Ringkasan alert prioritas tinggi untuk membantu triase cepat dan menentukan tindakan
+            berikutnya.
+          </p>
+        </div>
+
+        <div className="emergency-header__stats">
+          <div className="emergency-stat-pill">
+            <span className="emergency-stat-pill__label">Alerts</span>
+            <span className="emergency-stat-pill__value">{alerts.length}</span>
+          </div>
+          <div className="emergency-stat-pill">
+            <span className="emergency-stat-pill__label">Actions</span>
+            <span className="emergency-stat-pill__value">{totalActionItems}</span>
+          </div>
+        </div>
       </div>
 
       {/* No Alerts State */}
       {alerts.length === 0 && (
         <div className="emergency-empty">
           <p>Tidak ada alert aktif</p>
-          <span>Semua vital signs dalam batas normal</span>
+          <span>Semua vital sign dan skrining saat ini masih berada dalam ambang aman.</span>
         </div>
       )}
 
@@ -462,14 +764,30 @@ function EmergencyDashboard({ alerts }: EmergencyDashboardProps) {
 
 // Emergency Card Component
 function EmergencyCard({ alert }: { alert: ScreeningAlert }) {
+  const severityLabel =
+    alert.severity === 'critical'
+      ? 'Critical'
+      : alert.severity === 'high'
+        ? 'High Priority'
+        : 'Warning';
+
   return (
     <div className={`emergency-card emergency-card-${alert.severity}`}>
       <div className="emergency-card-header">
-        <span className="emergency-card-title">{alert.title}</span>
+        <div className="emergency-card-heading">
+          <span className="emergency-card-kicker">{severityLabel}</span>
+          <span className="emergency-card-title">{alert.title}</span>
+        </div>
         <span className="emergency-card-gate">{alert.gate.replace(/_/g, ' ')}</span>
       </div>
-      <p className="emergency-card-reasoning">{alert.reasoning}</p>
+
+      <div className="emergency-card-block">
+        <span className="emergency-card-block-label">Clinical reasoning</span>
+        <p className="emergency-card-reasoning">{alert.reasoning}</p>
+      </div>
+
       <div className="emergency-card-recommendations">
+        <span className="emergency-card-block-label">Recommended actions</span>
         {alert.recommendations.map((rec, idx) => (
           <div
             key={idx}
@@ -483,29 +801,40 @@ function EmergencyCard({ alert }: { alert: ScreeningAlert }) {
   );
 }
 
-// Pengaturan (Bridge Config) Panel
+// Pengaturan (Bridge Config) Panel — simplified, auth handled by auth-store
 function PengaturanPanel() {
   const [config, setConfig] = useState<BridgeConfig>({
-    dashboardUrl: '',
-    authToken: '',
     enabled: false,
     pollIntervalMinutes: 0.5,
   });
-  const [showToken, setShowToken] = useState(false);
+  const [authStatus, setAuthStatus] = useState<'checking' | 'logged_in' | 'not_logged_in'>('checking');
+  const [userName, setUserName] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'ok' | 'err'>('idle');
   const [testStatus, setTestStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
   const [testMsg, setTestMsg] = useState('');
 
   useEffect(() => {
-    void getBridgeConfig().then(setConfig);
+    void import('@/lib/api/bridge-client').then((m) => m.getBridgeConfig()).then(setConfig);
+    void import('@/lib/api/auth-store').then(async (m) => {
+      const session = await m.getSession();
+      if (session?.tokens?.accessToken) {
+        setAuthStatus('logged_in');
+        setUserName(session.user.name || session.user.username);
+      } else {
+        setAuthStatus('not_logged_in');
+      }
+    });
   }, []);
 
   const handleSave = async () => {
     setSaving(true);
     setSaveStatus('idle');
     try {
+      const { saveBridgeConfig } = await import('@/lib/api/bridge-client');
       await saveBridgeConfig(config);
+      // Notify background to restart/stop poller based on new config
+      await chrome.runtime.sendMessage({ type: 'AUTH_STATE_CHANGED' });
       setSaveStatus('ok');
     } catch {
       setSaveStatus('err');
@@ -519,9 +848,12 @@ function PengaturanPanel() {
     setTestStatus('loading');
     setTestMsg('');
     try {
+      const { getOnlineDoctors } = await import('@/lib/api/bridge-client');
       const docs = await getOnlineDoctors();
       setTestStatus('ok');
-      setTestMsg(docs.length > 0 ? `${docs.length} dokter online` : 'Terhubung — tidak ada dokter online');
+      setTestMsg(
+        docs.length > 0 ? `${docs.length} dokter online` : 'Terhubung — tidak ada dokter online'
+      );
     } catch (e) {
       setTestStatus('err');
       setTestMsg(e instanceof Error ? e.message : 'Koneksi gagal');
@@ -529,148 +861,81 @@ function PengaturanPanel() {
     setTimeout(() => setTestStatus('idle'), 4000);
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    borderRadius: 6,
-    padding: '9px 12px',
-    color: '#d4d4d4',
-    fontSize: 12,
-    fontFamily: 'var(--font-mono, monospace)',
-    outline: 'none',
-    boxSizing: 'border-box',
-  };
+  const authLabel =
+    authStatus === 'checking' ? 'Memeriksa...'
+    : authStatus === 'logged_in' ? `Login sebagai ${userName}`
+    : 'Belum login';
 
-  const labelStyle: React.CSSProperties = {
-    fontSize: 10,
-    color: '#777',
-    letterSpacing: '0.12em',
-    textTransform: 'uppercase',
-    marginBottom: 5,
-    display: 'block',
-  };
+  const authColor =
+    authStatus === 'logged_in' ? 'var(--status-success)' : 'var(--text-muted)';
 
   return (
-    <div style={{ padding: '2px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: 11, color: '#E67E22', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 2 }}>
-            Ghost Protocols
-          </div>
-          <div style={{ fontSize: 13, color: '#d4d4d4' }}>Konfigurasi Bridge</div>
+    <div className="pengaturan-shell sentra-card">
+      <div className="pengaturan-shell__header">
+          <div>
+          <div className="text-caption">Bridge Console</div>
+          <h3 className="pengaturan-shell__title">Konfigurasi Bridge</h3>
+          <p className="pengaturan-shell__subtitle">
+            Sinkronisasi Crew Dashboard untuk transfer EMR dan konsultasi dokter online.
+          </p>
         </div>
-        {/* Enable toggle */}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer' }}>
-          <span style={{ fontSize: 11, color: config.enabled ? '#4ADE80' : '#777' }}>
+
+        <div className="pengaturan-shell__toggle">
+          <span
+            className="text-small"
+            style={{ color: config.enabled ? 'var(--status-success)' : 'var(--text-muted)' }}
+          >
             {config.enabled ? 'Aktif' : 'Nonaktif'}
           </span>
-          <div
-            onClick={() => setConfig((c) => ({ ...c, enabled: !c.enabled }))}
-            style={{
-              width: 36, height: 20, borderRadius: 10, position: 'relative', cursor: 'pointer',
-              background: config.enabled ? 'rgba(74,222,128,0.3)' : 'rgba(255,255,255,0.08)',
-              border: `1px solid ${config.enabled ? '#4ADE80' : 'rgba(255,255,255,0.12)'}`,
-              transition: 'all 0.2s',
-            }}
-          >
-            <div style={{
-              position: 'absolute', top: 2,
-              left: config.enabled ? 17 : 2,
-              width: 14, height: 14, borderRadius: '50%',
-              background: config.enabled ? '#4ADE80' : '#555',
-              transition: 'left 0.2s',
-            }} />
-          </div>
-        </label>
-      </div>
-
-      {/* Dashboard URL */}
-      <div>
-        <label style={labelStyle}>URL Dashboard</label>
-        <input
-          style={inputStyle}
-          type="url"
-          placeholder="https://dashboard.puskesmas.id"
-          value={config.dashboardUrl}
-          onChange={(e) => setConfig((c) => ({ ...c, dashboardUrl: e.target.value }))}
-        />
-      </div>
-
-      {/* Auth Token */}
-      <div>
-        <label style={labelStyle}>Access Token</label>
-        <div style={{ position: 'relative' }}>
-          <input
-            style={{ ...inputStyle, paddingRight: 36 }}
-            type={showToken ? 'text' : 'password'}
-            placeholder="Crew access token"
-            value={config.authToken}
-            onChange={(e) => setConfig((c) => ({ ...c, authToken: e.target.value }))}
-          />
           <button
-            onClick={() => setShowToken((v) => !v)}
-            style={{
-              position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: '#555', fontSize: 12, padding: 0,
-            }}
+            type="button"
+            role="switch"
+            aria-checked={config.enabled}
+            aria-label="Aktifkan bridge dashboard"
+            onClick={() => setConfig((c) => ({ ...c, enabled: !c.enabled }))}
+            className={`pengaturan-shell__toggle-track ${config.enabled ? 'pengaturan-shell__toggle-track--enabled' : ''}`}
           >
-            {showToken ? '🙈' : '👁'}
+            <div
+              className={`pengaturan-shell__toggle-thumb ${config.enabled ? 'pengaturan-shell__toggle-thumb--enabled' : ''}`}
+            />
           </button>
         </div>
       </div>
 
-      {/* Buttons */}
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="pengaturan-shell__field">
+        <label className="pengaturan-shell__label">Status Autentikasi</label>
+        <div className="pengaturan-shell__auth-status" style={{ color: authColor, fontSize: '13px', padding: '8px 0' }}>
+          {authLabel}
+        </div>
+      </div>
+
+      <div className="pengaturan-shell__actions">
         <button
           onClick={() => void handleTest()}
-          disabled={testStatus === 'loading'}
-          style={{
-            flex: 1, padding: '8px 0', borderRadius: 6, fontSize: 12, cursor: 'pointer',
-            background: 'rgba(255,255,255,0.04)',
-            border: `1px solid ${testStatus === 'ok' ? '#4ADE80' : testStatus === 'err' ? '#f87171' : 'rgba(255,255,255,0.12)'}`,
-            color: testStatus === 'ok' ? '#4ADE80' : testStatus === 'err' ? '#f87171' : '#999',
-            fontFamily: 'var(--font-mono, monospace)',
-            letterSpacing: '0.06em',
-          }}
+          disabled={testStatus === 'loading' || authStatus !== 'logged_in'}
+          className="shell-secondary-button"
         >
-          {testStatus === 'loading' ? '...' : 'Test'}
+          {testStatus === 'loading' ? 'Testing…' : 'Test Koneksi'}
         </button>
         <button
           onClick={() => void handleSave()}
           disabled={saving}
-          style={{
-            flex: 2, padding: '8px 0', borderRadius: 6, fontSize: 12, cursor: 'pointer',
-            background: saveStatus === 'ok' ? 'rgba(74,222,128,0.15)' : 'rgba(230,126,34,0.15)',
-            border: `1px solid ${saveStatus === 'ok' ? '#4ADE80' : saveStatus === 'err' ? '#f87171' : '#E67E22'}`,
-            color: saveStatus === 'ok' ? '#4ADE80' : saveStatus === 'err' ? '#f87171' : '#E67E22',
-            fontFamily: 'var(--font-mono, monospace)',
-            letterSpacing: '0.06em',
-            fontWeight: 600,
-          }}
+          className="shell-primary-button"
         >
           {saving ? 'Menyimpan...' : saveStatus === 'ok' ? '✓ Tersimpan' : 'Simpan'}
         </button>
       </div>
 
-      {/* Test result message */}
       {testMsg && (
-        <div style={{
-          fontSize: 11, padding: '6px 10px', borderRadius: 4,
-          background: testStatus === 'ok' ? 'rgba(74,222,128,0.08)' : 'rgba(248,113,113,0.08)',
-          color: testStatus === 'ok' ? '#4ADE80' : '#f87171',
-          border: `1px solid ${testStatus === 'ok' ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'}`,
-          fontFamily: 'var(--font-mono, monospace)',
-        }}>
+        <div
+          className={`pengaturan-shell__feedback ${testStatus === 'ok' ? 'pengaturan-shell__feedback--ok' : 'pengaturan-shell__feedback--err'}`}
+        >
           {testMsg}
         </div>
       )}
 
-      {/* Info note */}
-      <div style={{ fontSize: 10, color: '#555', lineHeight: 1.5, marginTop: 4 }}>
-        Diisi sekali oleh admin. Token didapat dari Intelligence Dashboard → Pengaturan Klinik.
+      <div className="pengaturan-shell__note">
+        Token otomatis tersedia setelah login. Bridge akan aktif otomatis saat Anda masuk.
       </div>
     </div>
   );

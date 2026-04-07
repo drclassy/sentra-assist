@@ -4,23 +4,17 @@ name: CD — Release & Deploy
 on:
   push:
     tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
+      - v*.*.*
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 jobs:
   release:
     name: Build & Package Release
     runs-on: ubuntu-latest
-    environment: ${{ github.event_name == 'push' && 'production' || inputs.environment }}
+    environment: ${{ github.event_name == 'push' && 'production' || 'staging' }}
     permissions:
       contents: write
       id-token: write

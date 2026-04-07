@@ -5,6 +5,10 @@ import {
 } from '@/lib/iskandar-diagnosis-engine/diagnosis-algorithm';
 import { classifyChronicDisease } from '@/lib/iskandar-diagnosis-engine/chronic-disease-classifier';
 import type { DifferentialVitals } from '@/lib/iskandar-diagnosis-engine/differential-diagnosis';
+import {
+  evaluateCanonicalDifferential,
+  type CanonicalClinicalEngineOutput,
+} from '@/lib/api/bridge-client';
 import { buildRMETransferPayload } from '@/lib/rme/payload-mapper';
 import { sendMessage } from '@/utils/messaging';
 import type {
@@ -20,6 +24,7 @@ import type {
   RMETransferStepStatus,
 } from '@/utils/types';
 import React, { useEffect, useMemo, useState } from 'react';
+import { CTHeader } from './CTHeader';
 
 interface ClinicalDifferentialProps {
   keluhanUtama: string;
@@ -31,6 +36,7 @@ interface ClinicalDifferentialProps {
   confirmedPregnancyStatus?: boolean | null;
   vitals: DifferentialVitals;
   trajectory?: import('@/lib/iskandar-diagnosis-engine/trajectory-analyzer').TrajectoryAnalysis;
+  canonicalOutput?: CanonicalClinicalEngineOutput | null;
   hasVisitHistory?: boolean;
   onBack: () => void;
 }
@@ -146,12 +152,10 @@ function pregnancyStatusLabel(status: PregnancyStatus): string {
   return 'Confirmed: Not Pregnant';
 }
 
-function buildConfirmedChronicSuggestion(
-  diagnosis: {
-    icd_x: string;
-    nama: string;
-  },
-): DiagnosisSuggestion {
+function buildConfirmedChronicSuggestion(diagnosis: {
+  icd_x: string;
+  nama: string;
+}): DiagnosisSuggestion {
   return {
     rank: 0,
     icd_x: diagnosis.icd_x,
@@ -168,10 +172,11 @@ function buildConfirmedChronicSuggestion(
 
 function buildUiFallbackDiagnoses(
   keluhanUtama: string,
-  vitals: DifferentialVitals,
+  vitals: DifferentialVitals
 ): DiagnosisSuggestion[] {
   const text = keluhanUtama.toLowerCase().trim();
-  const hasChestPain = text.includes('nyeri dada') || text.includes('chest pain') || text === 'dada';
+  const hasChestPain =
+    text.includes('nyeri dada') || text.includes('chest pain') || text === 'dada';
   const chestRisk = vitals.sbp >= 180 || vitals.sbp < 90 || vitals.hr >= 120 || vitals.rr >= 24;
 
   if (hasChestPain) {
@@ -194,7 +199,8 @@ function buildUiFallbackDiagnoses(
         icd_x: 'M94.0',
         nama: 'Nyeri Dinding Dada Muskuloskeletal',
         confidence: 0.33,
-        rationale: 'Diagnosis banding non-kardiak yang sering pada nyeri dada setelah red flag tersingkirkan.',
+        rationale:
+          'Diagnosis banding non-kardiak yang sering pada nyeri dada setelah red flag tersingkirkan.',
         red_flags: [],
         recommended_actions: ['Evaluasi nyeri tekan lokal', 'Eksklusi red flag kardiopulmoner'],
       },
@@ -207,7 +213,8 @@ function buildUiFallbackDiagnoses(
       icd_x: 'R69',
       nama: 'Differential Belum Spesifik',
       confidence: 0.25,
-      rationale: 'Data klinis belum cukup untuk differential spesifik, perlu anamnesis dan pemeriksaan lanjutan.',
+      rationale:
+        'Data klinis belum cukup untuk differential spesifik, perlu anamnesis dan pemeriksaan lanjutan.',
       red_flags: [],
       recommended_actions: [
         'Lengkapi keluhan utama terstruktur',
@@ -247,25 +254,36 @@ function toNeedStyle(level: 'required' | 'recommended' | 'optional'): {
   };
 }
 
-function riskTierUi(
-  riskTier: PharmacotherapyExplainability['risk_tier'],
-): { label: string; badgeClass: string } {
+function riskTierUi(riskTier: PharmacotherapyExplainability['risk_tier']): {
+  label: string;
+  badgeClass: string;
+} {
   if (riskTier === 'emergency') {
     return { label: 'EMERGENCY', badgeClass: 'border-red-600/35 text-red-400 bg-red-600/10' };
   }
   if (riskTier === 'urgent') {
     return { label: 'URGENT', badgeClass: 'border-amber-600/35 text-amber-400 bg-amber-600/10' };
   }
-  return { label: 'ROUTINE', badgeClass: 'border-emerald-600/35 text-emerald-400 bg-emerald-600/10' };
+  return {
+    label: 'ROUTINE',
+    badgeClass: 'border-emerald-600/35 text-emerald-400 bg-emerald-600/10',
+  };
 }
 
-function pathwayUi(
-  pathway: PharmacotherapyExplainability['pathway'],
-): string {
+function pathwayUi(pathway: PharmacotherapyExplainability['pathway']): string {
   if (pathway === 'knowledge+syndrome-intent') return 'Knowledge + Syndrome-Intent';
   if (pathway === 'knowledge-only') return 'Knowledge Only';
   if (pathway === 'syndrome-intent-only') return 'Syndrome-Intent Only';
   return 'Legacy Fallback';
+}
+
+function canonicalSeverityWeight(
+  severity?: CanonicalClinicalEngineOutput['alerts'][number]['severity']
+): number {
+  if (severity === 'emergency') return 45;
+  if (severity === 'urgent') return 30;
+  if (severity === 'warning') return 15;
+  return 0;
 }
 
 const TRANSFER_STEP_ORDER: RMETransferStepStatus[] = ['anamnesa', 'diagnosa', 'resep'];
@@ -289,7 +307,7 @@ const REASON_CODE_LABELS: Record<RMETransferReasonCode, string> = {
 
 function filterReasonCodesForStep(
   reasonCodes: RMETransferReasonCode[],
-  step: RMETransferStepStatus,
+  step: RMETransferStepStatus
 ): RMETransferReasonCode[] {
   return reasonCodes.filter((code) => {
     if (step !== 'diagnosa' && code === 'DIAGNOSA_PAYLOAD_EMPTY') return false;
@@ -367,6 +385,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
   confirmedPregnancyStatus,
   vitals,
   trajectory,
+  canonicalOutput,
   hasVisitHistory,
   onBack,
 }) => {
@@ -416,7 +435,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
       ? false
       : typeof confirmedPregnancyStatus === 'boolean'
         ? confirmedPregnancyStatus
-        : false,
+        : false
   );
 
   useEffect(() => {
@@ -430,6 +449,23 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
     }
     setPregnancyStatus(false);
   }, [patientGender, confirmedPregnancyStatus]);
+
+  const confirmedChronicDiagnoses = useMemo(
+    () =>
+      (trajectory?.confirmed_chronic_diagnoses || [])
+        .map((item) => {
+          const icd_x = normalizeIcdCode(item.icd_x);
+          const classification = classifyChronicDisease(icd_x);
+          if (!classification) return null;
+
+          return {
+            icd_x,
+            nama: isReadableDiagnosisName(item.nama) ? item.nama.trim() : classification.fullName,
+          };
+        })
+        .filter((item): item is { icd_x: string; nama: string } => Boolean(item?.icd_x)),
+    [trajectory]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -480,6 +516,82 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
       setSelectedMedicationKeys([]);
 
       try {
+        let canonicalFallbackNote = '';
+
+        try {
+          const canonicalResponse = await evaluateCanonicalDifferential({
+            request_id: `assist-diff-${patientRM || 'anon'}-${Date.now()}`,
+            patient: {
+              age: patientAge > 0 ? patientAge : 30,
+              gender: patientGender,
+            },
+            narrative: {
+              keluhan_utama: keluhanUtama,
+              keluhan_tambahan: keluhanTambahan || '',
+            },
+            vitals: {
+              sbp: vitals.sbp || undefined,
+              dbp: vitals.dbp || undefined,
+              hr: vitals.hr || undefined,
+              rr: vitals.rr || undefined,
+              temp: vitals.temp || undefined,
+              glucose: vitals.glucose || undefined,
+            },
+            context: {
+              allergies: allergies.filter((item) => item.toLowerCase() !== 'tidak ada'),
+              chronic_diseases: confirmedChronicDiagnoses.map((item) => item.nama),
+              is_pregnant: patientGender === 'P' ? pregnancyStatus === true : undefined,
+            },
+            canonical_clinical: canonicalOutput?.trajectory?.raw_context
+              ? {
+                  trajectory_context: canonicalOutput.trajectory.raw_context.trajectory_context,
+                  deterioration_summary_text:
+                    canonicalOutput.trajectory.raw_context.deterioration_summary_text,
+                }
+              : undefined,
+          });
+
+          if (cancelled) return;
+
+          const canonicalSuggestions: DiagnosisSuggestion[] = [];
+          for (const item of (canonicalResponse.diagnosis_suggestions || []).slice(0, 5)) {
+            const normalizedCode = normalizeIcdCode(item.icd_x || item.icd10_code);
+            if (!isLikelyIcdCode(normalizedCode)) continue;
+
+            canonicalSuggestions.push({
+                rank: item.rank,
+                icd_x: normalizedCode,
+                nama: resolveDiagnosisDisplayName(
+                  normalizedCode,
+                  item.nama || item.diagnosis_name || normalizedCode
+                ),
+                diagnosis_name: item.diagnosis_name,
+                icd10_code: item.icd10_code,
+                confidence: item.confidence,
+                rationale: item.rationale || item.reasoning || 'Differential canonical aktif',
+                reasoning: item.reasoning,
+                red_flags: item.red_flags || [],
+                recommended_actions: item.recommended_actions || [],
+            });
+          }
+
+          if (canonicalSuggestions.length > 0) {
+            setErrorMsg('');
+            setSuggestions(canonicalSuggestions);
+            setProcessingTimeMs(canonicalResponse.meta?.processing_time_ms ?? null);
+            setPhase('ready');
+            return;
+          }
+
+          canonicalFallbackNote =
+            'Differential canonical kosong, fallback differential lokal digunakan.';
+        } catch (canonicalError) {
+          canonicalFallbackNote =
+            canonicalError instanceof Error
+              ? `${canonicalError.message} (fallback differential lokal digunakan)`
+              : 'Differential canonical gagal, fallback differential lokal digunakan.';
+        }
+
         const response = await sendMessage('getSuggestions', {
           keluhan_utama: keluhanUtama,
           keluhan_tambahan: keluhanTambahan || '',
@@ -497,7 +609,11 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
         if (cancelled) return;
 
         if (!response.success || !response.data) {
-          setErrorMsg(response.error?.message || 'Engine tidak merespons, fallback differential lokal digunakan.');
+          setErrorMsg(
+            canonicalFallbackNote ||
+              response.error?.message ||
+              'Engine tidak merespons, fallback differential lokal digunakan.'
+          );
           setSuggestions(buildUiFallbackDiagnoses(keluhanUtama, vitals));
           setPhase('ready');
           return;
@@ -505,10 +621,13 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
 
         const incomingSuggestions = (response.data.diagnosis_suggestions || []).slice(0, 5);
         if (incomingSuggestions.length === 0) {
-          setErrorMsg('Differential dari engine kosong, fallback differential lokal digunakan.');
+          setErrorMsg(
+            canonicalFallbackNote ||
+              'Differential dari engine kosong, fallback differential lokal digunakan.'
+          );
           setSuggestions(buildUiFallbackDiagnoses(keluhanUtama, vitals));
         } else {
-          setErrorMsg('');
+          setErrorMsg(canonicalFallbackNote);
           setSuggestions(incomingSuggestions);
         }
         setProcessingTimeMs(response.data.meta?.processing_time_ms ?? null);
@@ -518,7 +637,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
         setErrorMsg(
           error instanceof Error
             ? `${error.message} (fallback differential lokal digunakan)`
-            : 'Unknown error (fallback differential lokal digunakan)',
+            : 'Unknown error (fallback differential lokal digunakan)'
         );
         setSuggestions(buildUiFallbackDiagnoses(keluhanUtama, vitals));
         setPhase('ready');
@@ -529,24 +648,23 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [keluhanUtama, keluhanTambahan, patientAge, patientGender, vitals.dbp, vitals.glucose, vitals.hr, vitals.rr, vitals.sbp, vitals.temp]);
-
-  const confirmedChronicDiagnoses = useMemo(
-    () =>
-      (trajectory?.confirmed_chronic_diagnoses || [])
-        .map((item) => {
-          const icd_x = normalizeIcdCode(item.icd_x);
-          const classification = classifyChronicDisease(icd_x);
-          if (!classification) return null;
-
-          return {
-            icd_x,
-            nama: isReadableDiagnosisName(item.nama) ? item.nama.trim() : classification.fullName,
-          };
-        })
-        .filter((item): item is { icd_x: string; nama: string } => Boolean(item?.icd_x)),
-    [trajectory],
-  );
+  }, [
+    keluhanUtama,
+    keluhanTambahan,
+    patientAge,
+    patientGender,
+    patientRM,
+    allergies,
+    canonicalOutput,
+    vitals.dbp,
+    vitals.glucose,
+    vitals.hr,
+    vitals.rr,
+    vitals.sbp,
+    vitals.temp,
+    confirmedChronicDiagnoses,
+    pregnancyStatus,
+  ]);
 
   const normalizedSuggestions = useMemo<DiagnosisSuggestion[]>(() => {
     const baseSuggestions =
@@ -603,11 +721,81 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
         keluhanUtama,
         keluhanTambahan,
         vitals,
-        trajectory,  // SPRINT 1 P0-2: Pass trajectory data
+        trajectory, // SPRINT 1 P0-2: Pass trajectory data
         maxResults: 5,
       }),
     [normalizedSuggestions, keluhanUtama, keluhanTambahan, vitals, trajectory]
   );
+  const displayedDiagnoses = useMemo(() => {
+    if (!canonicalOutput) {
+      return rankedDiagnoses;
+    }
+
+    const immediateActions = canonicalOutput.recommendations.immediate_actions.map((item) =>
+      item.toLowerCase()
+    );
+    const maxSeverity = canonicalOutput.alerts.reduce<
+      CanonicalClinicalEngineOutput['alerts'][number]['severity'] | undefined
+    >((current, alert) => {
+      const currentWeight = canonicalSeverityWeight(current);
+      const nextWeight = canonicalSeverityWeight(alert.severity);
+      return nextWeight > currentWeight ? alert.severity : current;
+    }, undefined);
+    const globalSeverityBoost = canonicalSeverityWeight(maxSeverity);
+
+    return [...rankedDiagnoses]
+      .map((item) => {
+        const redFlagBoost =
+          (item.suggestion.red_flags?.length || 0) * (globalSeverityBoost > 0 ? 8 : 2);
+        const requiresExamBoost =
+          item.insight.supportingExamPlan.needLevel === 'required'
+            ? globalSeverityBoost > 0
+              ? 18
+              : 6
+            : item.insight.supportingExamPlan.needLevel === 'recommended'
+              ? 6
+              : 0;
+        const actionText = (item.suggestion.recommended_actions || []).join(' ').toLowerCase();
+        const matchesImmediateAction = immediateActions.some((action) => {
+          const [firstToken] = action.split(' ');
+          return firstToken ? actionText.includes(firstToken) : false;
+        });
+        const canonicalActionBoost = matchesImmediateAction ? 20 : 0;
+        const canonicalScore =
+          item.diagnosisScore + redFlagBoost + requiresExamBoost + canonicalActionBoost;
+
+        return {
+          ...item,
+          diagnosisScore: canonicalScore,
+        };
+      })
+      .sort((left, right) => {
+        if (right.diagnosisScore !== left.diagnosisScore) {
+          return right.diagnosisScore - left.diagnosisScore;
+        }
+        if (right.adjustedConfidence !== left.adjustedConfidence) {
+          return right.adjustedConfidence - left.adjustedConfidence;
+        }
+        return left.rank - right.rank;
+      })
+      .map((item, index) => ({
+        ...item,
+        rank: index + 1,
+      }));
+  }, [canonicalOutput, rankedDiagnoses]);
+  const canonicalTrajectory = canonicalOutput?.trajectory;
+  const canonicalNews2 = canonicalOutput?.scoring.news2;
+  const canonicalSourceLabel = canonicalOutput ? 'CANONICAL ENGINE' : 'PREVIEW LOKAL';
+  const canonicalTrendLabel = canonicalTrajectory?.overall_trend
+    ? humanize(canonicalTrajectory.overall_trend).toUpperCase()
+    : trajectory
+      ? humanize(trajectory.overallTrend).toUpperCase()
+      : 'TIDAK TERSEDIA';
+  const canonicalRiskLabel = canonicalTrajectory?.overall_risk
+    ? humanize(canonicalTrajectory.overall_risk).toUpperCase()
+    : trajectory
+      ? humanize(trajectory.overallRisk).toUpperCase()
+      : 'TIDAK TERSEDIA';
 
   const diagnosisKey = (diagnosis: SelectedDiagnosis): string =>
     diagnosis.source === 'manual'
@@ -682,7 +870,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                     : 'Gagal mengambil rekomendasi farmakoterapi.',
               };
             }
-          }),
+          })
         );
 
         if (cancelled) return;
@@ -701,7 +889,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
         setTherapyByDiagnosis([]);
         setTherapyState('error');
         setTherapyError(
-          error instanceof Error ? error.message : 'Gagal mengambil rekomendasi farmakoterapi.',
+          error instanceof Error ? error.message : 'Gagal mengambil rekomendasi farmakoterapi.'
         );
       }
     };
@@ -774,7 +962,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
       combined.push(
         ...therapyByDiagnosis
           .filter((item) => selectedKeys.has(diagnosisKey(item.diagnosis)))
-          .flatMap((item) => item.medications),
+          .flatMap((item) => item.medications)
       );
     }
     combined.push(...manualMedications);
@@ -804,17 +992,13 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
     const availableMedicationKeys = new Set(
       candidateTransferMedications.map((med) => medicationSelectionKey(med))
     );
-    setSelectedMedicationKeys((prev) =>
-      prev.filter((key) => availableMedicationKeys.has(key))
-    );
+    setSelectedMedicationKeys((prev) => prev.filter((key) => availableMedicationKeys.has(key)));
   }, [candidateTransferMedications]);
 
   const toggleMedicationSelection = (med: MedicationRecommendation): void => {
     const key = medicationSelectionKey(med);
     setSelectedMedicationKeys((prev) =>
-      prev.includes(key)
-        ? prev.filter((item) => item !== key)
-        : [...prev, key]
+      prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]
     );
     setTransferError('');
   };
@@ -834,7 +1018,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
 
   const updateManualMedicationDraft = <TField extends keyof ManualMedicationDraft>(
     field: TField,
-    value: ManualMedicationDraft[TField],
+    value: ManualMedicationDraft[TField]
   ): void => {
     setManualMedicationDraft((prev) => ({
       ...prev,
@@ -863,9 +1047,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
     };
 
     const medKey = medicationSelectionKey(manualMedication);
-    const hasDuplicate = manualMedications.some(
-      (item) => medicationSelectionKey(item) === medKey,
-    );
+    const hasDuplicate = manualMedications.some((item) => medicationSelectionKey(item) === medKey);
     if (hasDuplicate) {
       setTherapyState('error');
       setTherapyError('Obat manual dengan regimen yang sama sudah ada.');
@@ -886,9 +1068,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
 
   const removeManualMedication = (medication: MedicationRecommendation): void => {
     const medKey = medicationSelectionKey(medication);
-    setManualMedications((prev) =>
-      prev.filter((item) => medicationSelectionKey(item) !== medKey),
-    );
+    setManualMedications((prev) => prev.filter((item) => medicationSelectionKey(item) !== medKey));
     setSelectedMedicationKeys((prev) => prev.filter((item) => item !== medKey));
     setTherapyError('');
   };
@@ -906,7 +1086,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
 
   const handleTransferToRME = async (
     targetStep: RMETransferStepStatus,
-    forceRun = false,
+    forceRun = false
   ): Promise<void> => {
     if (targetStep === 'diagnosa' && !selectedDiagnosisForTransfer) {
       setTransferUiState('failed');
@@ -928,7 +1108,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
       if (!hasCandidateResepMedication) {
         setTransferUiState('failed');
         setTransferError(
-          'Resep belum siap. Muat rekomendasi farmakologi dulu agar uplink Resep tidak kosong.',
+          'Resep belum siap. Muat rekomendasi farmakologi dulu agar uplink Resep tidak kosong.'
         );
         return;
       }
@@ -972,7 +1152,8 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
       diagnosis: {
         icd_x: selectedDiagnosisForTransfer.icd_x,
         nama: selectedDiagnosisForTransfer.nama,
-        jenis: selectedDiagnoses.indexOf(selectedDiagnosisForTransfer) === 0 ? 'PRIMER' : 'SEKUNDER',
+        jenis:
+          selectedDiagnoses.indexOf(selectedDiagnosisForTransfer) === 0 ? 'PRIMER' : 'SEKUNDER',
         // kasus, prognosa, penyakit_kronis auto-detected by payload-mapper
       },
       medications: selectedTransferMedications,
@@ -1025,7 +1206,103 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
       setTransferUiState(mapTransferStateToUi(result.state));
       if (result.state !== 'success') {
         const firstReason = result.reasonCodes[0];
-        setTransferError(firstReason ? REASON_CODE_LABELS[firstReason] : 'Transfer RME tidak sepenuhnya berhasil.');
+        setTransferError(
+          firstReason ? REASON_CODE_LABELS[firstReason] : 'Transfer RME tidak sepenuhnya berhasil.'
+        );
+      }
+    } catch (error) {
+      setTransferUiState('failed');
+      setTransferError(error instanceof Error ? error.message : 'Transfer RME gagal.');
+    }
+  };
+
+  const handleAutoFillAll = async (forceRun = false): Promise<void> => {
+    let resolvedTenagaMedis = tenagaMedis;
+    try {
+      const tenagaMedisResponse = await sendMessage('resolveTenagaMedis', undefined);
+      if (tenagaMedisResponse.success && tenagaMedisResponse.tenagaMedis) {
+        resolvedTenagaMedis = {
+          dokterNama: tenagaMedisResponse.tenagaMedis.dokterNama || '',
+          perawatNama: tenagaMedisResponse.tenagaMedis.perawatNama || '',
+          source: tenagaMedisResponse.tenagaMedis.source || [],
+          capturedAt: tenagaMedisResponse.tenagaMedis.capturedAt || '',
+        };
+        setTenagaMedis(resolvedTenagaMedis);
+      }
+    } catch {
+      // Keep last known value in state.
+    }
+
+    const diagnosisInput = selectedDiagnosisForTransfer
+      ? {
+          icd_x: selectedDiagnosisForTransfer.icd_x,
+          nama: selectedDiagnosisForTransfer.nama,
+          jenis: (selectedDiagnoses.indexOf(selectedDiagnosisForTransfer) === 0
+            ? 'PRIMER'
+            : 'SEKUNDER') as 'PRIMER' | 'SEKUNDER',
+        }
+      : undefined;
+
+    const mapped = buildRMETransferPayload({
+      keluhanUtama,
+      keluhanTambahan,
+      patientGender,
+      pregnancyStatus,
+      allergies,
+      vitalSigns: {
+        sbp: vitals.sbp,
+        dbp: vitals.dbp,
+        hr: vitals.hr,
+        rr: vitals.rr,
+        temp: vitals.temp,
+        glucose: vitals.glucose,
+      },
+      diagnosis: diagnosisInput,
+      medications: selectedTransferMedications,
+      tenagaMedis:
+        resolvedTenagaMedis.dokterNama || resolvedTenagaMedis.perawatNama
+          ? {
+              dokterNama: resolvedTenagaMedis.dokterNama || undefined,
+              perawatNama: resolvedTenagaMedis.perawatNama || undefined,
+              ruangan: 'POLI UMUM',
+            }
+          : undefined,
+      trajectory,
+      hasVisitHistory,
+    });
+
+    const requestId = `rme-auto-${Date.now()}`;
+    setTransferRunId(requestId);
+    setLastTriggeredStep('anamnesa');
+    setTransferUiState('running');
+    setTransferError('');
+    setTransferResult(null);
+    setTransferSteps(makeInitialTransferSteps());
+    setTransferReasonCodes(mapped.reasonCodes);
+
+    try {
+      const result = await sendMessage('transferRME', {
+        ...mapped.payload,
+        options: {
+          ...mapped.payload.options,
+          requestId,
+          forceRun,
+        },
+        meta: {
+          ...mapped.payload.meta,
+          reasonCodes: mapped.reasonCodes,
+        },
+      });
+      setTransferResult(result);
+      setTransferRunId(result.runId);
+      setTransferSteps(result.steps);
+      setTransferReasonCodes(result.reasonCodes);
+      setTransferUiState(mapTransferStateToUi(result.state));
+      if (result.state !== 'success') {
+        const firstReason = result.reasonCodes[0];
+        setTransferError(
+          firstReason ? REASON_CODE_LABELS[firstReason] : 'Transfer RME tidak sepenuhnya berhasil.'
+        );
       }
     } catch (error) {
       setTransferUiState('failed');
@@ -1051,7 +1328,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
       icd_x: normalizedIcd || item.suggestion.icd_x,
       nama: resolveDiagnosisDisplayName(
         normalizedIcd || item.suggestion.icd_x,
-        item.suggestion.nama,
+        item.suggestion.nama
       ),
       source: 'suggested',
       rank: item.rank,
@@ -1141,22 +1418,17 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
             'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,107,47,0.08) 0%, transparent 70%)',
         }}
       />
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="neu-logo w-11 h-11 flex items-center justify-center overflow-hidden rounded-xl">
-            <img src="/logosen.png" alt="Sentra" className="w-8 h-8 object-contain" />
-          </div>
-          <div>
-            <h1 className="text-title text-platinum">Ghost Protocols</h1>
-            <p className="text-small text-muted mt-0.5">Halaman 3 • Diagnosis dan Resep</p>
-          </div>
-        </div>
-        {processingTimeMs !== null && (
-          <span className="px-2 py-1 text-[10px] rounded border border-[var(--border-subtle)] text-muted font-mono">
-            {processingTimeMs}ms
-          </span>
-        )}
-      </header>
+      <CTHeader
+        title="Sentra Assist"
+        subtitle="Architected by dr Ferdi Iskandar"
+        sectionLabel="Diagnosis + Resep"
+        meta={
+          processingTimeMs !== null
+            ? `Resolution workflow • ${processingTimeMs}ms processing time`
+            : 'Clinical resolution workflow for diagnosis and pharmacotherapy'
+        }
+        onBack={onBack}
+      />
 
       <div className="neu-card-inset p-1.5">
         <div className="flex gap-1.5">
@@ -1185,7 +1457,9 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-semibold text-platinum">Step 1 • Pilih Diagnosis</span>
+              <span className="text-[10px] font-semibold text-platinum">
+                Step 1 • Pilih Diagnosis
+              </span>
               <span className="text-[10px] text-muted font-mono">
                 {selectedDiagnoses.length}/{MAX_DIAGNOSIS_SELECTION}
               </span>
@@ -1221,23 +1495,58 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
             }`}
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] font-semibold text-platinum">Step 3 • Uplink ke RME</span>
-              <span className="text-[10px] text-muted font-mono">{transferUiState.toUpperCase()}</span>
+              <span className="text-[10px] font-semibold text-platinum">
+                Step 3 • Uplink ke RME
+              </span>
+              <span className="text-[10px] text-muted font-mono">
+                {transferUiState.toUpperCase()}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {trajectory && hasVisitHistory !== undefined && (
+      {(trajectory || canonicalTrajectory) && hasVisitHistory !== undefined && (
         <div className="bg-blue-700/10 border border-blue-700/30 rounded-[6px] p-3 mb-3">
           <div className="flex items-center gap-2 mb-1">
-            <div className="text-[10px] text-blue-300 font-semibold uppercase tracking-wide">Trajectory Intelligence Active</div>
+            <div className="text-[10px] text-blue-300 font-semibold uppercase tracking-wide">
+              Trajectory Intelligence Active
+            </div>
             <span className="px-2 py-0.5 rounded border border-blue-600/35 bg-blue-600/10 text-[10px] text-blue-300 font-mono">
               {hasVisitHistory ? 'Returning Patient' : 'New Case'}
             </span>
+            <span className="px-2 py-0.5 rounded border border-emerald-600/35 bg-emerald-600/10 text-[10px] text-emerald-300 font-mono">
+              {canonicalSourceLabel}
+            </span>
           </div>
           <div className="text-[10px] text-muted leading-snug">
-            Auto-detecting: Prognosis ({trajectory.overallTrend} trend, {trajectory.overallRisk} risk) • Kasus ({hasVisitHistory ? 'LAMA' : 'BARU'}) • Chronic diseases from ICD
+            Auto-detecting: Prognosis ({canonicalTrendLabel} trend, {canonicalRiskLabel} risk) •
+            Kasus ({hasVisitHistory ? 'LAMA' : 'BARU'}) • Chronic diseases from ICD
+            {canonicalNews2 ? ` • NEWS2 ${canonicalNews2.score}` : ''}
+          </div>
+          {canonicalTrajectory?.narrative ? (
+            <div className="text-[10px] text-platinum mt-2 leading-snug">
+              {canonicalTrajectory.narrative}
+            </div>
+          ) : null}
+          {canonicalOutput?.recommendations.immediate_actions?.length ? (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {canonicalOutput.recommendations.immediate_actions.slice(0, 2).map((action, index) => (
+                <span
+                  key={`${action}-${index}`}
+                  className="px-2 py-0.5 rounded border border-blue-600/25 bg-blue-600/10 text-[10px] text-blue-200"
+                >
+                  {action}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-[10px] text-muted mt-2">
+              Differential tetap fallback ke workflow lokal bila canonical detail belum tersedia.
+            </div>
+          )}
+          <div className="text-[10px] text-muted mt-2">
+            Source aktif: {canonicalOutput ? 'dashboard canonical engine' : 'trajectory lokal transisi'}.
           </div>
         </div>
       )}
@@ -1358,7 +1667,9 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
       {phase === 'error' && (
         <div className="bg-[var(--surface-secondary)] border border-critical/40 rounded-[6px] p-4">
           <div className="text-xs text-critical font-bold mb-1">FAILED TO LOAD DIFFERENTIAL</div>
-          <div className="text-small text-muted">{errorMsg || 'Terjadi error saat memuat data.'}</div>
+          <div className="text-small text-muted">
+            {errorMsg || 'Terjadi error saat memuat data.'}
+          </div>
         </div>
       )}
 
@@ -1369,43 +1680,46 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
               <div className="text-[10px] text-amber-300 leading-snug">{errorMsg}</div>
             </div>
           )}
-          {rankedDiagnoses.length === 0 && (
+          {displayedDiagnoses.length === 0 && (
             <div className="ttv-section p-4">
-              <div className="text-small text-muted">Belum ada differential diagnosis yang bisa diproposisikan.</div>
+              <div className="text-small text-muted">
+                Belum ada differential diagnosis yang bisa diproposisikan.
+              </div>
             </div>
           )}
 
-          {rankedDiagnoses.length > 0 && (
+          {displayedDiagnoses.length > 0 && (
             <div className="ttv-section p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-tiny font-bold text-muted uppercase tracking-wide">
                   Step 1 • Kandidat Diagnosis
                 </div>
                 <span className="px-2 py-0.5 rounded border border-[var(--border-subtle)] text-[10px] text-muted">
-                  Top {Math.min(rankedDiagnoses.length, 3)}
+                  Top {Math.min(displayedDiagnoses.length, 3)}
                 </span>
               </div>
             </div>
           )}
 
-          {rankedDiagnoses.slice(0, 3).map((item) => {
+          {displayedDiagnoses.slice(0, 3).map((item) => {
             const { suggestion, insight, adjustedConfidence } = item;
             const confidencePct = Math.round(suggestion.confidence * 100);
             const adjustedPct = Math.round(adjustedConfidence * 100);
             const needStyle = toNeedStyle(insight.supportingExamPlan.needLevel);
 
             // SPRINT 1 HOTFIX: Confidence tier classification
-            const confidenceTier = adjustedConfidence >= 0.60
-              ? 'primary'
-              : adjustedConfidence >= 0.25
-                ? 'secondary'
-                : 'low';
+            const confidenceTier =
+              adjustedConfidence >= 0.6
+                ? 'primary'
+                : adjustedConfidence >= 0.25
+                  ? 'secondary'
+                  : 'low';
             const normalizedSuggestionIcd = normalizeIcdCode(suggestion.icd_x);
             const diagnosisCandidate: SelectedDiagnosis = {
               icd_x: normalizedSuggestionIcd || suggestion.icd_x,
               nama: resolveDiagnosisDisplayName(
                 normalizedSuggestionIcd || suggestion.icd_x,
-                suggestion.nama,
+                suggestion.nama
               ),
               source: 'suggested',
               rank: item.rank,
@@ -1431,7 +1745,9 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                           {suggestion.icd_x}
                         </span>
                       </div>
-                      <h3 className="text-sm font-semibold text-platinum">{humanize(suggestion.nama)}</h3>
+                      <h3 className="text-sm font-semibold text-platinum">
+                        {humanize(suggestion.nama)}
+                      </h3>
                     </div>
                     <div className="text-right flex flex-col items-end gap-1">
                       {/* SPRINT 1 HOTFIX: Tier badge */}
@@ -1445,7 +1761,10 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                         </div>
                       )}
                       {/* Adjusted confidence (composite score) */}
-                      <div className="text-[10px] text-muted">Skor Klinis: <span className="font-mono font-bold text-platinum">{adjustedPct}%</span></div>
+                      <div className="text-[10px] text-muted">
+                        Skor Klinis:{' '}
+                        <span className="font-mono font-bold text-platinum">{adjustedPct}%</span>
+                      </div>
                       {/* Raw AI confidence */}
                       <div className="text-[9px] text-muted/70">AI: {confidencePct}%</div>
                     </div>
@@ -1471,22 +1790,31 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
 
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div className="ct-neu-cell bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] p-2">
-                      <div className="text-tiny font-bold text-muted uppercase tracking-wide mb-1">Berdasarkan Gejala</div>
+                      <div className="text-tiny font-bold text-muted uppercase tracking-wide mb-1">
+                        Berdasarkan Gejala
+                      </div>
                       <div className="flex flex-wrap gap-1">
                         {insight.matchedSymptoms.length > 0 ? (
                           insight.matchedSymptoms.map((item) => (
-                            <span key={item} className="px-2 py-0.5 rounded bg-carbon-800/70 border border-[var(--border-subtle)] text-[10px] text-muted">
+                            <span
+                              key={item}
+                              className="px-2 py-0.5 rounded bg-carbon-800/70 border border-[var(--border-subtle)] text-[10px] text-muted"
+                            >
                               {humanize(item)}
                             </span>
                           ))
                         ) : (
-                          <span className="text-[10px] text-muted">Tidak ada sinyal gejala dominan.</span>
+                          <span className="text-[10px] text-muted">
+                            Tidak ada sinyal gejala dominan.
+                          </span>
                         )}
                       </div>
                     </div>
 
                     <div className="ct-neu-cell bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] p-2">
-                      <div className="text-tiny font-bold text-muted uppercase tracking-wide mb-1">Driver TTV</div>
+                      <div className="text-tiny font-bold text-muted uppercase tracking-wide mb-1">
+                        Driver TTV
+                      </div>
                       <div className="flex flex-col gap-1">
                         {insight.vitalDrivers.length > 0 ? (
                           insight.vitalDrivers.slice(0, 2).map((driver) => (
@@ -1495,23 +1823,36 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                             </div>
                           ))
                         ) : (
-                          <div className="text-[10px] text-muted">Tidak ada abnormalitas TTV dominan.</div>
+                          <div className="text-[10px] text-muted">
+                            Tidak ada abnormalitas TTV dominan.
+                          </div>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="ct-neu-cell bg-[var(--surface-primary)] border rounded-[6px] p-2 mb-2" style={{ borderColor: needStyle.border }}>
+                  <div
+                    className="ct-neu-cell bg-[var(--surface-primary)] border rounded-[6px] p-2 mb-2"
+                    style={{ borderColor: needStyle.border }}
+                  >
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="text-tiny font-bold text-muted uppercase tracking-wide">Pemeriksaan Penunjang</div>
+                      <div className="text-tiny font-bold text-muted uppercase tracking-wide">
+                        Pemeriksaan Penunjang
+                      </div>
                       <span
                         className="px-2 py-0.5 rounded border text-[10px] font-bold tracking-wide"
-                        style={{ color: needStyle.color, background: needStyle.bg, borderColor: needStyle.border }}
+                        style={{
+                          color: needStyle.color,
+                          background: needStyle.bg,
+                          borderColor: needStyle.border,
+                        }}
                       >
                         {needStyle.label}
                       </span>
                     </div>
-                    <div className="text-[10px] text-muted mb-1">{insight.supportingExamPlan.summary}</div>
+                    <div className="text-[10px] text-muted mb-1">
+                      {insight.supportingExamPlan.summary}
+                    </div>
                     <div className="flex flex-col gap-1">
                       {insight.supportingExamPlan.tests.slice(0, 4).map((test) => (
                         <div key={test} className="text-[10px] text-muted leading-snug">
@@ -1522,12 +1863,18 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                   </div>
 
                   <div className="text-[11px] text-muted leading-relaxed mb-2">
-                    {humanize(suggestion.rationale || suggestion.reasoning || 'Rasional klinis tidak tersedia.')}
+                    {humanize(
+                      suggestion.rationale ||
+                        suggestion.reasoning ||
+                        'Rasional klinis tidak tersedia.'
+                    )}
                   </div>
 
                   {suggestion.red_flags && suggestion.red_flags.length > 0 && (
                     <div className="mb-2">
-                      <div className="text-[10px] text-critical uppercase font-bold tracking-wide mb-1">Red Flags</div>
+                      <div className="text-[10px] text-critical uppercase font-bold tracking-wide mb-1">
+                        Red Flags
+                      </div>
                       <div className="flex flex-wrap gap-1">
                         {suggestion.red_flags.slice(0, 4).map((flag) => (
                           <span
@@ -1543,7 +1890,9 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
 
                   {suggestion.recommended_actions && suggestion.recommended_actions.length > 0 && (
                     <div>
-                      <div className="text-[10px] text-muted uppercase font-bold tracking-wide mb-1">Aksi Awal Disarankan</div>
+                      <div className="text-[10px] text-muted uppercase font-bold tracking-wide mb-1">
+                        Aksi Awal Disarankan
+                      </div>
                       <div className="flex flex-col gap-1">
                         {suggestion.recommended_actions.slice(0, 3).map((action) => (
                           <div key={action} className="text-[10px] text-muted leading-snug">
@@ -1581,7 +1930,8 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
               </div>
             ) : (
               <div className="text-[10px] text-muted">
-                Pilih 1-2 diagnosis dari daftar differential. Klik ulang diagnosis untuk membatalkan.
+                Pilih 1-2 diagnosis dari daftar differential. Klik ulang diagnosis untuk
+                membatalkan.
               </div>
             )}
           </div>
@@ -1637,12 +1987,17 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
             <div className="mb-2 ct-neu-cell bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] px-2 py-2">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-[10px] text-muted leading-snug">
-                  Obat dipilih: <span className="text-platinum font-semibold">{selectedMedicationCount}</span>/{candidateMedicationCount}
+                  Obat dipilih:{' '}
+                  <span className="text-platinum font-semibold">{selectedMedicationCount}</span>/
+                  {candidateMedicationCount}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={selectAllRecommendedMedications}
-                    disabled={candidateMedicationCount === 0 || selectedMedicationCount === candidateMedicationCount}
+                    disabled={
+                      candidateMedicationCount === 0 ||
+                      selectedMedicationCount === candidateMedicationCount
+                    }
                     className="px-2 py-1 rounded border border-emerald-600/35 text-[10px] text-emerald-300 bg-emerald-600/10 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Pilih Semua
@@ -1660,7 +2015,8 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
             <div className="mb-2 ct-neu-cell bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] px-2 py-2">
               {selectedDiagnoses.length === 0 && (
                 <div className="mb-2 text-[10px] text-muted leading-snug">
-                  Belum ada diagnosis dipilih. Obat manual tetap bisa disiapkan, tapi uplink resep membutuhkan diagnosis.
+                  Belum ada diagnosis dipilih. Obat manual tetap bisa disiapkan, tapi uplink resep
+                  membutuhkan diagnosis.
                 </div>
               )}
               <div className="mb-2">
@@ -1678,7 +2034,9 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                   <div className="grid grid-cols-2 gap-2">
                     <input
                       value={manualMedicationDraft.nama_obat}
-                      onChange={(event) => updateManualMedicationDraft('nama_obat', event.target.value)}
+                      onChange={(event) =>
+                        updateManualMedicationDraft('nama_obat', event.target.value)
+                      }
                       placeholder="Nama obat manual"
                       className="bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] px-2 py-2 text-[11px] text-platinum outline-none"
                     />
@@ -1695,7 +2053,7 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                       onChange={(event) =>
                         updateManualMedicationDraft(
                           'aturan_pakai',
-                          event.target.value as ManualMedicationDraft['aturan_pakai'],
+                          event.target.value as ManualMedicationDraft['aturan_pakai']
                         )
                       }
                       className="bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] px-2 py-2 text-[11px] text-platinum outline-none"
@@ -1708,14 +2066,18 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                     </select>
                     <input
                       value={manualMedicationDraft.durasi}
-                      onChange={(event) => updateManualMedicationDraft('durasi', event.target.value)}
+                      onChange={(event) =>
+                        updateManualMedicationDraft('durasi', event.target.value)
+                      }
                       placeholder="Durasi (contoh: 3 hari)"
                       className="bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] px-2 py-2 text-[11px] text-platinum outline-none"
                     />
                   </div>
                   <input
                     value={manualMedicationDraft.rationale}
-                    onChange={(event) => updateManualMedicationDraft('rationale', event.target.value)}
+                    onChange={(event) =>
+                      updateManualMedicationDraft('rationale', event.target.value)
+                    }
                     placeholder="Catatan klinis singkat (opsional)"
                     className="bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] px-2 py-2 text-[11px] text-platinum outline-none"
                   />
@@ -1756,7 +2118,8 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                                 {medication.nama_obat}
                               </div>
                               <div className="text-[10px] text-muted">
-                                {medication.dosis} • {medication.aturan_pakai} • {medication.durasi || '-'}
+                                {medication.dosis} • {medication.aturan_pakai} •{' '}
+                                {medication.durasi || '-'}
                               </div>
                             </div>
                           </div>
@@ -1780,7 +2143,8 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
             </div>
             {therapyState === 'idle' && (
               <div className="text-[10px] text-muted leading-snug">
-                {therapyError || 'Pilih diagnosis terlebih dahulu agar rekomendasi farmakoterapi ditampilkan.'}
+                {therapyError ||
+                  'Pilih diagnosis terlebih dahulu agar rekomendasi farmakoterapi ditampilkan.'}
               </div>
             )}
             {therapyState === 'loading' && (
@@ -1799,14 +2163,16 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
               <div className="grid grid-cols-1 gap-2">
                 {selectedDiagnoses.map((diagnosis) => {
                   const therapyResult = therapyByDiagnosis.find(
-                    (result) => diagnosisKey(result.diagnosis) === diagnosisKey(diagnosis),
+                    (result) => diagnosisKey(result.diagnosis) === diagnosisKey(diagnosis)
                   );
                   const medications = therapyResult?.medications || [];
                   const explainability = therapyResult?.explainability;
                   const escalationAlerts = (therapyResult?.alerts || []).filter(
-                    (alert) => alert.type === 'red_flag' && alert.severity === 'emergency',
+                    (alert) => alert.type === 'red_flag' && alert.severity === 'emergency'
                   );
-                  const explainabilityRiskUi = explainability ? riskTierUi(explainability.risk_tier) : null;
+                  const explainabilityRiskUi = explainability
+                    ? riskTierUi(explainability.risk_tier)
+                    : null;
 
                   return (
                     <div
@@ -1855,11 +2221,15 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                           <div className="grid grid-cols-2 gap-2 mb-2">
                             <div className="text-[10px] text-muted">
                               Review window:{' '}
-                              <span className="text-platinum font-mono">{explainability.review_window}</span>
+                              <span className="text-platinum font-mono">
+                                {explainability.review_window}
+                              </span>
                             </div>
                             <div className="text-[10px] text-muted">
                               Pathway:{' '}
-                              <span className="text-platinum">{pathwayUi(explainability.pathway)}</span>
+                              <span className="text-platinum">
+                                {pathwayUi(explainability.pathway)}
+                              </span>
                             </div>
                           </div>
                           <div className="text-[10px] text-muted uppercase tracking-wide font-semibold mb-1">
@@ -1897,7 +2267,10 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                             Escalation Alert
                           </div>
                           {escalationAlerts.slice(0, 2).map((alert) => (
-                            <div key={alert.id} className="text-[10px] text-red-200 leading-snug mb-1 last:mb-0">
+                            <div
+                              key={alert.id}
+                              className="text-[10px] text-red-200 leading-snug mb-1 last:mb-0"
+                            >
                               • {humanize(alert.title)}: {humanize(alert.message)}
                             </div>
                           ))}
@@ -1927,7 +2300,9 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                                       className="mt-0.5 h-3.5 w-3.5 accent-emerald-500 cursor-pointer"
                                     />
                                     <div>
-                                      <div className="text-xs font-semibold text-platinum">{med.nama_obat}</div>
+                                      <div className="text-xs font-semibold text-platinum">
+                                        {med.nama_obat}
+                                      </div>
                                       <div className="text-[10px] text-muted mt-0.5">
                                         {med.dosis} • {med.aturan_pakai} • {med.durasi || '-'}
                                       </div>
@@ -1950,7 +2325,8 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                                 </div>
                                 {med.contraindications && med.contraindications.length > 0 && (
                                   <div className="text-[10px] text-amber-300 mt-1">
-                                    Kontraindikasi: {med.contraindications.map((c) => humanize(c)).join('; ')}
+                                    Kontraindikasi:{' '}
+                                    {med.contraindications.map((c) => humanize(c)).join('; ')}
                                   </div>
                                 )}
                               </div>
@@ -1958,20 +2334,22 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
                           })}
                         </div>
                       )}
-                      {therapyResult && !therapyResult.error && therapyResult.guidelines.length > 0 && (
-                        <div className="ct-neu-cell bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] p-2 mt-2">
-                          <div className="text-[10px] text-muted uppercase tracking-wide font-semibold mb-1">
-                            Guideline Notes
+                      {therapyResult &&
+                        !therapyResult.error &&
+                        therapyResult.guidelines.length > 0 && (
+                          <div className="ct-neu-cell bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] p-2 mt-2">
+                            <div className="text-[10px] text-muted uppercase tracking-wide font-semibold mb-1">
+                              Guideline Notes
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              {therapyResult.guidelines.slice(0, 3).map((guide) => (
+                                <div key={guide} className="text-[10px] text-muted leading-snug">
+                                  • {humanize(guide)}
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          <div className="flex flex-col gap-1">
-                            {therapyResult.guidelines.slice(0, 3).map((guide) => (
-                              <div key={guide} className="text-[10px] text-muted leading-snug">
-                                • {humanize(guide)}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                        )}
                       {therapyResult && !therapyResult.error && medications.length === 0 && (
                         <div className="text-[10px] text-muted">
                           Belum ada paket terapi farmakologi terstruktur untuk diagnosis ini.
@@ -2054,7 +2432,8 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
 
         {transferReasonCodes.length > 0 && (
           <div className="mb-3 text-[10px] text-muted leading-snug">
-            Reason code: {transferReasonCodes.map((code) => REASON_CODE_LABELS[code] || code).join(' | ')}
+            Reason code:{' '}
+            {transferReasonCodes.map((code) => REASON_CODE_LABELS[code] || code).join(' | ')}
           </div>
         )}
 
@@ -2067,6 +2446,18 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
             runId: {transferResult.runId} • total: {transferResult.totalLatencyMs}ms
           </div>
         )}
+
+        <div className="mb-3">
+          <button
+            onClick={() => {
+              void handleAutoFillAll(false);
+            }}
+            disabled={transferUiState === 'running'}
+            className="w-full px-4 py-2.5 text-[12px] font-bold rounded-[6px] border border-[#eb5939]/60 text-white bg-[#eb5939]/20 hover:bg-[#eb5939]/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Auto Fill RME
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 gap-3">
           <div className="ct-neu-cell bg-[var(--surface-primary)] border border-[var(--border-subtle)] rounded-[6px] p-3">
@@ -2128,20 +2519,22 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
 
         {(!hasDiagnosisForTransfer || !hasResepPayloadReady) && (
           <div className="mt-2 text-[10px] text-muted leading-snug">
-            Pilih diagnosis terlebih dahulu, lalu pilih minimal 1 obat proposal/manual sebelum uplink Pharmacotherapy.
+            Pilih diagnosis terlebih dahulu, lalu pilih minimal 1 obat proposal/manual sebelum
+            uplink Pharmacotherapy.
           </div>
         )}
       </div>
 
       <div className="bg-amber-700/10 border border-amber-700/30 rounded-[6px] p-3">
-        <div className="text-[10px] text-amber-400 font-semibold uppercase tracking-wide mb-1">Clinical Safety Note</div>
+        <div className="text-[10px] text-amber-400 font-semibold uppercase tracking-wide mb-1">
+          Clinical Safety Note
+        </div>
         <div className="text-[10px] text-muted leading-relaxed">
-          Differential diagnosis adalah dukungan klinis awal, bukan diagnosis final. Konfirmasi dengan anamnesis
-          lanjutan, pemeriksaan fisik, dan pemeriksaan penunjang sesuai konteks FKTP.
+          Differential diagnosis adalah dukungan klinis awal, bukan diagnosis final. Konfirmasi
+          dengan anamnesis lanjutan, pemeriksaan fisik, dan pemeriksaan penunjang sesuai konteks
+          FKTP.
         </div>
       </div>
     </div>
   );
 };
-
-

@@ -32,20 +32,20 @@
 export function playNotificationSound(): void {
   try {
     // Get the correct path for the sound file in the extension
-    const soundPath = chrome.runtime.getURL('assets/sounds/notif1.wav');
+    const soundPath = chrome.runtime.getURL('assets/sounds/notif1.wav')
 
     // Create and play the audio
-    const audio = new Audio(soundPath);
+    const audio = new Audio(soundPath)
 
     // Set volume to a reasonable level (0.8 = 80%)
-    audio.volume = 0.8;
+    audio.volume = 0.8
 
     // Play the sound
-    audio.play().catch((error) => {
-      console.warn('[Audio] Failed to play notification sound:', error);
-    });
+    audio.play().catch(error => {
+      console.warn('[Audio] Failed to play notification sound:', error)
+    })
   } catch (error) {
-    console.error('[Audio] Error initializing notification sound:', error);
+    console.error('[Audio] Error initializing notification sound:', error)
   }
 }
 
@@ -62,16 +62,16 @@ export function playNotificationSound(): void {
  */
 export function playNotificationSoundWithVolume(volume: number): void {
   try {
-    const soundPath = chrome.runtime.getURL('assets/sounds/notif1.wav');
-    const audio = new Audio(soundPath);
+    const soundPath = chrome.runtime.getURL('assets/sounds/notif1.wav')
+    const audio = new Audio(soundPath)
 
     // Clamp volume between 0 and 1
-    audio.volume = Math.max(0, Math.min(1, volume));
+    audio.volume = Math.max(0, Math.min(1, volume))
 
-    audio.play().catch((error) => {
-      console.warn('[Audio] Failed to play notification sound:', error);
-    });
+    audio.play().catch(error => {
+      console.warn('[Audio] Failed to play notification sound:', error)
+    })
   } catch (error) {
-    console.error('[Audio] Error initializing notification sound:', error);
+    console.error('[Audio] Error initializing notification sound:', error)
   }
 }

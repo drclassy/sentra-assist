@@ -11,17 +11,17 @@
  * @module lib/api/mocks/ddi-mock
  */
 
-import type { DrugInteraction, DDISeverity } from '@/types/api';
+import type { DDISeverity, DrugInteraction } from '@/types/api'
 
 // =============================================================================
 // DDI DATABASE
 // =============================================================================
 
 interface DDIEntry {
-  drugs: [string, string];
-  severity: DDISeverity;
-  description: string;
-  recommendation: string;
+  drugs: [string, string]
+  severity: DDISeverity
+  description: string
+  recommendation: string
 }
 
 /**
@@ -156,7 +156,7 @@ const DDI_DATABASE: DDIEntry[] = [
     description: 'Efek aditif untuk netralisasi asam lambung',
     recommendation: 'Berikan dengan jarak waktu untuk efek optimal.',
   },
-];
+]
 
 // =============================================================================
 // DDI CHECKER FUNCTIONS
@@ -170,21 +170,21 @@ function normalizeDrugName(name: string): string {
     .toLowerCase()
     .replace(/\d+\s*(mg|ml|mcg|g|iu)/gi, '')
     .replace(/tablet|kapsul|sirup|injeksi|cream|salep/gi, '')
-    .trim();
+    .trim()
 }
 
 /**
  * Check if two drug names match (fuzzy matching)
  */
 function drugsMatch(drug1: string, drug2: string): boolean {
-  const norm1 = normalizeDrugName(drug1);
-  const norm2 = normalizeDrugName(drug2);
+  const norm1 = normalizeDrugName(drug1)
+  const norm2 = normalizeDrugName(drug2)
 
   // Exact match
-  if (norm1 === norm2) return true;
+  if (norm1 === norm2) return true
 
   // Partial match (one contains the other)
-  if (norm1.includes(norm2) || norm2.includes(norm1)) return true;
+  if (norm1.includes(norm2) || norm2.includes(norm1)) return true
 
   // Drug class matching
   const drugClasses: Record<string, string[]> = {
@@ -194,43 +194,43 @@ function drugsMatch(drug1: string, drug2: string): boolean {
     ppi: ['omeprazole', 'lansoprazole', 'pantoprazole', 'esomeprazole'],
     ssri: ['sertraline', 'fluoxetine', 'paroxetine', 'escitalopram'],
     diuretik: ['furosemide', 'hydrochlorothiazide', 'spironolactone'],
-  };
+  }
 
   for (const [className, drugs] of Object.entries(drugClasses)) {
-    const drug1InClass = drugs.some((d) => norm1.includes(d)) || norm1.includes(className);
-    const drug2InClass = drugs.some((d) => norm2.includes(d)) || norm2.includes(className);
+    const drug1InClass = drugs.some(d => norm1.includes(d)) || norm1.includes(className)
+    const drug2InClass = drugs.some(d => norm2.includes(d)) || norm2.includes(className)
 
     if (drug1InClass && drug2InClass && norm1 !== norm2) {
-      return false; // Same class but different drugs
+      return false // Same class but different drugs
     }
 
     if ((drug1InClass && norm2 === className) || (drug2InClass && norm1 === className)) {
-      return true;
+      return true
     }
   }
 
-  return false;
+  return false
 }
 
 /**
  * Check drug interactions for a list of drugs
  */
 export function checkMockDDI(drugs: string[]): DrugInteraction[] {
-  const interactions: DrugInteraction[] = [];
+  const interactions: DrugInteraction[] = []
 
   // Check all pairs
   for (let i = 0; i < drugs.length; i++) {
     for (let j = i + 1; j < drugs.length; j++) {
-      const drug1 = drugs[i];
-      const drug2 = drugs[j];
+      const drug1 = drugs[i]
+      const drug2 = drugs[j]
 
       // Search in DDI database
       for (const entry of DDI_DATABASE) {
-        const [entryDrug1, entryDrug2] = entry.drugs;
+        const [entryDrug1, entryDrug2] = entry.drugs
 
         const match1 =
           (drugsMatch(drug1, entryDrug1) && drugsMatch(drug2, entryDrug2)) ||
-          (drugsMatch(drug1, entryDrug2) && drugsMatch(drug2, entryDrug1));
+          (drugsMatch(drug1, entryDrug2) && drugsMatch(drug2, entryDrug1))
 
         if (match1) {
           interactions.push({
@@ -240,8 +240,8 @@ export function checkMockDDI(drugs: string[]): DrugInteraction[] {
             description: entry.description,
             recommendation: entry.recommendation,
             source: 'Sentra DDI Database v1.0',
-          });
-          break; // Found interaction for this pair
+          })
+          break // Found interaction for this pair
         }
       }
     }
@@ -253,18 +253,16 @@ export function checkMockDDI(drugs: string[]): DrugInteraction[] {
     major: 1,
     moderate: 2,
     minor: 3,
-  };
+  }
 
-  return interactions.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+  return interactions.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
 }
 
 /**
  * Check if any interactions are blocking (contraindicated or major)
  */
 export function hasBlockingInteractions(interactions: DrugInteraction[]): boolean {
-  return interactions.some(
-    (i) => i.severity === 'contraindicated' || i.severity === 'major'
-  );
+  return interactions.some(i => i.severity === 'contraindicated' || i.severity === 'major')
 }
 
 /**
@@ -276,6 +274,6 @@ export function getSeverityLabel(severity: DDISeverity): string {
     major: 'MAYOR',
     moderate: 'MODERAT',
     minor: 'MINOR',
-  };
-  return labels[severity];
+  }
+  return labels[severity]
 }

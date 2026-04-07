@@ -8,7 +8,10 @@
 // Based on SENTRA-SPEC-001 v1.2.0 Section 4.3
 // Handles: message routing, state management, side panel site-lock, CDSS API routing
 
-import { registerBridgeExecutor, startBridgePoller } from '@/lib/api/bridge-poller';
+import { syncPatientToDashboard } from '@/lib/api/bridge-client';
+import { buildPatientSyncPayload } from '@/lib/api/patient-sync-payload';
+import { registerBridgeExecutor, startBridgePoller, stopBridgePoller } from '@/lib/api/bridge-poller';
+import { AUTH_STORE_KEYS } from '@/lib/api/auth-store';
 import { SentraAPI } from '@/lib/api/sentra-api';
 import { getCDSSEngineStatus, initCDSSEngine } from '@/lib/iskandar-diagnosis-engine';
 import { runGetSuggestionsFlow } from '@/lib/iskandar-diagnosis-engine/get-suggestions-flow';
@@ -22,8 +25,8 @@ import type {
 } from '@/types/api';
 import { createLogger } from '~/utils/logger';
 import {
-  MESSAGE_TIMEOUTS,
   classifyTabMessageError,
+  MESSAGE_TIMEOUTS,
   onMessage,
   parseAnamnesaData,
   parseDiagnosaData,
@@ -120,6 +123,8 @@ type ResolveTenagaMedisResponse = {
 };
 
 const TENAGA_MEDIS_CACHE_KEY = 'sentra:tenaga-medis-cache';
+const DIRECT_PATIENT_SYNC_CACHE_KEY = 'sentra:patient-sync:last-direct';
+const DIRECT_PATIENT_SYNC_WINDOW_MS = 2 * 60 * 1000;
 
 function normalizeTenagaMedisName(value: unknown): string {
   if (typeof value !== 'string') return '';
@@ -153,6 +158,40 @@ async function readTenagaMedisCache(): Promise<TenagaMedisSnapshot | null> {
     transferLog.warn('[Background] Failed to read tenaga medis cache', error);
     return null;
   }
+}
+
+type RecentPatientSyncSnapshot = {
+  rm: string;
+  syncedAt: string;
+};
+
+async function readRecentDirectPatientSync(): Promise<RecentPatientSyncSnapshot | null> {
+  try {
+    const raw = await browser.storage.local.get(DIRECT_PATIENT_SYNC_CACHE_KEY);
+    const cached = raw[DIRECT_PATIENT_SYNC_CACHE_KEY] as
+      | Partial<RecentPatientSyncSnapshot>
+      | undefined;
+    if (!cached?.rm || !cached?.syncedAt) return null;
+    return {
+      rm: String(cached.rm).trim(),
+      syncedAt: String(cached.syncedAt),
+    };
+  } catch (error) {
+    bgLog.debug('[Background] Failed to read recent direct patient sync cache', error);
+    return null;
+  }
+}
+
+function hasRecentDirectPatientSync(
+  snapshot: RecentPatientSyncSnapshot | null,
+  patientRm: string | undefined
+): boolean {
+  if (!snapshot || !patientRm) return false;
+  if (snapshot.rm !== patientRm.trim()) return false;
+
+  const syncedAt = Date.parse(snapshot.syncedAt);
+  if (Number.isNaN(syncedAt)) return false;
+  return Date.now() - syncedAt <= DIRECT_PATIENT_SYNC_WINDOW_MS;
 }
 
 async function writeTenagaMedisCache(snapshot: TenagaMedisSnapshot): Promise<void> {
@@ -615,8 +654,34 @@ async function tryInjectContentScripts(
   }
 }
 
+// Audio playback helper for icon click
+const OPENING_SOUND_URL = '/assets/sounds/opening.mp3';
+
+function playOpeningSound(): void {
+  try {
+    const audio = new Audio(OPENING_SOUND_URL);
+    audio.volume = 0.7;
+    audio.play().catch((err) => {
+      // Audio play failed (likely due to user interaction not yet triggered)
+      bgLog.debug('[Background] Audio play skipped:', err.message);
+    });
+  } catch (error) {
+    bgLog.debug('[Background] Audio creation failed:', error);
+  }
+}
+
 export default defineBackground(() => {
   bgLog.debug('[Background] Sentra Assist service worker initialized');
+
+  // ========================================
+  // Icon Click Sound Effect
+  // ========================================
+  browser.action?.onClicked?.addListener(() => {
+    playOpeningSound();
+  });
+
+  // Note: Sound is also played by login popup when it opens
+  // SidePanel doesn't have onOpened event in MV3, so we rely on the popup
 
   // ========================================
   // CDSS Engine Initialization
@@ -648,6 +713,44 @@ export default defineBackground(() => {
   startBridgePoller()
     .then(() => bgLog.debug('[Background] Bridge poller started'))
     .catch((err) => bgLog.error('[Background] Bridge poller failed to start:', err));
+
+  // ========================================
+  // Auth State Listener — auto-start/stop bridge on login/logout
+  // ========================================
+  browser.storage.onChanged.addListener((changes, area) => {
+    const sessionChanged =
+      (area === 'session' && AUTH_STORE_KEYS.session in changes) ||
+      (area === 'local' && AUTH_STORE_KEYS.persisted in changes);
+
+    if (!sessionChanged) return;
+
+    const key = area === 'session' ? AUTH_STORE_KEYS.session : AUTH_STORE_KEYS.persisted;
+    const newValue = changes[key]?.newValue as
+      | { tokens?: { accessToken?: string } }
+      | undefined;
+
+    if (newValue?.tokens?.accessToken) {
+      bgLog.debug('[Background] Auth session detected — starting bridge poller');
+      startBridgePoller().catch((err) =>
+        bgLog.error('[Background] Bridge poller restart failed:', err)
+      );
+    } else {
+      bgLog.debug('[Background] Auth session cleared — stopping bridge poller');
+      stopBridgePoller().catch((err) =>
+        bgLog.error('[Background] Bridge poller stop failed:', err)
+      );
+    }
+  });
+
+  // Handle AUTH_STATE_CHANGED message from login popup
+  browser.runtime.onMessage.addListener((message) => {
+    if (message?.type === 'AUTH_STATE_CHANGED') {
+      bgLog.debug('[Background] AUTH_STATE_CHANGED received — restarting bridge poller');
+      startBridgePoller().catch((err) =>
+        bgLog.error('[Background] Bridge poller restart failed:', err)
+      );
+    }
+  });
 
   // ========================================
   // Side Panel Setup - SIMPLIFIED FOR DEBUG
@@ -730,6 +833,9 @@ export default defineBackground(() => {
       } else {
         bgLog.warn('[Background] Rejected anamnesa scrape payload', { reasons: parsed.reasons });
       }
+
+      // Note: vital_signs and patient_demographics are passed through scrapeData.data
+      // and read directly in syncPatientToDashboard below (not stored in Encounter)
     } else if (scrapeData.pageType === 'diagnosa' && scrapeData.data) {
       const parsed = parseDiagnosaData(scrapeData.data);
       if (parsed.ok && parsed.value) {
@@ -758,6 +864,56 @@ export default defineBackground(() => {
 
     await updateEncounter(updated);
     bgLog.debug('[Background] Encounter updated from scrape');
+
+    // Auto-sync to Dashboard when anamnesa is scraped (contains vitals + keluhan)
+    if (scrapeData.pageType === 'anamnesa' && updated.anamnesa) {
+      const fullEncounter = await getEncounter();
+      if (fullEncounter) {
+        // Use freshly scraped data (from enhanced scraper) — vitals come from DOM, not Encounter
+        const rawData = scrapeData.data as Record<string, unknown>;
+        const scrapedVitals = rawData.vital_signs as Record<string, number | undefined> | undefined;
+        const scrapedDemo = rawData.patient_demographics as Record<string, unknown> | undefined;
+        const patientRm = (scrapedDemo?.no_rm as string) || fullEncounter.patient_id;
+        const recentDirectSync = await readRecentDirectPatientSync();
+
+        if (hasRecentDirectPatientSync(recentDirectSync, patientRm)) {
+          bgLog.debug('[Background] Skipping duplicate patient-sync after recent direct relay', {
+            patientRm,
+          });
+          return;
+        }
+
+        syncPatientToDashboard(
+          buildPatientSyncPayload({
+            patient: {
+              name: (scrapedDemo?.nama as string) || fullEncounter.patient_id || 'Unknown',
+              age: (scrapedDemo?.umur as number) || 0,
+              gender: ((scrapedDemo?.jenis_kelamin as string) === 'P' ? 'P' : 'L') as 'L' | 'P',
+              rm: patientRm,
+              noBpjs: (scrapedDemo?.no_bpjs as string) || undefined,
+              isPregnant: fullEncounter.anamnesa?.is_pregnant,
+            },
+            vitals: {
+              sbp: scrapedVitals?.tekanan_darah_sistolik,
+              dbp: scrapedVitals?.tekanan_darah_diastolik,
+              hr: scrapedVitals?.nadi,
+              rr: scrapedVitals?.respirasi,
+              temp: scrapedVitals?.suhu,
+              glucose: scrapedVitals?.gula_darah,
+            },
+            narrative: {
+              keluhan_utama: fullEncounter.anamnesa?.keluhan_utama || '',
+              keluhan_tambahan: fullEncounter.anamnesa?.keluhan_tambahan || '',
+            },
+            medicalHistory: fullEncounter.anamnesa?.riwayat_penyakit
+              ? [fullEncounter.anamnesa.riwayat_penyakit]
+              : undefined,
+          })
+        ).catch((err) => {
+          bgLog.error('[Background] Failed to sync patient to Dashboard:', err);
+        });
+      }
+    }
   });
 
   // Panel → Worker: Fill command
@@ -950,7 +1106,6 @@ export default defineBackground(() => {
             options: {
               ...payload.options,
               startFromStep,
-              onlyStep: startFromStep,
             },
           };
           transferLog.debug('[Background] transfer start context resolved', {
@@ -1355,6 +1510,7 @@ export default defineBackground(() => {
         tabId,
         {
           type: 'scanMedicalHistory',
+          timestamp: Date.now(),
         },
         MESSAGE_TIMEOUTS.scrape
       );
@@ -1638,7 +1794,7 @@ export default defineBackground(() => {
           bgLog.debug('[Background] Sending scanMedicalHistory to tab:', tabId);
           const result = await sendMessageToTabWithTimeout<ScanMedicalHistoryResponse>(
             tabId,
-            { type: 'scanMedicalHistory' },
+            { type: 'scanMedicalHistory', timestamp: Date.now() },
             MESSAGE_TIMEOUTS.scrape
           );
           bgLog.debug('[Background] scanMedicalHistory result:', result);

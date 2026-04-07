@@ -1,41 +1,41 @@
 // Designed and constructed by Claudesy.
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { fillFieldsMock, mapPayloadToFieldsMock } = vi.hoisted(() => ({
   fillFieldsMock: vi.fn(),
   mapPayloadToFieldsMock: vi.fn(),
-}));
+}))
 
 vi.mock('@/lib/filler/filler-core', () => ({
   fillFields: fillFieldsMock,
-}));
+}))
 
 vi.mock('@/lib/das', () => ({
   mapPayloadToFields: mapPayloadToFieldsMock,
-}));
+}))
 
-import { fillDiagnosaForm } from '@/lib/handlers/page-diagnosa';
+import { fillDiagnosaForm } from '@/lib/handlers/page-diagnosa'
 
 describe('fillDiagnosaForm fallback selector reliability', () => {
   beforeEach(() => {
-    document.body.innerHTML = '';
-    fillFieldsMock.mockReset();
-    mapPayloadToFieldsMock.mockReset();
-  });
+    document.body.innerHTML = ''
+    fillFieldsMock.mockReset()
+    mapPayloadToFieldsMock.mockReset()
+  })
 
   it('uses the selector that actually exists instead of hardcoding the first fallback selector', async () => {
     document.body.innerHTML = `
       <form>
         <input name="icd10" />
       </form>
-    `;
+    `
 
     mapPayloadToFieldsMock.mockResolvedValue({
       mappings: [],
       unmapped: ['icd_x'],
       fromCache: false,
       latencyMs: 3,
-    });
+    })
 
     fillFieldsMock.mockResolvedValue([
       {
@@ -44,7 +44,7 @@ describe('fillDiagnosaForm fallback selector reliability', () => {
         value: 'J18',
         method: 'direct',
       },
-    ]);
+    ])
 
     const result = await fillDiagnosaForm({
       icd_x: 'J18',
@@ -53,14 +53,14 @@ describe('fillDiagnosaForm fallback selector reliability', () => {
       kasus: 'BARU',
       prognosa: '',
       penyakit_kronis: [],
-    });
+    })
 
-    expect(fillFieldsMock).toHaveBeenCalledTimes(1);
-    const mappings = fillFieldsMock.mock.calls[0][0] as Array<{ selector: string }>;
-    const selectedToken = mappings[0]?.selector || '';
-    expect(selectedToken).toMatch(/^\[data-sentra-target=/);
-    const targetedElement = document.querySelector(selectedToken) as HTMLInputElement | null;
-    expect(targetedElement?.name).toBe('icd10');
-    expect(result.success.length).toBeGreaterThan(0);
-  });
-});
+    expect(fillFieldsMock).toHaveBeenCalledTimes(1)
+    const mappings = fillFieldsMock.mock.calls[0][0] as Array<{ selector: string }>
+    const selectedToken = mappings[0]?.selector || ''
+    expect(selectedToken).toMatch(/^\[data-sentra-target=/)
+    const targetedElement = document.querySelector(selectedToken) as HTMLInputElement | null
+    expect(targetedElement?.name).toBe('icd10')
+    expect(result.success.length).toBeGreaterThan(0)
+  })
+})

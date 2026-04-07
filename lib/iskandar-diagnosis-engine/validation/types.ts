@@ -11,8 +11,8 @@
  * @version 1.0.0
  */
 
-import type { AIDiagnosisSuggestion } from '../../api/deepseek-types';
-import type { RedFlag } from '../red-flags';
+import type { AIDiagnosisSuggestion } from '../../api/deepseek-types'
+import type { RedFlag } from '../red-flags'
 
 // =============================================================================
 // VALIDATION RESULT TYPES
@@ -23,25 +23,25 @@ import type { RedFlag } from '../red-flags';
  */
 export interface ValidationResult {
   /** Overall validation passed */
-  valid: boolean;
+  valid: boolean
 
   /** Highest layer passed (1-5) */
-  layer_passed: 1 | 2 | 3 | 4 | 5;
+  layer_passed: 1 | 2 | 3 | 4 | 5
 
   /** Filtered and validated suggestions */
-  filtered_suggestions: ValidatedSuggestion[];
+  filtered_suggestions: ValidatedSuggestion[]
 
   /** ICD-10 codes that could not be verified */
-  unverified_codes: string[];
+  unverified_codes: string[]
 
   /** Red flags from safety layer */
-  red_flags: RedFlag[];
+  red_flags: RedFlag[]
 
   /** Warning messages */
-  warnings: string[];
+  warnings: string[]
 
   /** Detailed layer results */
-  layer_results: LayerResult[];
+  layer_results: LayerResult[]
 }
 
 /**
@@ -49,16 +49,16 @@ export interface ValidationResult {
  */
 export interface ValidatedSuggestion extends AIDiagnosisSuggestion {
   /** Whether ICD-10 code was verified in RAG database */
-  rag_verified: boolean;
+  rag_verified: boolean
 
   /** Confidence adjustment applied */
-  confidence_adjusted: boolean;
+  confidence_adjusted: boolean
 
   /** Original confidence before adjustment */
-  original_confidence?: number;
+  original_confidence?: number
 
   /** Validation flags */
-  validation_flags: ValidationFlag[];
+  validation_flags: ValidationFlag[]
 }
 
 /**
@@ -66,13 +66,13 @@ export interface ValidatedSuggestion extends AIDiagnosisSuggestion {
  */
 export interface ValidationFlag {
   /** Flag type */
-  type: 'warning' | 'info' | 'error';
+  type: 'warning' | 'info' | 'error'
 
   /** Flag code */
-  code: string;
+  code: string
 
   /** Human-readable message */
-  message: string;
+  message: string
 }
 
 /**
@@ -80,19 +80,19 @@ export interface ValidationFlag {
  */
 export interface LayerResult {
   /** Layer number */
-  layer: 1 | 2 | 3 | 4 | 5;
+  layer: 1 | 2 | 3 | 4 | 5
 
   /** Layer name */
-  name: string;
+  name: string
 
   /** Whether layer passed */
-  passed: boolean;
+  passed: boolean
 
   /** Number of suggestions filtered/modified */
-  affected_count: number;
+  affected_count: number
 
   /** Details about what was done */
-  details: string[];
+  details: string[]
 }
 
 // =============================================================================
@@ -104,19 +104,19 @@ export interface LayerResult {
  */
 export interface ValidationContext {
   /** Patient age in years */
-  patient_age: number;
+  patient_age: number
 
   /** Patient gender */
-  patient_gender: 'L' | 'P';
+  patient_gender: 'L' | 'P'
 
   /** Pregnancy status */
-  is_pregnant: boolean;
+  is_pregnant: boolean
 
   /** Original chief complaint */
-  keluhan_utama: string;
+  keluhan_utama: string
 
   /** Red flags already detected */
-  existing_red_flags: RedFlag[];
+  existing_red_flags: RedFlag[]
 }
 
 // =============================================================================
@@ -127,37 +127,37 @@ export interface ValidationContext {
  * Layer 1: Syntax validation errors
  */
 export interface SyntaxError {
-  field: string;
-  expected: string;
-  actual: string;
+  field: string
+  expected: string
+  actual: string
 }
 
 /**
  * Layer 2: Schema validation result
  */
 export interface SchemaValidationResult {
-  code: string;
-  exists: boolean;
-  name_en?: string;
-  name_id?: string;
+  code: string
+  exists: boolean
+  name_en?: string
+  name_id?: string
 }
 
 /**
  * Layer 3: Clinical plausibility check
  */
 export interface ClinicalCheck {
-  code: string;
-  check_type: 'age' | 'gender' | 'pregnancy' | 'combination';
-  passed: boolean;
-  reason?: string;
+  code: string
+  check_type: 'age' | 'gender' | 'pregnancy' | 'combination'
+  passed: boolean
+  reason?: string
 }
 
 /**
  * Layer 5: Confidence adjustment
  */
 export interface ConfidenceAdjustment {
-  code: string;
-  original: number;
-  adjusted: number;
-  reason: string;
+  code: string
+  original: number
+  adjusted: number
+  reason: string
 }

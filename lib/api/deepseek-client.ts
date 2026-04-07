@@ -12,22 +12,22 @@
  * @version 1.0.0
  */
 
-import type { RAGSearchResult } from '../rag/types';
+import type { RAGSearchResult } from '../rag/types'
 import type {
+  AIDiagnosisSuggestion,
+  AnonymizedClinicalContext,
   DeepSeekConfig,
+  DeepSeekInferenceResult,
   DeepSeekRequest,
   DeepSeekResponse,
-  DeepSeekInferenceResult,
-  AnonymizedClinicalContext,
-  AIDiagnosisSuggestion,
-} from './deepseek-types';
+} from './deepseek-types'
 import {
   DEFAULT_DEEPSEEK_CONFIG,
   DeepSeekError,
-  isDeepSeekResponse,
   isDeepSeekAPIError,
-} from './deepseek-types';
-import { buildMessages, parseAIResponse } from './prompt-templates';
+  isDeepSeekResponse,
+} from './deepseek-types'
+import { buildMessages, parseAIResponse } from './prompt-templates'
 
 // =============================================================================
 // CONFIGURATION MANAGEMENT
@@ -36,17 +36,17 @@ import { buildMessages, parseAIResponse } from './prompt-templates';
 /**
  * Storage key for API configuration
  */
-const CONFIG_STORAGE_KEY = 'sentra:deepseek:config';
+const CONFIG_STORAGE_KEY = 'sentra:deepseek:config'
 
 /**
  * Get API configuration from storage
  */
 async function getStoredConfig(): Promise<Partial<DeepSeekConfig>> {
   try {
-    const result = await browser.storage.sync.get(CONFIG_STORAGE_KEY);
-    return result[CONFIG_STORAGE_KEY] || {};
+    const result = await browser.storage.sync.get(CONFIG_STORAGE_KEY)
+    return result[CONFIG_STORAGE_KEY] || {}
   } catch {
-    return {};
+    return {}
   }
 }
 
@@ -56,26 +56,26 @@ async function getStoredConfig(): Promise<Partial<DeepSeekConfig>> {
 export async function saveConfig(config: Partial<DeepSeekConfig>): Promise<void> {
   await browser.storage.sync.set({
     [CONFIG_STORAGE_KEY]: config,
-  });
+  })
 }
 
 /**
  * Get merged configuration (defaults + stored)
  */
 async function getConfig(): Promise<DeepSeekConfig> {
-  const stored = await getStoredConfig();
+  const stored = await getStoredConfig()
   return {
     ...DEFAULT_DEEPSEEK_CONFIG,
     ...stored,
-  };
+  }
 }
 
 /**
  * Check if API is configured (has API key)
  */
 export async function isAPIConfigured(): Promise<boolean> {
-  const config = await getConfig();
-  return !!config.apiKey && config.apiKey.length > 0;
+  const config = await getConfig()
+  return !!config.apiKey && config.apiKey.length > 0
 }
 
 // =============================================================================
@@ -90,17 +90,17 @@ async function fetchWithTimeout(
   options: RequestInit,
   timeout: number
 ): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   try {
     const response = await fetch(url, {
       ...options,
       signal: controller.signal,
-    });
-    return response;
+    })
+    return response
   } finally {
-    clearTimeout(timeoutId);
+    clearTimeout(timeoutId)
   }
 }
 
@@ -112,46 +112,47 @@ async function fetchWithRetry(
   options: RequestInit,
   config: DeepSeekConfig
 ): Promise<Response> {
-  let lastError: Error | null = null;
+  let lastError: Error | null = null
 
   for (let attempt = 0; attempt <= config.retryAttempts; attempt++) {
     try {
-      const response = await fetchWithTimeout(url, options, config.timeout);
+      const response = await fetchWithTimeout(url, options, config.timeout)
 
       // Don't retry on client errors (4xx) except rate limit
       if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-        return response;
+        return response
       }
 
       // Retry on server errors and rate limits
       if (response.status >= 500 || response.status === 429) {
         if (attempt < config.retryAttempts) {
-          const delay = config.retryDelay * Math.pow(2, attempt); // Exponential backoff
-          console.warn(`[DeepSeek] Request failed with ${response.status}, retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
+          const delay = config.retryDelay * 2 ** attempt // Exponential backoff
+          console.warn(
+            `[DeepSeek] Request failed with ${response.status}, retrying in ${delay}ms...`
+          )
+          await new Promise(resolve => setTimeout(resolve, delay))
+          continue
         }
       }
 
-      return response;
+      return response
     } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
+      lastError = error instanceof Error ? error : new Error(String(error))
 
       // Check if it's a timeout or network error (retryable)
       if (error instanceof Error && error.name === 'AbortError') {
-        lastError = new DeepSeekError('Request timeout', 'timeout', 'network_error');
+        lastError = new DeepSeekError('Request timeout', 'timeout', 'network_error')
       }
 
       if (attempt < config.retryAttempts) {
-        const delay = config.retryDelay * Math.pow(2, attempt);
-        console.warn(`[DeepSeek] Request error: ${lastError.message}, retrying in ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
+        const delay = config.retryDelay * 2 ** attempt
+        console.warn(`[DeepSeek] Request error: ${lastError.message}, retrying in ${delay}ms...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
       }
     }
   }
 
-  throw lastError || new Error('Request failed after retries');
+  throw lastError || new Error('Request failed after retries')
 }
 
 /**
@@ -161,7 +162,7 @@ async function callAPI(
   messages: Array<{ role: string; content: string }>,
   config: DeepSeekConfig
 ): Promise<DeepSeekResponse> {
-  const url = `${config.baseUrl}/chat/completions`;
+  const url = `${config.baseUrl}/chat/completions`
 
   const requestBody: DeepSeekRequest = {
     model: config.model,
@@ -169,7 +170,7 @@ async function callAPI(
     max_tokens: config.maxTokens,
     temperature: config.temperature,
     response_format: { type: 'json_object' },
-  };
+  }
 
   const response = await fetchWithRetry(
     url,
@@ -177,41 +178,32 @@ async function callAPI(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
+        Authorization: `Bearer ${config.apiKey}`,
       },
       body: JSON.stringify(requestBody),
     },
     config
-  );
+  )
 
-  const data = await response.json();
+  const data = await response.json()
 
   if (!response.ok) {
     if (isDeepSeekAPIError(data)) {
-      throw new DeepSeekError(
-        data.error.message,
-        data.error.code,
-        data.error.type,
-        response.status
-      );
+      throw new DeepSeekError(data.error.message, data.error.code, data.error.type, response.status)
     }
     throw new DeepSeekError(
       `API request failed: ${response.status}`,
       'api_error',
       'http_error',
       response.status
-    );
+    )
   }
 
   if (!isDeepSeekResponse(data)) {
-    throw new DeepSeekError(
-      'Invalid API response format',
-      'invalid_response',
-      'parse_error'
-    );
+    throw new DeepSeekError('Invalid API response format', 'invalid_response', 'parse_error')
   }
 
-  return data;
+  return data
 }
 
 // =============================================================================
@@ -225,33 +217,29 @@ export async function inferDiagnosis(
   context: AnonymizedClinicalContext,
   ragResults: RAGSearchResult[]
 ): Promise<DeepSeekInferenceResult> {
-  const startTime = Date.now();
-  const config = await getConfig();
+  const startTime = Date.now()
+  const config = await getConfig()
 
   // Check if API is configured
   if (!config.apiKey) {
-    throw new DeepSeekError(
-      'API key not configured',
-      'not_configured',
-      'config_error'
-    );
+    throw new DeepSeekError('API key not configured', 'not_configured', 'config_error')
   }
 
   // Build messages
-  const messages = buildMessages(context, ragResults);
+  const messages = buildMessages(context, ragResults)
 
   try {
     // Call API
-    const response = await callAPI(messages, config);
+    const response = await callAPI(messages, config)
 
     // Extract response text
-    const responseText = response.choices[0]?.message?.content || '';
+    const responseText = response.choices[0]?.message?.content || ''
 
     // Parse response
-    const parsed = parseAIResponse(responseText);
+    const parsed = parseAIResponse(responseText)
 
     if (!parsed.success || !parsed.data) {
-      console.error('[DeepSeek] Failed to parse response:', parsed.error);
+      console.error('[DeepSeek] Failed to parse response:', parsed.error)
       return {
         suggestions: [],
         raw_response: responseText,
@@ -264,7 +252,7 @@ export async function inferDiagnosis(
         model_version: config.model,
         used_fallback: false,
         data_quality_note: `Parse error: ${parsed.error}`,
-      };
+      }
     }
 
     // Map to AIDiagnosisSuggestion format
@@ -276,7 +264,7 @@ export async function inferDiagnosis(
       reasoning: s.reasoning,
       red_flags: s.red_flags,
       recommended_actions: s.recommended_actions,
-    }));
+    }))
 
     return {
       suggestions,
@@ -290,12 +278,12 @@ export async function inferDiagnosis(
       model_version: config.model,
       used_fallback: false,
       data_quality_note: parsed.data.data_quality_note,
-    };
+    }
   } catch (error) {
-    console.error('[DeepSeek] Inference error:', error);
+    console.error('[DeepSeek] Inference error:', error)
 
     // Rethrow to let caller handle fallback
-    throw error;
+    throw error
   }
 }
 
@@ -311,20 +299,18 @@ export function localFallbackInference(
   _context: AnonymizedClinicalContext,
   ragResults: RAGSearchResult[]
 ): DeepSeekInferenceResult {
-  const startTime = Date.now();
+  const startTime = Date.now()
 
   // Convert RAG results to suggestions
-  const suggestions: AIDiagnosisSuggestion[] = ragResults
-    .slice(0, 5)
-    .map((result, index) => ({
-      rank: index + 1,
-      diagnosis_name: result.entry.name_id,
-      icd10_code: result.entry.code,
-      confidence: result.relevance_score * 0.7, // Reduce confidence for local fallback
-      reasoning: `Berdasarkan keyword matching: ${result.matched_keywords?.join(', ') || 'similarity'}`,
-      red_flags: [],
-      recommended_actions: ['Verifikasi diagnosis dengan pemeriksaan klinis'],
-    }));
+  const suggestions: AIDiagnosisSuggestion[] = ragResults.slice(0, 5).map((result, index) => ({
+    rank: index + 1,
+    diagnosis_name: result.entry.name_id,
+    icd10_code: result.entry.code,
+    confidence: result.relevance_score * 0.7, // Reduce confidence for local fallback
+    reasoning: `Berdasarkan keyword matching: ${result.matched_keywords?.join(', ') || 'similarity'}`,
+    red_flags: [],
+    recommended_actions: ['Verifikasi diagnosis dengan pemeriksaan klinis'],
+  }))
 
   return {
     suggestions,
@@ -338,7 +324,7 @@ export function localFallbackInference(
     model_version: 'local-fallback',
     used_fallback: true,
     data_quality_note: 'Menggunakan fallback lokal karena API tidak tersedia',
-  };
+  }
 }
 
 // =============================================================================
@@ -349,20 +335,20 @@ export function localFallbackInference(
  * Check if DeepSeek API is reachable
  */
 export async function checkAPIHealth(): Promise<{
-  healthy: boolean;
-  latency_ms?: number;
-  error?: string;
+  healthy: boolean
+  latency_ms?: number
+  error?: string
 }> {
-  const startTime = Date.now();
+  const startTime = Date.now()
 
   try {
-    const config = await getConfig();
+    const config = await getConfig()
 
     if (!config.apiKey) {
       return {
         healthy: false,
         error: 'API key not configured',
-      };
+      }
     }
 
     // Simple health check with minimal request
@@ -371,23 +357,23 @@ export async function checkAPIHealth(): Promise<{
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${config.apiKey}`,
+          Authorization: `Bearer ${config.apiKey}`,
         },
       },
       5000 // 5 second timeout for health check
-    );
+    )
 
     return {
       healthy: response.ok,
       latency_ms: Date.now() - startTime,
       error: response.ok ? undefined : `HTTP ${response.status}`,
-    };
+    }
   } catch (error) {
     return {
       healthy: false,
       latency_ms: Date.now() - startTime,
       error: error instanceof Error ? error.message : 'Unknown error',
-    };
+    }
   }
 }
 
@@ -395,10 +381,10 @@ export async function checkAPIHealth(): Promise<{
 // EXPORTS
 // =============================================================================
 
-export { DeepSeekError } from './deepseek-types';
 export type {
-  DeepSeekConfig,
-  AnonymizedClinicalContext,
   AIDiagnosisSuggestion,
+  AnonymizedClinicalContext,
+  DeepSeekConfig,
   DeepSeekInferenceResult,
-} from './deepseek-types';
+} from './deepseek-types'
+export { DeepSeekError } from './deepseek-types'

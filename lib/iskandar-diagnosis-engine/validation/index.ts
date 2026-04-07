@@ -19,16 +19,11 @@
  * Layer 5: Confidence - Threshold filtering and adjustment
  */
 
-import type { AIDiagnosisSuggestion } from '../../api/deepseek-types';
-import type { RedFlag } from '../red-flags';
-import type {
-  ValidationResult,
-  ValidationContext,
-  ValidatedSuggestion,
-  LayerResult,
-} from './types';
-import type { ICD10Entry } from '../../rag/types';
-import { icd10DB } from '../../rag/icd10-db';
+import type { AIDiagnosisSuggestion } from '../../api/deepseek-types'
+import { icd10DB } from '../../rag/icd10-db'
+import type { ICD10Entry } from '../../rag/types'
+import type { RedFlag } from '../red-flags'
+import type { LayerResult, ValidatedSuggestion, ValidationContext, ValidationResult } from './types'
 
 // =============================================================================
 // LAYER 1: SYNTAX VALIDATION
@@ -38,48 +33,48 @@ import { icd10DB } from '../../rag/icd10-db';
  * Validate JSON structure and required fields
  */
 function validateSyntax(suggestions: unknown[]): {
-  passed: boolean;
-  valid: AIDiagnosisSuggestion[];
-  errors: string[];
+  passed: boolean
+  valid: AIDiagnosisSuggestion[]
+  errors: string[]
 } {
-  const valid: AIDiagnosisSuggestion[] = [];
-  const errors: string[] = [];
+  const valid: AIDiagnosisSuggestion[] = []
+  const errors: string[] = []
 
   if (!Array.isArray(suggestions)) {
-    return { passed: false, valid: [], errors: ['Input is not an array'] };
+    return { passed: false, valid: [], errors: ['Input is not an array'] }
   }
 
   for (let i = 0; i < suggestions.length; i++) {
-    const s = suggestions[i] as Record<string, unknown>;
+    const s = suggestions[i] as Record<string, unknown>
 
     // Check required fields
     if (!s || typeof s !== 'object') {
-      errors.push(`Suggestion ${i}: not an object`);
-      continue;
+      errors.push(`Suggestion ${i}: not an object`)
+      continue
     }
 
-    const requiredFields = ['diagnosis_name', 'icd10_code', 'confidence'];
-    const missingFields = requiredFields.filter(f => !(f in s));
+    const requiredFields = ['diagnosis_name', 'icd10_code', 'confidence']
+    const missingFields = requiredFields.filter(f => !(f in s))
 
     if (missingFields.length > 0) {
-      errors.push(`Suggestion ${i}: missing fields: ${missingFields.join(', ')}`);
-      continue;
+      errors.push(`Suggestion ${i}: missing fields: ${missingFields.join(', ')}`)
+      continue
     }
 
     // Validate types
     if (typeof s.diagnosis_name !== 'string' || s.diagnosis_name.length === 0) {
-      errors.push(`Suggestion ${i}: invalid diagnosis_name`);
-      continue;
+      errors.push(`Suggestion ${i}: invalid diagnosis_name`)
+      continue
     }
 
     if (typeof s.icd10_code !== 'string' || s.icd10_code.length === 0) {
-      errors.push(`Suggestion ${i}: invalid icd10_code`);
-      continue;
+      errors.push(`Suggestion ${i}: invalid icd10_code`)
+      continue
     }
 
     if (typeof s.confidence !== 'number' || s.confidence < 0 || s.confidence > 1) {
-      errors.push(`Suggestion ${i}: invalid confidence (must be 0-1)`);
-      continue;
+      errors.push(`Suggestion ${i}: invalid confidence (must be 0-1)`)
+      continue
     }
 
     // Normalize to AIDiagnosisSuggestion
@@ -91,14 +86,14 @@ function validateSyntax(suggestions: unknown[]): {
       reasoning: (s.reasoning as string) || '',
       red_flags: Array.isArray(s.red_flags) ? s.red_flags : [],
       recommended_actions: Array.isArray(s.recommended_actions) ? s.recommended_actions : [],
-    });
+    })
   }
 
   return {
     passed: valid.length > 0,
     valid,
     errors,
-  };
+  }
 }
 
 // =============================================================================
@@ -109,11 +104,11 @@ function validateSyntax(suggestions: unknown[]): {
  * Schema validation result with ICD10 entries
  */
 interface SchemaValidationResult {
-  passed: boolean;
-  verified: Map<string, boolean>;
-  unverified: string[];
+  passed: boolean
+  verified: Map<string, boolean>
+  unverified: string[]
   /** ICD10 entries from RAG database for enrichment */
-  entries: Map<string, ICD10Entry>;
+  entries: Map<string, ICD10Entry>
 }
 
 /**
@@ -123,22 +118,22 @@ interface SchemaValidationResult {
 async function validateSchema(
   suggestions: AIDiagnosisSuggestion[]
 ): Promise<SchemaValidationResult> {
-  const verified = new Map<string, boolean>();
-  const unverified: string[] = [];
-  const entries = new Map<string, ICD10Entry>();
+  const verified = new Map<string, boolean>()
+  const unverified: string[] = []
+  const entries = new Map<string, ICD10Entry>()
 
   for (const suggestion of suggestions) {
-    const code = suggestion.icd10_code;
+    const code = suggestion.icd10_code
 
     // Fetch full entry from RAG database
-    const entry = await icd10DB.getByCode(code);
+    const entry = await icd10DB.getByCode(code)
 
     if (entry) {
-      verified.set(code, true);
-      entries.set(code, entry);
+      verified.set(code, true)
+      entries.set(code, entry)
     } else {
-      verified.set(code, false);
-      unverified.push(code);
+      verified.set(code, false)
+      unverified.push(code)
     }
   }
 
@@ -147,7 +142,7 @@ async function validateSchema(
     verified,
     unverified,
     entries,
-  };
+  }
 }
 
 // =============================================================================
@@ -161,26 +156,26 @@ function validateClinical(
   suggestions: AIDiagnosisSuggestion[],
   context: ValidationContext
 ): {
-  passed: boolean;
-  filtered: AIDiagnosisSuggestion[];
-  removed: Array<{ code: string; reason: string }>;
+  passed: boolean
+  filtered: AIDiagnosisSuggestion[]
+  removed: Array<{ code: string; reason: string }>
 } {
-  const filtered: AIDiagnosisSuggestion[] = [];
-  const removed: Array<{ code: string; reason: string }> = [];
+  const filtered: AIDiagnosisSuggestion[] = []
+  const removed: Array<{ code: string; reason: string }> = []
 
   for (const suggestion of suggestions) {
-    const code = suggestion.icd10_code;
+    const code = suggestion.icd10_code
 
     // Check pregnancy codes (O00-O99) for male patients
     if (context.patient_gender === 'L' && code.startsWith('O')) {
-      removed.push({ code, reason: 'Pregnancy code for male patient' });
-      continue;
+      removed.push({ code, reason: 'Pregnancy code for male patient' })
+      continue
     }
 
     // Check neonatal codes (P00-P96) for non-infants
     if (code.startsWith('P') && context.patient_age > 1) {
-      removed.push({ code, reason: 'Neonatal code for non-infant' });
-      continue;
+      removed.push({ code, reason: 'Neonatal code for non-infant' })
+      continue
     }
 
     // Check pediatric-specific codes for adults
@@ -197,17 +192,17 @@ function validateClinical(
       suggestion.red_flags = [
         ...(suggestion.red_flags || []),
         'Kode obstetri untuk pasien tidak hamil',
-      ];
+      ]
     }
 
-    filtered.push(suggestion);
+    filtered.push(suggestion)
   }
 
   return {
     passed: filtered.length > 0,
     filtered,
     removed,
-  };
+  }
 }
 
 // =============================================================================
@@ -226,7 +221,7 @@ function integrateSafety(
   icd10Entries: Map<string, ICD10Entry>
 ): AIDiagnosisSuggestion[] {
   // Add red flag conditions to suggestions if not already present
-  const existingCodes = new Set(suggestions.map(s => s.icd10_code));
+  const existingCodes = new Set(suggestions.map(s => s.icd10_code))
 
   // 1. Add hardcoded red flag diagnoses (sepsis, ACS, etc.)
   for (const flag of redFlags) {
@@ -240,24 +235,24 @@ function integrateSafety(
           reasoning: `RED FLAG: ${flag.criteria_met.join(', ')}`,
           red_flags: [flag.action],
           recommended_actions: [flag.action],
-        });
-        existingCodes.add(code);
+        })
+        existingCodes.add(code)
       }
     }
   }
 
   // 2. Enrich suggestions with disease-specific red flags from penyakit.json
   for (const suggestion of suggestions) {
-    const entry = icd10Entries.get(suggestion.icd10_code);
+    const entry = icd10Entries.get(suggestion.icd10_code)
 
     if (entry) {
       // Add disease-specific red flags from 144 Penyakit Puskesmas
       if (entry.red_flags && entry.red_flags.length > 0) {
-        const existingFlags = new Set(suggestion.red_flags || []);
+        const existingFlags = new Set(suggestion.red_flags || [])
         for (const rf of entry.red_flags) {
           if (!existingFlags.has(rf)) {
-            suggestion.red_flags = [...(suggestion.red_flags || []), rf];
-            existingFlags.add(rf);
+            suggestion.red_flags = [...(suggestion.red_flags || []), rf]
+            existingFlags.add(rf)
           }
         }
       }
@@ -267,29 +262,29 @@ function integrateSafety(
         const terapiSummary = entry.terapi
           .slice(0, 3) // Limit to top 3 medications
           .map(t => `${t.obat} ${t.dosis} ${t.frek}`)
-          .join('; ');
+          .join('; ')
 
         if (terapiSummary && !suggestion.recommended_actions.some(a => a.includes(terapiSummary))) {
-          suggestion.recommended_actions.push(`Terapi PPK: ${terapiSummary}`);
+          suggestion.recommended_actions.push(`Terapi PPK: ${terapiSummary}`)
         }
       }
 
       // Add referral criteria if available
       if (entry.kriteria_rujukan && entry.kriteria_rujukan.length > 0) {
         if (!suggestion.recommended_actions) {
-          suggestion.recommended_actions = [];
+          suggestion.recommended_actions = []
         }
-        const rujukanExists = suggestion.recommended_actions.some(a =>
-          a.toLowerCase().includes('rujuk') || a.toLowerCase().includes('referral')
-        );
+        const rujukanExists = suggestion.recommended_actions.some(
+          a => a.toLowerCase().includes('rujuk') || a.toLowerCase().includes('referral')
+        )
         if (!rujukanExists) {
-          suggestion.recommended_actions.push(`Kriteria Rujukan: ${entry.kriteria_rujukan}`);
+          suggestion.recommended_actions.push(`Kriteria Rujukan: ${entry.kriteria_rujukan}`)
         }
       }
     }
   }
 
-  return suggestions;
+  return suggestions
 }
 
 // =============================================================================
@@ -299,26 +294,24 @@ function integrateSafety(
 /**
  * Filter by confidence threshold and adjust overconfident suggestions
  */
-function filterConfidence(
-  suggestions: AIDiagnosisSuggestion[]
-): {
-  filtered: ValidatedSuggestion[];
-  adjustments: Array<{ code: string; from: number; to: number; reason: string }>;
+function filterConfidence(suggestions: AIDiagnosisSuggestion[]): {
+  filtered: ValidatedSuggestion[]
+  adjustments: Array<{ code: string; from: number; to: number; reason: string }>
 } {
   // SPRINT 1 P0-1 FIX: Validation is sanity check only (removes obvious junk)
   // Real filtering happens in diagnosis-algorithm.ts using adjustedConfidence
-  const MIN_CONFIDENCE = 0.15;  // Sanity threshold (keep low to allow composite boosting)
-  const CONSIDER_THRESHOLD = 0.60;  // Tier marker for UI (informational)
-  const MAX_CONFIDENCE = 0.95;
-  const OVERCONFIDENCE_THRESHOLD = 0.95;
+  const MIN_CONFIDENCE = 0.15 // Sanity threshold (keep low to allow composite boosting)
+  const CONSIDER_THRESHOLD = 0.6 // Tier marker for UI (informational)
+  const MAX_CONFIDENCE = 0.95
+  const OVERCONFIDENCE_THRESHOLD = 0.95
 
-  const filtered: ValidatedSuggestion[] = [];
-  const adjustments: Array<{ code: string; from: number; to: number; reason: string }> = [];
+  const filtered: ValidatedSuggestion[] = []
+  const adjustments: Array<{ code: string; from: number; to: number; reason: string }> = []
 
   for (const suggestion of suggestions) {
     // Skip only obvious junk (15% is garbage threshold)
     if (suggestion.confidence < MIN_CONFIDENCE) {
-      continue;
+      continue
     }
 
     const validated: ValidatedSuggestion = {
@@ -326,25 +319,25 @@ function filterConfidence(
       rag_verified: false, // Will be set by schema layer
       confidence_adjusted: false,
       validation_flags: [],
-    };
+    }
 
     // Warn and cap overconfident suggestions
     if (suggestion.confidence > OVERCONFIDENCE_THRESHOLD) {
-      validated.original_confidence = suggestion.confidence;
-      validated.confidence = MAX_CONFIDENCE;
-      validated.confidence_adjusted = true;
+      validated.original_confidence = suggestion.confidence
+      validated.confidence = MAX_CONFIDENCE
+      validated.confidence_adjusted = true
       validated.validation_flags.push({
         type: 'warning',
         code: 'OVERCONFIDENCE',
         message: `Confidence diturunkan dari ${(suggestion.confidence * 100).toFixed(0)}% ke ${(MAX_CONFIDENCE * 100).toFixed(0)}%`,
-      });
+      })
 
       adjustments.push({
         code: suggestion.icd10_code,
         from: suggestion.confidence,
         to: MAX_CONFIDENCE,
         reason: 'Overconfidence warning',
-      });
+      })
     }
 
     // SPRINT 1 P0-1: Mark confidence tier (Primary vs Secondary)
@@ -354,14 +347,14 @@ function filterConfidence(
         type: 'info',
         code: 'CONFIDENCE_TIER_PRIMARY',
         message: 'Kepercayaan tinggi - rekomendasi utama',
-      });
+      })
     } else {
       // Secondary tier: Moderate confidence (40-60%)
       validated.validation_flags.push({
         type: 'info',
         code: 'CONFIDENCE_TIER_SECONDARY',
         message: '⚠️ Pertimbangkan juga (kepercayaan sedang)',
-      });
+      })
     }
 
     // Check for empty reasoning
@@ -370,19 +363,19 @@ function filterConfidence(
         type: 'warning',
         code: 'INCOMPLETE_REASONING',
         message: 'Reasoning tidak lengkap',
-      });
+      })
     }
 
-    filtered.push(validated);
+    filtered.push(validated)
   }
 
   // Re-rank by confidence
-  filtered.sort((a, b) => b.confidence - a.confidence);
+  filtered.sort((a, b) => b.confidence - a.confidence)
   filtered.forEach((s, i) => {
-    s.rank = i + 1;
-  });
+    s.rank = i + 1
+  })
 
-  return { filtered, adjustments };
+  return { filtered, adjustments }
 }
 
 // =============================================================================
@@ -396,19 +389,19 @@ export async function runValidationPipeline(
   rawSuggestions: AIDiagnosisSuggestion[],
   context: ValidationContext
 ): Promise<ValidationResult> {
-  const layerResults: LayerResult[] = [];
-  const warnings: string[] = [];
-  let currentSuggestions = rawSuggestions;
+  const layerResults: LayerResult[] = []
+  const warnings: string[] = []
+  let currentSuggestions = rawSuggestions
 
   // Layer 1: Syntax
-  const syntaxResult = validateSyntax(currentSuggestions as unknown[]);
+  const syntaxResult = validateSyntax(currentSuggestions as unknown[])
   layerResults.push({
     layer: 1,
     name: 'Syntax Validation',
     passed: syntaxResult.passed,
     affected_count: rawSuggestions.length - syntaxResult.valid.length,
     details: syntaxResult.errors,
-  });
+  })
 
   if (!syntaxResult.passed) {
     return {
@@ -419,53 +412,55 @@ export async function runValidationPipeline(
       red_flags: context.existing_red_flags,
       warnings: syntaxResult.errors,
       layer_results: layerResults,
-    };
+    }
   }
 
-  currentSuggestions = syntaxResult.valid;
+  currentSuggestions = syntaxResult.valid
 
   // Layer 2: Schema (ICD-10 verification)
-  const schemaResult = await validateSchema(currentSuggestions);
+  const schemaResult = await validateSchema(currentSuggestions)
   layerResults.push({
     layer: 2,
     name: 'ICD-10 Schema Validation',
     passed: schemaResult.passed,
     affected_count: schemaResult.unverified.length,
     details: schemaResult.unverified.map(c => `Unverified: ${c}`),
-  });
+  })
 
   if (schemaResult.unverified.length > 0) {
-    warnings.push(`${schemaResult.unverified.length} kode ICD-10 tidak terverifikasi dalam database`);
+    warnings.push(
+      `${schemaResult.unverified.length} kode ICD-10 tidak terverifikasi dalam database`
+    )
   }
 
   // Layer 3: Clinical plausibility
-  const clinicalResult = validateClinical(currentSuggestions, context);
+  const clinicalResult = validateClinical(currentSuggestions, context)
   layerResults.push({
     layer: 3,
     name: 'Clinical Plausibility',
     passed: clinicalResult.passed,
     affected_count: clinicalResult.removed.length,
     details: clinicalResult.removed.map(r => `${r.code}: ${r.reason}`),
-  });
+  })
 
   if (!clinicalResult.passed) {
-    warnings.push('Semua saran diagnosis tidak sesuai dengan profil pasien');
+    warnings.push('Semua saran diagnosis tidak sesuai dengan profil pasien')
   }
 
-  currentSuggestions = clinicalResult.filtered;
+  currentSuggestions = clinicalResult.filtered
 
   // Layer 4: Safety integration (hardcoded + disease-specific red flags)
   const safetyResult = integrateSafety(
     currentSuggestions,
     context.existing_red_flags,
     schemaResult.entries
-  );
+  )
 
   // Count disease-specific red flags enriched
-  let diseaseRedFlagCount = 0;
+  let diseaseRedFlagCount = 0
   for (const [, entry] of schemaResult.entries) {
     if (entry.red_flags && entry.red_flags.length > 0) {
-      diseaseRedFlagCount += entry.red_flags.length;
+      diseaseRedFlagCount += entry.red_flags.length
     }
   }
 
@@ -476,14 +471,16 @@ export async function runValidationPipeline(
     affected_count: context.existing_red_flags.length + diseaseRedFlagCount,
     details: [
       ...context.existing_red_flags.map(f => `Emergency red flag: ${f.condition}`),
-      ...(diseaseRedFlagCount > 0 ? [`${diseaseRedFlagCount} disease-specific red flags dari PPK`] : []),
+      ...(diseaseRedFlagCount > 0
+        ? [`${diseaseRedFlagCount} disease-specific red flags dari PPK`]
+        : []),
     ],
-  });
+  })
 
-  currentSuggestions = safetyResult;
+  currentSuggestions = safetyResult
 
   // Layer 5: Confidence filtering
-  const confidenceResult = filterConfidence(currentSuggestions);
+  const confidenceResult = filterConfidence(currentSuggestions)
   layerResults.push({
     layer: 5,
     name: 'Confidence Filtering',
@@ -492,18 +489,18 @@ export async function runValidationPipeline(
     details: confidenceResult.adjustments.map(
       a => `${a.code}: ${(a.from * 100).toFixed(0)}% → ${(a.to * 100).toFixed(0)}%`
     ),
-  });
+  })
 
   // Mark RAG verification status
   for (const suggestion of confidenceResult.filtered) {
-    suggestion.rag_verified = schemaResult.verified.get(suggestion.icd10_code) || false;
+    suggestion.rag_verified = schemaResult.verified.get(suggestion.icd10_code) || false
 
     if (!suggestion.rag_verified) {
       suggestion.validation_flags.push({
         type: 'warning',
         code: 'UNVERIFIED_CODE',
         message: 'Kode ICD-10 tidak terverifikasi dalam database lokal',
-      });
+      })
     }
   }
 
@@ -515,7 +512,7 @@ export async function runValidationPipeline(
     red_flags: context.existing_red_flags,
     warnings,
     layer_results: layerResults,
-  };
+  }
 }
 
 // =============================================================================
@@ -523,9 +520,9 @@ export async function runValidationPipeline(
 // =============================================================================
 
 export type {
-  ValidationResult,
-  ValidationContext,
-  ValidatedSuggestion,
-  ValidationFlag,
   LayerResult,
-} from './types';
+  ValidatedSuggestion,
+  ValidationContext,
+  ValidationFlag,
+  ValidationResult,
+} from './types'

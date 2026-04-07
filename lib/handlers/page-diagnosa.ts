@@ -22,8 +22,8 @@
  * 5. Prognosa (optional textarea)
  */
 
-import { fillFields, type FieldMapping, type FillResult } from '@/lib/filler/filler-core';
-import type { DiagnosaFillPayload } from '@/utils/types';
+import { type FieldMapping, type FillResult, fillFields } from '@/lib/filler/filler-core'
+import type { DiagnosaFillPayload } from '@/utils/types'
 
 // ============================================================================
 // DIAGNOSA PAYLOAD TO DAS MAPPING
@@ -34,35 +34,35 @@ import type { DiagnosaFillPayload } from '@/utils/types';
  * DAS expects a flat Record<string, unknown>
  */
 function buildDASPayload(payload: DiagnosaFillPayload): Record<string, unknown> {
-  const dasPayload: Record<string, unknown> = {};
+  const dasPayload: Record<string, unknown> = {}
 
   if (payload.icd_x) {
-    dasPayload['icd_x'] = payload.icd_x;
-    dasPayload['icd10'] = payload.icd_x; // Alternative key
-    dasPayload['kode_diagnosa'] = payload.icd_x; // Alternative key
+    dasPayload['icd_x'] = payload.icd_x
+    dasPayload['icd10'] = payload.icd_x // Alternative key
+    dasPayload['kode_diagnosa'] = payload.icd_x // Alternative key
   }
 
   if (payload.nama) {
-    dasPayload['nama_diagnosa'] = payload.nama;
-    dasPayload['diagnosis_name'] = payload.nama; // Alternative key
+    dasPayload['nama_diagnosa'] = payload.nama
+    dasPayload['diagnosis_name'] = payload.nama // Alternative key
   }
 
   if (payload.jenis) {
-    dasPayload['jenis_diagnosa'] = payload.jenis;
-    dasPayload['jenis'] = payload.jenis;
+    dasPayload['jenis_diagnosa'] = payload.jenis
+    dasPayload['jenis'] = payload.jenis
   }
 
   if (payload.kasus) {
-    dasPayload['kasus_diagnosa'] = payload.kasus;
-    dasPayload['kasus'] = payload.kasus;
+    dasPayload['kasus_diagnosa'] = payload.kasus
+    dasPayload['kasus'] = payload.kasus
   }
 
   if (payload.prognosa) {
-    dasPayload['prognosa'] = payload.prognosa;
-    dasPayload['prognosis'] = payload.prognosa; // Alternative key
+    dasPayload['prognosa'] = payload.prognosa
+    dasPayload['prognosis'] = payload.prognosa // Alternative key
   }
 
-  return dasPayload;
+  return dasPayload
 }
 
 // ============================================================================
@@ -75,7 +75,7 @@ function buildDASPayload(payload: DiagnosaFillPayload): Record<string, unknown> 
 const JENIS_VALUE_MAP: Record<string, string[]> = {
   PRIMER: ['1', 'PRIMER', 'primer', 'P'],
   SEKUNDER: ['2', 'SEKUNDER', 'sekunder', 'S'],
-};
+}
 
 /**
  * Map BARU/LAMA to ePuskesmas dropdown values
@@ -83,7 +83,7 @@ const JENIS_VALUE_MAP: Record<string, string[]> = {
 const KASUS_VALUE_MAP: Record<string, string[]> = {
   BARU: ['1', 'BARU', 'baru', 'B'],
   LAMA: ['2', 'LAMA', 'lama', 'L'],
-};
+}
 
 /**
  * Map prognosis text to ePuskesmas dropdown values
@@ -95,78 +95,76 @@ const PROGNOSA_EPUSKESMAS_MAP: Record<string, string> = {
   'Malam (Buruk/Jelek)': '3',
   'Dubia Ad Sanam/Bonam (Tidak tentu/Ragu-ragu, Cenderung Sembuh/Baik)': '4',
   'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)': '5',
-};
+}
 
 /**
  * Try to find matching select option value
  */
 function findSelectValue(element: HTMLSelectElement, possibleValues: string[]): string | null {
   for (const opt of Array.from(element.options)) {
-    const optValue = opt.value.toUpperCase();
-    const optText = opt.text.toUpperCase();
+    const optValue = opt.value.toUpperCase()
+    const optText = opt.text.toUpperCase()
 
     for (const val of possibleValues) {
       if (optValue === val.toUpperCase() || optText.includes(val.toUpperCase())) {
-        return opt.value;
+        return opt.value
       }
     }
   }
-  return possibleValues[0]; // Default to first value
+  return possibleValues[0] // Default to first value
 }
 
 function getNearbyText(element: Element | null): string {
-  if (!element) return '';
+  if (!element) return ''
   const scope =
-    element.closest('label, .form-group, .panel, .box, .row, tr, td, div') || element.parentElement;
-  return (scope?.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    element.closest('label, .form-group, .panel, .box, .row, tr, td, div') || element.parentElement
+  return (scope?.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
 function getCheckboxLabelText(checkbox: HTMLInputElement): string {
-  const parts: string[] = [];
+  const parts: string[] = []
 
   if (checkbox.id) {
     try {
-      const linkedLabel = document.querySelector(
-        `label[for="${checkbox.id.replace(/"/g, '\\"')}"]`,
-      );
+      const linkedLabel = document.querySelector(`label[for="${checkbox.id.replace(/"/g, '\\"')}"]`)
       if (linkedLabel?.textContent) {
-        parts.push(linkedLabel.textContent);
+        parts.push(linkedLabel.textContent)
       }
     } catch {
       // ignore malformed selector edge cases
     }
   }
 
-  const wrappingLabel = checkbox.closest('label');
+  const wrappingLabel = checkbox.closest('label')
   if (wrappingLabel?.textContent) {
-    parts.push(wrappingLabel.textContent);
+    parts.push(wrappingLabel.textContent)
   }
 
-  const next = checkbox.nextElementSibling;
+  const next = checkbox.nextElementSibling
   if (next?.textContent) {
-    parts.push(next.textContent);
+    parts.push(next.textContent)
   }
 
-  const parent = checkbox.parentElement;
+  const parent = checkbox.parentElement
   if (parent?.textContent) {
-    parts.push(parent.textContent);
+    parts.push(parent.textContent)
   }
 
-  const cell = checkbox.closest('td, li, tr, div');
+  const cell = checkbox.closest('td, li, tr, div')
   if (cell?.textContent) {
-    parts.push(cell.textContent);
+    parts.push(cell.textContent)
   }
 
-  return parts.join(' ').toLowerCase().replace(/\s+/g, ' ').trim();
+  return parts.join(' ').toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
 function isScreeningContext(element: Element | null): boolean {
-  const text = getNearbyText(element);
+  const text = getNearbyText(element)
   return (
     text.includes('screening') ||
     text.includes('silhakan pilih jenis screening') ||
     text.includes('silahkan pilih jenis screening')
-  );
+  )
 }
 
 function findPrognosaSelector(): string | null {
@@ -176,100 +174,102 @@ function findPrognosaSelector(): string | null {
     'select[name^="Diagnosa["][name$="[prognosa]"]',
     'select[name="Diagnosa[prognosa]"]',
     'select[name="prognosa"]',
-  ];
+  ]
 
-  const candidates: HTMLSelectElement[] = [];
+  const candidates: HTMLSelectElement[] = []
   for (const sel of prioritizedSelectors) {
     const found = Array.from(document.querySelectorAll(sel)).filter(
-      (el): el is HTMLSelectElement => el instanceof HTMLSelectElement,
-    );
-    candidates.push(...found);
+      (el): el is HTMLSelectElement => el instanceof HTMLSelectElement
+    )
+    candidates.push(...found)
   }
 
   for (const el of candidates) {
-    if (isElementHiddenForFill(el)) continue;
-    if (isScreeningContext(el)) continue;
+    if (isElementHiddenForFill(el)) continue
+    if (isScreeningContext(el)) continue
 
-    const name = (el.name || '').toLowerCase();
-    const id = (el.id || '').toLowerCase();
-    const nearby = getNearbyText(el);
+    const name = (el.name || '').toLowerCase()
+    const id = (el.id || '').toLowerCase()
+    const nearby = getNearbyText(el)
     const optionsText = Array.from(el.options)
-      .map((opt) => (opt.text || '').toLowerCase())
-      .join(' | ');
+      .map(opt => (opt.text || '').toLowerCase())
+      .join(' | ')
 
-    if (optionsText.includes('screening')) continue;
+    if (optionsText.includes('screening')) continue
 
     const looksLikePrognosaOptions =
       optionsText.includes('bonam') ||
       optionsText.includes('sanam') ||
       optionsText.includes('dubia') ||
-      optionsText.includes('malam');
+      optionsText.includes('malam')
 
     const looksLikeDiagnosaField =
       id.includes('prognosa') ||
       name.includes('prognosa') ||
       name.includes('diagnosa') ||
-      nearby.includes('prognosa');
+      nearby.includes('prognosa')
 
     if (!looksLikePrognosaOptions || !looksLikeDiagnosaField) {
-      continue;
+      continue
     }
 
-    const token = `sentra-prognosa-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    el.setAttribute('data-sentra-prognosa', token);
-    return `[data-sentra-prognosa="${token}"]`;
+    const token = `sentra-prognosa-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    el.setAttribute('data-sentra-prognosa', token)
+    return `[data-sentra-prognosa="${token}"]`
   }
 
-  return null;
+  return null
 }
 
 function sanitizeStaffName(value: string | null | undefined): string | null {
-  const normalized = String(value || '').replace(/\s+/g, ' ').trim();
-  if (!normalized) return null;
-  if (/^\d{4,}$/.test(normalized)) return null;
-  if (!/[a-z]/i.test(normalized)) return null;
-  if (normalized.length < 3) return null;
-  return normalized;
+  const normalized = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!normalized) return null
+  if (/^\d{4,}$/.test(normalized)) return null
+  if (!/[a-z]/i.test(normalized)) return null
+  if (normalized.length < 3) return null
+  return normalized
 }
 
 function isAutocompleteLikeInput(input: HTMLInputElement): boolean {
-  const className = (input.className || '').toLowerCase();
-  const role = (input.getAttribute('role') || '').toLowerCase();
+  const className = (input.className || '').toLowerCase()
+  const role = (input.getAttribute('role') || '').toLowerCase()
   return (
     className.includes('ui-autocomplete-input') ||
     className.includes('typeahead') ||
     role === 'combobox' ||
     input.getAttribute('aria-autocomplete') === 'list'
-  );
+  )
 }
 
 function scoreStaffInput(input: HTMLInputElement, role: 'dokter' | 'perawat'): number {
-  const placeholder = (input.placeholder || '').toLowerCase();
-  const name = (input.name || '').toLowerCase();
-  const id = (input.id || '').toLowerCase();
-  const currentValue = (input.value || '').trim();
-  let score = 0;
+  const placeholder = (input.placeholder || '').toLowerCase()
+  const name = (input.name || '').toLowerCase()
+  const id = (input.id || '').toLowerCase()
+  const currentValue = (input.value || '').trim()
+  let score = 0
 
-  if (!currentValue) score += 35;
-  if (isAutocompleteLikeInput(input)) score += 20;
-  if (/^\d{4,}$/.test(currentValue)) score -= 90; // usually hidden/id-like field shown in table
-  if (placeholder.includes('cari') || name.includes('icd') || name.includes('diagnosa')) score -= 70;
+  if (!currentValue) score += 35
+  if (isAutocompleteLikeInput(input)) score += 20
+  if (/^\d{4,}$/.test(currentValue)) score -= 90 // usually hidden/id-like field shown in table
+  if (placeholder.includes('cari') || name.includes('icd') || name.includes('diagnosa')) score -= 70
 
   if (role === 'dokter') {
-    if (placeholder.includes('nama dokter')) score += 90;
-    if (placeholder.includes('dokter') && !placeholder.includes('asisten')) score += 60;
-    if (name.includes('dokter_nama')) score += 45;
-    if (name.includes('dokter')) score += 25;
-    if (id.includes('dokter')) score += 15;
-    if (placeholder.includes('asisten')) score -= 40;
+    if (placeholder.includes('nama dokter')) score += 90
+    if (placeholder.includes('dokter') && !placeholder.includes('asisten')) score += 60
+    if (name.includes('dokter_nama')) score += 45
+    if (name.includes('dokter')) score += 25
+    if (id.includes('dokter')) score += 15
+    if (placeholder.includes('asisten')) score -= 40
   } else {
-    if (placeholder.includes('asisten')) score += 90;
-    if (placeholder.includes('perawat') || placeholder.includes('bidan')) score += 70;
-    if (name.includes('perawat') || name.includes('bidan')) score += 40;
-    if (id.includes('perawat') || id.includes('bidan')) score += 20;
+    if (placeholder.includes('asisten')) score += 90
+    if (placeholder.includes('perawat') || placeholder.includes('bidan')) score += 70
+    if (name.includes('perawat') || name.includes('bidan')) score += 40
+    if (id.includes('perawat') || id.includes('bidan')) score += 20
   }
 
-  return score;
+  return score
 }
 
 function findBestStaffInput(role: 'dokter' | 'perawat'): HTMLInputElement | null {
@@ -292,7 +292,7 @@ function findBestStaffInput(role: 'dokter' | 'perawat'): HTMLInputElement | null
           'input[name*="bidan"]',
           'input[id*="perawat"]',
           'input[id*="bidan"]',
-        ].join(', ');
+        ].join(', ')
 
   const candidates = Array.from(document.querySelectorAll(selector)).filter(
     (el): el is HTMLInputElement =>
@@ -300,16 +300,16 @@ function findBestStaffInput(role: 'dokter' | 'perawat'): HTMLInputElement | null
       el.offsetParent !== null &&
       !el.disabled &&
       !el.readOnly &&
-      el.type !== 'hidden',
-  );
+      el.type !== 'hidden'
+  )
 
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) return null
 
   const ranked = candidates
-    .map((input) => ({ input, score: scoreStaffInput(input, role) }))
-    .sort((a, b) => b.score - a.score);
+    .map(input => ({ input, score: scoreStaffInput(input, role) }))
+    .sort((a, b) => b.score - a.score)
 
-  return ranked[0]?.score > 0 ? ranked[0].input : null;
+  return ranked[0]?.score > 0 ? ranked[0].input : null
 }
 
 /**
@@ -317,72 +317,74 @@ function findBestStaffInput(role: 'dokter' | 'perawat'): HTMLInputElement | null
  * Tries multiple strategies: label text match, input value match, name attribute
  */
 function findChronicDiseaseCheckbox(diseaseName: string): HTMLInputElement | null {
-  const searchTerms = CHRONIC_DISEASE_CHECKBOX_MAP[diseaseName] || [diseaseName];
+  const searchTerms = CHRONIC_DISEASE_CHECKBOX_MAP[diseaseName] || [diseaseName]
 
   // Strategy 1: Find by label text
-  const allLabels = Array.from(document.querySelectorAll('label'));
+  const allLabels = Array.from(document.querySelectorAll('label'))
   for (const label of allLabels) {
-    if (isScreeningContext(label)) continue;
-    const labelText = label.textContent?.trim().toLowerCase() || '';
+    if (isScreeningContext(label)) continue
+    const labelText = label.textContent?.trim().toLowerCase() || ''
     for (const term of searchTerms) {
       if (labelText.includes(term.toLowerCase())) {
         // Find associated checkbox
-        const forAttr = label.getAttribute('for');
+        const forAttr = label.getAttribute('for')
         if (forAttr) {
-          const checkbox = document.getElementById(forAttr) as HTMLInputElement;
+          const checkbox = document.getElementById(forAttr) as HTMLInputElement
           if (checkbox && checkbox.type === 'checkbox') {
-            return checkbox;
+            return checkbox
           }
         }
         // Or checkbox inside label
-        const checkbox = label.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        const checkbox = label.querySelector('input[type="checkbox"]') as HTMLInputElement
         if (checkbox) {
-          return checkbox;
+          return checkbox
         }
       }
     }
   }
 
   // Strategy 2: Find by input name/id/value
-  const allCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"]')) as HTMLInputElement[];
+  const allCheckboxes = Array.from(
+    document.querySelectorAll('input[type="checkbox"]')
+  ) as HTMLInputElement[]
   for (const checkbox of allCheckboxes) {
-    if (isScreeningContext(checkbox)) continue;
-    const name = (checkbox.name || '').toLowerCase();
-    const id = (checkbox.id || '').toLowerCase();
-    const value = (checkbox.value || '').toLowerCase();
-    const labelText = getCheckboxLabelText(checkbox);
+    if (isScreeningContext(checkbox)) continue
+    const name = (checkbox.name || '').toLowerCase()
+    const id = (checkbox.id || '').toLowerCase()
+    const value = (checkbox.value || '').toLowerCase()
+    const labelText = getCheckboxLabelText(checkbox)
 
     for (const term of searchTerms) {
-      const termLower = term.toLowerCase();
+      const termLower = term.toLowerCase()
       if (
         name.includes(termLower) ||
         id.includes(termLower) ||
         value.includes(termLower) ||
         labelText.includes(termLower)
       ) {
-        return checkbox;
+        return checkbox
       }
     }
   }
 
   // Strategy 3: Match surrounding text (row/cell/div) near checkbox
   for (const checkbox of allCheckboxes) {
-    if (isScreeningContext(checkbox)) continue;
+    if (isScreeningContext(checkbox)) continue
     const scope =
       checkbox.closest('label, tr, td, li, div') ||
       checkbox.parentElement ||
-      checkbox.nextElementSibling;
-    const scopeText = (scope?.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim();
-    if (!scopeText) continue;
+      checkbox.nextElementSibling
+    const scopeText = (scope?.textContent || '').toLowerCase().replace(/\s+/g, ' ').trim()
+    if (!scopeText) continue
 
     for (const term of searchTerms) {
       if (scopeText.includes(term.toLowerCase())) {
-        return checkbox;
+        return checkbox
       }
     }
   }
 
-  return null;
+  return null
 }
 
 // ============================================================================
@@ -394,18 +396,18 @@ function findChronicDiseaseCheckbox(diseaseName: string): HTMLInputElement | nul
  * Based on ePuskesmas form structure
  */
 const CHRONIC_DISEASE_CHECKBOX_MAP: Record<string, string[]> = {
-  'Hipertensi': ['Hipertensi', 'hipertensi'],
+  Hipertensi: ['Hipertensi', 'hipertensi'],
   'Diabetes Mellitus': ['Diabetes Mellitus', 'diabetes'],
   'Gagal Jantung': ['Penyakit Jantung Kronis', 'jantung', 'gagal jantung'],
   'Penyakit Jantung Koroner': ['Penyakit Jantung Kronis', 'jantung', 'koroner'],
-  'Stroke': ['Stroke', 'stroke'],
+  Stroke: ['Stroke', 'stroke'],
   'Gagal Ginjal Kronik': ['Penyakit Ginjal Kronis', 'ginjal', 'gagal ginjal'],
-  'Kanker': ['Kanker', 'kanker'],
+  Kanker: ['Kanker', 'kanker'],
   'Asma Kronis': ['Penyakit Paru Kronis', 'paru', 'asma'],
-  'PPOK': ['Penyakit Paru Kronis', 'paru', 'ppok'],
-  'GERD': ['Penyakit Autoimun', 'gerd'], // May vary by ePuskesmas version
+  PPOK: ['Penyakit Paru Kronis', 'paru', 'ppok'],
+  GERD: ['Penyakit Autoimun', 'gerd'], // May vary by ePuskesmas version
   'Gangguan Tiroid': ['Penyakit Autoimun', 'tiroid'], // May vary by ePuskesmas version
-};
+}
 
 const FALLBACK_SELECTORS = {
   dokter_nama: [
@@ -500,153 +502,153 @@ const FALLBACK_SELECTORS = {
     'input[name="Diagnosa[prognosa]"]',
     'input[name="prognosa"]',
   ],
-} as const;
+} as const
 
 function isJsdomEnvironment(): boolean {
-  return typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent || '');
+  return typeof navigator !== 'undefined' && /jsdom/i.test(navigator.userAgent || '')
 }
 
 function isElementHiddenForFill(el: HTMLElement): boolean {
-  const style = window.getComputedStyle(el);
+  const style = window.getComputedStyle(el)
   if (style.display === 'none' || style.visibility === 'hidden') {
-    return true;
+    return true
   }
 
   // In JSDOM, offsetParent is frequently null even for normal visible elements.
   if (isJsdomEnvironment()) {
-    return false;
+    return false
   }
 
-  return el.offsetParent === null && style.position !== 'fixed';
+  return el.offsetParent === null && style.position !== 'fixed'
 }
 
 function findSelectorByFallback(selectors: readonly string[]): string | null {
   for (const sel of selectors) {
-    const candidates = Array.from(document.querySelectorAll(sel));
+    const candidates = Array.from(document.querySelectorAll(sel))
     for (const el of candidates) {
       // Skip hidden elements
       if (el instanceof HTMLElement) {
         if (isElementHiddenForFill(el)) {
-          console.log('[Diagnosa Handler] Skipping hidden element:', sel);
-          continue;
+          console.log('[Diagnosa Handler] Skipping hidden element:', sel)
+          continue
         }
       }
 
       if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
         if (el.readOnly || el.disabled) {
-          continue;
+          continue
         }
       } else if (el instanceof HTMLSelectElement) {
         if (el.disabled) {
-          continue;
+          continue
         }
       }
 
       if (el instanceof HTMLElement) {
-        console.log('[Diagnosa Handler] ✅ Found VISIBLE element for:', sel, el);
-        const token = `sentra-dx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        el.setAttribute('data-sentra-target', token);
-        return `[data-sentra-target="${token}"]`;
+        console.log('[Diagnosa Handler] ✅ Found VISIBLE element for:', sel, el)
+        const token = `sentra-dx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+        el.setAttribute('data-sentra-target', token)
+        return `[data-sentra-target="${token}"]`
       }
     }
   }
-  console.warn('[Diagnosa Handler] ❌ No visible element found for selectors:', selectors);
-  return null;
+  console.warn('[Diagnosa Handler] ❌ No visible element found for selectors:', selectors)
+  return null
 }
 
 function waitMs(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 async function findChronicDiseaseCheckboxWithRetry(
   diseaseName: string,
   retries: number = 3,
-  delayMs: number = 250,
+  delayMs: number = 250
 ): Promise<HTMLInputElement | null> {
   for (let attempt = 0; attempt < retries; attempt += 1) {
-    const found = findChronicDiseaseCheckbox(diseaseName);
-    if (found) return found;
+    const found = findChronicDiseaseCheckbox(diseaseName)
+    if (found) return found
     if (attempt < retries - 1) {
-      await waitMs(delayMs);
+      await waitMs(delayMs)
     }
   }
-  return null;
+  return null
 }
 
 async function applyPostDiagnosisFields(
   payload: DiagnosaFillPayload,
-  normalizedSkipped: string[],
+  normalizedSkipped: string[]
 ): Promise<{
-  success: FillResult[];
-  failed: FillResult[];
+  success: FillResult[]
+  failed: FillResult[]
 }> {
-  const postMappings: FieldMapping[] = [];
+  const postMappings: FieldMapping[] = []
 
   if (payload.prognosa) {
-    const progSelector = findPrognosaSelector();
+    const progSelector = findPrognosaSelector()
     if (progSelector) {
-      const progEl = document.querySelector(progSelector);
-      let prognosisValue: string = payload.prognosa;
+      const progEl = document.querySelector(progSelector)
+      let prognosisValue: string = payload.prognosa
       if (progEl instanceof HTMLSelectElement) {
-        const mappedValue = PROGNOSA_EPUSKESMAS_MAP[payload.prognosa];
+        const mappedValue = PROGNOSA_EPUSKESMAS_MAP[payload.prognosa]
         if (mappedValue) {
-          prognosisValue = findSelectValue(progEl, [mappedValue, payload.prognosa]) || mappedValue;
+          prognosisValue = findSelectValue(progEl, [mappedValue, payload.prognosa]) || mappedValue
         }
       }
       postMappings.push({
         selector: progSelector,
         value: prognosisValue,
         type: progEl instanceof HTMLSelectElement ? 'select' : 'textarea',
-      });
+      })
     } else {
-      normalizedSkipped.push('prognosa: Element not found (post-add)');
+      normalizedSkipped.push('prognosa: Element not found (post-add)')
     }
   }
 
   if (payload.penyakit_kronis && payload.penyakit_kronis.length > 0) {
     for (const diseaseName of payload.penyakit_kronis) {
-      const checkbox = await findChronicDiseaseCheckboxWithRetry(diseaseName, 3, 300);
+      const checkbox = await findChronicDiseaseCheckboxWithRetry(diseaseName, 3, 300)
       if (checkbox) {
-        const checkboxToken = `sentra-chronic-post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-        checkbox.setAttribute('data-sentra-chronic-post', checkboxToken);
+        const checkboxToken = `sentra-chronic-post-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+        checkbox.setAttribute('data-sentra-chronic-post', checkboxToken)
         postMappings.push({
           selector: `[data-sentra-chronic-post="${checkboxToken}"]`,
           value: true,
           type: 'checkbox',
-        });
+        })
       } else {
-        normalizedSkipped.push(`penyakit_kronis[${diseaseName}]: Checkbox not found (post-add)`);
+        normalizedSkipped.push(`penyakit_kronis[${diseaseName}]: Checkbox not found (post-add)`)
       }
     }
   }
 
   if (postMappings.length === 0) {
-    return { success: [], failed: [] };
+    return { success: [], failed: [] }
   }
 
-  const postResults = await fillFields(postMappings, 90);
-  const success: FillResult[] = [];
-  const failed: FillResult[] = [];
+  const postResults = await fillFields(postMappings, 90)
+  const success: FillResult[] = []
+  const failed: FillResult[] = []
 
   for (const r of postResults) {
     if (r.success) {
-      success.push(r);
-      continue;
+      success.push(r)
+      continue
     }
-    const errorText = String(r.error || '').toLowerCase();
+    const errorText = String(r.error || '').toLowerCase()
     if (
       errorText.includes('readonly') ||
       errorText.includes('read only') ||
       errorText.includes('disabled') ||
       errorText.includes('protected')
     ) {
-      normalizedSkipped.push(`${r.field}: ${r.error || 'readonly/protected field (post-add)'}`);
-      continue;
+      normalizedSkipped.push(`${r.field}: ${r.error || 'readonly/protected field (post-add)'}`)
+      continue
     }
-    failed.push(r);
+    failed.push(r)
   }
 
-  return { success, failed };
+  return { success, failed }
 }
 
 // ============================================================================
@@ -661,38 +663,38 @@ async function applyPostDiagnosisFields(
  * @returns Fill result with success/failed/skipped arrays
  */
 export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
-  success: FillResult[];
-  failed: FillResult[];
-  skipped: string[];
+  success: FillResult[]
+  failed: FillResult[]
+  skipped: string[]
 }> {
-  console.log('[Diagnosa Handler] ===== STARTING DIAGNOSIS FILL =====');
-  console.log('[Diagnosa Handler] Payload:', JSON.stringify(payload, null, 2));
-  console.log('[Diagnosa Handler] Payload fields:');
-  console.log('  - icd_x:', payload.icd_x);
-  console.log('  - nama:', payload.nama);
-  console.log('  - jenis:', payload.jenis);
-  console.log('  - kasus:', payload.kasus);
-  console.log('  - prognosa:', payload.prognosa);
-  console.log('  - penyakit_kronis:', payload.penyakit_kronis);
+  console.log('[Diagnosa Handler] ===== STARTING DIAGNOSIS FILL =====')
+  console.log('[Diagnosa Handler] Payload:', JSON.stringify(payload, null, 2))
+  console.log('[Diagnosa Handler] Payload fields:')
+  console.log('  - icd_x:', payload.icd_x)
+  console.log('  - nama:', payload.nama)
+  console.log('  - jenis:', payload.jenis)
+  console.log('  - kasus:', payload.kasus)
+  console.log('  - prognosa:', payload.prognosa)
+  console.log('  - penyakit_kronis:', payload.penyakit_kronis)
 
-  const mappings: FieldMapping[] = [];
-  const skipped: string[] = [];
+  const mappings: FieldMapping[] = []
+  const skipped: string[] = []
 
   try {
     // ========================================
     // SKIP DAS - Use direct fallback selectors only
     // DAS auth broken, causing fills to fail completely
     // ========================================
-    console.log('[Diagnosa Handler] Skipping DAS, using direct fallback selectors');
+    console.log('[Diagnosa Handler] Skipping DAS, using direct fallback selectors')
 
     const dasResult = {
       mappings: [],
       unmapped: Object.keys(buildDASPayload(payload)),
       fromCache: false,
-      latencyMs: 0
-    };
+      latencyMs: 0,
+    }
 
-    console.log('[Diagnosa Handler] Using fallback for all fields:', dasResult.unmapped);
+    console.log('[Diagnosa Handler] Using fallback for all fields:', dasResult.unmapped)
 
     // DAS is skipped, so no mappings to process from DAS result
     // All fields will be handled by fallback logic below
@@ -701,22 +703,23 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
     // STRATEGY 2: Fallback for unmapped fields
     // ========================================
     if (dasResult.unmapped.length > 0) {
-      console.log('[Diagnosa Handler] Using fallback for unmapped fields:', dasResult.unmapped);
+      console.log('[Diagnosa Handler] Using fallback for unmapped fields:', dasResult.unmapped)
 
       // ========================================
       // DOCTOR/NURSE NAMES - SCRAPE FROM RME + DIRECT FILL
       // ========================================
-      const scrapedNames = scrapeDoctorNurseNames();
-      console.log('[Diagnosa Handler] Scraped names from RME:', scrapedNames);
+      const scrapedNames = scrapeDoctorNurseNames()
+      console.log('[Diagnosa Handler] Scraped names from RME:', scrapedNames)
 
       // Doctor name
-      const dokterName = sanitizeStaffName(scrapedNames.dokter) || sanitizeStaffName(findPrefilledDoctorName());
+      const dokterName =
+        sanitizeStaffName(scrapedNames.dokter) || sanitizeStaffName(findPrefilledDoctorName())
       if (dokterName) {
-        const dokterInput = findBestStaffInput('dokter');
+        const dokterInput = findBestStaffInput('dokter')
         if (dokterInput) {
-          const token = `sentra-dokter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-          dokterInput.setAttribute('data-sentra-target', token);
-          const autocomplete = isAutocompleteLikeInput(dokterInput);
+          const token = `sentra-dokter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+          dokterInput.setAttribute('data-sentra-target', token)
+          const autocomplete = isAutocompleteLikeInput(dokterInput)
           mappings.push({
             selector: `[data-sentra-target="${token}"]`,
             value: dokterName,
@@ -729,27 +732,27 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
                   typeDelay: 35,
                 }
               : undefined,
-          });
+          })
           console.log(
             `[Diagnosa Handler] ✅ Will fill doctor name (${autocomplete ? 'autocomplete' : 'text'}):`,
-            dokterName,
-          );
+            dokterName
+          )
         } else {
-          skipped.push('dokter_nama: target field not found');
+          skipped.push('dokter_nama: target field not found')
         }
       } else {
-        skipped.push('dokter_nama: source unavailable');
+        skipped.push('dokter_nama: source unavailable')
       }
 
       // Nurse name
       const perawatName =
-        sanitizeStaffName(scrapedNames.perawat) || sanitizeStaffName(findPrefilledNurseName());
+        sanitizeStaffName(scrapedNames.perawat) || sanitizeStaffName(findPrefilledNurseName())
       if (perawatName) {
-        const perawatInput = findBestStaffInput('perawat');
+        const perawatInput = findBestStaffInput('perawat')
         if (perawatInput) {
-          const token = `sentra-perawat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-          perawatInput.setAttribute('data-sentra-target', token);
-          const autocomplete = isAutocompleteLikeInput(perawatInput);
+          const token = `sentra-perawat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+          perawatInput.setAttribute('data-sentra-target', token)
+          const autocomplete = isAutocompleteLikeInput(perawatInput)
           mappings.push({
             selector: `[data-sentra-target="${token}"]`,
             value: perawatName,
@@ -762,129 +765,138 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
                   typeDelay: 35,
                 }
               : undefined,
-          });
+          })
           console.log(
             `[Diagnosa Handler] ✅ Will fill nurse name (${autocomplete ? 'autocomplete' : 'text'}):`,
-            perawatName,
-          );
+            perawatName
+          )
         } else {
-          skipped.push('perawat_nama: target field not found');
+          skipped.push('perawat_nama: target field not found')
         }
       } else {
-        skipped.push('perawat_nama: source unavailable');
+        skipped.push('perawat_nama: source unavailable')
       }
 
       // ICD-X field
-      if (payload.icd_x && !mappings.some((m) => m.selector.includes('icd'))) {
-        const icdSelector = findSelectorByFallback(FALLBACK_SELECTORS.icd_x);
+      if (payload.icd_x && !mappings.some(m => m.selector.includes('icd'))) {
+        const icdSelector = findSelectorByFallback(FALLBACK_SELECTORS.icd_x)
         if (icdSelector) {
           mappings.push({
             selector: icdSelector,
             value: payload.icd_x,
             type: 'text',
-          });
+          })
         } else {
-          skipped.push('icd_x: Element not found');
+          skipped.push('icd_x: Element not found')
         }
       }
 
       // Nama diagnosa field
-      if (payload.nama && !mappings.some((m) => m.selector.includes('nama'))) {
-        const namaSelector = findSelectorByFallback(FALLBACK_SELECTORS.nama);
+      if (payload.nama && !mappings.some(m => m.selector.includes('nama'))) {
+        const namaSelector = findSelectorByFallback(FALLBACK_SELECTORS.nama)
         if (namaSelector) {
           mappings.push({
             selector: namaSelector,
             value: payload.nama,
             type: 'text',
-          });
+          })
         } else {
-          skipped.push('nama: Element not found');
+          skipped.push('nama: Element not found')
         }
       }
 
       // Jenis diagnosa field - AGGRESSIVE SEARCH
-      if (payload.jenis && !mappings.some((m) => m.selector.includes('jenis'))) {
+      if (payload.jenis && !mappings.some(m => m.selector.includes('jenis'))) {
         // Try ALL select elements in diagnosis table
-        const allSelects = Array.from(document.querySelectorAll('select'));
-        let jenisEl: HTMLSelectElement | null = null;
+        const allSelects = Array.from(document.querySelectorAll('select'))
+        let jenisEl: HTMLSelectElement | null = null
 
         for (const sel of allSelects) {
-          const name = sel.name || '';
-          const nearby = sel.closest('td')?.previousElementSibling?.textContent || '';
+          const name = sel.name || ''
+          const nearby = sel.closest('td')?.previousElementSibling?.textContent || ''
 
           if (name.includes('jenis') || nearby.includes('Jenis')) {
             if (sel.offsetParent !== null && !sel.disabled) {
-              jenisEl = sel;
-              console.log('[Diagnosa Handler] ✅ Found Jenis dropdown:', sel.name);
-              break;
+              jenisEl = sel
+              console.log('[Diagnosa Handler] ✅ Found Jenis dropdown:', sel.name)
+              break
             }
           }
         }
 
         if (jenisEl) {
-          const token = `sentra-jenis-${Date.now()}`;
-          jenisEl.setAttribute('data-sentra-target', token);
-          const jenisValue = findSelectValue(jenisEl, JENIS_VALUE_MAP[payload.jenis] || [payload.jenis]);
+          const token = `sentra-jenis-${Date.now()}`
+          jenisEl.setAttribute('data-sentra-target', token)
+          const jenisValue = findSelectValue(
+            jenisEl,
+            JENIS_VALUE_MAP[payload.jenis] || [payload.jenis]
+          )
           mappings.push({
             selector: `[data-sentra-target="${token}"]`,
             value: jenisValue || '1',
             type: 'select',
-          });
-          console.log('[Diagnosa Handler] ✅ Will fill Jenis:', jenisValue);
+          })
+          console.log('[Diagnosa Handler] ✅ Will fill Jenis:', jenisValue)
         } else {
-          console.warn('[Diagnosa Handler] ❌ Jenis dropdown not found');
-          skipped.push('jenis: Element not found');
+          console.warn('[Diagnosa Handler] ❌ Jenis dropdown not found')
+          skipped.push('jenis: Element not found')
         }
       }
 
       // Kasus field - AGGRESSIVE SEARCH
-      if (payload.kasus && !mappings.some((m) => m.selector.includes('kasus'))) {
+      if (payload.kasus && !mappings.some(m => m.selector.includes('kasus'))) {
         // Try ALL select elements in diagnosis table
-        const allSelects = Array.from(document.querySelectorAll('select'));
-        let kasusEl: HTMLSelectElement | null = null;
+        const allSelects = Array.from(document.querySelectorAll('select'))
+        let kasusEl: HTMLSelectElement | null = null
 
         for (const sel of allSelects) {
-          const name = sel.name || '';
-          const nearby = sel.closest('td')?.previousElementSibling?.textContent || '';
+          const name = sel.name || ''
+          const nearby = sel.closest('td')?.previousElementSibling?.textContent || ''
 
           if (name.includes('kasus') || nearby.includes('Kasus')) {
             if (sel.offsetParent !== null && !sel.disabled) {
-              kasusEl = sel;
-              console.log('[Diagnosa Handler] ✅ Found Kasus dropdown:', sel.name);
-              break;
+              kasusEl = sel
+              console.log('[Diagnosa Handler] ✅ Found Kasus dropdown:', sel.name)
+              break
             }
           }
         }
 
         if (kasusEl) {
-          const token = `sentra-kasus-${Date.now()}`;
-          kasusEl.setAttribute('data-sentra-target', token);
-          const kasusValue = findSelectValue(kasusEl, KASUS_VALUE_MAP[payload.kasus] || [payload.kasus]);
+          const token = `sentra-kasus-${Date.now()}`
+          kasusEl.setAttribute('data-sentra-target', token)
+          const kasusValue = findSelectValue(
+            kasusEl,
+            KASUS_VALUE_MAP[payload.kasus] || [payload.kasus]
+          )
           mappings.push({
             selector: `[data-sentra-target="${token}"]`,
             value: kasusValue || '1',
             type: 'select',
-          });
-          console.log('[Diagnosa Handler] ✅ Will fill Kasus:', kasusValue);
+          })
+          console.log('[Diagnosa Handler] ✅ Will fill Kasus:', kasusValue)
         } else {
-          console.warn('[Diagnosa Handler] ❌ Kasus dropdown not found');
-          skipped.push('kasus: Element not found');
+          console.warn('[Diagnosa Handler] ❌ Kasus dropdown not found')
+          skipped.push('kasus: Element not found')
         }
       }
 
       // Prognosa field (optional)
-      if (payload.prognosa && !mappings.some((m) => m.selector.includes('prognosa'))) {
-        const progSelector = findPrognosaSelector();
+      if (payload.prognosa && !mappings.some(m => m.selector.includes('prognosa'))) {
+        const progSelector = findPrognosaSelector()
         if (progSelector) {
-          const progEl = document.querySelector(progSelector);
-          let prognosisValue: string = payload.prognosa;
+          const progEl = document.querySelector(progSelector)
+          let prognosisValue: string = payload.prognosa
 
           // If it's a select dropdown, map to numeric value
           if (progEl instanceof HTMLSelectElement) {
-            const mappedValue = PROGNOSA_EPUSKESMAS_MAP[payload.prognosa];
+            const mappedValue = PROGNOSA_EPUSKESMAS_MAP[payload.prognosa]
             if (mappedValue) {
-              prognosisValue = findSelectValue(progEl, [mappedValue, payload.prognosa]) || payload.prognosa;
-              console.log(`[Diagnosa Handler] Mapped prognosis "${payload.prognosa}" → "${prognosisValue}"`);
+              prognosisValue =
+                findSelectValue(progEl, [mappedValue, payload.prognosa]) || payload.prognosa
+              console.log(
+                `[Diagnosa Handler] Mapped prognosis "${payload.prognosa}" → "${prognosisValue}"`
+              )
             }
           }
 
@@ -892,98 +904,103 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
             selector: progSelector,
             value: prognosisValue,
             type: progEl instanceof HTMLSelectElement ? 'select' : 'textarea',
-          });
+          })
         }
         // Don't add to skipped - prognosa is optional
       }
 
       // Penyakit kronis checkboxes
       if (payload.penyakit_kronis && payload.penyakit_kronis.length > 0) {
-        console.log('[Diagnosa Handler] Processing chronic diseases:', payload.penyakit_kronis);
+        console.log('[Diagnosa Handler] Processing chronic diseases:', payload.penyakit_kronis)
         for (const diseaseName of payload.penyakit_kronis) {
-          const checkbox = findChronicDiseaseCheckbox(diseaseName);
+          const checkbox = findChronicDiseaseCheckbox(diseaseName)
           if (checkbox) {
             // Add unique data attribute to target checkbox
-            const checkboxToken = `sentra-chronic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-            checkbox.setAttribute('data-sentra-chronic', checkboxToken);
+            const checkboxToken = `sentra-chronic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+            checkbox.setAttribute('data-sentra-chronic', checkboxToken)
             mappings.push({
               selector: `[data-sentra-chronic="${checkboxToken}"]`,
               value: true,
               type: 'checkbox',
-            });
-            console.log(`[Diagnosa Handler] Found checkbox for "${diseaseName}"`);
+            })
+            console.log(`[Diagnosa Handler] Found checkbox for "${diseaseName}"`)
           } else {
-            console.warn(`[Diagnosa Handler] Checkbox not found for chronic disease: "${diseaseName}"`);
-            skipped.push(`penyakit_kronis[${diseaseName}]: Checkbox not found`);
+            console.warn(
+              `[Diagnosa Handler] Checkbox not found for chronic disease: "${diseaseName}"`
+            )
+            skipped.push(`penyakit_kronis[${diseaseName}]: Checkbox not found`)
           }
         }
       }
     }
 
-    console.log('[Diagnosa Handler] Final mappings:', mappings.length);
-    console.log('[Diagnosa Handler] Skipped:', skipped);
+    console.log('[Diagnosa Handler] Final mappings:', mappings.length)
+    console.log('[Diagnosa Handler] Skipped:', skipped)
   } catch (error) {
-    console.error('[Diagnosa Handler] DAS error, using pure fallback:', error);
+    console.error('[Diagnosa Handler] DAS error, using pure fallback:', error)
 
     // Pure fallback mode
     if (payload.icd_x) {
-      const selector = findSelectorByFallback(FALLBACK_SELECTORS.icd_x);
+      const selector = findSelectorByFallback(FALLBACK_SELECTORS.icd_x)
       if (selector) {
         mappings.push({
           selector,
           value: payload.icd_x,
           type: 'text',
-        });
+        })
       }
     }
     if (payload.nama) {
-      const selector = findSelectorByFallback(FALLBACK_SELECTORS.nama);
+      const selector = findSelectorByFallback(FALLBACK_SELECTORS.nama)
       if (selector) {
         mappings.push({
           selector,
           value: payload.nama,
           type: 'text',
-        });
+        })
       }
     }
     if (payload.jenis) {
-      const selector = findSelectorByFallback(FALLBACK_SELECTORS.jenis);
+      const selector = findSelectorByFallback(FALLBACK_SELECTORS.jenis)
       if (selector) {
-        const jenisEl = document.querySelector(selector) as HTMLSelectElement | null;
+        const jenisEl = document.querySelector(selector) as HTMLSelectElement | null
         if (jenisEl) {
           const jenisValue = findSelectValue(
             jenisEl,
             JENIS_VALUE_MAP[payload.jenis] || [payload.jenis]
-          );
-          mappings.push({ selector, value: jenisValue || payload.jenis, type: 'select' });
+          )
+          mappings.push({ selector, value: jenisValue || payload.jenis, type: 'select' })
         }
       }
     }
     if (payload.kasus) {
-      const selector = findSelectorByFallback(FALLBACK_SELECTORS.kasus);
+      const selector = findSelectorByFallback(FALLBACK_SELECTORS.kasus)
       if (selector) {
-        const kasusEl = document.querySelector(selector) as HTMLSelectElement | null;
+        const kasusEl = document.querySelector(selector) as HTMLSelectElement | null
         if (kasusEl) {
           const kasusValue = findSelectValue(
             kasusEl,
             KASUS_VALUE_MAP[payload.kasus] || [payload.kasus]
-          );
-          mappings.push({ selector, value: kasusValue || payload.kasus, type: 'select' });
+          )
+          mappings.push({ selector, value: kasusValue || payload.kasus, type: 'select' })
         }
       }
     }
     if (payload.prognosa) {
-      const selector = findPrognosaSelector();
+      const selector = findPrognosaSelector()
       if (selector) {
-        const progEl = document.querySelector(selector);
-        let prognosisValue: string = payload.prognosa;
+        const progEl = document.querySelector(selector)
+        let prognosisValue: string = payload.prognosa
 
         // If it's a select dropdown, map to numeric value
         if (progEl instanceof HTMLSelectElement) {
-          const mappedValue = PROGNOSA_EPUSKESMAS_MAP[payload.prognosa];
+          const mappedValue = PROGNOSA_EPUSKESMAS_MAP[payload.prognosa]
           if (mappedValue) {
-            prognosisValue = findSelectValue(progEl, [mappedValue, payload.prognosa]) || payload.prognosa;
-            console.log(`[Diagnosa Handler] Mapped prognosis "${payload.prognosa}" → "${prognosisValue}"`);
+            prognosisValue =
+              findSelectValue(progEl, [mappedValue, payload.prognosa]) || payload.prognosa
+            console.log(
+              `[Diagnosa Handler] Mapped prognosis "${payload.prognosa}" → "${prognosisValue}"`
+            )
           }
         }
 
@@ -991,7 +1008,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
           selector,
           value: prognosisValue,
           type: progEl instanceof HTMLSelectElement ? 'select' : 'textarea',
-        });
+        })
       }
     }
   }
@@ -1000,7 +1017,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
   // EXECUTE FILL
   // ========================================
   if (mappings.length === 0) {
-    console.warn('[Diagnosa Handler] No fields to fill');
+    console.warn('[Diagnosa Handler] No fields to fill')
     return {
       success: [],
       failed: [
@@ -1013,22 +1030,22 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
         },
       ],
       skipped,
-    };
+    }
   }
 
-  const fillResults = await fillFields(mappings, 100);
+  const fillResults = await fillFields(mappings, 100)
 
   // Categorize results
-  const success: FillResult[] = [];
-  const failed: FillResult[] = [];
-  const normalizedSkipped = [...skipped];
+  const success: FillResult[] = []
+  const failed: FillResult[] = []
+  const normalizedSkipped = [...skipped]
 
   for (const r of fillResults) {
     if (r.success) {
-      success.push(r);
-      continue;
+      success.push(r)
+      continue
     }
-    const errorText = String(r.error || '').toLowerCase();
+    const errorText = String(r.error || '').toLowerCase()
     if (
       errorText.includes('readonly') ||
       errorText.includes('read only') ||
@@ -1036,124 +1053,125 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
       errorText.includes('csrf') ||
       errorText.includes('protected')
     ) {
-      normalizedSkipped.push(`${r.field}: ${r.error || 'readonly/protected field'}`);
-      continue;
+      normalizedSkipped.push(`${r.field}: ${r.error || 'readonly/protected field'}`)
+      continue
     }
-    failed.push(r);
+    failed.push(r)
   }
 
   console.log('[Diagnosa Handler] Fill complete:', {
     success: success.length,
     failed: failed.length,
     skipped: normalizedSkipped.length,
-  });
+  })
 
   // ========================================
   // AUTO-CLICK "TAMBAH" + POST-FILL (PROGNOSA/CHRONIC)
   // ========================================
   if (success.length > 0 && failed.length === 0) {
     try {
-      await waitMs(500); // ensure primary fields settled
-      const addButton = findAddDiagnosisButton();
+      await waitMs(500) // ensure primary fields settled
+      const addButton = findAddDiagnosisButton()
       if (addButton) {
-        console.log('[Diagnosa Handler] Auto-clicking "Tambah" button');
-        addButton.click();
-        await waitMs(700); // wait UI to commit row + refresh dependent fields
+        console.log('[Diagnosa Handler] Auto-clicking "Tambah" button')
+        addButton.click()
+        await waitMs(700) // wait UI to commit row + refresh dependent fields
       } else {
-        console.warn('[Diagnosa Handler] "Tambah" button not found for auto-click');
+        console.warn('[Diagnosa Handler] "Tambah" button not found for auto-click')
       }
 
-      const needPostApply = Boolean(payload.prognosa) || Boolean(payload.penyakit_kronis?.length);
+      const needPostApply = Boolean(payload.prognosa) || Boolean(payload.penyakit_kronis?.length)
       if (needPostApply) {
-        const post = await applyPostDiagnosisFields(payload, normalizedSkipped);
-        success.push(...post.success);
-        failed.push(...post.failed);
+        const post = await applyPostDiagnosisFields(payload, normalizedSkipped)
+        success.push(...post.success)
+        failed.push(...post.failed)
         if (post.success.length > 0) {
-          console.log('[Diagnosa Handler] Post-add fields applied:', post.success.length);
+          console.log('[Diagnosa Handler] Post-add fields applied:', post.success.length)
         }
       }
     } catch (error) {
-      console.error('[Diagnosa Handler] Auto-click/post-fill failed:', error);
+      console.error('[Diagnosa Handler] Auto-click/post-fill failed:', error)
     }
   }
 
-  return { success, failed, skipped: normalizedSkipped };
+  return { success, failed, skipped: normalizedSkipped }
 }
 
 /**
  * Find "Tambah" or "Simpan" button for diagnosis entry
  */
-function findAddDiagnosisButton():
-  | HTMLButtonElement
-  | HTMLAnchorElement
-  | HTMLInputElement
-  | null {
-  const buttonSelector = 'button, a.btn, input[type="button"], input[type="submit"]';
+function findAddDiagnosisButton(): HTMLButtonElement | HTMLAnchorElement | HTMLInputElement | null {
+  const buttonSelector = 'button, a.btn, input[type="button"], input[type="submit"]'
   const allButtons = Array.from(document.querySelectorAll(buttonSelector)).filter(
     (el): el is HTMLButtonElement | HTMLAnchorElement | HTMLInputElement =>
-      el instanceof HTMLButtonElement || el instanceof HTMLAnchorElement || el instanceof HTMLInputElement,
-  );
+      el instanceof HTMLButtonElement ||
+      el instanceof HTMLAnchorElement ||
+      el instanceof HTMLInputElement
+  )
 
   const isAddLike = (btn: HTMLButtonElement | HTMLAnchorElement | HTMLInputElement): boolean => {
-    const text = (btn.textContent || '').trim().toLowerCase();
-    const value = (btn instanceof HTMLInputElement ? btn.value : '').trim().toLowerCase();
-    return text === 'tambah' || text === 'simpan' || value === 'tambah' || value === 'simpan';
-  };
+    const text = (btn.textContent || '').trim().toLowerCase()
+    const value = (btn instanceof HTMLInputElement ? btn.value : '').trim().toLowerCase()
+    return text === 'tambah' || text === 'simpan' || value === 'tambah' || value === 'simpan'
+  }
 
   const scoreButton = (btn: HTMLButtonElement | HTMLAnchorElement | HTMLInputElement): number => {
-    if (!isAddLike(btn)) return -999;
-    if (isScreeningContext(btn)) return -999;
+    if (!isAddLike(btn)) return -999
+    if (isScreeningContext(btn)) return -999
 
-    const nearby = getNearbyText(btn);
-    const id = (btn.id || '').toLowerCase();
-    const className = (btn.className || '').toLowerCase();
-    let score = 0;
+    const nearby = getNearbyText(btn)
+    const id = (btn.id || '').toLowerCase()
+    const className = (btn.className || '').toLowerCase()
+    let score = 0
 
-    if (nearby.includes('diagnosa')) score += 120;
-    if (nearby.includes('icd')) score += 80;
-    if (nearby.includes('jenis')) score += 40;
-    if (nearby.includes('kasus')) score += 40;
-    if (id.includes('diagnosa') || className.includes('diagnosa')) score += 90;
-    if (id.includes('tambah') || className.includes('btn-tambah') || className.includes('btn-add')) score += 30;
+    if (nearby.includes('diagnosa')) score += 120
+    if (nearby.includes('icd')) score += 80
+    if (nearby.includes('jenis')) score += 40
+    if (nearby.includes('kasus')) score += 40
+    if (id.includes('diagnosa') || className.includes('diagnosa')) score += 90
+    if (id.includes('tambah') || className.includes('btn-tambah') || className.includes('btn-add'))
+      score += 30
 
     const label = (btn.textContent || (btn instanceof HTMLInputElement ? btn.value : '') || '')
       .toLowerCase()
-      .trim();
-    if (label === 'tambah') score += 10;
-    if (label === 'simpan') score += 4;
+      .trim()
+    if (label === 'tambah') score += 10
+    if (label === 'simpan') score += 4
 
-    return score;
-  };
+    return score
+  }
 
   // Strategy 1: Prefer button around diagnosis input area
   const icdInput = document.querySelector(
-    'input[name*="diagnosa_id"], input[name*="icd"], input[placeholder*="Cari ICD"], input[placeholder*="Cari Diagnosa"]',
-  );
+    'input[name*="diagnosa_id"], input[name*="icd"], input[placeholder*="Cari ICD"], input[placeholder*="Cari Diagnosa"]'
+  )
   if (icdInput) {
-    const diagnosisArea = icdInput.closest('table, form, .panel, .box, .row, div');
+    const diagnosisArea = icdInput.closest('table, form, .panel, .box, .row, div')
     if (diagnosisArea) {
       const localButtons = Array.from(diagnosisArea.querySelectorAll(buttonSelector)).filter(
         (el): el is HTMLButtonElement | HTMLAnchorElement | HTMLInputElement =>
-          el instanceof HTMLButtonElement || el instanceof HTMLAnchorElement || el instanceof HTMLInputElement,
-      );
+          el instanceof HTMLButtonElement ||
+          el instanceof HTMLAnchorElement ||
+          el instanceof HTMLInputElement
+      )
       const bestLocal = localButtons
-        .map((btn) => ({ btn, score: scoreButton(btn) }))
-        .sort((a, b) => b.score - a.score)[0];
+        .map(btn => ({ btn, score: scoreButton(btn) }))
+        .sort((a, b) => b.score - a.score)[0]
       if (bestLocal && bestLocal.score > 0) {
-        return bestLocal.btn;
+        return bestLocal.btn
       }
     }
   }
 
   // Strategy 2: Global fallback with strict scoring + screening block
   const bestGlobal = allButtons
-    .map((btn) => ({ btn, score: scoreButton(btn) }))
-    .sort((a, b) => b.score - a.score)[0];
+    .map(btn => ({ btn, score: scoreButton(btn) }))
+    .sort((a, b) => b.score - a.score)[0]
   if (bestGlobal && bestGlobal.score > 0) {
-    return bestGlobal.btn;
+    return bestGlobal.btn
   }
 
-  return null;
+  return null
 }
 
 // ============================================================================
@@ -1165,18 +1183,18 @@ function findAddDiagnosisButton():
  * Called when content script detects diagnosa page
  */
 export function initDiagnosaPage(): void {
-  console.log('[Diagnosa Handler] Page initialized with DAS integration');
+  console.log('[Diagnosa Handler] Page initialized with DAS integration')
 
   // Pre-warm DAS cache by scanning fields
   setTimeout(async () => {
     try {
-      const { scanPageFields } = await import('@/lib/das');
-      const result = scanPageFields({ includeHidden: false });
-      console.log('[Diagnosa Handler] Pre-scan found', result.fields.length, 'fields');
+      const { scanPageFields } = await import('@/lib/das')
+      const result = scanPageFields({ includeHidden: false })
+      console.log('[Diagnosa Handler] Pre-scan found', result.fields.length, 'fields')
     } catch (error) {
-      console.warn('[Diagnosa Handler] Pre-scan failed:', error);
+      console.warn('[Diagnosa Handler] Pre-scan failed:', error)
     }
-  }, 500);
+  }, 500)
 }
 
 // ============================================================================
@@ -1188,69 +1206,69 @@ export function initDiagnosaPage(): void {
  * @returns Scraped diagnosa data
  */
 export async function scrapeDiagnosaForm(): Promise<Partial<DiagnosaFillPayload>> {
-  console.log('[Diagnosa Handler] Scraping diagnosa form...');
+  console.log('[Diagnosa Handler] Scraping diagnosa form...')
 
-  const result: Partial<DiagnosaFillPayload> = {};
+  const result: Partial<DiagnosaFillPayload> = {}
 
   // Try to get ICD-X
   for (const sel of FALLBACK_SELECTORS.icd_x) {
-    const el = document.querySelector(sel) as HTMLInputElement;
+    const el = document.querySelector(sel) as HTMLInputElement
     if (el && el.value) {
-      result.icd_x = el.value;
-      break;
+      result.icd_x = el.value
+      break
     }
   }
 
   // Try to get nama
   for (const sel of FALLBACK_SELECTORS.nama) {
-    const el = document.querySelector(sel) as HTMLInputElement | HTMLTextAreaElement;
+    const el = document.querySelector(sel) as HTMLInputElement | HTMLTextAreaElement
     if (el && el.value) {
-      result.nama = el.value;
-      break;
+      result.nama = el.value
+      break
     }
   }
 
   // Try to get jenis
   for (const sel of FALLBACK_SELECTORS.jenis) {
-    const el = document.querySelector(sel) as HTMLSelectElement;
+    const el = document.querySelector(sel) as HTMLSelectElement
     if (el && el.value) {
       // Map back to PRIMER/SEKUNDER
-      const val = el.value.toUpperCase();
+      const val = el.value.toUpperCase()
       if (val === '1' || val === 'PRIMER' || val === 'P') {
-        result.jenis = 'PRIMER';
+        result.jenis = 'PRIMER'
       } else if (val === '2' || val === 'SEKUNDER' || val === 'S') {
-        result.jenis = 'SEKUNDER';
+        result.jenis = 'SEKUNDER'
       }
-      break;
+      break
     }
   }
 
   // Try to get kasus
   for (const sel of FALLBACK_SELECTORS.kasus) {
-    const el = document.querySelector(sel) as HTMLSelectElement;
+    const el = document.querySelector(sel) as HTMLSelectElement
     if (el && el.value) {
       // Map back to BARU/LAMA
-      const val = el.value.toUpperCase();
+      const val = el.value.toUpperCase()
       if (val === '1' || val === 'BARU' || val === 'B') {
-        result.kasus = 'BARU';
+        result.kasus = 'BARU'
       } else if (val === '2' || val === 'LAMA' || val === 'L') {
-        result.kasus = 'LAMA';
+        result.kasus = 'LAMA'
       }
-      break;
+      break
     }
   }
 
   // Try to get prognosa
   for (const sel of FALLBACK_SELECTORS.prognosa) {
-    const el = document.querySelector(sel) as HTMLInputElement | HTMLTextAreaElement;
+    const el = document.querySelector(sel) as HTMLInputElement | HTMLTextAreaElement
     if (el && el.value) {
-      result.prognosa = el.value;
-      break;
+      result.prognosa = el.value
+      break
     }
   }
 
-  console.log('[Diagnosa Handler] Scraped data:', result);
-  return result;
+  console.log('[Diagnosa Handler] Scraped data:', result)
+  return result
 }
 
 // ============================================================================
@@ -1262,64 +1280,70 @@ export async function scrapeDiagnosaForm(): Promise<Partial<DiagnosaFillPayload>
  * Tries multiple strategies to extract names from page header, session info, or hidden fields
  */
 function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | null } {
-  const result = { dokter: null as string | null, perawat: null as string | null };
+  const result = { dokter: null as string | null, perawat: null as string | null }
 
   // Strategy 1: Look for names in RME header/info section
   // Common patterns in ePuskesmas: <div class="info-row">Dokter: dr. John Doe</div>
-  const headerTexts = Array.from(document.querySelectorAll('.info, .header-info, .patient-info, .rme-info, .form-info'));
+  const headerTexts = Array.from(
+    document.querySelectorAll('.info, .header-info, .patient-info, .rme-info, .form-info')
+  )
   for (const header of headerTexts) {
-    const text = header.textContent || '';
+    const text = header.textContent || ''
 
     // Match doctor name pattern: "Dokter: dr. Name" or "Dokter Pemeriksa: dr. Name"
-    const dokterMatch = text.match(/(?:Dokter|Dokter Pemeriksa)\s*:\s*([^\n,]+)/i);
+    const dokterMatch = text.match(/(?:Dokter|Dokter Pemeriksa)\s*:\s*([^\n,]+)/i)
     if (dokterMatch && dokterMatch[1]) {
-      result.dokter = dokterMatch[1].trim();
-      console.log('[Diagnosa Handler] Found doctor in header:', result.dokter);
+      result.dokter = dokterMatch[1].trim()
+      console.log('[Diagnosa Handler] Found doctor in header:', result.dokter)
     }
 
     // Match nurse name pattern: "Perawat: Name" or "Bidan: Name"
-    const perawatMatch = text.match(/(?:Perawat|Bidan)\s*:\s*([^\n,]+)/i);
+    const perawatMatch = text.match(/(?:Perawat|Bidan)\s*:\s*([^\n,]+)/i)
     if (perawatMatch && perawatMatch[1]) {
-      result.perawat = perawatMatch[1].trim();
-      console.log('[Diagnosa Handler] Found nurse in header:', result.perawat);
+      result.perawat = perawatMatch[1].trim()
+      console.log('[Diagnosa Handler] Found nurse in header:', result.perawat)
     }
   }
 
   // Strategy 2: Look for readonly/hidden fields with doctor/nurse names
   if (!result.dokter) {
-    const dokterHidden = document.querySelector('input[name*="dokter"][readonly], input[name*="dokter"][type="hidden"]') as HTMLInputElement;
+    const dokterHidden = document.querySelector(
+      'input[name*="dokter"][readonly], input[name*="dokter"][type="hidden"]'
+    ) as HTMLInputElement
     if (dokterHidden && dokterHidden.value) {
-      const sanitized = sanitizeStaffName(dokterHidden.value);
+      const sanitized = sanitizeStaffName(dokterHidden.value)
       if (sanitized) {
-        result.dokter = sanitized;
+        result.dokter = sanitized
       }
-      console.log('[Diagnosa Handler] Found doctor in hidden field:', result.dokter);
+      console.log('[Diagnosa Handler] Found doctor in hidden field:', result.dokter)
     }
   }
 
   if (!result.perawat) {
-    const perawatHidden = document.querySelector('input[name*="perawat"][readonly], input[name*="perawat"][type="hidden"], input[name*="bidan"][readonly], input[name*="bidan"][type="hidden"]') as HTMLInputElement;
+    const perawatHidden = document.querySelector(
+      'input[name*="perawat"][readonly], input[name*="perawat"][type="hidden"], input[name*="bidan"][readonly], input[name*="bidan"][type="hidden"]'
+    ) as HTMLInputElement
     if (perawatHidden && perawatHidden.value) {
-      const sanitized = sanitizeStaffName(perawatHidden.value);
+      const sanitized = sanitizeStaffName(perawatHidden.value)
       if (sanitized) {
-        result.perawat = sanitized;
+        result.perawat = sanitized
       }
-      console.log('[Diagnosa Handler] Found nurse in hidden field:', result.perawat);
+      console.log('[Diagnosa Handler] Found nurse in hidden field:', result.perawat)
     }
   }
 
   // Strategy 3: Look for names in session/user info spans/labels
   if (!result.dokter) {
-    const allText = Array.from(document.querySelectorAll('span, label, td, th'));
+    const allText = Array.from(document.querySelectorAll('span, label, td, th'))
     for (const el of allText) {
-      const text = el.textContent || '';
+      const text = el.textContent || ''
       if (text.toLowerCase().includes('dokter') && text.includes('dr.')) {
         // Extract doctor name: "dr. FirstName LastName"
-        const nameMatch = text.match(/(dr\.\s*[A-Za-z]+(?:\s+[A-Za-z]+)*)/i);
+        const nameMatch = text.match(/(dr\.\s*[A-Za-z]+(?:\s+[A-Za-z]+)*)/i)
         if (nameMatch) {
-          result.dokter = nameMatch[1].trim();
-          console.log('[Diagnosa Handler] Found doctor in text element:', result.dokter);
-          break;
+          result.dokter = nameMatch[1].trim()
+          console.log('[Diagnosa Handler] Found doctor in text element:', result.dokter)
+          break
         }
       }
     }
@@ -1327,30 +1351,34 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
 
   // Strategy 4: Look for current user name if logged in as doctor/nurse
   // ePuskesmas often shows "Selamat datang, dr. Name" or similar
-  const userNameEl = document.querySelector('.username, .user-name, .logged-in-user, .current-user');
+  const userNameEl = document.querySelector('.username, .user-name, .logged-in-user, .current-user')
   if (userNameEl) {
-    const userName = userNameEl.textContent?.trim() || '';
+    const userName = userNameEl.textContent?.trim() || ''
     if (userName.toLowerCase().startsWith('dr.') && !result.dokter) {
-      result.dokter = userName;
-      console.log('[Diagnosa Handler] Found doctor from user name:', result.dokter);
+      result.dokter = userName
+      console.log('[Diagnosa Handler] Found doctor from user name:', result.dokter)
     } else if (!result.perawat && userName && !userName.toLowerCase().startsWith('dr.')) {
-      result.perawat = userName;
-      console.log('[Diagnosa Handler] Found nurse from user name:', result.perawat);
+      result.perawat = userName
+      console.log('[Diagnosa Handler] Found nurse from user name:', result.perawat)
     }
   }
 
   // Strategy 5: Check localStorage/sessionStorage for cached user info
   try {
-    const storedDoctor = localStorage.getItem('epuskesmas_doctor_name') || sessionStorage.getItem('epuskesmas_doctor_name');
+    const storedDoctor =
+      localStorage.getItem('epuskesmas_doctor_name') ||
+      sessionStorage.getItem('epuskesmas_doctor_name')
     if (storedDoctor && !result.dokter) {
-      result.dokter = storedDoctor;
-      console.log('[Diagnosa Handler] Found doctor in storage:', result.dokter);
+      result.dokter = storedDoctor
+      console.log('[Diagnosa Handler] Found doctor in storage:', result.dokter)
     }
 
-    const storedNurse = localStorage.getItem('epuskesmas_nurse_name') || sessionStorage.getItem('epuskesmas_nurse_name');
+    const storedNurse =
+      localStorage.getItem('epuskesmas_nurse_name') ||
+      sessionStorage.getItem('epuskesmas_nurse_name')
     if (storedNurse && !result.perawat) {
-      result.perawat = storedNurse;
-      console.log('[Diagnosa Handler] Found nurse in storage:', result.perawat);
+      result.perawat = storedNurse
+      console.log('[Diagnosa Handler] Found nurse in storage:', result.perawat)
     }
   } catch {
     // Storage access may fail in some contexts
@@ -1359,33 +1387,41 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
   return {
     dokter: sanitizeStaffName(result.dokter),
     perawat: sanitizeStaffName(result.perawat),
-  };
+  }
 }
 
 /**
  * Try to find pre-filled doctor name in the diagnosis form itself
  */
 function findPrefilledDoctorName(): string | null {
-  const dokterInputs = Array.from(document.querySelectorAll('input[name*="dokter"], input[placeholder*="dokter"], input[placeholder*="Dokter"]'));
+  const dokterInputs = Array.from(
+    document.querySelectorAll(
+      'input[name*="dokter"], input[placeholder*="dokter"], input[placeholder*="Dokter"]'
+    )
+  )
   for (const input of dokterInputs) {
     if (input instanceof HTMLInputElement && input.value && input.value.trim()) {
-      const sanitized = sanitizeStaffName(input.value);
-      if (sanitized) return sanitized;
+      const sanitized = sanitizeStaffName(input.value)
+      if (sanitized) return sanitized
     }
   }
-  return null;
+  return null
 }
 
 /**
  * Try to find pre-filled nurse name in the diagnosis form itself
  */
 function findPrefilledNurseName(): string | null {
-  const perawatInputs = Array.from(document.querySelectorAll('input[name*="perawat"], input[name*="bidan"], input[placeholder*="perawat"], input[placeholder*="Perawat"], input[placeholder*="bidan"], input[placeholder*="Bidan"]'));
+  const perawatInputs = Array.from(
+    document.querySelectorAll(
+      'input[name*="perawat"], input[name*="bidan"], input[placeholder*="perawat"], input[placeholder*="Perawat"], input[placeholder*="bidan"], input[placeholder*="Bidan"]'
+    )
+  )
   for (const input of perawatInputs) {
     if (input instanceof HTMLInputElement && input.value && input.value.trim()) {
-      const sanitized = sanitizeStaffName(input.value);
-      if (sanitized) return sanitized;
+      const sanitized = sanitizeStaffName(input.value)
+      if (sanitized) return sanitized
     }
   }
-  return null;
+  return null
 }

@@ -12,7 +12,7 @@
  * @version 1.0.0
  */
 
-import type { VitalSigns } from '@/types/api';
+import type { VitalSigns } from '@/types/api'
 
 // =============================================================================
 // API CONFIGURATION
@@ -23,28 +23,28 @@ import type { VitalSigns } from '@/types/api';
  */
 export interface DeepSeekConfig {
   /** SiliconFlow API key */
-  apiKey: string;
+  apiKey: string
 
   /** API base URL */
-  baseUrl: string;
+  baseUrl: string
 
   /** Model identifier */
-  model: string;
+  model: string
 
   /** Maximum tokens for response */
-  maxTokens: number;
+  maxTokens: number
 
   /** Temperature (0.0-1.0) - lower = more deterministic */
-  temperature: number;
+  temperature: number
 
   /** Request timeout in milliseconds */
-  timeout: number;
+  timeout: number
 
   /** Number of retry attempts */
-  retryAttempts: number;
+  retryAttempts: number
 
   /** Delay between retries in milliseconds */
-  retryDelay: number;
+  retryDelay: number
 }
 
 /**
@@ -59,7 +59,7 @@ export const DEFAULT_DEEPSEEK_CONFIG: DeepSeekConfig = {
   timeout: 60000, // 60 seconds - reasoning models are slow
   retryAttempts: 2,
   retryDelay: 2000,
-};
+}
 
 // =============================================================================
 // REQUEST TYPES
@@ -69,23 +69,23 @@ export const DEFAULT_DEEPSEEK_CONFIG: DeepSeekConfig = {
  * Chat message format for DeepSeek API
  */
 export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
+  role: 'system' | 'user' | 'assistant'
+  content: string
 }
 
 /**
  * DeepSeek API request body
  */
 export interface DeepSeekRequest {
-  model: string;
-  messages: ChatMessage[];
-  max_tokens?: number;
-  temperature?: number;
-  top_p?: number;
-  stream?: boolean;
+  model: string
+  messages: ChatMessage[]
+  max_tokens?: number
+  temperature?: number
+  top_p?: number
+  stream?: boolean
   response_format?: {
-    type: 'text' | 'json_object';
-  };
+    type: 'text' | 'json_object'
+  }
 }
 
 /**
@@ -93,41 +93,41 @@ export interface DeepSeekRequest {
  */
 export interface AnonymizedClinicalContext {
   /** Chief complaint (keluhan utama) */
-  keluhan_utama: string;
+  keluhan_utama: string
 
   /** Additional complaints (keluhan tambahan) */
-  keluhan_tambahan?: string;
+  keluhan_tambahan?: string
 
   /** Patient age in years */
-  usia_tahun: number;
+  usia_tahun: number
 
   /** Patient gender */
-  jenis_kelamin: 'L' | 'P';
+  jenis_kelamin: 'L' | 'P'
 
   /** Vital signs if available */
-  vital_signs?: VitalSigns;
+  vital_signs?: VitalSigns
 
   /** Duration of illness */
   lama_sakit?: {
-    hari: number;
-    bulan: number;
-    tahun: number;
-  };
+    hari: number
+    bulan: number
+    tahun: number
+  }
 
   /** Known chronic diseases */
-  chronic_diseases?: string[];
+  chronic_diseases?: string[]
 
   /** Known allergies */
-  allergies?: string[];
+  allergies?: string[]
 
   /** Pregnancy status (for female patients) */
-  is_pregnant?: boolean;
+  is_pregnant?: boolean
 
   /** Physical examination findings */
-  pemeriksaan_fisik?: string;
+  pemeriksaan_fisik?: string
 
   /** Laboratory results if any */
-  lab_results?: string;
+  lab_results?: string
 }
 
 // =============================================================================
@@ -138,40 +138,40 @@ export interface AnonymizedClinicalContext {
  * DeepSeek API response
  */
 export interface DeepSeekResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: DeepSeekChoice[];
-  usage: DeepSeekUsage;
+  id: string
+  object: string
+  created: number
+  model: string
+  choices: DeepSeekChoice[]
+  usage: DeepSeekUsage
 }
 
 /**
  * DeepSeekChoice interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-02-04
  */
 
 export interface DeepSeekChoice {
-  index: number;
-  message: ChatMessage;
-  finish_reason: 'stop' | 'length' | 'content_filter' | null;
+  index: number
+  message: ChatMessage
+  finish_reason: 'stop' | 'length' | 'content_filter' | null
 }
 
 /**
  * DeepSeekUsage interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-02-04
  */
 
 export interface DeepSeekUsage {
-  prompt_tokens: number;
-  completion_tokens: number;
-  total_tokens: number;
+  prompt_tokens: number
+  completion_tokens: number
+  total_tokens: number
 }
 
 /**
@@ -179,25 +179,25 @@ export interface DeepSeekUsage {
  */
 export interface AIDiagnosisSuggestion {
   /** Rank (1-5) */
-  rank: number;
+  rank: number
 
   /** Diagnosis name in Indonesian */
-  diagnosis_name: string;
+  diagnosis_name: string
 
   /** ICD-10 code */
-  icd10_code: string;
+  icd10_code: string
 
   /** Confidence score (0.0-1.0) */
-  confidence: number;
+  confidence: number
 
   /** Clinical reasoning */
-  reasoning: string;
+  reasoning: string
 
   /** Red flags identified */
-  red_flags: string[];
+  red_flags: string[]
 
   /** Recommended actions */
-  recommended_actions: string[];
+  recommended_actions: string[]
 }
 
 /**
@@ -205,13 +205,13 @@ export interface AIDiagnosisSuggestion {
  */
 export interface AIResponseFormat {
   /** Diagnosis suggestions */
-  suggestions: AIDiagnosisSuggestion[];
+  suggestions: AIDiagnosisSuggestion[]
 
   /** Data quality note if input incomplete */
-  data_quality_note?: string;
+  data_quality_note?: string
 
   /** Reasoning chain (chain-of-thought) */
-  reasoning_chain?: string;
+  reasoning_chain?: string
 }
 
 /**
@@ -219,29 +219,29 @@ export interface AIResponseFormat {
  */
 export interface DeepSeekInferenceResult {
   /** Parsed suggestions */
-  suggestions: AIDiagnosisSuggestion[];
+  suggestions: AIDiagnosisSuggestion[]
 
   /** Raw response text */
-  raw_response: string;
+  raw_response: string
 
   /** Token usage */
   token_usage: {
-    input: number;
-    output: number;
-    total: number;
-  };
+    input: number
+    output: number
+    total: number
+  }
 
   /** Processing time in milliseconds */
-  latency_ms: number;
+  latency_ms: number
 
   /** Model version used */
-  model_version: string;
+  model_version: string
 
   /** Whether fallback was used */
-  used_fallback: boolean;
+  used_fallback: boolean
 
   /** Data quality notes */
-  data_quality_note?: string;
+  data_quality_note?: string
 }
 
 // =============================================================================
@@ -253,45 +253,40 @@ export interface DeepSeekInferenceResult {
  */
 export interface DeepSeekAPIError {
   error: {
-    message: string;
-    type: string;
-    code: string;
-    param?: string;
-  };
+    message: string
+    type: string
+    code: string
+    param?: string
+  }
 }
 
 /**
  * Custom error class for DeepSeek API errors
  */
 export class DeepSeekError extends Error {
-  public readonly code: string;
-  public readonly type: string;
-  public readonly statusCode?: number;
-  public readonly retryable: boolean;
+  public readonly code: string
+  public readonly type: string
+  public readonly statusCode?: number
+  public readonly retryable: boolean
 
-  constructor(
-    message: string,
-    code: string,
-    type: string,
-    statusCode?: number
-  ) {
-    super(message);
-    this.name = 'DeepSeekError';
-    this.code = code;
-    this.type = type;
-    this.statusCode = statusCode;
+  constructor(message: string, code: string, type: string, statusCode?: number) {
+    super(message)
+    this.name = 'DeepSeekError'
+    this.code = code
+    this.type = type
+    this.statusCode = statusCode
 
     // Determine if error is retryable
-    this.retryable = this.isRetryable();
+    this.retryable = this.isRetryable()
   }
 
   private isRetryable(): boolean {
     // Retry on server errors and rate limits
-    if (this.statusCode && this.statusCode >= 500) return true;
-    if (this.statusCode === 429) return true; // Rate limit
-    if (this.code === 'timeout') return true;
-    if (this.code === 'network_error') return true;
-    return false;
+    if (this.statusCode && this.statusCode >= 500) return true
+    if (this.statusCode === 429) return true // Rate limit
+    if (this.code === 'timeout') return true
+    if (this.code === 'network_error') return true
+    return false
   }
 }
 
@@ -309,7 +304,7 @@ export function isDeepSeekResponse(obj: unknown): obj is DeepSeekResponse {
     'id' in obj &&
     'choices' in obj &&
     Array.isArray((obj as DeepSeekResponse).choices)
-  );
+  )
 }
 
 /**
@@ -321,7 +316,7 @@ export function isDeepSeekAPIError(obj: unknown): obj is DeepSeekAPIError {
     obj !== null &&
     'error' in obj &&
     typeof (obj as DeepSeekAPIError).error === 'object'
-  );
+  )
 }
 
 /**
@@ -333,16 +328,16 @@ export function isAIResponseFormat(obj: unknown): obj is AIResponseFormat {
     obj !== null &&
     'suggestions' in obj &&
     Array.isArray((obj as AIResponseFormat).suggestions)
-  );
+  )
 }
 
 /**
  * Validate AI diagnosis suggestion structure
  */
 export function isValidAISuggestion(obj: unknown): obj is AIDiagnosisSuggestion {
-  if (typeof obj !== 'object' || obj === null) return false;
+  if (typeof obj !== 'object' || obj === null) return false
 
-  const suggestion = obj as AIDiagnosisSuggestion;
+  const suggestion = obj as AIDiagnosisSuggestion
 
   return (
     typeof suggestion.diagnosis_name === 'string' &&
@@ -350,5 +345,5 @@ export function isValidAISuggestion(obj: unknown): obj is AIDiagnosisSuggestion 
     typeof suggestion.confidence === 'number' &&
     suggestion.confidence >= 0 &&
     suggestion.confidence <= 1
-  );
+  )
 }

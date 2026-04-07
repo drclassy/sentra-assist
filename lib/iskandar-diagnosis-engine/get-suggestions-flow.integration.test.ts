@@ -1,8 +1,8 @@
 // Designed and constructed by Claudesy.
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DiagnosisRequestContext } from '@/types/api';
-import type { Encounter } from '~/utils/types';
-import { runGetSuggestionsFlow } from './get-suggestions-flow';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { DiagnosisRequestContext } from '@/types/api'
+import type { Encounter } from '~/utils/types'
+import { runGetSuggestionsFlow } from './get-suggestions-flow'
 
 vi.mock('./validation', () => ({
   runValidationPipeline: vi.fn(async (suggestions: unknown[]) => ({
@@ -13,7 +13,7 @@ vi.mock('./validation', () => ({
     unverified_codes: [],
     warnings: [],
   })),
-}));
+}))
 
 vi.mock('./audit-logger', () => ({
   auditLogger: {
@@ -24,7 +24,7 @@ vi.mock('./audit-logger', () => ({
   logSuggestionDisplayed: vi.fn(async () => undefined),
   logEngineError: vi.fn(async () => undefined),
   logFallbackUsed: vi.fn(async () => undefined),
-}));
+}))
 
 const buildEncounter = (): Encounter => ({
   id: 'enc-it-1',
@@ -53,15 +53,15 @@ const buildEncounter = (): Encounter => ({
     penyakit_kronis: ['diabetes'],
   },
   resep: [],
-});
+})
 
 describe('getSuggestions -> runDiagnosisEngine(v3) flow', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   it('returns v3-backed diagnosis payload with mapped fields', async () => {
-    const encounter = buildEncounter();
+    const encounter = buildEncounter()
     const context: DiagnosisRequestContext = {
       keluhan_utama: encounter.anamnesa.keluhan_utama,
       keluhan_tambahan: encounter.anamnesa.keluhan_tambahan,
@@ -78,34 +78,34 @@ describe('getSuggestions -> runDiagnosisEngine(v3) flow', () => {
       },
       chronic_diseases: ['diabetes'],
       allergies: ['penisilin'],
-    };
+    }
 
-    const response = await runGetSuggestionsFlow(encounter, context);
+    const response = await runGetSuggestionsFlow(encounter, context)
 
-    expect(response.success).toBe(true);
-    expect(response.data).toBeDefined();
-    expect(response.data?.meta?.model_version).toContain('IDE-V1');
-    expect(response.data?.diagnosis_suggestions.length).toBeGreaterThan(0);
+    expect(response.success).toBe(true)
+    expect(response.data).toBeDefined()
+    expect(response.data?.meta?.model_version).toContain('IDE-V1')
+    expect(response.data?.diagnosis_suggestions.length).toBeGreaterThan(0)
 
-    const first = response.data?.diagnosis_suggestions[0];
-    expect(first?.icd_x).toBeTruthy();
-    expect(first?.nama).toBeTruthy();
-    expect(Array.isArray(first?.recommended_actions)).toBe(true);
-  });
+    const first = response.data?.diagnosis_suggestions[0]
+    expect(first?.icd_x).toBeTruthy()
+    expect(first?.nama).toBeTruthy()
+    expect(Array.isArray(first?.recommended_actions)).toBe(true)
+  })
 
   it('returns explicit error when encounter lacks chief complaint', async () => {
-    const encounter = buildEncounter();
-    encounter.anamnesa.keluhan_utama = '';
+    const encounter = buildEncounter()
+    encounter.anamnesa.keluhan_utama = ''
 
     const context: DiagnosisRequestContext = {
       keluhan_utama: '',
       patient_age: 30,
       patient_gender: 'F',
-    };
+    }
 
-    const response = await runGetSuggestionsFlow(encounter, context);
+    const response = await runGetSuggestionsFlow(encounter, context)
 
-    expect(response.success).toBe(false);
-    expect(response.error?.code).toBe('MISSING_DATA');
-  });
-});
+    expect(response.success).toBe(false)
+    expect(response.error?.code).toBe('MISSING_DATA')
+  })
+})

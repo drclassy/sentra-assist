@@ -10,67 +10,67 @@
 // ============================================================================
 
 export interface Assessment {
-  id: string;
-  patientId: string;
-  timestamp: Date;
-  chiefComplaint: string;
-  historyOfPresentIllness: string;
-  reviewOfSystems: ReviewOfSystems;
-  physicalExam: PhysicalExam;
-  vitalSigns: VitalSigns;
+  id: string
+  patientId: string
+  timestamp: Date
+  chiefComplaint: string
+  historyOfPresentIllness: string
+  reviewOfSystems: ReviewOfSystems
+  physicalExam: PhysicalExam
+  vitalSigns: VitalSigns
 }
 
 export interface ReviewOfSystems {
-  constitutional: SystemReview;
-  heent: SystemReview;
-  cardiovascular: SystemReview;
-  respiratory: SystemReview;
-  gastrointestinal: SystemReview;
-  genitourinary: SystemReview;
-  musculoskeletal: SystemReview;
-  neurological: SystemReview;
-  psychiatric: SystemReview;
-  skin: SystemReview;
+  constitutional: SystemReview
+  heent: SystemReview
+  cardiovascular: SystemReview
+  respiratory: SystemReview
+  gastrointestinal: SystemReview
+  genitourinary: SystemReview
+  musculoskeletal: SystemReview
+  neurological: SystemReview
+  psychiatric: SystemReview
+  skin: SystemReview
 }
 
 export interface SystemReview {
-  status: 'positive' | 'negative' | 'not-assessed';
-  findings?: string[];
-  notes?: string;
+  status: 'positive' | 'negative' | 'not-assessed'
+  findings?: string[]
+  notes?: string
 }
 
 export interface PhysicalExam {
-  general: ExamSection;
-  vitalSigns: ExamSection;
-  heent: ExamSection;
-  cardiovascular: ExamSection;
-  respiratory: ExamSection;
-  abdomen: ExamSection;
-  extremities: ExamSection;
-  neurological: ExamSection;
-  skin: ExamSection;
+  general: ExamSection
+  vitalSigns: ExamSection
+  heent: ExamSection
+  cardiovascular: ExamSection
+  respiratory: ExamSection
+  abdomen: ExamSection
+  extremities: ExamSection
+  neurological: ExamSection
+  skin: ExamSection
 }
 
 export interface ExamSection {
-  normal: boolean;
-  findings?: string;
-  notes?: string;
+  normal: boolean
+  findings?: string
+  notes?: string
 }
 
 export interface VitalSigns {
   bloodPressure: {
-    systolic: number;
-    diastolic: number;
-    map?: number;
-  };
-  heartRate: number;
-  respiratoryRate: number;
-  temperature: number;
-  oxygenSaturation?: number;
-  glucose?: number;
-  weight?: number;
-  height?: number;
-  bmi?: number;
+    systolic: number
+    diastolic: number
+    map?: number
+  }
+  heartRate: number
+  respiratoryRate: number
+  temperature: number
+  oxygenSaturation?: number
+  glucose?: number
+  weight?: number
+  height?: number
+  bmi?: number
 }
 
 // ============================================================================
@@ -78,22 +78,22 @@ export interface VitalSigns {
 // ============================================================================
 
 export interface Diagnosis {
-  id: string;
-  icd10Code: string;
-  description: string;
-  confidence: number; // 0-1
-  differential: boolean;
-  reasoning: string;
-  supportingEvidence: string[];
-  createdAt: Date;
-  updatedAt?: Date;
+  id: string
+  icd10Code: string
+  description: string
+  confidence: number // 0-1
+  differential: boolean
+  reasoning: string
+  supportingEvidence: string[]
+  createdAt: Date
+  updatedAt?: Date
 }
 
 export interface DiagnosisSuggestion extends Diagnosis {
-  source: 'cdss' | 'manual' | 'api';
-  probability: number;
-  riskFactors?: string[];
-  redFlags?: string[];
+  source: 'cdss' | 'manual' | 'api'
+  probability: number
+  riskFactors?: string[]
+  redFlags?: string[]
 }
 
 // ============================================================================
@@ -101,43 +101,43 @@ export interface DiagnosisSuggestion extends Diagnosis {
 // ============================================================================
 
 export interface Therapy {
-  id: string;
-  type: 'medication' | 'procedure' | 'counseling' | 'referral';
-  name: string;
-  instructions: string;
-  contraindications: string[];
-  createdAt: Date;
+  id: string
+  type: 'medication' | 'procedure' | 'counseling' | 'referral'
+  name: string
+  instructions: string
+  contraindications: string[]
+  createdAt: Date
 }
 
 export interface Medication extends Therapy {
-  type: 'medication';
-  drugName: string;
-  genericName?: string;
-  dosage: string;
-  frequency: Frequency;
-  route: Route;
-  duration: Duration;
-  quantity: number;
-  refills?: number;
-  prn?: boolean;
-  prnInstructions?: string;
-  interactions?: DrugInteraction[];
+  type: 'medication'
+  drugName: string
+  genericName?: string
+  dosage: string
+  frequency: Frequency
+  route: Route
+  duration: Duration
+  quantity: number
+  refills?: number
+  prn?: boolean
+  prnInstructions?: string
+  interactions?: DrugInteraction[]
 }
 
-export type Frequency = 'QD' | 'BID' | 'TID' | 'QID' | 'Q4H' | 'Q6H' | 'Q8H' | 'PRN' | 'CUSTOM';
+export type Frequency = 'QD' | 'BID' | 'TID' | 'QID' | 'Q4H' | 'Q6H' | 'Q8H' | 'PRN' | 'CUSTOM'
 
-export type Route = 'PO' | 'IV' | 'IM' | 'SC' | 'TOP' | 'INH' | 'PR' | 'SL' | 'OTHER';
+export type Route = 'PO' | 'IV' | 'IM' | 'SC' | 'TOP' | 'INH' | 'PR' | 'SL' | 'OTHER'
 
 export interface Duration {
-  value: number;
-  unit: 'days' | 'weeks' | 'months' | 'ongoing';
+  value: number
+  unit: 'days' | 'weeks' | 'months' | 'ongoing'
 }
 
 export interface DrugInteraction {
-  severity: 'critical' | 'high' | 'moderate' | 'low';
-  interactingDrug: string;
-  effect: string;
-  recommendation: string;
+  severity: 'critical' | 'high' | 'moderate' | 'low'
+  interactingDrug: string
+  effect: string
+  recommendation: string
 }
 
 // ============================================================================
@@ -145,84 +145,84 @@ export interface DrugInteraction {
 // ============================================================================
 
 export interface WidgetBaseProps {
-  mode: 'widget' | 'fullpage';
-  onClick?: () => void;
-  className?: string;
+  mode: 'widget' | 'fullpage'
+  onClick?: () => void
+  className?: string
 }
 
 export interface AssessmentWidgetData {
-  chiefComplaint?: string;
-  symptoms?: string[];
-  vitalSigns?: VitalSigns;
-  emergencyFlags?: number;
+  chiefComplaint?: string
+  symptoms?: string[]
+  vitalSigns?: VitalSigns
+  emergencyFlags?: number
 }
 
 export interface DiagnosisWidgetData {
-  suggestions: DiagnosisSuggestion[];
-  confirmed?: Diagnosis[];
+  suggestions: DiagnosisSuggestion[]
+  confirmed?: Diagnosis[]
 }
 
 export interface TherapyWidgetData {
-  medications: Medication[];
-  procedures?: Therapy[];
-  counseling?: string[];
+  medications: Medication[]
+  procedures?: Therapy[]
+  counseling?: string[]
 }
 
 // ============================================================================
 // API Client Types
 // ============================================================================
 
-export type AdapterType = 'mock' | 'fhir' | 'hl7' | 'custom';
+export type AdapterType = 'mock' | 'fhir' | 'hl7' | 'custom'
 
 export interface MedlinkConfig {
-  adapterType: AdapterType;
-  apiEndpoint?: string;
-  apiKey?: string;
-  authToken?: string;
-  timeout?: number;
-  retryAttempts?: number;
+  adapterType: AdapterType
+  apiEndpoint?: string
+  apiKey?: string
+  authToken?: string
+  timeout?: number
+  retryAttempts?: number
 }
 
 export interface APICapabilities {
-  canFetchAssessment: boolean;
-  canFetchDiagnosis: boolean;
-  canFetchTherapy: boolean;
-  canSaveAssessment: boolean;
-  canSaveDiagnosis: boolean;
-  canSaveTherapy: boolean;
-  supportsRealtime: boolean;
+  canFetchAssessment: boolean
+  canFetchDiagnosis: boolean
+  canFetchTherapy: boolean
+  canSaveAssessment: boolean
+  canSaveDiagnosis: boolean
+  canSaveTherapy: boolean
+  supportsRealtime: boolean
   rateLimit?: {
-    requests: number;
-    perSeconds: number;
-  };
+    requests: number
+    perSeconds: number
+  }
 }
 
 export interface AuthToken {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt: Date;
-  tokenType: 'Bearer' | 'ApiKey';
+  accessToken: string
+  refreshToken?: string
+  expiresAt: Date
+  tokenType: 'Bearer' | 'ApiKey'
 }
 
 export interface APIResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: APIError;
-  metadata?: ResponseMetadata;
+  success: boolean
+  data?: T
+  error?: APIError
+  metadata?: ResponseMetadata
 }
 
 export interface APIError {
-  code: string;
-  message: string;
-  details?: unknown;
-  retryable: boolean;
+  code: string
+  message: string
+  details?: unknown
+  retryable: boolean
 }
 
 export interface ResponseMetadata {
-  requestId: string;
-  timestamp: Date;
-  source: 'api' | 'cache' | 'mock';
-  latency?: number;
+  requestId: string
+  timestamp: Date
+  source: 'api' | 'cache' | 'mock'
+  latency?: number
 }
 
 // ============================================================================
@@ -231,32 +231,32 @@ export interface ResponseMetadata {
 
 export interface MedlinkState {
   // Configuration
-  config: MedlinkConfig;
-  capabilities: APICapabilities | null;
-  connected: boolean;
+  config: MedlinkConfig
+  capabilities: APICapabilities | null
+  connected: boolean
 
   // Current encounter data
-  currentAssessment: Assessment | null;
-  currentDiagnoses: Diagnosis[];
-  currentTherapies: Therapy[];
+  currentAssessment: Assessment | null
+  currentDiagnoses: Diagnosis[]
+  currentTherapies: Therapy[]
 
   // UI state
-  activeView: 'dashboard' | 'assessment' | 'diagnosis' | 'therapy';
-  widgetLayout: WidgetLayout;
+  activeView: 'dashboard' | 'assessment' | 'diagnosis' | 'therapy'
+  widgetLayout: WidgetLayout
 
   // Sync state
-  lastSyncAt: Date | null;
-  syncInProgress: boolean;
-  syncErrors: string[];
+  lastSyncAt: Date | null
+  syncInProgress: boolean
+  syncErrors: string[]
 }
 
 export interface WidgetLayout {
-  columns: 1 | 2 | 3;
-  widgetOrder: WidgetType[];
-  collapsed: WidgetType[];
+  columns: 1 | 2 | 3
+  widgetOrder: WidgetType[]
+  collapsed: WidgetType[]
 }
 
-export type WidgetType = 'assessment' | 'diagnosis' | 'therapy' | 'vitals';
+export type WidgetType = 'assessment' | 'diagnosis' | 'therapy' | 'vitals'
 
 // ============================================================================
 // Integration with TTV System
@@ -264,11 +264,11 @@ export type WidgetType = 'assessment' | 'diagnosis' | 'therapy' | 'vitals';
 
 export interface TTVMedlinkBridge {
   // Convert TTV data to Medlink assessment
-  ttvToVitalSigns(ttvData: unknown): VitalSigns;
+  ttvToVitalSigns(ttvData: unknown): VitalSigns
 
   // Extract symptoms from TTV inference
-  extractSymptoms(symptomText: string): string[];
+  extractSymptoms(symptomText: string): string[]
 
   // Map emergency alerts to assessment flags
-  mapEmergencyAlerts(alerts: unknown[]): string[];
+  mapEmergencyAlerts(alerts: unknown[]): string[]
 }

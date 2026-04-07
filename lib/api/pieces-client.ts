@@ -4,32 +4,32 @@
  * Sentra Healthcare Artificial Intelligence
  */
 
-import * as Pieces from '@pieces.app/pieces-os-client';
-import { useSettingsStore } from '../settings-store';
-import type { PiecesSearchResponse, PiecesSnippet } from './pieces-types';
+import * as Pieces from '@pieces.app/pieces-os-client'
+import { useSettingsStore } from '../settings-store'
+import type { PiecesSearchResponse, PiecesSnippet } from './pieces-types'
 
 /**
  * Pieces API Client
  * Orchestrates interaction with Pieces OS local instance
  */
 export class PiecesClient {
-  private static instance: PiecesClient;
-  private config: Pieces.Configuration;
-  private assetsApi: Pieces.AssetsApi;
+  private static instance: PiecesClient
+  private config: Pieces.Configuration
+  private assetsApi: Pieces.AssetsApi
 
   private constructor() {
     this.config = new Pieces.Configuration({
       basePath: 'http://localhost:1000',
-    });
+    })
 
-    this.assetsApi = new Pieces.AssetsApi(this.config);
+    this.assetsApi = new Pieces.AssetsApi(this.config)
   }
 
   public static getInstance(): PiecesClient {
     if (!PiecesClient.instance) {
-      PiecesClient.instance = new PiecesClient();
+      PiecesClient.instance = new PiecesClient()
     }
-    return PiecesClient.instance;
+    return PiecesClient.instance
   }
 
   /**
@@ -37,10 +37,10 @@ export class PiecesClient {
    */
   public async saveClinicalSnippet(snippet: PiecesSnippet): Promise<string> {
     // Check configuration setting
-    const { enableContextualSaving } = useSettingsStore.getState().pieces;
+    const { enableContextualSaving } = useSettingsStore.getState().pieces
     if (!enableContextualSaving) {
-      console.log('[PiecesClient] Contextual saving disabled by user settings.');
-      return '';
+      console.log('[PiecesClient] Contextual saving disabled by user settings.')
+      return ''
     }
 
     try {
@@ -67,12 +67,12 @@ export class PiecesClient {
             },
           },
         },
-      });
+      })
 
-      return result.id;
+      return result.id
     } catch (error) {
-      console.error('[PiecesClient] Failed to save snippet:', error);
-      throw new Error('Pieces OS not reachable. Please ensure Pieces is running.');
+      console.error('[PiecesClient] Failed to save snippet:', error)
+      throw new Error('Pieces OS not reachable. Please ensure Pieces is running.')
     }
   }
 
@@ -85,24 +85,24 @@ export class PiecesClient {
       // Simplified version: listing assets if search is complex to implement immediately
       // Actually, Pieces search is usually prefix-based or through QGPT
 
-      const assets = await this.assetsApi.assetsSnapshot();
+      const assets = await this.assetsApi.assetsSnapshot()
 
       const filtered = assets.iterable
-        .filter((asset) => asset.name?.toLowerCase().includes(query.toLowerCase()))
-        .map((asset) => ({
+        .filter(asset => asset.name?.toLowerCase().includes(query.toLowerCase()))
+        .map(asset => ({
           id: asset.id,
           title: asset.name || 'Untitled Snippet',
           content: 'Content retrieval requires additional API calls per asset', // Placeholder
           classification: 'plaintext' as const,
-        }));
+        }))
 
       return {
         snippets: filtered as PiecesSnippet[],
         total: filtered.length,
-      };
+      }
     } catch (error) {
-      console.error('[PiecesClient] Search failed:', error);
-      return { snippets: [], total: 0 };
+      console.error('[PiecesClient] Search failed:', error)
+      return { snippets: [], total: 0 }
     }
   }
 
@@ -111,11 +111,11 @@ export class PiecesClient {
    */
   public async checkAvailability(): Promise<boolean> {
     try {
-      const wellKnown = new Pieces.WellKnownApi(this.config);
-      await wellKnown.getWellKnownHealth();
-      return true;
+      const wellKnown = new Pieces.WellKnownApi(this.config)
+      await wellKnown.getWellKnownHealth()
+      return true
     } catch {
-      return false;
+      return false
     }
   }
 
@@ -125,28 +125,28 @@ export class PiecesClient {
    */
   public async getRelevantContext(query: string, patientId?: string): Promise<string> {
     // Check configuration setting
-    const { enableAutoSuggestions } = useSettingsStore.getState().pieces;
+    const { enableAutoSuggestions } = useSettingsStore.getState().pieces
     if (!enableAutoSuggestions) {
-      console.log('[PiecesClient] Auto-suggestions disabled by user settings.');
-      return '';
+      console.log('[PiecesClient] Auto-suggestions disabled by user settings.')
+      return ''
     }
 
-    const response = await this.searchClinicalMemory(`${query} ${patientId || ''}`);
-    if (!response.snippets || response.snippets.length === 0) return '';
+    const response = await this.searchClinicalMemory(`${query} ${patientId || ''}`)
+    if (!response.snippets || response.snippets.length === 0) return ''
 
     // Synthesize top 3 snippets into a prompt-friendly string
     return response.snippets
       .slice(0, 3)
-      .map((s) => `- ${s.title}: ${s.content}`)
-      .join('\n');
+      .map(s => `- ${s.title}: ${s.content}`)
+      .join('\n')
   }
 
   /**
    * Alias for checkAvailability to match standard health check naming
    */
   public async isAvailable(): Promise<boolean> {
-    return this.checkAvailability();
+    return this.checkAvailability()
   }
 }
 
-export const piecesClient = PiecesClient.getInstance();
+export const piecesClient = PiecesClient.getInstance()

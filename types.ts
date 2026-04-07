@@ -6,15 +6,15 @@
  */
 
 export interface EncounterData {
-  patientId: string;
-  encounterId?: string;
-  timestamp: string;
-  complaint?: string;
-  history?: string[];
-  allergies?: string[];
+  patientId: string
+  encounterId?: string
+  timestamp: string
+  complaint?: string
+  history?: string[]
+  allergies?: string[]
   diagnosis?: {
-    code: string;
-    name: string;
-    type: 'Primary' | 'Secondary';
-  }[];
+    code: string
+    name: string
+    type: 'Primary' | 'Secondary'
+  }[]
 }

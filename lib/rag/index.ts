@@ -17,61 +17,52 @@
 // =============================================================================
 
 export type {
-  ICD10Entry,
   ICD10Chapter,
+  ICD10Entry,
   ICD10RawData,
-  RAGSearchResult,
-  RAGSearchOptions,
-  RAGMatchType,
-  RAGDatabaseStatus,
-  RAGDatabaseStats,
   LoaderProgress,
   LoaderProgressCallback,
+  PenyakitDatabase,
   // Penyakit.json types (144 Penyakit Puskesmas)
   PenyakitRawData,
-  PenyakitDatabase,
+  RAGDatabaseStats,
+  RAGDatabaseStatus,
+  RAGMatchType,
+  RAGSearchOptions,
+  RAGSearchResult,
   TerapiEntry,
-} from './types';
+} from './types'
 
 export {
   DEFAULT_SEARCH_OPTIONS,
-  PUSKESMAS_COMMON_CODES,
-  SYMPTOM_KEYWORDS,
   isICD10Entry,
   isRAGSearchResult,
   isValidICD10Code,
-} from './types';
+  PUSKESMAS_COMMON_CODES,
+  SYMPTOM_KEYWORDS,
+} from './types'
 
 // =============================================================================
 // DATABASE EXPORTS
 // =============================================================================
 
-export {
-  icd10DB,
-  initICD10Database,
-  isICD10DatabaseReady,
-} from './icd10-db';
+export { icd10DB, initICD10Database, isICD10DatabaseReady } from './icd10-db'
 
 // =============================================================================
 // LOADER EXPORTS
 // =============================================================================
 
-export {
-  ICD10Loader,
-  loadICD10Data,
-  needsDataLoad,
-  ensureICD10DataLoaded,
-} from './icd10-loader';
+export { ensureICD10DataLoaded, ICD10Loader, loadICD10Data, needsDataLoad } from './icd10-loader'
 
 // =============================================================================
 // SEARCH EXPORTS
 // =============================================================================
 
 export {
-  searchICD10,
-  searchForDiagnosisSuggestions,
-  verifyICD10Codes,
-  getICD10Details,
-  buildRAGContext,
   buildDetailedRAGContext,
-} from './icd10-search';
+  buildRAGContext,
+  getICD10Details,
+  searchForDiagnosisSuggestions,
+  searchICD10,
+  verifyICD10Codes,
+} from './icd10-search'

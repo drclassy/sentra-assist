@@ -23,142 +23,110 @@
 // ENGINE EXPORTS (Main Entry Point)
 // =============================================================================
 
+export type { CDSSAlert, CDSSEngineConfig, CDSSEngineResult, CDSSEngineStatus } from './engine'
 export {
-  runDiagnosisEngine,
-  initCDSSEngine,
-  getCDSSEngineStatus,
   DEFAULT_ENGINE_CONFIG,
-} from './engine';
-
-export type {
-  CDSSEngineResult,
-  CDSSAlert,
-  CDSSEngineConfig,
-  CDSSEngineStatus,
-} from './engine';
+  getCDSSEngineStatus,
+  initCDSSEngine,
+  runDiagnosisEngine,
+} from './engine'
 
 // =============================================================================
 // Iskandar Diagnosis Engine V1 MODULE EXPORTS
 // =============================================================================
 
+export type { EpiWeightResult } from './epidemiology-weights'
 export {
-  matchSymptoms,
-  getKBDiseaseCount,
-  clearMatcherCache,
-} from './symptom-matcher';
-
-export type { MatcherInput, MatchedCandidate } from './symptom-matcher';
-
-export {
-  getEpidemiologyWeight,
   applyEpidemiologyWeights,
-  getLocalEpidemiologyContext,
   getEpidemiologyMeta,
-} from './epidemiology-weights';
-
-export type { EpiWeightResult } from './epidemiology-weights';
-
-export { classifyTrafficLight } from './traffic-light';
-
-export type {
-  TrafficLightLevel,
-  TrafficLightInput,
-  TrafficLightOutput,
-} from './traffic-light';
-
-export { runLLMReasoning } from './llm-reasoner';
-
-export type {
-  ReasonerInput,
-  ReasonerOutput,
-} from './llm-reasoner';
+  getEpidemiologyWeight,
+  getLocalEpidemiologyContext,
+} from './epidemiology-weights'
+export type { ReasonerInput, ReasonerOutput } from './llm-reasoner'
+export { runLLMReasoning } from './llm-reasoner'
+export type { MatchedCandidate, MatcherInput } from './symptom-matcher'
+export { clearMatcherCache, getKBDiseaseCount, matchSymptoms } from './symptom-matcher'
+export type { TrafficLightInput, TrafficLightLevel, TrafficLightOutput } from './traffic-light'
+export { classifyTrafficLight } from './traffic-light'
 
 // =============================================================================
 // ANONYMIZER EXPORTS
 // =============================================================================
 
-export {
-  anonymize,
-  redactPII,
-  validateAnonymization,
-  containsPII,
-} from './anonymizer';
+export { anonymize, containsPII, redactPII, validateAnonymization } from './anonymizer'
 
 // =============================================================================
 // RED FLAG EXPORTS
 // =============================================================================
 
+export type { RedFlag, RedFlagContext } from './red-flags'
 export {
+  checkACS,
+  checkAnaphylaxis,
+  checkHypoglycemia,
+  checkPreeclampsia,
+  checkSepsis,
+  checkStroke,
   runRedFlagChecks,
   runRedFlagChecksFromContext,
-  checkSepsis,
-  checkACS,
-  checkPreeclampsia,
-  checkStroke,
-  checkHypoglycemia,
-  checkAnaphylaxis,
-} from './red-flags';
-
-export type { RedFlag, RedFlagContext } from './red-flags';
+} from './red-flags'
 
 // =============================================================================
 // VALIDATION EXPORTS
 // =============================================================================
 
-export { runValidationPipeline } from './validation';
+export { runValidationPipeline } from './validation'
 
 export type {
-  ValidationResult,
   ValidatedSuggestion,
-  ValidationFlag,
   ValidationContext,
-} from './validation/types';
+  ValidationFlag,
+  ValidationResult,
+} from './validation/types'
 
 // =============================================================================
 // AUDIT EXPORTS
 // =============================================================================
 
+export type { AuditAction, AuditEntry } from './audit-logger'
 export {
   auditLogger,
   logDiagnosisRequest,
-  logSuggestionDisplayed,
-  logSuggestionSelected,
-  logRedFlagShown,
   logEngineError,
   logFallbackUsed,
-} from './audit-logger';
-
-export type { AuditEntry, AuditAction } from './audit-logger';
+  logRedFlagShown,
+  logSuggestionDisplayed,
+  logSuggestionSelected,
+} from './audit-logger'
 
 // =============================================================================
 // CHRONIC DISEASE CLASSIFIER EXPORTS
 // =============================================================================
 
+export type {
+  BadgeConfig,
+  ChronicDiseaseClassification,
+  ChronicDiseaseSeverity,
+} from './chronic-disease-classifier'
 export {
+  ChronicDiseaseType,
   classifyChronicDisease,
   getBadgeConfig,
   getBadgeConfigForDisease,
-  isChronicDisease,
-  getSupportedDiseaseTypes,
   getDiseaseFullName,
-  ChronicDiseaseType,
-} from './chronic-disease-classifier';
-
-export type {
-  ChronicDiseaseSeverity,
-  ChronicDiseaseClassification,
-  BadgeConfig,
-} from './chronic-disease-classifier';
+  getSupportedDiseaseTypes,
+  isChronicDisease,
+} from './chronic-disease-classifier'
 
 // =============================================================================
 // DDI (DRUG-DRUG INTERACTION) CHECKER EXPORTS
 // =============================================================================
 
 export {
-  loadDDIDatabase,
-  getDDIStatus,
   checkDrugInteractions,
-  hasBlockingInteractions,
-  getSeverityLabel,
+  getDDIStatus,
   getSeverityColor,
-} from './ddi-checker';
+  getSeverityLabel,
+  hasBlockingInteractions,
+  loadDDIDatabase,
+} from './ddi-checker'

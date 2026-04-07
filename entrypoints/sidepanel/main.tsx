@@ -601,18 +601,47 @@ function App() {
     );
   }
 
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 1: LOGIN — completely separate full-page design
+  // ════════════════════════════════════════════════════════════════
+  if (!isLoggedIn) {
+    return (
+      <div className="sidepanel-shell view-transition">
+        <div className="sidepanel-shell__ambient" aria-hidden="true" />
+        <div className="sidepanel-shell__container">
+          <ConsoleLogin onLoginSuccess={handleLoginSuccess} />
+        </div>
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 2: DASHBOARD / WELCOME — completely separate full-page design
+  // ════════════════════════════════════════════════════════════════
+  if (showDashboard) {
+    return (
+      <div className="sidepanel-shell view-transition">
+        <div className="sidepanel-shell__ambient" aria-hidden="true" />
+        <div className="sidepanel-shell__container">
+          <DashboardView
+            user={authUser}
+            onLaunchConsole={handleLaunchConsole}
+            onLogout={handleLogout}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 3: CLINICAL UI — the main operational interface
+  // ════════════════════════════════════════════════════════════════
   return (
     <div key={`main-${activeTab}`} className="sidepanel-shell view-transition">
       <div className="sidepanel-shell__ambient" aria-hidden="true" />
 
-      {/* Power Button — always visible */}
-      <PowerButton isPowered={isPowered} onToggle={handlePowerToggle} />
-
       <div className="sidepanel-shell__container">
-        <div className={`sentra-card ${isPowered ? 'sentra-card--boot' : 'sentra-card--boot'}`}>
-          {/* Off overlay — dims card when powered off */}
-          <div className="off-overlay" />
-
+        <div className="sentra-card">
           <SidePanelHeader
             activeEngine={activeEngine}
             onEngineChange={handleEngineChange}
@@ -623,73 +652,53 @@ function App() {
             isLoadingPatient={isLoadingPatient}
             demographicStatus={demographicStatus}
             historyStatus={historyStatus}
-            bootMode
           />
 
-          <div className="console-divider" />
+          <section className="sidepanel-shell-content" aria-label="Konten side panel aktif">
+            <div className={activeTab === 'ttv' ? 'tab-panel-active' : 'tab-panel-hidden'}>
+              <Suspense fallback={<div className="ct-loading-bar">Memuat...</div>}>
+              <TTVInferenceUI
+                patientName={visiblePatientName}
+                patientGender={patientData.gender}
+                patientAge={patientData.age}
+                patientRM={patientData.rm}
+                patientDOB={patientData.dob}
+                patientBloodType={patientData.bloodType}
+                patientBPJSStatus={patientData.bpjsStatus}
+                patientKelurahan={patientData.kelurahan}
+                onComplete={handleTTVComplete}
+                onAlertsChange={handleAlertsChange}
+                showMaskedName={false}
+                ttvState={ttvState}
+                onTTVStateChange={setTTVState}
+                onRefreshPatient={fetchPatientData}
+                isLoadingPatient={isLoadingPatient}
+                onNavigateToTrajectory={() => setViewState('trajectory')}
+                onChronicHistoryChange={setPatientHistorySummary}
+                prefilledHistoryFlags={prefilledHistoryFlags}
+                extractedSpecialConditions={clinicalContext.specialConditions}
+                extractedPregnancyRisk={clinicalContext.pregnancyRisk}
+                extractedFacilityName={clinicalContext.facilityName}
+                extractedPayerLabel={clinicalContext.payerLabel}
+                extractedAllergies={clinicalContext.allergies}
+                extractedPregnancyStatus={clinicalContext.pregnancyStatus}
+                canonicalOutput={canonicalTrajectoryData}
+              />
+              </Suspense>
+            </div>
+            <div className={activeTab === 'emergency' ? 'tab-panel-active' : 'tab-panel-hidden'}>
+              <EmergencyDashboard alerts={emergencyAlerts} />
+            </div>
+            <div className={activeTab === 'agent' ? 'tab-panel-active' : 'tab-panel-hidden'}>
+              <AgentPanel />
+            </div>
+          </section>
 
-          {/* Phase 1: Login — visible when powered but not logged in */}
-          {!isLoggedIn && (
-            <ConsoleLogin isPowered={isPowered} onLoginSuccess={handleLoginSuccess} />
-          )}
-
-          {/* Phase 2: Dashboard — visible after login, before clinical */}
-          {isLoggedIn && showDashboard && (
-            <DashboardView
-              user={authUser}
-              onLaunchConsole={handleLaunchConsole}
-              onLogout={handleLogout}
-            />
-          )}
-
-          {/* Phase 3: Clinical content — visible after dashboard launch */}
-          <div className={`console-section--boot ${isLoggedIn && !showDashboard ? 'console-section--visible' : ''}`}>
-            <section className="sidepanel-shell-content" aria-label="Konten side panel aktif">
-              <div className={activeTab === 'ttv' ? 'tab-panel-active' : 'tab-panel-hidden'}>
-                <Suspense fallback={<div className="ct-loading-bar">Memuat...</div>}>
-                <TTVInferenceUI
-                  patientName={visiblePatientName}
-                  patientGender={patientData.gender}
-                  patientAge={patientData.age}
-                  patientRM={patientData.rm}
-                  patientDOB={patientData.dob}
-                  patientBloodType={patientData.bloodType}
-                  patientBPJSStatus={patientData.bpjsStatus}
-                  patientKelurahan={patientData.kelurahan}
-                  onComplete={handleTTVComplete}
-                  onAlertsChange={handleAlertsChange}
-                  showMaskedName={false}
-                  ttvState={ttvState}
-                  onTTVStateChange={setTTVState}
-                  onRefreshPatient={fetchPatientData}
-                  isLoadingPatient={isLoadingPatient}
-                  onNavigateToTrajectory={() => setViewState('trajectory')}
-                  onChronicHistoryChange={setPatientHistorySummary}
-                  prefilledHistoryFlags={prefilledHistoryFlags}
-                  extractedSpecialConditions={clinicalContext.specialConditions}
-                  extractedPregnancyRisk={clinicalContext.pregnancyRisk}
-                  extractedFacilityName={clinicalContext.facilityName}
-                  extractedPayerLabel={clinicalContext.payerLabel}
-                  extractedAllergies={clinicalContext.allergies}
-                  extractedPregnancyStatus={clinicalContext.pregnancyStatus}
-                  canonicalOutput={canonicalTrajectoryData}
-                />
-                </Suspense>
-              </div>
-              <div className={activeTab === 'emergency' ? 'tab-panel-active' : 'tab-panel-hidden'}>
-                <EmergencyDashboard alerts={emergencyAlerts} />
-              </div>
-              <div className={activeTab === 'agent' ? 'tab-panel-active' : 'tab-panel-hidden'}>
-                <AgentPanel />
-              </div>
-            </section>
-
-            <SidePanelFooter
-              workspace="Puskesmas Balowerti"
-              section={engineConfig[activeEngine].section}
-              loadingPatient={isLoadingPatient}
-            />
-          </div>
+          <SidePanelFooter
+            workspace="Puskesmas Balowerti"
+            section={engineConfig[activeEngine].section}
+            loadingPatient={isLoadingPatient}
+          />
         </div>
       </div>
     </div>

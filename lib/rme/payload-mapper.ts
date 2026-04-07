@@ -1,5 +1,6 @@
 // Designed and constructed by Claudesy.
 
+import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/constants/tenaga-medis'
 import { classifyChronicDisease } from '@/lib/iskandar-diagnosis-engine/chronic-disease-classifier'
 import type { TrajectoryAnalysis } from '@/lib/iskandar-diagnosis-engine/trajectory-analyzer'
 import stockDatabase from '@/public/data/stok_obat.json'
@@ -47,6 +48,13 @@ export interface RMETransferMapperInput {
   }
   trajectory?: TrajectoryAnalysis
   hasVisitHistory?: boolean
+  // Extended state from TTV form
+  spo2?: number
+  avpu?: 'A' | 'C' | 'V' | 'P' | 'U'
+  painScore?: number
+  disabilityType?: string
+  // Pre-built anamnesa from anamnesa-composer (overrides lama_sakit + riwayat_penyakit)
+  anamnesaDraftPayload?: Pick<AnamnesaFillPayload, 'lama_sakit' | 'riwayat_penyakit'>
 }
 
 /**
@@ -497,6 +505,204 @@ export function mapPregnancyStatusToBoolean(
   }
 }
 
+// ============================================================================
+// ANAMNESA EXTENDED — compute additional sections from TTV state
+// ============================================================================
+
+type AvpuValue = 'A' | 'C' | 'V' | 'P' | 'U'
+type KesadaranValue = 'COMPOS MENTIS' | 'SOMNOLEN' | 'SOPOR' | 'COMA'
+
+const AVPU_GCS_MAP: Record<AvpuValue, {
+  mata: '4' | '3' | '2' | '1'
+  verbal: '5' | '4' | '3' | '2' | '1'
+  motorik: '6' | '5' | '4' | '3' | '2' | '1'
+}> = {
+  A: { mata: '4', verbal: '5', motorik: '6' },
+  C: { mata: '4', verbal: '4', motorik: '6' },
+  V: { mata: '3', verbal: '3', motorik: '5' },
+  P: { mata: '2', verbal: '2', motorik: '4' },
+  U: { mata: '1', verbal: '1', motorik: '1' },
+}
+
+const AVPU_KESADARAN_MAP: Record<AvpuValue, KesadaranValue> = {
+  A: 'COMPOS MENTIS',
+  C: 'SOMNOLEN',
+  V: 'SOMNOLEN',
+  P: 'SOPOR',
+  U: 'COMA',
+}
+
+function buildPeriksaFisikExtended(
+  avpu: AvpuValue,
+  spo2: number,
+  disabilityType: string | undefined
+): AnamnesaFillPayload['periksa_fisik'] {
+  const gcs = AVPU_GCS_MAP[avpu]
+  const adl: '0' | '1' | '2' = disabilityType ? '1' : '0'
+  return {
+    gcs_membuka_mata: gcs.mata,
+    gcs_respon_verbal: gcs.verbal,
+    gcs_respon_motorik: gcs.motorik,
+    tinggi: 0,         // not captured — handler skips falsy
+    berat: 0,
+    lingkar_perut: 0,
+    imt: 0,
+    hasil_imt: 'Normal',
+    saturasi: spo2,
+    mobilisasi: adl,
+    toileting: adl,
+    makan_minum: adl,
+    mandi: adl,
+    berpakaian: adl,
+    aktifitas_fisik: disabilityType
+      ? `Keterbatasan fisik: ${disabilityType}`
+      : 'Pasien dapat beraktivitas secara mandiri',
+  }
+}
+
+function buildLainnyaFromMedications(
+  medications: MedicationRecommendation[],
+  keluhanUtama: string,
+  diagnosisNama?: string
+): AnamnesaFillPayload['lainnya'] {
+  const terapiObat =
+    medications.length > 0
+      ? medications.map((m) => `${m.nama_obat} ${m.dosis}`).join(', ')
+      : 'Sesuai advis dokter'
+
+  const dxLabel = diagnosisNama || 'kondisi pasien'
+  const edukasi = [
+    `Edukasi mengenai ${dxLabel} telah diberikan kepada pasien dan keluarga.`,
+    'Anjurkan istirahat cukup dan minum air putih minimal 2 liter per hari.',
+    'Kontrol kembali jika keluhan tidak membaik dalam 3 hari atau timbul gejala baru yang mengkhawatirkan.',
+    'Minum obat sesuai anjuran dokter dan jangan berhenti tanpa konsultasi.',
+  ].join(' ')
+
+  const keluhan = keluhanUtama.toLowerCase()
+  const askep = buildAskep(keluhan, dxLabel)
+  const tindakanKeperawatan = buildTindakanKeperawatan(keluhan)
+
+  return {
+    terapi: terapiObat,
+    terapi_non_obat: 'Istirahat cukup, minum air putih 2 liter/hari, diet sesuai anjuran dokter',
+    bmhp: 'Tidak ada',
+    merokok: '0',
+    konsumsi_alkohol: '0',
+    kurang_sayur_buah: '0',
+    edukasi,
+    askep,
+    observasi: 'Pantau tanda vital per 4-6 jam. Monitor respons terapi. Perhatikan perubahan kondisi klinis seperti penurunan kesadaran, nyeri memberat, atau gejala baru.',
+    keterangan: 'Pasien kooperatif, edukasi telah diberikan dan dipahami.',
+    biopsikososial: `Pasien dalam kondisi stabil secara biologis. Tidak ada gangguan psikologis yang bermakna. Dukungan keluarga baik. Kondisi sosial ekonomi cukup untuk mendukung proses penyembuhan terkait ${dxLabel}.`,
+    tindakan_keperawatan: tindakanKeperawatan,
+  }
+}
+
+function buildAskep(keluhan: string, dxLabel: string): string {
+  const lines: string[] = [`Asuhan keperawatan pada pasien dengan ${dxLabel}.`]
+  if (/batuk|sesak|nafas|pilek/.test(keluhan)) {
+    lines.push('Gangguan pola napas: observasi frekuensi dan kedalaman napas, posisikan semi-fowler.')
+  }
+  if (/nyeri|sakit/.test(keluhan)) {
+    lines.push('Nyeri akut: kaji skala nyeri, berikan posisi nyaman, kolaborasi analgetik sesuai advis.')
+  }
+  if (/mual|muntah|diare|perut/.test(keluhan)) {
+    lines.push('Gangguan keseimbangan cairan: monitor intake-output, anjurkan cairan oral adekuat.')
+  }
+  if (/demam|panas/.test(keluhan)) {
+    lines.push('Hipertermia: monitor suhu tubuh tiap 4 jam, kompres hangat, hidrasi adekuat.')
+  }
+  lines.push('Defisit pengetahuan: berikan edukasi tentang penyakit, pengobatan, dan pencegahan kambuh.')
+  return lines.join(' ')
+}
+
+function buildTindakanKeperawatan(keluhan: string): string {
+  const tindakan = [
+    'Mengukur dan mendokumentasikan tanda-tanda vital.',
+    'Melakukan anamnesis dan pengkajian fisik.',
+  ]
+  if (/batuk|sesak|nafas/.test(keluhan)) {
+    tindakan.push('Memposisikan pasien semi-fowler untuk memaksimalkan ekspansi paru.')
+  }
+  if (/demam|panas/.test(keluhan)) {
+    tindakan.push('Memberikan kompres hangat dan memantau suhu tubuh.')
+  }
+  if (/mual|muntah|diare/.test(keluhan)) {
+    tindakan.push('Memantau keseimbangan cairan dan elektrolit.')
+  }
+  tindakan.push('Memberikan edukasi kepada pasien dan keluarga.')
+  tindakan.push('Mendokumentasikan seluruh tindakan keperawatan.')
+  return tindakan.join(' ')
+}
+
+// Symptom → organ system mapping for keadaan_fisik
+const SYMPTOM_ORGAN_MAP: Array<{
+  keywords: RegExp
+  organs: (keyof NonNullable<AnamnesaFillPayload['keadaan_fisik']>)[]
+}> = [
+  { keywords: /batuk|sesak|nafas|dada|paru|ronkhi|wheezing/, organs: ['dada_punggung', 'kardiovaskuler'] },
+  { keywords: /pilek|hidung|ingus|bersin|sinus/, organs: ['hidung_sinus'] },
+  { keywords: /tenggorok|telan|suara|tonsil|amandel|faring/, organs: ['mulut_bibir', 'leher'] },
+  { keywords: /perut|mual|muntah|diare|nyeri perut|kembung|konstipasi|mulas|disentri/, organs: ['abdomen_perut'] },
+  { keywords: /mata|penglihatan|kabur|merah|konjungtiva/, organs: ['mata'] },
+  { keywords: /telinga|pendengaran|tuli|tinnitus/, organs: ['telinga'] },
+  { keywords: /kepala|pusing|vertigo|migren|sakit kepala/, organs: ['kepala'] },
+  { keywords: /kulit|gatal|ruam|bintik|eksim|dermatitis/, organs: ['kulit'] },
+  { keywords: /nyeri dada|jantung|berdebar/, organs: ['kardiovaskuler'] },
+  { keywords: /kaki|betis|lutut|pergelangan kaki|tungkai/, organs: ['ekstremitas_bawah'] },
+  { keywords: /tangan|lengan|siku|pergelangan tangan|jari/, organs: ['ekstremitas_atas'] },
+  { keywords: /leher|benjolan leher|tiroid/, organs: ['leher'] },
+]
+
+const ORGAN_NORMAL_FINDINGS: Record<
+  keyof NonNullable<AnamnesaFillPayload['keadaan_fisik']>,
+  NonNullable<AnamnesaFillPayload['keadaan_fisik']>[keyof NonNullable<AnamnesaFillPayload['keadaan_fisik']>]
+> = {
+  kepala: { inspeksi: 'Normocephal, tidak ada deformitas', palpasi: 'Tidak teraba massa, tidak ada nyeri tekan' },
+  wajah: { inspeksi: 'Simetris, tidak pucat, tidak ikterik', palpasi: 'Tidak ada nyeri tekan' },
+  mata: { inspeksi: 'Konjungtiva anemis (-/-), sklera ikterik (-/-), pupil isokor, refleks cahaya (+/+)' },
+  telinga: { inspeksi: 'Tidak ada discharge, membran timpani intak', palpasi: 'Tidak ada nyeri tekan mastoid' },
+  hidung_sinus: { inspeksi: 'Mukosa hidung tampak sedikit hiperemis, sekret minimal', palpasi_perkusi: 'Tidak ada nyeri tekan sinus paranasalis' },
+  mulut_bibir: { inspeksi_luar: 'Bibir tidak pucat, tidak kering, tidak sianosis', inspeksi_dalam: 'Mukosa mulut lembab, faring sedikit hiperemis, tonsil T1/T1' },
+  leher: { inspeksi: 'Tidak tampak pembesaran KGB, JVP tidak meningkat', auskultasi_karotis: 'Tidak terdengar bising karotis', palpasi_tiroid: 'Tidak teraba pembesaran tiroid', auskultasi_bising: 'Tidak ada bising pembuluh darah' },
+  kulit: { inspeksi: 'Turgor kulit baik, tidak ada ruam, tidak ikterik', palpasi: 'Akral hangat, CRT < 2 detik' },
+  kuku: { inspeksi: 'Tidak ada clubbing finger, tidak sianosis', palpasi: 'CRT < 2 detik' },
+  dada_punggung: { inspeksi: 'Gerakan dada simetris, tidak ada retraksi', palpasi: 'Vocal fremitus simetris, tidak ada nyeri tekan', perkusi: 'Sonor di seluruh lapang paru', auskultasi: 'Suara napas vesikuler, tidak ada rhonki, tidak ada wheezing' },
+  kardiovaskuler: { inspeksi: 'Iktus kordis tidak tampak', palpasi: 'Iktus kordis teraba di ICS 5 linea midklavikularis kiri', perkusi: 'Batas jantung dalam batas normal', auskultasi: 'S1 S2 reguler, tidak ada murmur, tidak ada gallop' },
+  dada_aksila: { inspeksi_dada: 'Simetris, tidak ada massa', palpasi_dada: 'Tidak ada nyeri tekan, tidak ada massa', inspeksi_palpasi_aksila: 'Tidak teraba pembesaran KGB aksila' },
+  abdomen_perut: { inspeksi: 'Perut datar, tidak tampak distensi, tidak ada massa yang menonjol', auskultasi: 'Bising usus normal (+) 5-10x/menit', perkusi_kuadran: 'Timpani di keempat kuadran', perkusi_hepar: 'Pekak hepar dalam batas normal', perkusi_limfa: 'Timpani, tidak ada splenomegali', perkusi_ginjal: 'Tidak ada nyeri ketuk ginjal kanan/kiri', palpasi_kuadran: 'Supel, tidak ada nyeri tekan, tidak teraba hepatomegali/splenomegali' },
+  ekstremitas_atas: { inspeksi: 'Tidak ada deformitas, tidak ada edema, tidak ada sianosis', palpasi: 'Tidak ada nyeri tekan, kekuatan otot baik, tonus otot normal' },
+  ekstremitas_bawah: { inspeksi: 'Tidak ada deformitas, tidak ada edema, tidak ada varises', palpasi: 'Tidak ada nyeri tekan, kekuatan otot baik, refleks fisiologis (+/+)' },
+}
+
+function buildKeadaanFisikFromKeluhan(
+  keluhanUtama: string
+): AnamnesaFillPayload['keadaan_fisik'] | undefined {
+  const keluhan = keluhanUtama.toLowerCase()
+  const activeOrgans = new Set<keyof NonNullable<AnamnesaFillPayload['keadaan_fisik']>>()
+
+  for (const { keywords, organs } of SYMPTOM_ORGAN_MAP) {
+    if (keywords.test(keluhan)) {
+      organs.forEach((o) => activeOrgans.add(o))
+    }
+  }
+
+  // Demam / lemas / infeksi → kepala + kulit always checked
+  if (/demam|panas|meriang|lemas|lemah|tidak enak badan/.test(keluhan)) {
+    activeOrgans.add('kepala')
+    activeOrgans.add('kulit')
+  }
+
+  if (activeOrgans.size === 0) return undefined
+
+  const result: Partial<NonNullable<AnamnesaFillPayload['keadaan_fisik']>> = {}
+  for (const organ of activeOrgans) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(result as any)[organ] = ORGAN_NORMAL_FINDINGS[organ]
+  }
+  return result as AnamnesaFillPayload['keadaan_fisik']
+}
+
 function buildAnamnesaPayload(input: RMETransferMapperInput): {
   payload: AnamnesaFillPayload
   reasonCodes: RMETransferReasonCode[]
@@ -507,13 +713,31 @@ function buildAnamnesaPayload(input: RMETransferMapperInput): {
 
   const keluhanUtama = input.keluhanUtama.trim() || 'Keluhan belum diisi'
   const vital = input.vitalSigns
+  const avpu = input.avpu ?? 'A'
+  const spo2 = input.spo2 ?? 0
+  const kesadaran = AVPU_KESADARAN_MAP[avpu]
+
+  // lama_sakit: prefer pre-built draft (has parsed duration), fallback to default
+  const lamaSakit = input.anamnesaDraftPayload?.lama_sakit ?? { thn: 0, bln: 0, hr: 1 }
 
   const payload: AnamnesaFillPayload = {
     keluhan_utama: keluhanUtama,
     keluhan_tambahan: input.keluhanTambahan?.trim() || keluhanUtama,
-    lama_sakit: { thn: 0, bln: 0, hr: 1 },
+    lama_sakit: lamaSakit,
     is_pregnant: pregnancy.is_pregnant,
     alergi: normalizeAllergies(input.allergies || []),
+
+    // riwayat_penyakit: from pre-built draft, always ensure RPK has a default
+    riwayat_penyakit: {
+      sekarang: input.anamnesaDraftPayload?.riwayat_penyakit?.sekarang
+        || input.keluhanTambahan?.trim()
+        || keluhanUtama,
+      dahulu: input.anamnesaDraftPayload?.riwayat_penyakit?.dahulu || '',
+      keluarga: input.anamnesaDraftPayload?.riwayat_penyakit?.keluarga
+        || 'Tidak ada riwayat penyakit serupa dalam keluarga yang diketahui.',
+    },
+
+    // vital_signs with AVPU-derived kesadaran
     ...(vital
       ? {
           vital_signs: {
@@ -523,18 +747,58 @@ function buildAnamnesaPayload(input: RMETransferMapperInput): {
             respirasi: vital.rr || 0,
             suhu: vital.temp || 0,
             gula_darah: vital.glucose,
-            kesadaran: 'COMPOS MENTIS' as const,
+            kesadaran,
           },
         }
       : {}),
-    ...(input.tenagaMedis?.dokterNama || input.tenagaMedis?.perawatNama
+
+    // periksa_fisik: GCS + SpO2 + ADL from AVPU + spo2 + disabilityType
+    periksa_fisik: buildPeriksaFisikExtended(avpu, spo2, input.disabilityType),
+
+    // assesmen_nyeri: from pain_score
+    ...(input.painScore !== undefined
       ? {
-          tenaga_medis: {
-            dokter_nama: input.tenagaMedis?.dokterNama || '',
-            perawat_nama: input.tenagaMedis?.perawatNama || '',
+          assesmen_nyeri: {
+            merasakan_nyeri: input.painScore > 0 ? '1' : '0',
+            skala_nyeri: input.painScore,
           },
         }
       : {}),
+
+    // resiko_jatuh: based on consciousness
+    resiko_jatuh: {
+      cara_berjalan: avpu === 'A' ? '0' : '1',
+      penopang: avpu === 'A' ? '0' : '1',
+    },
+
+    // status_psikososial: sensible clinical defaults
+    status_psikososial: {
+      alat_bantu_aktrifitas: input.disabilityType ? '1' : '0',
+      kendala_komunikasi: '0',
+      merawat_dirumah: '1',
+      membutuhkan_bantuan: input.disabilityType ? '1' : '0',
+      bahasa_digunakan: 'indonesia',
+      tinggal_dengan: 'lainnya',
+      sosial_ekonomi: 'cukup',
+      gangguan_jiwa_dimasa_lalu: '0',
+      status_ekonomi: 'cukup',
+    },
+
+    // lainnya: semua field termasuk askep, observasi, biopsikososial, tindakan keperawatan
+    lainnya: buildLainnyaFromMedications(
+      input.medications || [],
+      keluhanUtama,
+      input.diagnosis?.nama
+    ),
+
+    // keadaan_fisik: symptom-based organ system activation
+    keadaan_fisik: buildKeadaanFisikFromKeluhan(keluhanUtama),
+
+    // tenaga_medis — hardcoded per Chief directive
+    tenaga_medis: {
+      dokter_nama: DOKTER_NAMA,
+      perawat_nama: PERAWAT_NAMA,
+    },
   }
 
   return { payload, reasonCodes }
@@ -629,8 +893,8 @@ function buildResepPayload(input: RMETransferMapperInput): {
       },
       ajax: {
         ruangan: '',
-        dokter: input.tenagaMedis?.dokterNama || '',
-        perawat: input.tenagaMedis?.perawatNama || '',
+        dokter: DOKTER_NAMA,
+        perawat: PERAWAT_NAMA,
       },
       medications: mappedRows,
       prioritas: '0',

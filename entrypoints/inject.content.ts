@@ -12,6 +12,9 @@
  */
 
 import { riwayatDebugLog, riwayatDebugWarn } from '@/utils/debug-flags'
+import { createLogger } from '@/utils/logger'
+
+const mainWorldLog = createLogger('SentraMainWorld', 'content')
 
 export default defineContentScript({
   matches: ['*://*.epuskesmas.id/*'],
@@ -26,16 +29,15 @@ export default defineContentScript({
     const hasJQuery = typeof win.$ === 'function'
     const hasJQueryUI = hasJQuery && typeof (win.$ as { ui?: unknown }).ui === 'object'
 
-    console.log('[MainWorld] ✅ jQuery available?', hasJQuery)
-    console.log('[MainWorld] ✅ jQuery UI available?', hasJQueryUI)
+    mainWorldLog.debug('jQuery availability', { hasJQuery, hasJQueryUI })
 
     if (!hasJQuery) {
-      console.error(
+      mainWorldLog.error(
         '[MainWorld] ❌ CRITICAL: jQuery not available! Autocomplete filling will fail.'
       )
     }
     if (!hasJQueryUI) {
-      console.warn(
+      mainWorldLog.warn(
         '[MainWorld] ⚠️  WARNING: jQuery UI not detected. Autocomplete may not work properly.'
       )
     }
@@ -56,7 +58,7 @@ export default defineContentScript({
     }
 
     // Listen for trigger messages from isolated world content script
-    window.addEventListener('message', event => {
+    window.addEventListener('message', (event) => {
       // Only accept messages from same window (not iframes)
       if (event.source !== window) return
 
@@ -205,7 +207,7 @@ export default defineContentScript({
             )
           }, 1200)
         } catch (err) {
-          console.error(`[SentraMainWorld] Error calling showRiwayatPelayanan:`, err)
+          mainWorldLog.error('[SentraMainWorld] Error calling showRiwayatPelayanan', err)
           window.postMessage(
             {
               type: 'sentra-riwayat-result',
@@ -316,8 +318,8 @@ export default defineContentScript({
           })
 
           fetch(urlObj.toString(), { credentials: 'include' })
-            .then(r => r.text())
-            .then(text => {
+            .then((r) => r.text())
+            .then((text) => {
               window.postMessage(
                 {
                   type: 'sentra-native-fetch-response',
@@ -328,7 +330,7 @@ export default defineContentScript({
                 '*'
               )
             })
-            .catch(e => {
+            .catch((e) => {
               window.postMessage(
                 {
                   type: 'sentra-native-fetch-response',
@@ -448,7 +450,7 @@ export default defineContentScript({
 
             // Wait for dropdown to appear
             const result = await new Promise<{ success: boolean; selectedValue: string }>(
-              resolve => {
+              (resolve) => {
                 let resolved = false
 
                 // Listen for autocomplete select/response
@@ -538,7 +540,7 @@ export default defineContentScript({
       }
     }
 
-    window.addEventListener('message', async event => {
+    window.addEventListener('message', async (event) => {
       if (event.source !== window) return
       const msg = event.data
       if (!msg || typeof msg !== 'object') return
@@ -570,12 +572,12 @@ export default defineContentScript({
 
           // Delay between fields
           if (delayMs > 0) {
-            await new Promise(r => setTimeout(r, delayMs))
+            await new Promise((r) => setTimeout(r, delayMs))
           }
         }
 
-        const successCount = results.filter(r => r.success).length
-        const failCount = results.filter(r => !r.success).length
+        const successCount = results.filter((r) => r.success).length
+        const failCount = results.filter((r) => !r.success).length
         riwayatDebugLog(
           `[SentraMainWorld] Fill complete: ${successCount} success, ${failCount} failed`
         )

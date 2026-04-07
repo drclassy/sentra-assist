@@ -39,7 +39,7 @@ export class PiecesClient {
     // Check configuration setting
     const { enableContextualSaving } = useSettingsStore.getState().pieces
     if (!enableContextualSaving) {
-      console.log('[PiecesClient] Contextual saving disabled by user settings.')
+      console.warn('[PiecesClient] Contextual saving disabled by user settings.')
       return ''
     }
 
@@ -127,7 +127,7 @@ export class PiecesClient {
     // Check configuration setting
     const { enableAutoSuggestions } = useSettingsStore.getState().pieces
     if (!enableAutoSuggestions) {
-      console.log('[PiecesClient] Auto-suggestions disabled by user settings.')
+      console.warn('[PiecesClient] Auto-suggestions disabled by user settings.')
       return ''
     }
 

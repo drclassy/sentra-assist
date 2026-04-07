@@ -1,7 +1,7 @@
 // Architected and built by Claudesy.
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import react from 'eslint-plugin-react';
+import js from '@eslint/js'
+import react from 'eslint-plugin-react'
+import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   js.configs.recommended,
@@ -15,8 +15,32 @@ export default tseslint.config(
     rules: {
       ...react.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
     },
     settings: { react: { version: 'detect' } },
   },
-  { ignores: ['.output/**', '.wxt/**', 'node_modules/**', 'vscode-cursor-fix/**'] }
-);
+  {
+    // Logger implementation is allowed to use console directly
+    files: ['utils/logger.ts'],
+    rules: { 'no-console': 'off' },
+  },
+  {
+    ignores: [
+      '.output/**',
+      '.wxt/**',
+      'node_modules/**',
+      'vscode-cursor-fix/**',
+      'prototype/**',
+      'postcss.config.js',
+    ],
+  }
+)

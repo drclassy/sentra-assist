@@ -14,6 +14,8 @@ import type { FillResult } from '@/lib/filler/filler-core'
 import { fillAutocomplete, fillSelect, fillTextField } from '@/lib/filler/filler-core'
 import { fillViaMainWorld, type MainWorldFieldMapping } from '@/lib/filler/main-world-bridge'
 import { waitForElement } from '@/lib/scraper/dom-utils'
+import { createLogger } from '@/utils/logger'
+import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/constants/tenaga-medis'
 import type { AturanPakai, ResepFillPayload, ResepMedication } from '@/utils/types'
 
 // =============================================================================
@@ -67,6 +69,8 @@ interface ResepRowTelemetryEvent {
   message?: string
   timestamp: string
 }
+
+const resepLog = createLogger('ResepHandler', 'content')
 
 const STOCK_ALERT_SELECTORS = [
   '.alert',
@@ -183,7 +187,7 @@ function createRunId(): string {
 }
 
 function emitRowTelemetry(event: ResepRowTelemetryEvent): void {
-  console.info('[ResepHandler][Telemetry]', JSON.stringify(event))
+  resepLog.debug('Row telemetry', event)
 }
 
 function transitionRowState(
@@ -195,7 +199,7 @@ function transitionRowState(
 ): ResepRowState {
   const allowed = ROW_STATE_TRANSITIONS[current]
   if (!allowed.includes(next)) {
-    console.warn(`[ResepHandler] Invalid row state transition: ${current} -> ${next}`)
+    resepLog.warn('Invalid row state transition', { current, next, runId, rowIndex })
   }
   emitRowTelemetry({
     runId,
@@ -276,7 +280,7 @@ async function fillAturanPakaiField(selector: string, rawValue: unknown): Promis
 }
 
 function waitMs(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 function escapeRegex(value: string): string {
@@ -307,7 +311,7 @@ function hasIndexedResepLayout(): boolean {
     'input[name*="ResepDetail["][name*="[obat_nama]"]',
     'input[name*="resepdetail["][name*="[obat_nama]"]',
   ]
-  return probes.some(selector => Boolean(document.querySelector(selector)))
+  return probes.some((selector) => Boolean(document.querySelector(selector)))
 }
 
 function generateOrthographicMedicationVariants(rawValue: string): string[] {
@@ -424,7 +428,7 @@ function normalizeMedicationLabel(value: string): string {
 }
 
 function hasKeyword(text: string, keywords: string[]): boolean {
-  return keywords.some(keyword => text.includes(keyword))
+  return keywords.some((keyword) => text.includes(keyword))
 }
 
 function extractDoseMgValues(value: string): number[] {
@@ -465,8 +469,8 @@ function extractMedicationTokens(value: string): string[] {
   const stopwords = new Set(['mg', 'ml', 'tablet', 'tab', 'kaplet', 'kapsul', 'sirup', 'syrup'])
   return normalizeMedicationLabel(value)
     .split(' ')
-    .filter(token => token.length >= 3)
-    .filter(token => !stopwords.has(token))
+    .filter((token) => token.length >= 3)
+    .filter((token) => !stopwords.has(token))
 }
 
 /**
@@ -490,7 +494,7 @@ export function scoreMedicationNameCandidate(requestedName: string, candidate: s
   const requestedTokens = extractMedicationTokens(requestedName)
   const candidateTokens = extractMedicationTokens(candidate)
   if (requestedTokens.length > 0 && candidateTokens.length > 0) {
-    const overlap = requestedTokens.filter(token => candidateTokens.includes(token)).length
+    const overlap = requestedTokens.filter((token) => candidateTokens.includes(token)).length
     score += (overlap / requestedTokens.length) * 70
     if (overlap === 0) score -= 40
   }
@@ -505,8 +509,8 @@ export function scoreMedicationNameCandidate(requestedName: string, candidate: s
   const requestedMg = extractDoseMgValues(requestedName)
   const candidateMg = extractDoseMgValues(candidate)
   if (requestedMg.length > 0 && candidateMg.length > 0) {
-    const exact = requestedMg.some(expected =>
-      candidateMg.some(actual => Math.abs(actual - expected) < 0.5)
+    const exact = requestedMg.some((expected) =>
+      candidateMg.some((actual) => Math.abs(actual - expected) < 0.5)
     )
     if (exact) score += 24
     else score -= 18
@@ -532,7 +536,7 @@ export function rankMedicationNameCandidates(
 ): string[] {
   const unique = Array.from(new Set(rawCandidates.filter(Boolean)))
   const ranked = unique
-    .map(candidate => ({
+    .map((candidate) => ({
       candidate,
       score: scoreMedicationNameCandidate(requestedName, candidate),
     }))
@@ -540,7 +544,7 @@ export function rankMedicationNameCandidates(
       if (b.score !== a.score) return b.score - a.score
       return a.candidate.length - b.candidate.length
     })
-    .map(item => item.candidate)
+    .map((item) => item.candidate)
   return ranked.slice(0, 12)
 }
 
@@ -558,7 +562,7 @@ function isMedicationSelectionValid(actualValue: string, expectedValue: string):
     return actualNorm.includes(expectedNorm)
   }
 
-  return expectedTokens.some(token => actualNorm.includes(token))
+  return expectedTokens.some((token) => actualNorm.includes(token))
 }
 
 function isSameMedicationName(a: string, b: string): boolean {
@@ -614,9 +618,9 @@ export function extractMedicationNameFromStockAlert(text: string): string {
 function isVisibleElement(element: Element | null): element is HTMLElement {
   return Boolean(
     element instanceof HTMLElement &&
-      element.isConnected &&
-      !element.hasAttribute('disabled') &&
-      element.offsetParent !== null
+    element.isConnected &&
+    !element.hasAttribute('disabled') &&
+    element.offsetParent !== null
   )
 }
 
@@ -716,7 +720,7 @@ function findAddResepButton(): ResepAddControl | null {
   const candidates = collectCandidates(document)
 
   const best = candidates
-    .map(candidate => {
+    .map((candidate) => {
       const id = (candidate.id || '').toLowerCase()
       const className = (candidate.className || '').toLowerCase()
       const nearby = getNearbyContextText(candidate)
@@ -759,11 +763,11 @@ function isRenderableNotificationElement(element: Element | null): element is HT
 }
 
 function collectVisibleNotificationTexts(): string[] {
-  const notifications = STOCK_ALERT_SELECTORS.flatMap(selector =>
+  const notifications = STOCK_ALERT_SELECTORS.flatMap((selector) =>
     Array.from(document.querySelectorAll(selector))
   )
     .filter(isRenderableNotificationElement)
-    .map(element => element.textContent?.trim() || '')
+    .map((element) => element.textContent?.trim() || '')
     .filter(Boolean)
   return Array.from(new Set(notifications))
 }
@@ -775,7 +779,7 @@ function detectNewStockIssue(
 ): { hasIssue: boolean; alertText?: string } {
   const baseline = new Set(baselineNotifications)
   const current = collectVisibleNotificationTexts()
-  const freshAlerts = current.filter(text => !baseline.has(text))
+  const freshAlerts = current.filter((text) => !baseline.has(text))
   const inspectedAlerts = freshAlerts.length > 0 ? freshAlerts : current
   const selectedTokens = extractMedicationTokens(selectedName || attemptedCandidate)
 
@@ -791,7 +795,7 @@ function detectNewStockIssue(
     if (extractedNorm.includes(selectedNorm) || selectedNorm.includes(extractedNorm)) {
       return { hasIssue: true, alertText: text }
     }
-    if (selectedTokens.some(token => extractedNorm.includes(token))) {
+    if (selectedTokens.some((token) => extractedNorm.includes(token))) {
       return { hasIssue: true, alertText: text }
     }
   }
@@ -828,9 +832,9 @@ function countFilledMedicationDrafts(): number {
   ]
 
   return selectors
-    .flatMap(selector => Array.from(document.querySelectorAll(selector)))
+    .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
     .filter((el): el is HTMLInputElement => el instanceof HTMLInputElement)
-    .filter(input => input.value.trim().length > 0).length
+    .filter((input) => input.value.trim().length > 0).length
 }
 
 function hasNextRowInput(currentRowIndex: number): boolean {
@@ -1010,7 +1014,7 @@ export async function fillResepForm(payload: ResepFillPayload): Promise<{
   failed: FillResult[]
   skipped: string[]
 }> {
-  console.log('[ResepHandler] Starting fill cascade...')
+  console.warn('[ResepHandler] Starting fill cascade...')
 
   const result = {
     success: [] as FillResult[],
@@ -1083,23 +1087,21 @@ export async function fillResepForm(payload: ResepFillPayload): Promise<{
     }
 
     // 0b. Fill AJAX global fields through MAIN world bridge (jQuery-aware).
-    const ajaxMappings: MainWorldFieldMapping[] = []
-    if (payload.ajax?.dokter) {
-      ajaxMappings.push({
+    // Dokter/perawat hardcoded per Chief directive — always override payload.
+    const ajaxMappings: MainWorldFieldMapping[] = [
+      {
         selector: RESEP_FIELDS.dokter_nama_bpjs.selector,
-        value: payload.ajax.dokter,
+        value: DOKTER_NAMA,
         type: 'autocomplete',
         autocompleteTimeout: 4000,
-      })
-    }
-    if (payload.ajax?.perawat) {
-      ajaxMappings.push({
+      },
+      {
         selector: RESEP_FIELDS.perawat_nama.selector,
-        value: payload.ajax.perawat,
+        value: PERAWAT_NAMA,
         type: 'autocomplete',
         autocompleteTimeout: 4000,
-      })
-    }
+      },
+    ]
 
     if (ajaxMappings.length > 0) {
       const bridgeResult = await fillViaMainWorld(ajaxMappings, 25000, 220)
@@ -1137,7 +1139,7 @@ export async function fillResepForm(payload: ResepFillPayload): Promise<{
       const rowNum = i + 1
       let rowState: ResepRowState = 'init'
 
-      console.log(`[ResepHandler] Processing row ${rowNum}/${totalRows}: ${med.nama_obat}`)
+      console.warn(`[ResepHandler] Processing row ${rowNum}/${totalRows}: ${med.nama_obat}`)
 
       rowState = transitionRowState(runId, rowNum, rowState, 'row_ready', {
         message: `Row ${rowNum} started`,
@@ -1365,7 +1367,7 @@ export async function fillResepForm(payload: ResepFillPayload): Promise<{
       // STEP 9: Mandatory field validation
       const requiredCheck = await ensureRequiredRowFields(sel, med)
       if (!requiredCheck.ok) {
-        const reasonCode = requiredCheck.errors.some(item => item.includes('signa'))
+        const reasonCode = requiredCheck.errors.some((item) => item.includes('signa'))
           ? 'SIGNA_INVALID'
           : 'FORMULATION_MISMATCH'
         pushFailedResult(
@@ -1417,8 +1419,8 @@ export async function fillResepForm(payload: ResepFillPayload): Promise<{
     }
 
     const duration = Date.now() - startTime
-    console.log(`[ResepHandler] Fill cascade complete in ${duration}ms`)
-    console.log(
+    console.warn(`[ResepHandler] Fill cascade complete in ${duration}ms`)
+    console.warn(
       `[ResepHandler] Results: ${result.success.length} success, ${result.failed.length} failed, ${result.skipped.length} skipped`
     )
 
@@ -1449,7 +1451,7 @@ async function ensureRowExists(rowIndex: number): Promise<boolean> {
     return true
   }
 
-  console.log(`[ResepHandler] Adding new medication row ${rowIndex + 1}`)
+  console.warn(`[ResepHandler] Adding new medication row ${rowIndex + 1}`)
   const clicked = await clickAddResepButton()
   if (!clicked) {
     console.warn(`[ResepHandler] Could not add row ${rowIndex + 1} - add button not found`)
@@ -1458,7 +1460,7 @@ async function ensureRowExists(rowIndex: number): Promise<boolean> {
 
   const newRow = document.querySelector(sel.obat_nama)
   if (newRow) {
-    console.log(`[ResepHandler] Row ${rowIndex + 1} added successfully`)
+    console.warn(`[ResepHandler] Row ${rowIndex + 1} added successfully`)
     return true
   }
 
@@ -1474,7 +1476,7 @@ async function ensureRowExists(rowIndex: number): Promise<boolean> {
  * Scrape current values from Resep form
  */
 export async function scrapeResepForm(): Promise<ScrapedResepData> {
-  console.log('[ResepHandler] Scraping resep form...')
+  console.warn('[ResepHandler] Scraping resep form...')
 
   await waitForElement(RESEP_FIELDS.alergi.selector, 3000)
 
@@ -1542,7 +1544,7 @@ export async function scrapeResepForm(): Promise<ScrapedResepData> {
     data.medications.push(med)
   }
 
-  console.log(`[ResepHandler] Scraped ${data.medications.length} medication rows`)
+  console.warn(`[ResepHandler] Scraped ${data.medications.length} medication rows`)
   return data
 }
 
@@ -1554,7 +1556,7 @@ export async function scrapeResepForm(): Promise<ScrapedResepData> {
  * Called from content script when page is detected as resep
  */
 export function initResepPage(): void {
-  console.log('[ResepHandler] Page handler initialized')
+  console.warn('[ResepHandler] Page handler initialized')
 }
 
 export const __resepInternals = {

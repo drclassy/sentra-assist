@@ -36,6 +36,7 @@ import type {
   PharmacotherapyExplainability,
   PrescriptionRequestContext,
 } from '@/types/api'
+import { createLogger } from '@/utils/logger'
 import {
   buildMockDiagnosisResponse,
   buildMockPrescriptionResponse,
@@ -65,6 +66,7 @@ const FEATURE_DIAGNOSIS_AI = import.meta.env.VITE_FEATURE_DIAGNOSIS_AI !== 'fals
 const FEATURE_PRESCRIPTION_AI = import.meta.env.VITE_FEATURE_PRESCRIPTION_AI !== 'false'
 const FEATURE_DDI_CHECK = import.meta.env.VITE_FEATURE_DDI_CHECK !== 'false'
 const FEATURE_PEDIATRIC_DOSE = import.meta.env.VITE_FEATURE_PEDIATRIC_DOSE !== 'false'
+const apiLog = createLogger('SentraAPI', 'global')
 
 // =============================================================================
 // LOGGING
@@ -72,7 +74,7 @@ const FEATURE_PEDIATRIC_DOSE = import.meta.env.VITE_FEATURE_PEDIATRIC_DOSE !== '
 
 function log(message: string, data?: unknown): void {
   if (DEBUG) {
-    console.log(`[SentraAPI] ${message}`, data || '')
+    apiLog.debug(message, data || '')
   }
 }
 
@@ -112,11 +114,11 @@ function buildKnowledgeCandidateCodes(code: string): string[] {
   ])
 
   if (/^I2[0-4]/.test(normalized)) {
-    FKTP_PRIORITY_KNOWLEDGE_CODES.ischemic.forEach(item => candidates.add(item))
+    FKTP_PRIORITY_KNOWLEDGE_CODES.ischemic.forEach((item) => candidates.add(item))
   } else if (/^I1[0-6]/.test(normalized)) {
-    FKTP_PRIORITY_KNOWLEDGE_CODES.hypertension.forEach(item => candidates.add(item))
+    FKTP_PRIORITY_KNOWLEDGE_CODES.hypertension.forEach((item) => candidates.add(item))
   } else if (/^E1[0-4]/.test(normalized)) {
-    FKTP_PRIORITY_KNOWLEDGE_CODES.diabetes.forEach(item => candidates.add(item))
+    FKTP_PRIORITY_KNOWLEDGE_CODES.diabetes.forEach((item) => candidates.add(item))
   }
 
   return Array.from(candidates).filter(Boolean)
@@ -130,7 +132,7 @@ function rankKnowledgeDetail(
   const code = detail.code.toUpperCase()
   let score = 0
 
-  const candidateIndex = candidateCodes.findIndex(candidate => candidate.toUpperCase() === code)
+  const candidateIndex = candidateCodes.findIndex((candidate) => candidate.toUpperCase() === code)
   if (candidateIndex >= 0) {
     score += Math.max(30, 90 - candidateIndex * 8)
   }
@@ -145,7 +147,7 @@ function pickBestKnowledgeDetail(
   base3: string
 ): KnowledgeTherapyDetail | null {
   const withTherapy = details.filter(
-    detail => Array.isArray(detail.terapi) && detail.terapi.length > 0
+    (detail) => Array.isArray(detail.terapi) && detail.terapi.length > 0
   )
   if (withTherapy.length === 0) return null
 
@@ -174,7 +176,7 @@ async function resolveKnowledgeTherapyDetail(
       boost_common: true,
     })
     const codeSearchBest = pickBestKnowledgeDetail(
-      codeSearchResults.map(result => result.entry),
+      codeSearchResults.map((result) => result.entry),
       candidateCodes,
       base3
     )
@@ -196,7 +198,7 @@ async function resolveKnowledgeTherapyDetail(
       15
     )
     const complaintBest = pickBestKnowledgeDetail(
-      complaintResults.map(result => result.entry),
+      complaintResults.map((result) => result.entry),
       candidateCodes,
       base3
     )
@@ -217,7 +219,7 @@ async function buildKnowledgePrescriptionResponse(
     return null
   }
 
-  const medications = detail.terapi.slice(0, 5).map(item => ({
+  const medications = detail.terapi.slice(0, 5).map((item) => ({
     nama_obat: item.obat,
     dosis: item.frek || item.dosis || '-',
     aturan_pakai: deriveAturanPakai(item.obat),
@@ -351,8 +353,9 @@ function classifyMedicationRole(
   medication: CDSSResponse['medication_recommendations'][number]
 ): MedicationComponentRole {
   const normalized = normalizeDrugName(medication.nama_obat)
-  if (VITAMIN_MEDICATION_KEYWORDS.some(keyword => normalized.includes(keyword))) return 'vitamin'
-  if (ADJUVANT_MEDICATION_KEYWORDS.some(keyword => normalized.includes(keyword))) return 'adjuvant'
+  if (VITAMIN_MEDICATION_KEYWORDS.some((keyword) => normalized.includes(keyword))) return 'vitamin'
+  if (ADJUVANT_MEDICATION_KEYWORDS.some((keyword) => normalized.includes(keyword)))
+    return 'adjuvant'
   return 'utama'
 }
 
@@ -419,7 +422,7 @@ function enforceMedicationComposition(
   const tryAppendCandidate = (candidate: CuratedMedicationCandidate): boolean => {
     if (composed.length >= 5) return false
     const normalizedName = normalizeDrugName(candidate.medication.nama_obat)
-    if (composed.some(item => normalizeDrugName(item.nama_obat) === normalizedName)) return false
+    if (composed.some((item) => normalizeDrugName(item.nama_obat) === normalizedName)) return false
     const blockReason = getMedicationSafetyBlockReason(candidate.medication.nama_obat, context)
     if (blockReason) {
       drivers.push(
@@ -518,29 +521,29 @@ const PREGNANCY_KEYWORDS = [
 ]
 
 function isHighPriorityFktpCode(icdCode: string): boolean {
-  return HIGH_PRIORITY_FKTP_PATTERNS.some(pattern => pattern.test(icdCode.toUpperCase().trim()))
+  return HIGH_PRIORITY_FKTP_PATTERNS.some((pattern) => pattern.test(icdCode.toUpperCase().trim()))
 }
 
 function isCardiacEmergencyCode(icdCode: string): boolean {
-  return CARDIAC_EMERGENCY_PATTERNS.some(pattern => pattern.test(icdCode.toUpperCase().trim()))
+  return CARDIAC_EMERGENCY_PATTERNS.some((pattern) => pattern.test(icdCode.toUpperCase().trim()))
 }
 
 function matchAllergyCluster(medicationName: string, allergies: string[]): string | null {
   if (!allergies.length) return null
   const normalizedMedication = normalizeDrugName(medicationName)
-  const normalizedAllergies = allergies.map(item => normalizeDrugName(item)).filter(Boolean)
+  const normalizedAllergies = allergies.map((item) => normalizeDrugName(item)).filter(Boolean)
 
   for (const allergy of normalizedAllergies) {
     if (allergy.length >= 4 && normalizedMedication.includes(allergy)) return allergy
   }
 
   for (const [cluster, aliases] of Object.entries(SAFETY_ALLERGY_MAP)) {
-    const allergyMatch = normalizedAllergies.some(allergy => {
+    const allergyMatch = normalizedAllergies.some((allergy) => {
       if (allergy.includes(cluster)) return true
-      return aliases.some(alias => allergy.includes(alias))
+      return aliases.some((alias) => allergy.includes(alias))
     })
     if (!allergyMatch) continue
-    if (aliases.some(alias => normalizedMedication.includes(alias))) return cluster
+    if (aliases.some((alias) => normalizedMedication.includes(alias))) return cluster
   }
 
   return null
@@ -554,7 +557,7 @@ function isPregnancyContext(context: PrescriptionRequestContext): boolean {
       .filter(Boolean)
       .join(' ')
   )
-  return PREGNANCY_KEYWORDS.some(keyword => narrative.includes(keyword))
+  return PREGNANCY_KEYWORDS.some((keyword) => narrative.includes(keyword))
 }
 
 function getMedicationSafetyBlockReason(
@@ -575,7 +578,7 @@ function getMedicationSafetyBlockReason(
     return `diblok oleh safety filter karena SBP ${context.vital_signs.systolic} mmHg (< 90)`
   }
   if (
-    SAFETY_ALLERGY_MAP.beta_blocker.some(keyword => normalizedMedication.includes(keyword)) &&
+    SAFETY_ALLERGY_MAP.beta_blocker.some((keyword) => normalizedMedication.includes(keyword)) &&
     typeof context.vital_signs?.heart_rate === 'number' &&
     context.vital_signs.heart_rate < 50
   ) {
@@ -583,7 +586,7 @@ function getMedicationSafetyBlockReason(
   }
   if (
     isPregnancyContext(context) &&
-    SAFETY_ACE_ARB_KEYWORDS.some(keyword => normalizedMedication.includes(keyword))
+    SAFETY_ACE_ARB_KEYWORDS.some((keyword) => normalizedMedication.includes(keyword))
   ) {
     return 'diblok oleh safety filter karena kontraindikasi ACE inhibitor/ARB pada kehamilan'
   }
@@ -601,7 +604,7 @@ function applyMedicationSafetyFilter(
 } {
   const alerts: CDSSAlert[] = []
   const blockedDrivers: string[] = []
-  const filtered = medications.filter(medication => {
+  const filtered = medications.filter((medication) => {
     const reason = getMedicationSafetyBlockReason(medication.nama_obat, context)
     if (!reason) return true
     alerts.push({
@@ -627,7 +630,7 @@ function ensureHighPriorityEscalationAlert(
   if (!isCardiacEmergencyCode(normalizedCode)) return
 
   const hasEscalation = responseData.alerts.some(
-    alert => alert.type === 'red_flag' && alert.severity === 'emergency'
+    (alert) => alert.type === 'red_flag' && alert.severity === 'emergency'
   )
   if (hasEscalation) return
 
@@ -775,7 +778,7 @@ async function withRetry<T>(
 
     if (attempt < maxRetries) {
       log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delayMs}ms`)
-      await new Promise(resolve => setTimeout(resolve, delayMs * attempt))
+      await new Promise((resolve) => setTimeout(resolve, delayMs * attempt))
     }
   }
 
@@ -895,7 +898,7 @@ export const SentraAPI = {
         pipelineDrivers.push('Knowledge-based therapy gagal dieksekusi.')
       }
 
-      reasonerPlan = await generatePharmacotherapyPlan(context).catch(error => {
+      reasonerPlan = await generatePharmacotherapyPlan(context).catch((error) => {
         reasonerWarnings.push(
           error instanceof Error
             ? `Syndrome-intent reasoner gagal dijalankan: ${error.message}`
@@ -965,7 +968,7 @@ export const SentraAPI = {
       responseData.medication_recommendations = safetyResult.filtered
       responseData.alerts.push(...safetyResult.alerts)
       if (safetyResult.blockedDrivers.length > 0) {
-        pipelineDrivers.push(...safetyResult.blockedDrivers.map(line => `Safety filter: ${line}`))
+        pipelineDrivers.push(...safetyResult.blockedDrivers.map((line) => `Safety filter: ${line}`))
       }
 
       if (responseData.medication_recommendations.length === 0 && pathway !== 'legacy-fallback') {
@@ -1065,13 +1068,13 @@ export const SentraAPI = {
       if (context.current_medications && context.current_medications.length > 0) {
         const allDrugs = [
           ...context.current_medications,
-          ...responseData.medication_recommendations.map(m => m.nama_obat),
+          ...responseData.medication_recommendations.map((m) => m.nama_obat),
         ]
         const interactions = checkMockDDI(allDrugs)
 
         if (interactions.length > 0) {
           responseData.drug_interactions = interactions
-          interactions.forEach(i => {
+          interactions.forEach((i) => {
             if (i.severity === 'contraindicated' || i.severity === 'major') {
               responseData.alerts.push({
                 id: `ddi-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -1155,7 +1158,7 @@ export const SentraAPI = {
     if (USE_MOCK) {
       log('Using mock response for allergy check')
       const alerts = generateAllergyAlerts(
-        request.medications.map(m => ({
+        request.medications.map((m) => ({
           nama_obat: m,
           dosis: '',
           aturan_pakai: 'Sesudah makan' as const,

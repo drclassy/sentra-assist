@@ -1,58 +1,66 @@
 @tailwind components;
 
+/* Tokens live in style.css :root (imported before this file) */
+
 @layer components {
-  .sentra-card {
-    @apply bg-ace-carbon-700 border border-glow shadow-neu-card;
+  .sidepanel-shell {
+    @apply bg-[var(--bg-body)] text-[var(--text-main)] min-h-screen font-sans antialiased;
   }
 
-  .sentra-card::before {
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  .sentra-card {
+    @apply bg-[var(--bg-card)] border border-[var(--border-glow)] rounded-xl overflow-hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .sentra-card--inset {
+    @apply bg-[var(--bg-inset)] border border-[var(--border-subtle)] rounded-lg;
+  }
+
+  .sentra-card--elevated {
+    @apply bg-[var(--bg-elevated)] border border-[var(--accent-med)] rounded-xl;
+    box-shadow: 0 0 15px var(--accent-glow-soft);
   }
 
   .engine-btn {
-    @apply bg-ace-carbon-700 text-ace-silver border border-subtle shadow-neu-btn;
+    @apply bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border-subtle)] rounded-lg px-3 py-1.5 text-[10px] font-semibold tracking-wider;
     transition: all 0.2s ease;
   }
 
   .engine-btn:hover {
-    @apply text-ace-platinum;
-    border-color: rgba(255, 255, 255, 0.12);
-    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.6), -1px -1px 3px rgba(255, 255, 255, 0.05);
-  }
-
-  .engine-btn:active {
-    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.5), inset -1px -1px 2px rgba(255, 255, 255, 0.02);
-    transform: translateY(1px);
+    @apply text-[var(--text-main)];
+    border-color: var(--border-glow);
+    transform: translateY(-1px);
   }
 
   .engine-btn.active {
-    @apply text-ace-platinum border-medical;
-    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  }
-
-  .status-bar,
-  .workspace-info {
-    @apply bg-ace-carbon-800 border border-subtle;
+    @apply text-[var(--text-main)] border-[var(--accent-med)];
+    background: rgba(16, 185, 129, 0.05);
   }
 
   .neu-input {
-    @apply bg-ace-carbon-800 border border-subtle shadow-neu-inset;
-    color: var(--text-input);
-    caret-color: var(--accent-med);
-    transition: color 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .neu-input::placeholder {
-    @apply text-ace-silver;
+    @apply bg-[var(--bg-inset)] border border-[var(--border-subtle)] rounded-lg px-4 py-3 w-full;
+    @apply text-[var(--text-main)] placeholder-[var(--text-muted)];
+    box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(255, 255, 255, 0.02);
+    transition: all 0.2s ease;
   }
 
   .neu-input:focus {
-    @apply outline-none;
-    border-color: rgba(255, 255, 255, 0.2);
-    background-color: #0d0e10 !important;
-    box-shadow:
-      inset 2px 2px 4px rgba(0, 0, 0, 0.4),
-      inset -1px -1px 2px rgba(255, 255, 255, 0.02),
-      0 0 0 1px rgba(16, 185, 129, 0.16);
+    @apply outline-none border-[rgba(255,255,255,0.2)];
+    background-color: #0d0e10;
+  }
+
+  .cta-primary {
+    @apply bg-white text-black font-bold py-3 px-6 rounded-lg text-center w-full;
+    @apply transition-all duration-200 ease-in-out;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+  }
+
+  .cta-primary:hover {
+    @apply transform -translate-y-[2px];
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
+  }
+
+  .cta-primary:active {
+    @apply transform translate-y-0 scale-95 opacity-90;
   }
 }

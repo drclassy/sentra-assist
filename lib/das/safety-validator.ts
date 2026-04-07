@@ -270,7 +270,7 @@ export function logSafetyDecision(
   }
 
   // Log to console (can be extended to send to analytics)
-  console.log('[DAS:Safety] Decision:', logEntry)
+  console.warn('[DAS:Safety] Decision:', logEntry)
 
   // Store in session for debugging (optional)
   try {

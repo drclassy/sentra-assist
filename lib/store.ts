@@ -415,7 +415,7 @@ export const useEncounterStore = create<EncounterState>((set, get) => ({
 
     try {
       await browser.storage.local.set({ [STORAGE_KEY]: dataToSave })
-      console.log('[Store] State saved to browser.storage.local')
+      console.warn('[Store] State saved to browser.storage.local')
     } catch (error) {
       console.error('[Store] Failed to save state:', error)
     }
@@ -435,13 +435,13 @@ export const useEncounterStore = create<EncounterState>((set, get) => ({
         | undefined
 
       if (!savedState) {
-        console.log('[Store] No saved state found')
+        console.warn('[Store] No saved state found')
         return
       }
 
       // Check expiry
       if (isTimestampExpired(savedState.meta.expiresAt)) {
-        console.log('[Store] Saved state expired, clearing...')
+        console.warn('[Store] Saved state expired, clearing...')
         await browser.storage.local.remove(STORAGE_KEY)
         return
       }
@@ -455,7 +455,7 @@ export const useEncounterStore = create<EncounterState>((set, get) => ({
         meta: savedState.meta,
       })
 
-      console.log('[Store] State loaded from browser.storage.local')
+      console.warn('[Store] State loaded from browser.storage.local')
     } catch (error) {
       console.error('[Store] Failed to load state:', error)
     }

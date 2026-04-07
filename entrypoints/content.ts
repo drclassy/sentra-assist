@@ -110,7 +110,7 @@ export default defineContentScript({
         'undefined',
         '-',
       ]
-      if (blocked.some(item => lower === item)) return false
+      if (blocked.some((item) => lower === item)) return false
       if (role === 'dokter' && lower.includes('perawat')) return false
       return true
     }
@@ -329,32 +329,44 @@ export default defineContentScript({
             // Use direct handler for anamnesa/TTV - DO NOT require currentPage match
             contentLog.debug('Content script received anamnesa fill request')
             contentLog.debug('Current page =', currentPage)
-            contentLog.debug(
-              'Payload.encounter =',
-              JSON.stringify(payload.encounter).substring(0, 200)
-            )
+            contentLog.debug('Anamnesa payload received', {
+              hasEncounter: Boolean(payload.encounter),
+              keys:
+                payload.encounter && typeof payload.encounter === 'object'
+                  ? Object.keys(payload.encounter).slice(0, 10)
+                  : [],
+            })
             debug('Using direct Anamnesa handler with payload')
             const result = await fillAnamnesaForm(
               payload.encounter as unknown as AnamnesaFillPayload
             )
-            contentLog.debug('fillAnamnesaForm result =', JSON.stringify(result).substring(0, 300))
+            contentLog.debug('fillAnamnesaForm completed', {
+              successCount: Array.isArray((result as { success?: unknown }).success)
+                ? (result as { success: unknown[] }).success.length
+                : 0,
+              failedCount: Array.isArray((result as { failed?: unknown }).failed)
+                ? (result as { failed: unknown[] }).failed.length
+                : 0,
+            })
             return result
           }
 
           if (payload.type === 'diagnosa') {
             // Use direct handler for diagnosa/ICD-10 - DO NOT require currentPage match
-            console.warn('🚨 [SENTRA DIAGNOSA] Content script received execFill for diagnosa')
-            console.warn('🚨 [SENTRA DIAGNOSA] Payload:', payload.encounter)
+            contentLog.warn('Diagnosa fill request received')
             contentLog.debug('[SentraContent] Routing to fillDiagnosaForm')
             debug('Using Diagnosa handler with DAS integration')
             const result = await fillDiagnosaForm(
               payload.encounter as unknown as DiagnosaFillPayload
             )
-            console.warn('🚨 [SENTRA DIAGNOSA] Fill result:', result)
-            contentLog.debug(
-              '[SentraContent] fillDiagnosaForm result:',
-              JSON.stringify(result).substring(0, 300)
-            )
+            contentLog.debug('[SentraContent] fillDiagnosaForm completed', {
+              successCount: Array.isArray((result as { success?: unknown }).success)
+                ? (result as { success: unknown[] }).success.length
+                : 0,
+              failedCount: Array.isArray((result as { failed?: unknown }).failed)
+                ? (result as { failed: unknown[] }).failed.length
+                : 0,
+            })
             return result
           }
 
@@ -461,7 +473,7 @@ export default defineContentScript({
         }> = []
 
         // Scan all inputs
-        document.querySelectorAll('input, textarea, select').forEach(el => {
+        document.querySelectorAll('input, textarea, select').forEach((el) => {
           const input = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
           fields.push({
             tag: el.tagName.toLowerCase(),
@@ -619,7 +631,7 @@ export default defineContentScript({
         // Method 0: PRIORITY - Read direct "Penyakit Kronis" field from RME
         // ========================================
         const allElements = Array.from(document.querySelectorAll<HTMLElement>('body *'))
-        const chronicLabelElement = allElements.find(element => {
+        const chronicLabelElement = allElements.find((element) => {
           const text = element.textContent?.trim().toLowerCase() || ''
           return text === 'penyakit kronis'
         })
@@ -640,19 +652,17 @@ export default defineContentScript({
             candidateTexts.add(parentSibling.textContent.trim())
           }
 
-          parent
-            ?.querySelectorAll<HTMLElement>('span, div, p, td, a, button')
-            .forEach(node => {
-              const text = node.textContent?.trim()
-              if (text && text.toLowerCase() !== 'penyakit kronis') {
-                candidateTexts.add(text)
-              }
-            })
+          parent?.querySelectorAll<HTMLElement>('span, div, p, td, a, button').forEach((node) => {
+            const text = node.textContent?.trim()
+            if (text && text.toLowerCase() !== 'penyakit kronis') {
+              candidateTexts.add(text)
+            }
+          })
 
-          Array.from(candidateTexts).forEach(rawText => {
+          Array.from(candidateTexts).forEach((rawText) => {
             const normalizedText = rawText.toLowerCase()
-            directChronicMappings.forEach(mapping => {
-              if (mapping.patterns.some(pattern => normalizedText.includes(pattern))) {
+            directChronicMappings.forEach((mapping) => {
+              if (mapping.patterns.some((pattern) => normalizedText.includes(pattern))) {
                 pushDirectHistory(mapping.shortLabel, rawText, mapping.code)
               }
             })
@@ -702,7 +712,7 @@ export default defineContentScript({
               const matches = cellText.match(icdPattern)
 
               if (matches) {
-                matches.forEach(code => {
+                matches.forEach((code) => {
                   const baseCode = code.split('.')[0]
                   if (!foundCodes.has(baseCode)) {
                     foundCodes.add(baseCode)
@@ -735,9 +745,9 @@ export default defineContentScript({
         if (history.length === 0) {
           debug('Fallback: scanning all tables...')
           const tables = document.querySelectorAll('table')
-          tables.forEach(table => {
+          tables.forEach((table) => {
             const rows = table.querySelectorAll('tr')
-            rows.forEach(row => {
+            rows.forEach((row) => {
               const rowText = row.textContent || ''
               const cells = row.querySelectorAll('td')
 
@@ -746,7 +756,7 @@ export default defineContentScript({
                 const matches = cellText.match(icdPattern)
 
                 if (matches) {
-                  matches.forEach(code => {
+                  matches.forEach((code) => {
                     const baseCode = code.split('.')[0]
                     if (!foundCodes.has(baseCode)) {
                       foundCodes.add(baseCode)
@@ -815,7 +825,7 @@ export default defineContentScript({
           const matches = pageText.match(icdPattern)
 
           if (matches) {
-            matches.forEach(code => {
+            matches.forEach((code) => {
               const baseCode = code.split('.')[0]
               if (!foundCodes.has(baseCode)) {
                 foundCodes.add(baseCode)
@@ -846,40 +856,44 @@ export default defineContentScript({
         debug('Scanning clinical context from page...')
 
         const cleanCandidateValue = (rawValue: string, labels: string[]): string => {
-          const normalizedLabels = labels.map(label => label.toLowerCase())
-          return rawValue
-            .replace(/\s+/g, ' ')
-            .trim()
-            .replace(/\s*:\s*/g, ': ')
-            .split('|')
-            .map(item => item.trim())
-            .find(item => {
-              const normalized = item.toLowerCase()
-              if (!normalized || normalized.length > 180) return false
-              if (normalizedLabels.includes(normalized)) return false
-              if (normalizedLabels.some(label => normalized === `${label}:`)) return false
-              if (/^(warna|status|icdx|icd x|icd-?x)$/i.test(normalized)) return false
-              return true
-            }) || ''
+          const normalizedLabels = labels.map((label) => label.toLowerCase())
+          return (
+            rawValue
+              .replace(/\s+/g, ' ')
+              .trim()
+              .replace(/\s*:\s*/g, ': ')
+              .split('|')
+              .map((item) => item.trim())
+              .find((item) => {
+                const normalized = item.toLowerCase()
+                if (!normalized || normalized.length > 180) return false
+                if (normalizedLabels.includes(normalized)) return false
+                if (normalizedLabels.some((label) => normalized === `${label}:`)) return false
+                if (/^(warna|status|icdx|icd x|icd-?x)$/i.test(normalized)) return false
+                return true
+              }) || ''
+          )
         }
 
         const readLabeledValue = (labelInput: string | string[]): string => {
           const labels = Array.isArray(labelInput) ? labelInput : [labelInput]
           const allElements = Array.from(document.querySelectorAll<HTMLElement>('body *'))
           const candidates = new Set<string>()
-          const normalizedLabels = labels.map(label => label.toLowerCase())
-          const labelElements = allElements.filter(element => {
+          const normalizedLabels = labels.map((label) => label.toLowerCase())
+          const labelElements = allElements.filter((element) => {
             const text = element.textContent?.replace(/\s+/g, ' ').trim().toLowerCase() || ''
-            return normalizedLabels.some(label => text === label || text === `${label}:`)
+            return normalizedLabels.some((label) => text === label || text === `${label}:`)
           })
 
-          labelElements.forEach(labelElement => {
+          labelElements.forEach((labelElement) => {
             const parent = labelElement.parentElement
             const sibling = labelElement.nextElementSibling as HTMLElement | null
             const parentSibling = parent?.nextElementSibling as HTMLElement | null
             const row = labelElement.closest('tr')
             const rowCells = row ? Array.from(row.querySelectorAll<HTMLElement>('td, th')) : []
-            const labelIndex = rowCells.findIndex(cell => cell === labelElement || cell.contains(labelElement))
+            const labelIndex = rowCells.findIndex(
+              (cell) => cell === labelElement || cell.contains(labelElement)
+            )
 
             if (sibling?.innerText?.trim()) {
               candidates.add(sibling.innerText.trim())
@@ -898,7 +912,7 @@ export default defineContentScript({
 
             parent
               ?.querySelectorAll<HTMLElement>('span, div, p, td, a, button, strong, small')
-              .forEach(node => {
+              .forEach((node) => {
                 const text = node.innerText?.trim()
                 if (text) {
                   candidates.add(text)
@@ -907,7 +921,7 @@ export default defineContentScript({
           })
 
           const pageText = document.body.innerText.replace(/\s+/g, ' ')
-          normalizedLabels.forEach(label => {
+          normalizedLabels.forEach((label) => {
             const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
             const regex = new RegExp(`${escaped}\\s*:?\\s*([^\\n\\r|]{1,80})`, 'i')
             const match = pageText.match(regex)
@@ -917,7 +931,7 @@ export default defineContentScript({
           })
 
           const cleaned = Array.from(candidates)
-            .map(candidate => cleanCandidateValue(candidate, labels))
+            .map((candidate) => cleanCandidateValue(candidate, labels))
             .find(Boolean)
 
           return cleaned || ''
@@ -926,14 +940,16 @@ export default defineContentScript({
         const parseList = (rawValue: string): string[] =>
           rawValue
             .split(/\n|,|;|\|/g)
-            .map(item => item.trim())
+            .map((item) => item.trim())
             .filter(Boolean)
-            .filter(item => !/^warna$/i.test(item) && !/^status$/i.test(item) && !/^icd/i.test(item))
+            .filter(
+              (item) => !/^warna$/i.test(item) && !/^status$/i.test(item) && !/^icd/i.test(item)
+            )
 
         const normalizeAllergyList = (items: string[]): string[] => {
           const mapped = new Set<string>()
 
-          items.forEach(item => {
+          items.forEach((item) => {
             const normalized = item.toLowerCase()
             if (normalized.includes('makanan')) mapped.add('Makanan')
             if (normalized.includes('kulit')) mapped.add('Kulit')
@@ -1041,7 +1057,7 @@ export default defineContentScript({
           // Wait up to 2s for sidebar to load (lazy AJAX)
           if (!sidebarContainer || sidebarContainer.innerHTML.trim().length < 50) {
             d('SIDEBAR_WAIT: waiting 2s for lazy load...')
-            await new Promise(r => setTimeout(r, 2000))
+            await new Promise((r) => setTimeout(r, 2000))
             sidebarContainer = document.querySelector('#data_riwayat, .tab-riwayat')
             d(
               `SIDEBAR_AFTER_WAIT: ${sidebarContainer ? `FOUND len=${sidebarContainer.innerHTML.length}` : 'STILL_NOT_FOUND'}`
@@ -1051,7 +1067,7 @@ export default defineContentScript({
           // === STEP 1: DOM PROBE — find ALL riwayat-related anchors ===
           const allAnchors = document.querySelectorAll('a')
           const riwayatAnchors = Array.from(allAnchors).filter(
-            a =>
+            (a) =>
               a.className.includes('riwayat') ||
               a.getAttribute('onclick')?.toLowerCase().includes('riwayat') ||
               (a.getAttribute('data-id') && a.closest('.tab-riwayat, #data_riwayat'))
@@ -1114,7 +1130,7 @@ export default defineContentScript({
             return ''
           }
 
-          const candidates = uniqueLinks.map(a => {
+          const candidates = uniqueLinks.map((a) => {
             const text = a.textContent?.trim() || ''
             const dateMatch = text.match(/(\d{2})-(\d{2})-(\d{4})/)
             const isoDate = dateMatch ? `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}` : ''
@@ -1127,11 +1143,11 @@ export default defineContentScript({
           })
 
           // Filter: must have date, exclude today
-          const pastCandidates = candidates.filter(c => c.isoDate && c.isoDate !== today)
+          const pastCandidates = candidates.filter((c) => c.isoDate && c.isoDate !== today)
           d(`Past (excl today): ${pastCandidates.length}`)
 
           // Must have ID or href to fetch
-          const fetchable = pastCandidates.filter(c => c.id || c.href)
+          const fetchable = pastCandidates.filter((c) => c.id || c.href)
           d(`Fetchable: ${fetchable.length}`)
 
           // Rollback to expected behavior: process up to 5 latest visits.
@@ -1158,7 +1174,7 @@ export default defineContentScript({
                 success: boolean
                 content?: string
                 error?: string
-              }>(resolve => {
+              }>((resolve) => {
                 const listener = (event: MessageEvent) => {
                   if (event.source !== window) return
                   const msg = event.data
@@ -1182,7 +1198,7 @@ export default defineContentScript({
               // Wait for response (with 8s timeout)
               const result = await Promise.race([
                 fetchPromise,
-                new Promise<{ success: false; error: string }>(r =>
+                new Promise<{ success: false; error: string }>((r) =>
                   setTimeout(() => r({ success: false, error: 'Timeout 8s' }), 8000)
                 ),
               ])
@@ -1490,11 +1506,11 @@ export default defineContentScript({
           (msg.data as { type?: string })?.type
         )
         Promise.resolve(messageHandlers.execFill(msg.data))
-          .then(result => {
+          .then((result) => {
             debug('Fill result:', result)
             sendResponse(result)
           })
-          .catch(error => {
+          .catch((error) => {
             debug('Fill error:', error)
             sendResponse({
               success: [],
@@ -1507,8 +1523,8 @@ export default defineContentScript({
 
       if (msg.type === 'execScrape' && msg.data) {
         Promise.resolve(messageHandlers.execScrape(msg.data))
-          .then(result => sendResponse(result))
-          .catch(error => sendResponse({ success: false, error: String(error) }))
+          .then((result) => sendResponse(result))
+          .catch((error) => sendResponse({ success: false, error: String(error) }))
         return true
       }
 
@@ -1550,30 +1566,30 @@ export default defineContentScript({
 
       if (msg.type === 'scanVisitHistory') {
         Promise.resolve(messageHandlers.scanVisitHistory(msg.data))
-          .then(result => sendResponse(result))
-          .catch(error => sendResponse({ success: false, error: String(error), visits: [] }))
+          .then((result) => sendResponse(result))
+          .catch((error) => sendResponse({ success: false, error: String(error), visits: [] }))
         return true
       }
 
       // DAS - Data Ascension System handlers
       if (msg.type === 'scanFieldsDAS') {
         Promise.resolve(messageHandlers.scanFieldsDAS(msg.data))
-          .then(result => sendResponse(result))
-          .catch(error => sendResponse({ success: false, error: String(error) }))
+          .then((result) => sendResponse(result))
+          .catch((error) => sendResponse({ success: false, error: String(error) }))
         return true
       }
 
       if (msg.type === 'mapFieldsDAS') {
         Promise.resolve(messageHandlers.mapFieldsDAS(msg.data))
-          .then(result => sendResponse(result))
-          .catch(error => sendResponse({ success: false, error: String(error) }))
+          .then((result) => sendResponse(result))
+          .catch((error) => sendResponse({ success: false, error: String(error) }))
         return true
       }
 
       if (msg.type === 'previewMappingDAS') {
         Promise.resolve(messageHandlers.previewMappingDAS(msg.data))
-          .then(result => sendResponse(result))
-          .catch(error => sendResponse({ success: false, error: String(error) }))
+          .then((result) => sendResponse(result))
+          .catch((error) => sendResponse({ success: false, error: String(error) }))
         return true
       }
 

@@ -72,7 +72,7 @@ export async function initVisitHistoryStore(): Promise<void> {
 
     request.onsuccess = () => {
       db = request.result
-      console.log('[VisitHistory] Database initialized')
+      console.warn('[VisitHistory] Database initialized')
       resolve()
     }
 
@@ -113,7 +113,7 @@ export async function saveVisit(record: Omit<VisitRecord, 'id'>): Promise<void> 
   // Check duplicate by encounter_id
   const existing = await getVisitByEncounterId(record.encounter_id)
   if (existing) {
-    console.log('[VisitHistory] Encounter already saved:', record.encounter_id)
+    console.warn('[VisitHistory] Encounter already saved:', record.encounter_id)
     return
   }
 
@@ -123,7 +123,7 @@ export async function saveVisit(record: Omit<VisitRecord, 'id'>): Promise<void> 
     const request = store.add(record)
 
     request.onsuccess = () => {
-      console.log('[VisitHistory] Visit saved:', record.encounter_id)
+      console.warn('[VisitHistory] Visit saved:', record.encounter_id)
       resolve()
     }
     request.onerror = () => reject(request.error)
@@ -186,6 +186,6 @@ export async function saveScrapedVisits(records: Omit<VisitRecord, 'id'>[]): Pro
     }
   }
 
-  console.log(`[VisitHistory] Batch saved: ${saved}/${records.length}`)
+  console.warn(`[VisitHistory] Batch saved: ${saved}/${records.length}`)
   return saved
 }

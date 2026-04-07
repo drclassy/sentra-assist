@@ -16,6 +16,30 @@ export type DiagnosaJenis = 'PRIMER' | 'SEKUNDER'
 export type DiagnosaKasus = 'BARU' | 'LAMA'
 export type Prioritas = '0' | '1'
 
+// =============================================================================
+// HYBRID CLINICAL AUTO-TEXT CONTRACTS
+// =============================================================================
+
+export type AnamnesisMissingField =
+  | 'keluhan_utama'
+  | 'onset'
+  | 'lokasi'
+  | 'kualitas'
+  | 'keparahan'
+  | 'faktor_pemicu'
+  | 'faktor_peredam'
+
+export interface AnamnesisExtractionResult {
+  keluhan_utama: string
+  onset: string | null
+  lokasi: string | null
+  kualitas: string | null
+  keparahan: number | null
+  faktor_pemicu: string[]
+  faktor_peredam: string[]
+  data_belum_lengkap: AnamnesisMissingField[]
+}
+
 // Encounter state (Section 11.1)
 export interface Encounter {
   id: string // pelayanan_id

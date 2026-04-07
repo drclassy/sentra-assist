@@ -86,13 +86,21 @@ function normalizeText(...parts: Array<string | undefined>): string {
 }
 
 function hasAnyKeyword(text: string, keywords: readonly string[]): boolean {
-  return keywords.some(keyword => text.includes(keyword))
+  return keywords.some((keyword) => text.includes(keyword))
 }
 
+/**
+ * Keep only positive clinical signals (true) and numeric fields.
+ * Objects that are entirely false are omitted so payloads do not ship empty flag structs.
+ */
 function compactBooleanSection<T extends Record<string, boolean | number | undefined>>(
   section: T
 ): T | undefined {
-  const entries = Object.entries(section).filter(([, value]) => value !== undefined)
+  const entries = Object.entries(section).filter(([, value]) => {
+    if (value === undefined) return false
+    if (typeof value === 'boolean') return value === true
+    return typeof value === 'number'
+  })
   if (entries.length === 0) return undefined
   return Object.fromEntries(entries) as T
 }
@@ -120,10 +128,7 @@ export function mergeStructuredSigns(
   )
   const hmod = mergeStructuredSection(base?.hmod, override?.hmod)
   const dkaHhs = mergeStructuredSection(base?.dkaHhs, override?.dkaHhs)
-  const perfusionShock = mergeStructuredSection(
-    base?.perfusionShock,
-    override?.perfusionShock
-  )
+  const perfusionShock = mergeStructuredSection(base?.perfusionShock, override?.perfusionShock)
 
   if (respiratoryDistress) structuredSigns.respiratoryDistress = respiratoryDistress
   if (hmod) structuredSigns.hmod = hmod
@@ -184,7 +189,12 @@ export function inferStructuredSignsFromPatientSyncInput(
     'gelisah berat',
   ])
 
-  const oliguria = hasAnyKeyword(text, ['oliguria', 'kencing sedikit', 'bak sedikit', 'urin sedikit'])
+  const oliguria = hasAnyKeyword(text, [
+    'oliguria',
+    'kencing sedikit',
+    'bak sedikit',
+    'urin sedikit',
+  ])
 
   const respiratoryDistress = compactBooleanSection({
     accessoryMuscleUse: hasAnyKeyword(text, [
@@ -229,7 +239,11 @@ export function inferStructuredSignsFromPatientSyncInput(
       'vision changes',
       'penglihatan gelap',
     ]),
-    severe_headache: hasAnyKeyword(text, ['sakit kepala hebat', 'nyeri kepala hebat', 'severe headache']),
+    severe_headache: hasAnyKeyword(text, [
+      'sakit kepala hebat',
+      'nyeri kepala hebat',
+      'severe headache',
+    ]),
     oliguria,
     altered_mental_status: alteredMentalStatus,
   })
@@ -241,7 +255,12 @@ export function inferStructuredSignsFromPatientSyncInput(
       'napas cepat dalam',
       'napas dalam cepat',
     ]),
-    acetone_breath: hasAnyKeyword(text, ['bau aseton', 'bau buah', 'fruity breath', 'acetone breath']),
+    acetone_breath: hasAnyKeyword(text, [
+      'bau aseton',
+      'bau buah',
+      'fruity breath',
+      'acetone breath',
+    ]),
     nausea_vomiting: hasAnyKeyword(text, ['mual', 'muntah', 'nausea', 'vomiting']),
     abdominal_pain: hasAnyKeyword(text, ['nyeri perut', 'sakit perut', 'abdominal pain']),
     altered_mental_status: alteredMentalStatus,
@@ -260,11 +279,20 @@ export function inferStructuredSignsFromPatientSyncInput(
 
   const perfusionShock = compactBooleanSection({
     dizziness: hasAnyKeyword(text, ['pusing', 'kepala ringan', 'dizziness']),
-    presyncope: hasAnyKeyword(text, ['hampir pingsan', 'mau pingsan', 'pandangan gelap', 'presyncope']),
+    presyncope: hasAnyKeyword(text, [
+      'hampir pingsan',
+      'mau pingsan',
+      'pandangan gelap',
+      'presyncope',
+    ]),
     syncope: hasAnyKeyword(text, ['pingsan', 'syncope', 'loss of consciousness']),
     weakness: hasAnyKeyword(text, ['lemas', 'sangat lemah', 'weakness']),
     clammySkin: hasAnyKeyword(text, ['keringat dingin', 'clammy', 'kulit lembap dingin']),
-    coldExtremities: hasAnyKeyword(text, ['akral dingin', 'ekstremitas dingin', 'tangan kaki dingin']),
+    coldExtremities: hasAnyKeyword(text, [
+      'akral dingin',
+      'ekstremitas dingin',
+      'tangan kaki dingin',
+    ]),
     oliguria,
     capillaryRefillSec: undefined,
   })

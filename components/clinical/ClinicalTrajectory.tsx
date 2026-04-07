@@ -1,5 +1,18 @@
 // Designed and constructed by Claudesy.
 import {
+  evaluateCanonicalClinicalEngine,
+  type CanonicalClinicalEngineOutput,
+} from '@/lib/api/bridge-client'
+import type {
+  AutosenPreset,
+  DisabilityType,
+  ObesityConfirmation,
+} from '@/lib/clinical/autosen-types'
+import {
+  buildCanonicalRequestId,
+  buildCanonicalTriageInput,
+} from '@/lib/clinical/canonical-triage-builder'
+import {
   analyzeTrajectory,
   type ClinicalUrgencyTier,
   type GlobalDeteriorationState,
@@ -8,29 +21,20 @@ import {
   type TrajectoryAnalysis,
   type TrendDirection,
   type VitalTrend,
-} from '@/lib/iskandar-diagnosis-engine/trajectory-analyzer';
-import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store';
-import {
-  evaluateCanonicalClinicalEngine,
-  type CanonicalClinicalEngineOutput,
-} from '@/lib/api/bridge-client';
-import { sendMessage } from '@/utils/messaging';
-import React, { useEffect, useMemo, useState } from 'react';
-import {
-  buildCanonicalRequestId,
-  buildCanonicalTriageInput,
-} from '@/lib/clinical/canonical-triage-builder';
-import type {
-  AutosenPreset,
-  DisabilityType,
-  ObesityConfirmation,
-} from '@/lib/clinical/autosen-types';
-import type { ScreeningAlert } from './TTVInferenceUI';
-import { CTHeader } from './CTHeader';
-import { DosageCalculator } from './DosageCalculator';
+} from '@/lib/iskandar-diagnosis-engine/trajectory-analyzer'
+import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store'
+import { sendMessage } from '@/utils/messaging'
+import React, { useEffect, useMemo, useState } from 'react'
+import { CTHeader } from './CTHeader'
+import { DosageCalculator } from './DosageCalculator'
+import type { ScreeningAlert } from './TTVInferenceUI'
 
-// Lazy import ApexCharts
-const Chart = React.lazy(() => import('react-apexcharts'));
+// Lazy import ApexCharts (default export typing vs React.lazy — align to ComponentType)
+const Chart = React.lazy(() =>
+  import('react-apexcharts').then((m) => ({
+    default: m.default as React.ComponentType<Record<string, unknown>>,
+  }))
+)
 
 /**
  * ClinicalTrajectoryProps interface
@@ -42,54 +46,54 @@ const Chart = React.lazy(() => import('react-apexcharts'));
 
 export interface ClinicalTrajectoryProps {
   vitals: {
-    sbp: number;
-    dbp: number;
-    hr: number;
-    rr: number;
-    temp: number;
-    spo2: number;
-    glucose: number;
-  };
-  keluhanUtama: string;
-  keluhanTambahan?: string;
+    sbp: number
+    dbp: number
+    hr: number
+    rr: number
+    temp: number
+    spo2: number
+    glucose: number
+  }
+  keluhanUtama: string
+  keluhanTambahan?: string
   narrative: {
-    keluhan_utama: string;
-    lama_sakit: string;
-    is_akut: boolean;
-    confidence: number;
-  };
-  alerts: ScreeningAlert[];
-  patientAge: number;
-  patientGender: 'L' | 'P';
-  patientName: string;
-  patientRM: string;
-  patientDOB?: string;
-  patientBPJSStatus?: 'aktif' | 'nonaktif' | 'mandiri' | null;
-  patientKelurahan?: string;
-  patientFacilityName?: string;
-  patientPayerLabel?: string;
-  allergies?: string[];
-  pregnancyStatus?: boolean | null;
-  chronicHistorySummary?: string;
-  extractedPregnancyRisk?: string;
-  extractedSpecialConditions?: string[];
-  disabilityType?: DisabilityType;
-  obesityConfirmation?: ObesityConfirmation;
-  autosenPreset?: AutosenPreset;
-  symptomTextRaw?: string;
-  encounterId?: string;
-  prefetchedVisits?: VisitRecord[];
-  prefetchedDiagnostics?: string[];
-  prefetchedVisitStatus?: 'ready' | 'insufficient';
-  onBack: () => void;
+    keluhan_utama: string
+    lama_sakit: string
+    is_akut: boolean
+    confidence: number
+  }
+  alerts: ScreeningAlert[]
+  patientAge: number
+  patientGender: 'L' | 'P'
+  patientName: string
+  patientRM: string
+  patientDOB?: string
+  patientBPJSStatus?: 'aktif' | 'nonaktif' | 'mandiri' | null
+  patientKelurahan?: string
+  patientFacilityName?: string
+  patientPayerLabel?: string
+  allergies?: string[]
+  pregnancyStatus?: boolean | null
+  chronicHistorySummary?: string
+  extractedPregnancyRisk?: string
+  extractedSpecialConditions?: string[]
+  disabilityType?: DisabilityType
+  obesityConfirmation?: ObesityConfirmation
+  autosenPreset?: AutosenPreset
+  symptomTextRaw?: string
+  encounterId?: string
+  prefetchedVisits?: VisitRecord[]
+  prefetchedDiagnostics?: string[]
+  prefetchedVisitStatus?: 'ready' | 'insufficient'
+  onBack: () => void
   onNextDifferential?: (
     trajectory: TrajectoryAnalysis,
     visitCount: number,
     canonicalOutput: CanonicalClinicalEngineOutput | null
-  ) => void;
+  ) => void
 }
 
-type Phase = 'loading' | 'error' | 'ready';
+type Phase = 'loading' | 'error' | 'ready'
 
 // Visual mappings
 const TREND_ICON: Record<TrendDirection, string> = {
@@ -97,35 +101,35 @@ const TREND_ICON: Record<TrendDirection, string> = {
   declining: '↘',
   stable: '→',
   insufficient_data: '—',
-};
+}
 
 const TREND_COLOR: Record<TrendDirection, string> = {
-  improving: '#10B981',
+  improving: '#6B9B8A',
   declining: '#EF4444',
   stable: '#06B6D4',
   insufficient_data: '#6B7280',
-};
+}
 
 const TREND_LABEL: Record<TrendDirection, string> = {
   improving: 'MEMBAIK',
   declining: 'MEMBURUK',
   stable: 'STABIL',
   insufficient_data: 'DATA KURANG',
-};
+}
 
 const RISK_STYLE: Record<RiskLevel, { color: string; bg: string; border: string }> = {
-  low: { color: '#10B981', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.3)' },
+  low: { color: '#6B9B8A', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.3)' },
   moderate: { color: '#F59E0B', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.3)' },
   high: { color: '#EF4444', bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)' },
   critical: { color: '#DC2626', bg: 'rgba(220,38,38,0.15)', border: 'rgba(220,38,38,0.5)' },
-};
+}
 
 const URGENCY_STYLE: Record<
   ClinicalUrgencyTier,
   { color: string; bg: string; border: string; label: string }
 > = {
   low: {
-    color: '#10B981',
+    color: '#6B9B8A',
     bg: 'rgba(16,185,129,0.12)',
     border: 'rgba(16,185,129,0.35)',
     label: 'ROUTINE 24H',
@@ -148,14 +152,14 @@ const URGENCY_STYLE: Record<
     border: 'rgba(220,38,38,0.5)',
     label: 'EMERGENCY NOW',
   },
-};
+}
 
 const DETERIORATION_STYLE: Record<
   GlobalDeteriorationState,
   { color: string; bg: string; border: string; label: string }
 > = {
   improving: {
-    color: '#10B981',
+    color: '#6B9B8A',
     bg: 'rgba(16,185,129,0.12)',
     border: 'rgba(16,185,129,0.35)',
     label: 'IMPROVING',
@@ -178,19 +182,19 @@ const DETERIORATION_STYLE: Record<
     border: 'rgba(220,38,38,0.5)',
     label: 'CRITICAL',
   },
-};
+}
 
 const STABILITY_STYLE: Record<StabilityLabel, { label: string; color: string }> = {
-  true_stable: { label: 'TRUE STABLE', color: '#10B981' },
+  true_stable: { label: 'TRUE STABLE', color: '#6B9B8A' },
   pseudo_stable: { label: 'PSEUDO STABLE', color: '#F59E0B' },
   unstable: { label: 'UNSTABLE', color: '#EF4444' },
-};
+}
 
 function scoreToRiskLevel(score: number): RiskLevel {
-  if (score >= 80) return 'critical';
-  if (score >= 60) return 'high';
-  if (score >= 40) return 'moderate';
-  return 'low';
+  if (score >= 80) return 'critical'
+  if (score >= 60) return 'high'
+  if (score >= 40) return 'moderate'
+  return 'low'
 }
 
 const PAGE_BG_STYLE = {
@@ -198,14 +202,14 @@ const PAGE_BG_STYLE = {
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
   textRendering: 'geometricPrecision',
-} as React.CSSProperties;
+} as React.CSSProperties
 
 const PAGE_TOP_GLOW_STYLE: React.CSSProperties = {
   background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,69,0,0.03) 0%, transparent 60%)',
-};
+}
 
 function humanizeToken(value: string): string {
-  return value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+  return value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
 export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
@@ -238,36 +242,37 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   onBack,
   onNextDifferential,
 }) => {
-  const [phase, setPhase] = useState<Phase>('loading');
-  const [analysis, setAnalysis] = useState<TrajectoryAnalysis | null>(null);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [visitCount, setVisitCount] = useState(0);
-  const [scrapeLog, setScrapeLog] = useState<string[]>([]);
-  const [canonicalOutput, setCanonicalOutput] = useState<CanonicalClinicalEngineOutput | null>(null);
-  const [canonicalError, setCanonicalError] = useState('');
-  const [isCanonicalLoading, setIsCanonicalLoading] = useState(false);
+  const [phase, setPhase] = useState<Phase>('loading')
+  const [analysis, setAnalysis] = useState<TrajectoryAnalysis | null>(null)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [visitCount, setVisitCount] = useState(0)
+  const [scrapeLog, setScrapeLog] = useState<string[]>([])
+  const [canonicalOutput, setCanonicalOutput] = useState<CanonicalClinicalEngineOutput | null>(null)
+  const [canonicalError, setCanonicalError] = useState('')
+  const [isCanonicalLoading, setIsCanonicalLoading] = useState(false)
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
 
     const loadTrajectory = async () => {
-      console.log('[Trajectory] Loading visit history...');
-      setPhase('loading');
-      setCanonicalError('');
-      setCanonicalOutput(null);
-      setIsCanonicalLoading(true);
+      console.warn('[Trajectory] Loading visit history...')
+      setPhase('loading')
+      setCanonicalError('')
+      setCanonicalOutput(null)
+      setIsCanonicalLoading(true)
 
       try {
         if (prefetchedVisitStatus === 'insufficient') {
-          const diagLines = prefetchedDiagnostics && prefetchedDiagnostics.length > 0
-            ? prefetchedDiagnostics
-            : ['INSUFFICIENT_HISTORY: kurang dari 3 kunjungan historis'];
-          setScrapeLog(diagLines);
-          setVisitCount(prefetchedVisits?.length ?? 0);
-          setErrorMsg('Data not available');
-          setPhase('error');
-          setIsCanonicalLoading(false);
-          return;
+          const diagLines =
+            prefetchedDiagnostics && prefetchedDiagnostics.length > 0
+              ? prefetchedDiagnostics
+              : ['INSUFFICIENT_HISTORY: kurang dari 3 kunjungan historis']
+          setScrapeLog(diagLines)
+          setVisitCount(prefetchedVisits?.length ?? 0)
+          setErrorMsg('Data not available')
+          setPhase('error')
+          setIsCanonicalLoading(false)
+          return
         }
 
         const result =
@@ -283,20 +288,20 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                   diagnosa: visit.diagnosa ?? null,
                 })),
               }
-            : await sendMessage('scanVisitHistory', undefined);
-        if (cancelled) return;
+            : await sendMessage('scanVisitHistory', undefined)
+        if (cancelled) return
 
         // Capture diagnostics
-        const diagLines = result.diagnostics || [];
+        const diagLines = result.diagnostics || []
         if (result.error) {
-          diagLines.unshift(`ERROR: ${result.error}`);
+          diagLines.unshift(`ERROR: ${result.error}`)
         }
         if (diagLines.length === 0) {
-          diagLines.push('No diagnostics returned — pipeline may have failed silently');
+          diagLines.push('No diagnostics returned — pipeline may have failed silently')
         }
-        setScrapeLog(diagLines);
-        console.log('[Trajectory] Diagnostics:\n' + diagLines.join('\n'));
-        console.log(`[Trajectory] RECV: ${result.visits?.length ?? 0} visits`);
+        setScrapeLog(diagLines)
+        console.warn('[Trajectory] Diagnostics:\n' + diagLines.join('\n'))
+        console.warn(`[Trajectory] RECV: ${result.visits?.length ?? 0} visits`)
 
         const pastVisits: VisitRecord[] = (result.visits || []).map((v) => ({
           patient_id: patientRM,
@@ -306,7 +311,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           keluhan_utama: v.keluhan_utama,
           diagnosa: v.diagnosa || undefined,
           source: 'scrape' as const,
-        }));
+        }))
 
         const currentVisit: VisitRecord = {
           patient_id: patientRM,
@@ -315,29 +320,29 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           vitals,
           keluhan_utama: keluhanUtama,
           source: 'uplink',
-        };
+        }
 
-        const visitMap = new Map<string, VisitRecord>();
-        for (const v of pastVisits) visitMap.set(v.encounter_id, v);
-        visitMap.set(currentVisit.encounter_id, currentVisit);
+        const visitMap = new Map<string, VisitRecord>()
+        for (const v of pastVisits) visitMap.set(v.encounter_id, v)
+        visitMap.set(currentVisit.encounter_id, currentVisit)
 
         const allVisits = Array.from(visitMap.values()).sort(
           (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        );
+        )
 
-        console.log(`[Trajectory] Analyzing ${allVisits.length} unique visits`);
-        setVisitCount(allVisits.length);
+        console.warn(`[Trajectory] Analyzing ${allVisits.length} unique visits`)
+        setVisitCount(allVisits.length)
 
-        const trajectoryAnalysis = analyzeTrajectory(allVisits);
-        console.log(
+        const trajectoryAnalysis = analyzeTrajectory(allVisits)
+        console.warn(
           `[Trajectory] ANALYZED: trend=${trajectoryAnalysis.overallTrend}, risk=${trajectoryAnalysis.overallRisk}`
-        );
+        )
 
-        setAnalysis(trajectoryAnalysis);
-        setPhase('ready');
+        setAnalysis(trajectoryAnalysis)
+        setPhase('ready')
 
-        const requestId = buildCanonicalRequestId(patientRM);
-        const requestTime = new Date().toISOString();
+        const requestId = buildCanonicalRequestId(patientRM)
+        const requestTime = new Date().toISOString()
         const canonicalInput = buildCanonicalTriageInput({
           requestId,
           requestTime,
@@ -363,40 +368,40 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           obesityConfirmation,
           autosenPreset,
           prefetchedVisits: pastVisits,
-        });
+        })
 
         try {
-          const canonical = await evaluateCanonicalClinicalEngine(canonicalInput);
+          const canonical = await evaluateCanonicalClinicalEngine(canonicalInput)
           if (!cancelled) {
-            setCanonicalOutput(canonical);
+            setCanonicalOutput(canonical)
           }
         } catch (error) {
           if (!cancelled) {
             const message =
-              error instanceof Error ? error.message : 'Gagal memuat trajectory canonical';
-            console.error('[Trajectory] Canonical evaluate error:', message);
-            setCanonicalError(message);
+              error instanceof Error ? error.message : 'Gagal memuat trajectory canonical'
+            console.error('[Trajectory] Canonical evaluate error:', message)
+            setCanonicalError(message)
           }
         } finally {
           if (!cancelled) {
-            setIsCanonicalLoading(false);
+            setIsCanonicalLoading(false)
           }
         }
       } catch (error) {
-        if (cancelled) return;
-        const errStr = error instanceof Error ? error.message : String(error);
-        console.error('[Trajectory] Load error:', errStr);
-        setErrorMsg(errStr);
-        setScrapeLog((prev) => (prev.length > 0 ? prev : [`PIPELINE_ERROR: ${errStr}`]));
-        setPhase('error');
-        setIsCanonicalLoading(false);
+        if (cancelled) return
+        const errStr = error instanceof Error ? error.message : String(error)
+        console.error('[Trajectory] Load error:', errStr)
+        setErrorMsg(errStr)
+        setScrapeLog((prev) => (prev.length > 0 ? prev : [`PIPELINE_ERROR: ${errStr}`]))
+        setPhase('error')
+        setIsCanonicalLoading(false)
       }
-    };
+    }
 
-    loadTrajectory();
+    loadTrajectory()
     return () => {
-      cancelled = true;
-    };
+      cancelled = true
+    }
   }, [
     patientRM,
     encounterId,
@@ -423,23 +428,23 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
     autosenPreset,
     symptomTextRaw,
     keluhanTambahan,
-  ]);
+  ])
 
   // Chart config with EXACT TTVInferenceUI aesthetic
   const chartConfig = useMemo(() => {
-    if (!analysis) return null;
+    if (!analysis) return null
 
-    const bpTrend = analysis.vitalTrends.find((t) => t.parameter === 'sbp');
-    const dbpTrend = analysis.vitalTrends.find((t) => t.parameter === 'dbp');
-    const hrTrend = analysis.vitalTrends.find((t) => t.parameter === 'hr');
+    const bpTrend = analysis.vitalTrends.find((t) => t.parameter === 'sbp')
+    const dbpTrend = analysis.vitalTrends.find((t) => t.parameter === 'dbp')
+    const hrTrend = analysis.vitalTrends.find((t) => t.parameter === 'hr')
 
-    if (!bpTrend || bpTrend.values.length === 0) return null;
+    if (!bpTrend || bpTrend.values.length === 0) return null
 
     const series = [
       { name: 'SBP', data: bpTrend.values },
       { name: 'DBP', data: dbpTrend?.values || [] },
       { name: 'HR', data: hrTrend?.values || [] },
-    ].filter((s) => s.data.length > 0);
+    ].filter((s) => s.data.length > 0)
 
     const options: ApexCharts.ApexOptions = {
       chart: {
@@ -519,10 +524,10 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           },
         ],
       },
-    };
+    }
 
-    return { series, options };
-  }, [analysis]);
+    return { series, options }
+  }, [analysis])
 
   // Render: Loading
   if (phase === 'loading') {
@@ -557,7 +562,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           <p className="text-small text-muted">Menganalisis riwayat kunjungan...</p>
         </div>
       </div>
-    );
+    )
   }
 
   // Render: Error
@@ -613,34 +618,34 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           </div>
         )}
       </div>
-    );
+    )
   }
 
   // Render: Ready
-  if (!analysis) return null;
+  if (!analysis) return null
 
   const activeTrends = analysis.vitalTrends.filter(
     (t) => t.values.length > 0 && !t.values.every((v) => v === 0)
-  );
-  const canonicalTrajectory = canonicalOutput?.trajectory;
-  const canonicalNews2 = canonicalOutput?.scoring.news2;
-  const canonicalAlertCount = canonicalOutput?.alerts.length ?? 0;
-  const canonicalImmediateActions = canonicalOutput?.recommendations.immediate_actions ?? [];
-  const canonicalMonitoringActions = canonicalOutput?.recommendations.monitoring_actions ?? [];
-  const canonicalReferralActions = canonicalOutput?.recommendations.referral_actions ?? [];
+  )
+  const canonicalTrajectory = canonicalOutput?.trajectory
+  const canonicalNews2 = canonicalOutput?.scoring.news2
+  const canonicalAlertCount = canonicalOutput?.alerts.length ?? 0
+  const canonicalImmediateActions = canonicalOutput?.recommendations.immediate_actions ?? []
+  const canonicalMonitoringActions = canonicalOutput?.recommendations.monitoring_actions ?? []
+  const canonicalReferralActions = canonicalOutput?.recommendations.referral_actions ?? []
   const canonicalOverallTrend = canonicalTrajectory?.overall_trend
     ? TREND_LABEL[canonicalTrajectory.overall_trend]
-    : 'TIDAK TERSEDIA';
+    : 'TIDAK TERSEDIA'
   const canonicalOverallRisk = canonicalTrajectory?.overall_risk
     ? humanizeToken(canonicalTrajectory.overall_risk).toUpperCase()
-    : 'TIDAK TERSEDIA';
+    : 'TIDAK TERSEDIA'
   const canonicalDeteriorationState = canonicalTrajectory?.deterioration_state
     ? humanizeToken(canonicalTrajectory.deterioration_state).toUpperCase()
-    : 'TIDAK TERSEDIA';
+    : 'TIDAK TERSEDIA'
   const canonicalMomentum = canonicalTrajectory?.momentum_level
     ? humanizeToken(canonicalTrajectory.momentum_level).toUpperCase()
-    : 'TIDAK TERSEDIA';
-  const urgencyStyle = URGENCY_STYLE[analysis.mortality_proxy.clinical_urgency_tier];
+    : 'TIDAK TERSEDIA'
+  const urgencyStyle = URGENCY_STYLE[analysis.mortality_proxy.clinical_urgency_tier]
   const acuteRiskCards = [
     { label: 'HT Crisis', value: analysis.acute_attack_risk_24h.hypertensive_crisis_risk },
     { label: 'Glycemic Crisis', value: analysis.acute_attack_risk_24h.glycemic_crisis_risk },
@@ -656,14 +661,14 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       label: 'Stroke/ACS Susp',
       value: analysis.acute_attack_risk_24h.stroke_acs_suspicion_risk,
     },
-  ];
+  ]
   const etaEntries = Object.entries(analysis.time_to_critical_estimate).filter(
     ([, value]) => value !== null
-  );
-  const deteriorationStyle = DETERIORATION_STYLE[analysis.global_deterioration.state];
-  const stabilityStyle = STABILITY_STYLE[analysis.trajectory_volatility.stability_label];
-  const highAcuteRiskCount = acuteRiskCards.filter((risk) => risk.value >= 60).length;
-  const criticalEtaCount = etaEntries.filter(([, value]) => (value ?? 999) <= 24).length;
+  )
+  const deteriorationStyle = DETERIORATION_STYLE[analysis.global_deterioration.state]
+  const stabilityStyle = STABILITY_STYLE[analysis.trajectory_volatility.stability_label]
+  const highAcuteRiskCount = acuteRiskCards.filter((risk) => risk.value >= 60).length
+  const criticalEtaCount = etaEntries.filter(([, value]) => (value ?? 999) <= 24).length
   const breachCards = [
     { label: 'SBP >= 160', count: analysis.early_warning_burden.breach_breakdown.sbp_ge_160_count },
     {
@@ -673,8 +678,8 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
     { label: 'GDS >= 300', count: analysis.early_warning_burden.breach_breakdown.gds_ge_300_count },
     { label: 'HR ekstrem', count: analysis.early_warning_burden.breach_breakdown.hr_extreme_count },
     { label: 'RR ekstrem', count: analysis.early_warning_burden.breach_breakdown.rr_extreme_count },
-  ];
-  const activeBreaches = breachCards.filter((item) => item.count > 0);
+  ]
+  const activeBreaches = breachCards.filter((item) => item.count > 0)
 
   return (
     <div
@@ -720,7 +725,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           <span
             className="ct-neu-chip"
             style={{
-              color: canonicalOutput ? '#10B981' : canonicalError ? '#F59E0B' : '#c0bbb2',
+              color: canonicalOutput ? '#6B9B8A' : canonicalError ? '#F59E0B' : '#c0bbb2',
               borderColor: canonicalOutput ? 'rgba(16,185,129,0.35)' : 'rgba(255,255,255,0.08)',
               fontSize: '10px',
               padding: '4px 10px',
@@ -756,7 +761,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             </div>
             <div className="neu-card-inset p-3">
               <div className="ttv-label text-tertiary mb-1">Deterioration</div>
-              <div className="text-small font-mono text-platinum">{canonicalDeteriorationState}</div>
+              <div className="text-small font-mono text-platinum">
+                {canonicalDeteriorationState}
+              </div>
             </div>
             <div className="neu-card-inset p-3">
               <div className="ttv-label text-tertiary mb-1">Momentum</div>
@@ -921,7 +928,8 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             </div>
             <div className="text-body text-muted leading-relaxed">{analysis.summary}</div>
             <div className="text-tiny text-muted mt-2">
-              Preview lokal untuk continuity UX. Severity canonical mengikuti hasil `CANONICAL ENGINE`.
+              Preview lokal untuk continuity UX. Severity canonical mengikuti hasil `CANONICAL
+              ENGINE`.
             </div>
           </div>
         </div>
@@ -1045,8 +1053,8 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         </summary>
         <div className="grid grid-cols-2 gap-2 mt-3">
           {acuteRiskCards.map((risk) => {
-            const level = scoreToRiskLevel(risk.value);
-            const style = RISK_STYLE[level];
+            const level = scoreToRiskLevel(risk.value)
+            const style = RISK_STYLE[level]
             return (
               <div key={risk.label} className="ct-neu-cell" style={{ borderColor: style.border }}>
                 <div className="ct-neu-cell-label">{risk.label}</div>
@@ -1054,7 +1062,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                   {risk.value}
                 </div>
               </div>
-            );
+            )
           })}
         </div>
       </details>
@@ -1290,8 +1298,8 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
 // Sub-components
 
@@ -1300,12 +1308,12 @@ function MetricTile({
   value,
   tone,
 }: {
-  label: string;
-  value: string | number;
-  tone: RiskLevel;
+  label: string
+  value: string | number
+  tone: RiskLevel
 }) {
-  const toneStyle = RISK_STYLE[tone];
-  const displayValue = typeof value === 'string' ? humanizeToken(value) : value;
+  const toneStyle = RISK_STYLE[tone]
+  const displayValue = typeof value === 'string' ? humanizeToken(value) : value
   return (
     <div className="neu-card-inset p-2.5" style={{ borderColor: toneStyle.border }}>
       <div className="ttv-label text-tertiary">{label}</div>
@@ -1313,12 +1321,12 @@ function MetricTile({
         {displayValue}
       </div>
     </div>
-  );
+  )
 }
 
 function TrendCard({ trend }: { trend: VitalTrend }) {
-  const riskStyle = RISK_STYLE[trend.risk];
-  const trendColor = TREND_COLOR[trend.trend];
+  const riskStyle = RISK_STYLE[trend.risk]
+  const trendColor = TREND_COLOR[trend.trend]
 
   return (
     <div className="neu-card-inset p-3 flex items-center gap-3">
@@ -1352,5 +1360,5 @@ function TrendCard({ trend }: { trend: VitalTrend }) {
         </span>
       </div>
     </div>
-  );
+  )
 }

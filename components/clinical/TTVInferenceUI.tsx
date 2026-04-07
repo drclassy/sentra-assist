@@ -257,6 +257,39 @@ const normalizeText = (value?: string): string => (value || '').trim().toLowerCa
 const HYBRID_AUTOTEXT_ENABLED = import.meta.env.VITE_ENABLE_HYBRID_AUTOTEXT !== 'false'
 const ttvLog = createLogger('TTVInferenceUI', 'content')
 
+const getDoctorInitials = (name: string): string =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('')
+
+const formatLastSeenRelative = (iso?: string): string => {
+  if (!iso) return 'Tidak ada data aktivitas'
+
+  const timestamp = new Date(iso).getTime()
+  if (!Number.isFinite(timestamp)) return 'Waktu aktivitas tidak valid'
+
+  const diffMs = Date.now() - timestamp
+  if (diffMs < 60_000) return 'Aktif baru saja'
+  if (diffMs < 60 * 60_000) return `Aktif ${Math.max(1, Math.floor(diffMs / 60_000))} menit lalu`
+  if (diffMs < 24 * 60 * 60_000) {
+    return `Aktif ${Math.max(1, Math.floor(diffMs / (60 * 60_000)))} jam lalu`
+  }
+
+  return `Aktif ${Math.max(1, Math.floor(diffMs / (24 * 60 * 60_000)))} hari lalu`
+}
+
+const toSafeAutoTextReason = (error: unknown, fallback: string): string => {
+  const message = error instanceof Error ? error.message : fallback
+  const normalized = message.trim().toLowerCase()
+  if (normalized.startsWith('<!doctype html') || normalized.startsWith('<html')) {
+    return 'Server extraction mengembalikan HTML, bukan JSON API. Cek Base URL Bridge dan endpoint extraction.'
+  }
+  return message
+}
+
 const GERIATRIC_ORTHOSTATIC_KEYWORDS = [
   'pusing',
   'berkunang',
@@ -1024,13 +1057,8 @@ export function TTVInferenceUI({
   const [isDisabilityOpen, setIsDisabilityOpen] = useState(false)
   const [isObesityOpen, setIsObesityOpen] = useState(false)
   const [isPresetOpen, setIsPresetOpen] = useState(false)
-  const [extractedAnamnesis, setExtractedAnamnesis] = useState<AnamnesisExtractionResult | null>(
-    null
-  )
   const [anamnesisMissingFields, setAnamnesisMissingFields] = useState<AnamnesisMissingField[]>([])
   const [shadowSuggestion, setShadowSuggestion] = useState('')
-  const [autoTextSource, setAutoTextSource] = useState<'backend' | 'fallback-local' | null>(null)
-  const [isHybridExtracting, setIsHybridExtracting] = useState(false)
   const [onlineDoctors, setOnlineDoctors] = useState<OnlineDoctor[]>([])
   const [selectedDoctorId, setSelectedDoctorId] = useState('')
   const [isLoadingDoctors, setIsLoadingDoctors] = useState(false)
@@ -1250,13 +1278,16 @@ export function TTVInferenceUI({
   const chronicHistorySummary = chronicHistoryLabels.join(', ')
   const allergySummary = state.allergies.join(', ')
   const allergyPlaceholder = allergySummary || 'Pilih di sini'
+  const isAllergyPlaceholder = allergyPlaceholder === 'Pilih di sini'
   const disabilityPlaceholder = state.disabilityType || 'Pilih di sini'
+  const isDisabilityPlaceholder = disabilityPlaceholder === 'Pilih di sini'
   const obesityPlaceholder =
     state.obesityConfirmation === 'confirmed'
       ? 'Terkonfirmasi'
       : state.obesityConfirmation === 'not_confirmed'
         ? 'Tidak Terkonfirmasi'
         : 'Pilih di sini'
+  const isObesityPlaceholder = obesityPlaceholder === 'Pilih di sini'
   const presetPlaceholder = presetLabels[state.autosenPreset]
   const isFemalePatient = patientGender === 'P'
   const hasLoadedPatientContext =
@@ -1448,11 +1479,11 @@ export function TTVInferenceUI({
     setLastProcessedSymptomText('')
     setAnimatedDraftText('')
     setIsDraftTyping(false)
-    setExtractedAnamnesis(null)
     setAnamnesisMissingFields([])
     setShadowSuggestion('')
-    setAutoTextSource(null)
   }, [patientRM])
+
+  const [hasAutoTriggeredSymptoms, setHasAutoTriggeredSymptoms] = useState(false)
 
   useEffect(() => {
     if (!HYBRID_AUTOTEXT_ENABLED) return
@@ -1460,21 +1491,29 @@ export function TTVInferenceUI({
     const raw = state.symptomText.trim()
     if (raw.length < 8 || isAnalyzing || isDraftTyping) return
 
+    // Auto-trigger full analysis when 3 or more symptoms are detected
+    const symptoms = raw.split(',').map((s) => s.trim()).filter((s) => s.length > 2)
+    if (symptoms.length >= 3 && !hasAutoTriggeredSymptoms) {
+      setHasAutoTriggeredSymptoms(true)
+      handleAnalyze()
+      return
+    } else if (symptoms.length < 3) {
+      setHasAutoTriggeredSymptoms(false)
+    }
+
     const timerId = window.setTimeout(() => {
       void (async () => {
         const extractionStart = Date.now()
         try {
           const extraction = await extractClinicalAnamnesis(raw)
-          setExtractedAnamnesis(extraction)
           setAnamnesisMissingFields(extraction.data_belum_lengkap)
-          setAutoTextSource('backend')
           ttvLog.debug('Hybrid preview extraction updated', {
             source: 'backend',
             missingCount: extraction.data_belum_lengkap.length,
             latencyMs: Date.now() - extractionStart,
           })
-        } catch {
-          setAutoTextSource('fallback-local')
+        } catch (error) {
+          ttvLog.debug('Preview extraction gagal', error)
         }
       })()
     }, 220)
@@ -1740,7 +1779,7 @@ export function TTVInferenceUI({
     }
   }
 
-  const handleAnalyze = () => {
+  function handleAnalyze() {
     setIsAnalyzing(true)
 
     window.setTimeout(() => {
@@ -1750,13 +1789,10 @@ export function TTVInferenceUI({
 
         if (HYBRID_AUTOTEXT_ENABLED) {
           const extractionStart = Date.now()
-          setIsHybridExtracting(true)
           try {
             const extraction = await extractClinicalAnamnesis(state.symptomText.trim())
             extractionLatencyMs = Date.now() - extractionStart
-            setExtractedAnamnesis(extraction)
             setAnamnesisMissingFields(extraction.data_belum_lengkap)
-            setAutoTextSource('backend')
             activeDraft = composeAnamnesaDraftFromExtraction(extraction, {
               symptomText: state.symptomText,
               patientGender,
@@ -1784,16 +1820,12 @@ export function TTVInferenceUI({
               latencyMs: extractionLatencyMs,
             })
           } catch (error) {
-            setExtractedAnamnesis(null)
             setAnamnesisMissingFields([])
-            setAutoTextSource('fallback-local')
             ttvLog.warn('Hybrid extraction fallback to local composer', {
               source: 'fallback-local',
               reason: error instanceof Error ? error.message : 'unknown',
               latencyMs: Date.now() - extractionStart,
             })
-          } finally {
-            setIsHybridExtracting(false)
           }
         }
 
@@ -1992,7 +2024,7 @@ export function TTVInferenceUI({
             disabled={isAnalyzing || isCanonicalLoading}
             aria-label="AutoComplete+ Gejala"
           >
-            {isAnalyzing ? '...' : '✨ AutoComplete+'}
+            {isAnalyzing ? '...' : 'AutoComplete+'}
           </button>
         </div>
         {isDraftTyping && animatedDraftText ? (
@@ -2032,17 +2064,7 @@ export function TTVInferenceUI({
             Suggestion: {shadowSuggestion} (Tekan Tab untuk terapkan)
           </div>
         ) : null}
-        {autoTextSource ? (
-          <div className="field-context-note text-[10px] text-[var(--text-muted)]">
-            Auto-text source: {autoTextSource === 'backend' ? 'hybrid-backend' : 'fallback-local'}
-            {isHybridExtracting ? ' • extracting...' : ''}
-          </div>
-        ) : null}
-        {extractedAnamnesis ? (
-          <div className="field-context-note text-[10px] text-[var(--text-muted)]">
-            Hybrid gaps: {extractedAnamnesis.data_belum_lengkap.length}
-          </div>
-        ) : null}
+        {/* Development debug info removed per request */}
       </div>
 
       <div className="form-row-dual">
@@ -2064,7 +2086,9 @@ export function TTVInferenceUI({
               aria-controls="riwayat-alergi-panel"
             >
               <span
-                className="collapsible-trigger__summary field-summary-prominent"
+                className={`collapsible-trigger__summary field-summary-prominent ${
+                  isAllergyPlaceholder ? 'field-summary-prominent--placeholder' : ''
+                }`}
                 title={allergyPlaceholder}
               >
                 {allergyPlaceholder}
@@ -2074,9 +2098,12 @@ export function TTVInferenceUI({
               />
             </button>
             {isAllergyOpen ? (
-              <div id="riwayat-alergi-panel" className="history-dropdown__panel option-grid">
+              <div
+                id="riwayat-alergi-panel"
+                className="history-dropdown__panel option-grid option-grid--single"
+              >
                 {allergyPresets.map((label) => (
-                  <label key={label} className="option-item">
+                  <label key={label} className="option-item option-item--single">
                     <input
                       type="checkbox"
                       checked={state.allergies.includes(label)}
@@ -2121,7 +2148,9 @@ export function TTVInferenceUI({
                       : null
                 )
               }
-              className="neu-select field-summary-prominent select-prominent"
+              className={`neu-select field-summary-prominent select-prominent ${
+                state.pregnancyStatus === null ? 'select-prominent--placeholder' : ''
+              }`}
               aria-label="Pilih status kehamilan"
               aria-required
             >
@@ -2163,7 +2192,9 @@ export function TTVInferenceUI({
               aria-controls="disabilitas-panel"
             >
               <span
-                className="collapsible-trigger__summary field-summary-prominent"
+                className={`collapsible-trigger__summary field-summary-prominent ${
+                  isDisabilityPlaceholder ? 'field-summary-prominent--placeholder' : ''
+                }`}
                 title={disabilityPlaceholder}
               >
                 {disabilityPlaceholder}
@@ -2187,7 +2218,9 @@ export function TTVInferenceUI({
                       setIsDisabilityOpen(false)
                     }}
                   >
-                    <span>{option || 'Pilih di sini'}</span>
+                    <span className={!option ? 'option-item__placeholder' : ''}>
+                      {option || 'Pilih di sini'}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -2214,7 +2247,9 @@ export function TTVInferenceUI({
               aria-controls="obesitas-panel"
             >
               <span
-                className="collapsible-trigger__summary field-summary-prominent"
+                className={`collapsible-trigger__summary field-summary-prominent ${
+                  isObesityPlaceholder ? 'field-summary-prominent--placeholder' : ''
+                }`}
                 title={obesityPlaceholder}
               >
                 {obesityPlaceholder}
@@ -2242,7 +2277,9 @@ export function TTVInferenceUI({
                       setIsObesityOpen(false)
                     }}
                   >
-                    <span>{option.label}</span>
+                    <span className={option.value === '' ? 'option-item__placeholder' : ''}>
+                      {option.label}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -2327,7 +2364,7 @@ export function TTVInferenceUI({
             disabled={isAnalyzingVitals || isCanonicalLoading}
             aria-label="AutoComplete+ Vital Signs"
           >
-            {isAnalyzingVitals ? '...' : '✨ AutoComplete+'}
+            {isAnalyzingVitals ? '...' : 'AutoComplete+'}
           </button>
         </div>
         <div
@@ -2405,10 +2442,15 @@ export function TTVInferenceUI({
           </div>
         </div>
 
-        {/* GAP-001: Clinical Assessment Row */}
-        <div className="vital-assessment-row">
-          <div className="vital-assessment-group">
-            <div className="vital-assessment-label">AVPU</div>
+        <div className="form-group">
+          <div className="form-group-header">
+            <div className="console-label console-label-prominent">Tingkat Kesadaran</div>
+          </div>
+
+          {/* GAP-001: Clinical Assessment Row */}
+          <div className="vital-assessment-row">
+            <div className="vital-assessment-group">
+              <div className="vital-assessment-label">AVPU</div>
             <div className="vital-assessment-controls">
               {AVPU_OPTIONS.map((option) => (
                 <button
@@ -2425,7 +2467,7 @@ export function TTVInferenceUI({
               ))}
             </div>
           </div>
-          <div className="vital-assessment-group">
+          <div className="vital-assessment-group vital-assessment-group--pain">
             <div className="vital-assessment-label">Nyeri (0-10)</div>
             <div className="vital-value">
               <input
@@ -2441,9 +2483,20 @@ export function TTVInferenceUI({
                 disabled={isGhostFillAnimating}
               />
               <span className="vital-unit">/10</span>
+              <div
+                className={`pain-graph-accent ${state.pain_score.trim() ? 'pain-graph-accent--hidden' : ''}`}
+                aria-hidden="true"
+              >
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {alerts.length > 0 ? (
@@ -2477,7 +2530,6 @@ export function TTVInferenceUI({
           </div>
         </div>
       ) : null}
-
 
       <div className="form-group">
         <div className="form-group-header">
@@ -2514,10 +2566,6 @@ export function TTVInferenceUI({
           <div className="doctor-picker-panel__list">
             {sortedDoctors.map((doctor) => {
               const isSelected = doctor.id === selectedDoctorId
-              const presence = doctor.availability_status || 'online'
-              const location = [doctor.location_name, doctor.room_name].filter(Boolean).join(' • ')
-              const isMatchedPoli = matchesPreferredPoli(doctor, preferredPoliKeywords)
-              const isSameFacility = matchesPreferredFacility(doctor, extractedFacilityName)
 
               return (
                 <button
@@ -2527,34 +2575,7 @@ export function TTVInferenceUI({
                   onClick={() => setSelectedDoctorId(doctor.id)}
                   aria-pressed={isSelected}
                 >
-                  <div className="doctor-option__top">
-                    <span className="doctor-option__name">{doctor.name}</span>
-                    <span className={`doctor-option__status doctor-option__status--${presence}`}>
-                      {AVAILABILITY_LABELS[presence]}
-                    </span>
-                  </div>
-                  <div className="doctor-option__meta">
-                    {[doctor.poli, location].filter(Boolean).join(' • ') || 'Lokasi belum tersedia'}
-                  </div>
-                  {isMatchedPoli || isSameFacility ? (
-                    <div className="doctor-option__badges">
-                      {isMatchedPoli ? (
-                        <span className="doctor-option__badge doctor-option__badge--poli">
-                          matched poli
-                        </span>
-                      ) : null}
-                      {isSameFacility ? (
-                        <span className="doctor-option__badge doctor-option__badge--facility">
-                          same facility
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {doctor.last_seen_at ? (
-                    <div className="doctor-option__meta">
-                      Last seen {new Date(doctor.last_seen_at).toLocaleTimeString('id-ID')}
-                    </div>
-                  ) : null}
+                  <span className="doctor-option__name">{doctor.name}</span>
                 </button>
               )
             })}
@@ -2610,14 +2631,16 @@ export function TTVInferenceUI({
       <div className="action-bar action-bar--sequential">
         <button
           type="button"
-          className="action-btn action-btn--primary"
+          className="btn-sentra-uplink"
           onClick={() => void handleSentraUplink()}
           disabled={!onSentraUplink || isUplinkLoading}
           aria-label="Sentra Uplink — isi RME otomatis"
         >
-          {isUplinkLoading ? 'Uploading...' : '📡 Sentra Uplink →'}
+          {isUplinkLoading ? 'Uploading...' : 'Sentra Uplink →'}
         </button>
-        <span className="action-bar__sep" aria-hidden="true">›</span>
+        <span className="action-bar__sep" aria-hidden="true">
+          ›
+        </span>
         <button
           type="button"
           className="action-btn action-btn--secondary"

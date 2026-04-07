@@ -20,7 +20,7 @@ export const CTHeader: React.FC<CTHeaderProps> = ({
   onBack,
 }) => {
   return (
-    <header className="sidepanel-shell-header mb-4" role="banner">
+    <header className="sidepanel-shell-header mb-6" role="banner">
       <div className="sidepanel-shell-header__eyebrow-row">
         <span className="sidepanel-shell-header__ownership">Property of Sentra Incorporate</span>
 

@@ -21,6 +21,7 @@
  * 10. Tenaga Medis
  */
 
+import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/constants/tenaga-medis'
 import {
   activateCheckboxWithOnclick,
   type FieldMapping,
@@ -1193,32 +1194,30 @@ export async function fillAnamnesaForm(payload: AnamnesaFillPayload): Promise<{
   // SECTION 10: TENAGA MEDIS
   // ========================================
   if (payload.tenaga_medis) {
-    // MANDATORY FIELD 3: Dokter / Tenaga Medis - Always override
-    if (payload.tenaga_medis.dokter_nama) {
-      mappings.push({
-        selector: 'input[name="dokter_nama_bpjs"], input[name="dokter_nama"], input[name="dokter"]',
-        value: payload.tenaga_medis.dokter_nama, // Should be: dr. FERDI ANDRISKA SH. MKN. C.LM
-        type: 'text',
-        forceOverride: true, // ✅ Always override
-      })
-      tenagaMedisBridgeFields.push({
-        selector: 'input[name="dokter_nama_bpjs"], input[name="dokter_nama"], input[name="dokter"]',
-        value: payload.tenaga_medis.dokter_nama,
-        type: 'autocomplete',
-        autocompleteTimeout: 4000,
-      })
-    }
+    // MANDATORY FIELD 3: Dokter — hardcoded per Chief directive
+    mappings.push({
+      selector: 'input[name="dokter_nama_bpjs"], input[name="dokter_nama"], input[name="dokter"]',
+      value: DOKTER_NAMA,
+      type: 'text',
+      forceOverride: true,
+    })
+    tenagaMedisBridgeFields.push({
+      selector: 'input[name="dokter_nama_bpjs"], input[name="dokter_nama"], input[name="dokter"]',
+      value: DOKTER_NAMA,
+      type: 'autocomplete',
+      autocompleteTimeout: 4000,
+    })
 
-    // MANDATORY FIELD 4: Perawat / Bidan — hardcoded per Chief directive
+    // MANDATORY FIELD 4: Perawat — hardcoded per Chief directive
     mappings.push({
       selector: 'input[name="perawat_nama"], input[name="perawat"], input[name*="bidan"]',
-      value: 'JOSEP ARIANTO, A.Md',
+      value: PERAWAT_NAMA,
       type: 'text',
       forceOverride: true,
     })
     tenagaMedisBridgeFields.push({
       selector: 'input[name="perawat_nama"], input[name="perawat"], input[name*="bidan"]',
-      value: 'JOSEP ARIANTO, A.Md',
+      value: PERAWAT_NAMA,
       type: 'autocomplete',
       autocompleteTimeout: 4000,
     })

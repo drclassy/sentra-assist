@@ -22,8 +22,12 @@
  * 5. Prognosa (optional textarea)
  */
 
+import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/constants/tenaga-medis'
 import { type FieldMapping, type FillResult, fillFields } from '@/lib/filler/filler-core'
+import { createLogger } from '@/utils/logger'
 import type { DiagnosaFillPayload } from '@/utils/types'
+
+const diagnosaLog = createLogger('DiagnosaHandler', 'content')
 
 // ============================================================================
 // DIAGNOSA PAYLOAD TO DAS MAPPING
@@ -192,7 +196,7 @@ function findPrognosaSelector(): string | null {
     const id = (el.id || '').toLowerCase()
     const nearby = getNearbyText(el)
     const optionsText = Array.from(el.options)
-      .map(opt => (opt.text || '').toLowerCase())
+      .map((opt) => (opt.text || '').toLowerCase())
       .join(' | ')
 
     if (optionsText.includes('screening')) continue
@@ -306,7 +310,7 @@ function findBestStaffInput(role: 'dokter' | 'perawat'): HTMLInputElement | null
   if (candidates.length === 0) return null
 
   const ranked = candidates
-    .map(input => ({ input, score: scoreStaffInput(input, role) }))
+    .map((input) => ({ input, score: scoreStaffInput(input, role) }))
     .sort((a, b) => b.score - a.score)
 
   return ranked[0]?.score > 0 ? ranked[0].input : null
@@ -529,7 +533,7 @@ function findSelectorByFallback(selectors: readonly string[]): string | null {
       // Skip hidden elements
       if (el instanceof HTMLElement) {
         if (isElementHiddenForFill(el)) {
-          console.log('[Diagnosa Handler] Skipping hidden element:', sel)
+          console.warn('[Diagnosa Handler] Skipping hidden element:', sel)
           continue
         }
       }
@@ -545,7 +549,7 @@ function findSelectorByFallback(selectors: readonly string[]): string | null {
       }
 
       if (el instanceof HTMLElement) {
-        console.log('[Diagnosa Handler] ✅ Found VISIBLE element for:', sel, el)
+        console.warn('[Diagnosa Handler] ✅ Found VISIBLE element for:', sel, el)
         const token = `sentra-dx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
         el.setAttribute('data-sentra-target', token)
         return `[data-sentra-target="${token}"]`
@@ -557,7 +561,7 @@ function findSelectorByFallback(selectors: readonly string[]): string | null {
 }
 
 function waitMs(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 async function findChronicDiseaseCheckboxWithRetry(
@@ -667,15 +671,14 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
   failed: FillResult[]
   skipped: string[]
 }> {
-  console.log('[Diagnosa Handler] ===== STARTING DIAGNOSIS FILL =====')
-  console.log('[Diagnosa Handler] Payload:', JSON.stringify(payload, null, 2))
-  console.log('[Diagnosa Handler] Payload fields:')
-  console.log('  - icd_x:', payload.icd_x)
-  console.log('  - nama:', payload.nama)
-  console.log('  - jenis:', payload.jenis)
-  console.log('  - kasus:', payload.kasus)
-  console.log('  - prognosa:', payload.prognosa)
-  console.log('  - penyakit_kronis:', payload.penyakit_kronis)
+  diagnosaLog.debug('Starting diagnosis fill', {
+    hasIcd: Boolean(payload.icd_x),
+    hasNama: Boolean(payload.nama),
+    hasJenis: Boolean(payload.jenis),
+    hasKasus: Boolean(payload.kasus),
+    hasPrognosa: Boolean(payload.prognosa),
+    chronicCount: payload.penyakit_kronis?.length ?? 0,
+  })
 
   const mappings: FieldMapping[] = []
   const skipped: string[] = []
@@ -685,7 +688,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
     // SKIP DAS - Use direct fallback selectors only
     // DAS auth broken, causing fills to fail completely
     // ========================================
-    console.log('[Diagnosa Handler] Skipping DAS, using direct fallback selectors')
+    console.warn('[Diagnosa Handler] Skipping DAS, using direct fallback selectors')
 
     const dasResult = {
       mappings: [],
@@ -694,7 +697,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
       latencyMs: 0,
     }
 
-    console.log('[Diagnosa Handler] Using fallback for all fields:', dasResult.unmapped)
+    console.warn('[Diagnosa Handler] Using fallback for all fields:', dasResult.unmapped)
 
     // DAS is skipped, so no mappings to process from DAS result
     // All fields will be handled by fallback logic below
@@ -703,17 +706,16 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
     // STRATEGY 2: Fallback for unmapped fields
     // ========================================
     if (dasResult.unmapped.length > 0) {
-      console.log('[Diagnosa Handler] Using fallback for unmapped fields:', dasResult.unmapped)
+      console.warn('[Diagnosa Handler] Using fallback for unmapped fields:', dasResult.unmapped)
 
       // ========================================
       // DOCTOR/NURSE NAMES - SCRAPE FROM RME + DIRECT FILL
       // ========================================
       const scrapedNames = scrapeDoctorNurseNames()
-      console.log('[Diagnosa Handler] Scraped names from RME:', scrapedNames)
+      console.warn('[Diagnosa Handler] Scraped names from RME:', scrapedNames)
 
-      // Doctor name
-      const dokterName =
-        sanitizeStaffName(scrapedNames.dokter) || sanitizeStaffName(findPrefilledDoctorName())
+      // Doctor name — hardcoded per Chief directive
+      const dokterName = DOKTER_NAMA
       if (dokterName) {
         const dokterInput = findBestStaffInput('dokter')
         if (dokterInput) {
@@ -733,7 +735,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
                 }
               : undefined,
           })
-          console.log(
+          console.warn(
             `[Diagnosa Handler] ✅ Will fill doctor name (${autocomplete ? 'autocomplete' : 'text'}):`,
             dokterName
           )
@@ -744,9 +746,8 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
         skipped.push('dokter_nama: source unavailable')
       }
 
-      // Nurse name
-      const perawatName =
-        sanitizeStaffName(scrapedNames.perawat) || sanitizeStaffName(findPrefilledNurseName())
+      // Nurse name — hardcoded per Chief directive
+      const perawatName = PERAWAT_NAMA
       if (perawatName) {
         const perawatInput = findBestStaffInput('perawat')
         if (perawatInput) {
@@ -766,7 +767,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
                 }
               : undefined,
           })
-          console.log(
+          console.warn(
             `[Diagnosa Handler] ✅ Will fill nurse name (${autocomplete ? 'autocomplete' : 'text'}):`,
             perawatName
           )
@@ -778,7 +779,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
       }
 
       // ICD-X field
-      if (payload.icd_x && !mappings.some(m => m.selector.includes('icd'))) {
+      if (payload.icd_x && !mappings.some((m) => m.selector.includes('icd'))) {
         const icdSelector = findSelectorByFallback(FALLBACK_SELECTORS.icd_x)
         if (icdSelector) {
           mappings.push({
@@ -792,7 +793,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
       }
 
       // Nama diagnosa field
-      if (payload.nama && !mappings.some(m => m.selector.includes('nama'))) {
+      if (payload.nama && !mappings.some((m) => m.selector.includes('nama'))) {
         const namaSelector = findSelectorByFallback(FALLBACK_SELECTORS.nama)
         if (namaSelector) {
           mappings.push({
@@ -806,7 +807,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
       }
 
       // Jenis diagnosa field - AGGRESSIVE SEARCH
-      if (payload.jenis && !mappings.some(m => m.selector.includes('jenis'))) {
+      if (payload.jenis && !mappings.some((m) => m.selector.includes('jenis'))) {
         // Try ALL select elements in diagnosis table
         const allSelects = Array.from(document.querySelectorAll('select'))
         let jenisEl: HTMLSelectElement | null = null
@@ -818,7 +819,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
           if (name.includes('jenis') || nearby.includes('Jenis')) {
             if (sel.offsetParent !== null && !sel.disabled) {
               jenisEl = sel
-              console.log('[Diagnosa Handler] ✅ Found Jenis dropdown:', sel.name)
+              console.warn('[Diagnosa Handler] ✅ Found Jenis dropdown:', sel.name)
               break
             }
           }
@@ -836,7 +837,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
             value: jenisValue || '1',
             type: 'select',
           })
-          console.log('[Diagnosa Handler] ✅ Will fill Jenis:', jenisValue)
+          console.warn('[Diagnosa Handler] ✅ Will fill Jenis:', jenisValue)
         } else {
           console.warn('[Diagnosa Handler] ❌ Jenis dropdown not found')
           skipped.push('jenis: Element not found')
@@ -844,7 +845,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
       }
 
       // Kasus field - AGGRESSIVE SEARCH
-      if (payload.kasus && !mappings.some(m => m.selector.includes('kasus'))) {
+      if (payload.kasus && !mappings.some((m) => m.selector.includes('kasus'))) {
         // Try ALL select elements in diagnosis table
         const allSelects = Array.from(document.querySelectorAll('select'))
         let kasusEl: HTMLSelectElement | null = null
@@ -856,7 +857,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
           if (name.includes('kasus') || nearby.includes('Kasus')) {
             if (sel.offsetParent !== null && !sel.disabled) {
               kasusEl = sel
-              console.log('[Diagnosa Handler] ✅ Found Kasus dropdown:', sel.name)
+              console.warn('[Diagnosa Handler] ✅ Found Kasus dropdown:', sel.name)
               break
             }
           }
@@ -874,7 +875,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
             value: kasusValue || '1',
             type: 'select',
           })
-          console.log('[Diagnosa Handler] ✅ Will fill Kasus:', kasusValue)
+          console.warn('[Diagnosa Handler] ✅ Will fill Kasus:', kasusValue)
         } else {
           console.warn('[Diagnosa Handler] ❌ Kasus dropdown not found')
           skipped.push('kasus: Element not found')
@@ -882,7 +883,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
       }
 
       // Prognosa field (optional)
-      if (payload.prognosa && !mappings.some(m => m.selector.includes('prognosa'))) {
+      if (payload.prognosa && !mappings.some((m) => m.selector.includes('prognosa'))) {
         const progSelector = findPrognosaSelector()
         if (progSelector) {
           const progEl = document.querySelector(progSelector)
@@ -894,7 +895,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
             if (mappedValue) {
               prognosisValue =
                 findSelectValue(progEl, [mappedValue, payload.prognosa]) || payload.prognosa
-              console.log(
+              console.warn(
                 `[Diagnosa Handler] Mapped prognosis "${payload.prognosa}" → "${prognosisValue}"`
               )
             }
@@ -911,7 +912,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
 
       // Penyakit kronis checkboxes
       if (payload.penyakit_kronis && payload.penyakit_kronis.length > 0) {
-        console.log('[Diagnosa Handler] Processing chronic diseases:', payload.penyakit_kronis)
+        console.warn('[Diagnosa Handler] Processing chronic diseases:', payload.penyakit_kronis)
         for (const diseaseName of payload.penyakit_kronis) {
           const checkbox = findChronicDiseaseCheckbox(diseaseName)
           if (checkbox) {
@@ -923,7 +924,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
               value: true,
               type: 'checkbox',
             })
-            console.log(`[Diagnosa Handler] Found checkbox for "${diseaseName}"`)
+            console.warn(`[Diagnosa Handler] Found checkbox for "${diseaseName}"`)
           } else {
             console.warn(
               `[Diagnosa Handler] Checkbox not found for chronic disease: "${diseaseName}"`
@@ -934,8 +935,8 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
       }
     }
 
-    console.log('[Diagnosa Handler] Final mappings:', mappings.length)
-    console.log('[Diagnosa Handler] Skipped:', skipped)
+    console.warn('[Diagnosa Handler] Final mappings:', mappings.length)
+    console.warn('[Diagnosa Handler] Skipped:', skipped)
   } catch (error) {
     console.error('[Diagnosa Handler] DAS error, using pure fallback:', error)
 
@@ -998,7 +999,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
           if (mappedValue) {
             prognosisValue =
               findSelectValue(progEl, [mappedValue, payload.prognosa]) || payload.prognosa
-            console.log(
+            console.warn(
               `[Diagnosa Handler] Mapped prognosis "${payload.prognosa}" → "${prognosisValue}"`
             )
           }
@@ -1059,7 +1060,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
     failed.push(r)
   }
 
-  console.log('[Diagnosa Handler] Fill complete:', {
+  diagnosaLog.debug('Fill complete', {
     success: success.length,
     failed: failed.length,
     skipped: normalizedSkipped.length,
@@ -1073,7 +1074,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
       await waitMs(500) // ensure primary fields settled
       const addButton = findAddDiagnosisButton()
       if (addButton) {
-        console.log('[Diagnosa Handler] Auto-clicking "Tambah" button')
+        console.warn('[Diagnosa Handler] Auto-clicking "Tambah" button')
         addButton.click()
         await waitMs(700) // wait UI to commit row + refresh dependent fields
       } else {
@@ -1086,7 +1087,7 @@ export async function fillDiagnosaForm(payload: DiagnosaFillPayload): Promise<{
         success.push(...post.success)
         failed.push(...post.failed)
         if (post.success.length > 0) {
-          console.log('[Diagnosa Handler] Post-add fields applied:', post.success.length)
+          console.warn('[Diagnosa Handler] Post-add fields applied:', post.success.length)
         }
       }
     } catch (error) {
@@ -1155,7 +1156,7 @@ function findAddDiagnosisButton(): HTMLButtonElement | HTMLAnchorElement | HTMLI
           el instanceof HTMLInputElement
       )
       const bestLocal = localButtons
-        .map(btn => ({ btn, score: scoreButton(btn) }))
+        .map((btn) => ({ btn, score: scoreButton(btn) }))
         .sort((a, b) => b.score - a.score)[0]
       if (bestLocal && bestLocal.score > 0) {
         return bestLocal.btn
@@ -1165,7 +1166,7 @@ function findAddDiagnosisButton(): HTMLButtonElement | HTMLAnchorElement | HTMLI
 
   // Strategy 2: Global fallback with strict scoring + screening block
   const bestGlobal = allButtons
-    .map(btn => ({ btn, score: scoreButton(btn) }))
+    .map((btn) => ({ btn, score: scoreButton(btn) }))
     .sort((a, b) => b.score - a.score)[0]
   if (bestGlobal && bestGlobal.score > 0) {
     return bestGlobal.btn
@@ -1183,14 +1184,14 @@ function findAddDiagnosisButton(): HTMLButtonElement | HTMLAnchorElement | HTMLI
  * Called when content script detects diagnosa page
  */
 export function initDiagnosaPage(): void {
-  console.log('[Diagnosa Handler] Page initialized with DAS integration')
+  console.warn('[Diagnosa Handler] Page initialized with DAS integration')
 
   // Pre-warm DAS cache by scanning fields
   setTimeout(async () => {
     try {
       const { scanPageFields } = await import('@/lib/das')
       const result = scanPageFields({ includeHidden: false })
-      console.log('[Diagnosa Handler] Pre-scan found', result.fields.length, 'fields')
+      console.warn('[Diagnosa Handler] Pre-scan found', result.fields.length, 'fields')
     } catch (error) {
       console.warn('[Diagnosa Handler] Pre-scan failed:', error)
     }
@@ -1206,7 +1207,7 @@ export function initDiagnosaPage(): void {
  * @returns Scraped diagnosa data
  */
 export async function scrapeDiagnosaForm(): Promise<Partial<DiagnosaFillPayload>> {
-  console.log('[Diagnosa Handler] Scraping diagnosa form...')
+  diagnosaLog.debug('Scraping diagnosa form')
 
   const result: Partial<DiagnosaFillPayload> = {}
 
@@ -1267,7 +1268,13 @@ export async function scrapeDiagnosaForm(): Promise<Partial<DiagnosaFillPayload>
     }
   }
 
-  console.log('[Diagnosa Handler] Scraped data:', result)
+  diagnosaLog.debug('Diagnosa form scraped', {
+    hasIcd: Boolean(result.icd_x),
+    hasNama: Boolean(result.nama),
+    hasJenis: Boolean(result.jenis),
+    hasKasus: Boolean(result.kasus),
+    hasPrognosa: Boolean(result.prognosa),
+  })
   return result
 }
 
@@ -1294,14 +1301,14 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
     const dokterMatch = text.match(/(?:Dokter|Dokter Pemeriksa)\s*:\s*([^\n,]+)/i)
     if (dokterMatch && dokterMatch[1]) {
       result.dokter = dokterMatch[1].trim()
-      console.log('[Diagnosa Handler] Found doctor in header:', result.dokter)
+      console.warn('[Diagnosa Handler] Found doctor in header:', result.dokter)
     }
 
     // Match nurse name pattern: "Perawat: Name" or "Bidan: Name"
     const perawatMatch = text.match(/(?:Perawat|Bidan)\s*:\s*([^\n,]+)/i)
     if (perawatMatch && perawatMatch[1]) {
       result.perawat = perawatMatch[1].trim()
-      console.log('[Diagnosa Handler] Found nurse in header:', result.perawat)
+      console.warn('[Diagnosa Handler] Found nurse in header:', result.perawat)
     }
   }
 
@@ -1315,7 +1322,7 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
       if (sanitized) {
         result.dokter = sanitized
       }
-      console.log('[Diagnosa Handler] Found doctor in hidden field:', result.dokter)
+      console.warn('[Diagnosa Handler] Found doctor in hidden field:', result.dokter)
     }
   }
 
@@ -1328,7 +1335,7 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
       if (sanitized) {
         result.perawat = sanitized
       }
-      console.log('[Diagnosa Handler] Found nurse in hidden field:', result.perawat)
+      console.warn('[Diagnosa Handler] Found nurse in hidden field:', result.perawat)
     }
   }
 
@@ -1342,7 +1349,7 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
         const nameMatch = text.match(/(dr\.\s*[A-Za-z]+(?:\s+[A-Za-z]+)*)/i)
         if (nameMatch) {
           result.dokter = nameMatch[1].trim()
-          console.log('[Diagnosa Handler] Found doctor in text element:', result.dokter)
+          console.warn('[Diagnosa Handler] Found doctor in text element:', result.dokter)
           break
         }
       }
@@ -1356,10 +1363,10 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
     const userName = userNameEl.textContent?.trim() || ''
     if (userName.toLowerCase().startsWith('dr.') && !result.dokter) {
       result.dokter = userName
-      console.log('[Diagnosa Handler] Found doctor from user name:', result.dokter)
+      console.warn('[Diagnosa Handler] Found doctor from user name:', result.dokter)
     } else if (!result.perawat && userName && !userName.toLowerCase().startsWith('dr.')) {
       result.perawat = userName
-      console.log('[Diagnosa Handler] Found nurse from user name:', result.perawat)
+      console.warn('[Diagnosa Handler] Found nurse from user name:', result.perawat)
     }
   }
 
@@ -1370,7 +1377,7 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
       sessionStorage.getItem('epuskesmas_doctor_name')
     if (storedDoctor && !result.dokter) {
       result.dokter = storedDoctor
-      console.log('[Diagnosa Handler] Found doctor in storage:', result.dokter)
+      console.warn('[Diagnosa Handler] Found doctor in storage:', result.dokter)
     }
 
     const storedNurse =
@@ -1378,7 +1385,7 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
       sessionStorage.getItem('epuskesmas_nurse_name')
     if (storedNurse && !result.perawat) {
       result.perawat = storedNurse
-      console.log('[Diagnosa Handler] Found nurse in storage:', result.perawat)
+      console.warn('[Diagnosa Handler] Found nurse in storage:', result.perawat)
     }
   } catch {
     // Storage access may fail in some contexts

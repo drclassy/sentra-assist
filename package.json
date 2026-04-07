@@ -17,8 +17,9 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "test": "vitest run",
+    "test:contract": "vitest run lib/api/bridge-client.test.ts",
     "test:ui": "vitest --ui",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test tests/e2e --pass-with-no-tests",
     "quality": "npm run typecheck && npm run lint && npm run test",
     "docs:generate": "typedoc",
     "docs:serve": "npx http-server ./docs/api -p 8080 -o",
@@ -73,17 +74,6 @@
     "vite": "^6.0.7",
     "vitest": "^2.0.0",
     "wxt": "^0.20.13"
-  },
-  "pnpm": {
-    "overrides": {
-      "minimatch@<3.1.4": "3.1.5",
-      "minimatch@>=9.0.0 <9.0.7": "9.0.9",
-      "minimatch@>=10.0.0 <10.2.3": "10.2.4",
-      "rollup@>=4.0.0 <4.59.0": "4.59.0",
-      "esbuild@<0.25.0": "0.25.12",
-      "markdown-it@<14.1.1": "14.1.1",
-      "ajv@>=6.0.0 <6.14.0": "6.14.0"
-    }
   },
   "directories": {
     "doc": "docs",

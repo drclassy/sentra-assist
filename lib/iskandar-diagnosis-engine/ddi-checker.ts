@@ -106,7 +106,7 @@ export async function loadDDIDatabase(): Promise<boolean> {
     // Build efficient lookup index
     interactionIndex = buildInteractionIndex(ddiDatabase)
 
-    console.log(
+    console.warn(
       `[DDI] Database loaded: ${ddiDatabase.stats.drugs} drugs, ${ddiDatabase.stats.interactions} interactions`
     )
     return true

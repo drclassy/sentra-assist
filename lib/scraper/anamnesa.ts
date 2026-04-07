@@ -56,7 +56,7 @@ export interface AnamnesaScrapeResult extends Partial<EncounterData> {
 }
 
 export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
-  console.log('[Scraper] Analyzing Anamnesa Page...')
+  console.warn('[Scraper] Analyzing Anamnesa Page...')
 
   await waitForElement('#form-anamnesa-container')
 
@@ -202,7 +202,7 @@ export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
     },
   }
 
-  console.log('[Scraper] Anamnesa scraped:', {
+  console.warn('[Scraper] Anamnesa scraped:', {
     hasVitals: !!vital_signs,
     hasDemographics: !!patient_demographics,
     hasKeluhan: !!keluhanUtama,

@@ -148,7 +148,7 @@ export const DosageCalculator: React.FC<DosageCalculatorProps> = ({
                 ? '#EF4444'
                 : dosageResult.isOverMax
                   ? '#F59E0B'
-                  : '#10B981',
+                  : '#6B9B8A',
             }}
           >
             <div className="flex items-baseline gap-3">

@@ -39,6 +39,8 @@ interface ClinicalDifferentialProps {
   canonicalOutput?: CanonicalClinicalEngineOutput | null;
   hasVisitHistory?: boolean;
   onBack: () => void;
+  onDiagnosisChange?: (diagnosis: { icd_x: string; nama: string } | null) => void;
+  onMedicationsChange?: (medications: MedicationRecommendation[]) => void;
 }
 
 type LoadState = 'loading' | 'error' | 'ready';
@@ -89,7 +91,7 @@ const ICD_EMERGENCY_HEAD_MAP: Record<string, string> = {
   '8': 'B',
 };
 
-function normalizeIcdCode(value: string | undefined): string {
+export function normalizeIcdCode(value: string | undefined): string {
   const raw = String(value || '')
     .toUpperCase()
     .replace(/\s+/g, '')
@@ -112,7 +114,7 @@ function normalizeIcdCode(value: string | undefined): string {
   return compact;
 }
 
-function isReadableDiagnosisName(value: string | undefined): boolean {
+export function isReadableDiagnosisName(value: string | undefined): boolean {
   const cleaned = (value || '').trim();
   if (!cleaned) return false;
   if (cleaned.length < 3) return false;
@@ -128,7 +130,7 @@ function isCodeLikeDiagnosisName(value: string | undefined): boolean {
   return /^[A-Z][0-9]{2}(?:\.[0-9A-Z]{1,2})?$/.test(cleaned);
 }
 
-function isLikelyIcdCode(value: string | undefined): boolean {
+export function isLikelyIcdCode(value: string | undefined): boolean {
   const normalized = normalizeIcdCode(value);
   return ICD_PATTERN.test(normalized);
 }
@@ -152,7 +154,7 @@ function pregnancyStatusLabel(status: PregnancyStatus): string {
   return 'Confirmed: Not Pregnant';
 }
 
-function buildConfirmedChronicSuggestion(diagnosis: {
+export function buildConfirmedChronicSuggestion(diagnosis: {
   icd_x: string;
   nama: string;
 }): DiagnosisSuggestion {
@@ -170,7 +172,7 @@ function buildConfirmedChronicSuggestion(diagnosis: {
   };
 }
 
-function buildUiFallbackDiagnoses(
+export function buildUiFallbackDiagnoses(
   keluhanUtama: string,
   vitals: DifferentialVitals
 ): DiagnosisSuggestion[] {
@@ -247,7 +249,7 @@ function toNeedStyle(level: 'required' | 'recommended' | 'optional'): {
     };
   }
   return {
-    color: '#10B981',
+    color: '#6B9B8A',
     bg: 'rgba(16,185,129,0.12)',
     border: 'rgba(16,185,129,0.35)',
     label: 'OPTIONAL',
@@ -388,6 +390,8 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
   canonicalOutput,
   hasVisitHistory,
   onBack,
+  onDiagnosisChange,
+  onMedicationsChange,
 }) => {
   const [phase, setPhase] = useState<LoadState>('loading');
   const [errorMsg, setErrorMsg] = useState('');
@@ -994,6 +998,16 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
     );
     setSelectedMedicationKeys((prev) => prev.filter((key) => availableMedicationKeys.has(key)));
   }, [candidateTransferMedications]);
+
+  // Lift selected diagnosis and medications to parent (for uplink from TTVInferenceUI)
+  useEffect(() => {
+    const first = selectedDiagnoses[0];
+    onDiagnosisChange?.(first ? { icd_x: first.icd_x, nama: first.nama } : null);
+  }, [selectedDiagnoses, onDiagnosisChange]);
+
+  useEffect(() => {
+    onMedicationsChange?.(selectedTransferMedications);
+  }, [selectedTransferMedications, onMedicationsChange]);
 
   const toggleMedicationSelection = (med: MedicationRecommendation): void => {
     const key = medicationSelectionKey(med);

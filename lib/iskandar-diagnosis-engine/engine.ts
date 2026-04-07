@@ -580,12 +580,12 @@ export async function getCDSSEngineStatus(): Promise<CDSSEngineStatus> {
 
 export async function initCDSSEngine(): Promise<boolean> {
   try {
-    console.log('[Iskandar Engine V1] Initializing...')
+    console.warn('[Iskandar Engine V1] Initializing...')
 
     // Ensure ICD-10 database is loaded
     const { ensureICD10DataLoaded } = await import('@/lib/rag')
     await ensureICD10DataLoaded(progress => {
-      console.log(`[Iskandar Engine] ICD-10 loading: ${progress.phase} (${progress.progress}%)`)
+      console.warn(`[Iskandar Engine] ICD-10 loading: ${progress.phase} (${progress.progress}%)`)
     })
 
     // Pre-warm symptom matcher cache
@@ -598,7 +598,7 @@ export async function initCDSSEngine(): Promise<boolean> {
     await auditLogger.init()
 
     const status = await getCDSSEngineStatus()
-    console.log(
+    console.warn(
       `[Iskandar Engine V1] Ready. KB: ${status.icd10_count} diseases. Model: ${status.model}`
     )
 

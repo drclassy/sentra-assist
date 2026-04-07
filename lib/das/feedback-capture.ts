@@ -106,7 +106,7 @@ export function trackFilledField(mapping: FieldMapping, filledValue: string): vo
 
   trackedFields.set(trackingKey, tracked)
 
-  console.log(`[DAS:Feedback] Tracking field: ${mapping.payloadKey}`)
+  console.warn(`[DAS:Feedback] Tracking field: ${mapping.payloadKey}`)
 }
 
 /**
@@ -177,7 +177,7 @@ async function reportOutcome(
 
   try {
     await recordLearning(entry)
-    console.log(`[DAS:Feedback] Recorded ${outcome} for ${tracked.mapping.payloadKey}`)
+    console.warn(`[DAS:Feedback] Recorded ${outcome} for ${tracked.mapping.payloadKey}`)
   } catch (error) {
     console.error('[DAS:Feedback] Failed to record learning:', error)
   }
@@ -242,7 +242,7 @@ export async function reportFillFailed(mapping: FieldMapping, reason?: string): 
   }
 
   await reportOutcome(trackingKey, 'failed')
-  console.log(`[DAS:Feedback] Fill failed: ${reason || 'unknown'}`)
+  console.warn(`[DAS:Feedback] Fill failed: ${reason || 'unknown'}`)
 }
 
 /**

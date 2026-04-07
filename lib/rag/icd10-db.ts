@@ -60,13 +60,13 @@ class ICD10Database {
       request.onsuccess = () => {
         this.db = request.result
         this.isInitialized = true
-        console.log('[ICD10-DB] Database opened successfully')
+        console.warn('[ICD10-DB] Database opened successfully')
         resolve()
       }
 
       request.onupgradeneeded = event => {
         const db = (event.target as IDBOpenDBRequest).result
-        console.log('[ICD10-DB] Upgrading database schema...')
+        console.warn('[ICD10-DB] Upgrading database schema...')
 
         // Create main ICD-10 entries store
         if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -78,13 +78,13 @@ class ICD10Database {
           store.createIndex('is_leaf', 'is_leaf', { unique: false })
           store.createIndex('keywords', 'keywords', { unique: false, multiEntry: true })
 
-          console.log('[ICD10-DB] Created icd10_entries store with indices')
+          console.warn('[ICD10-DB] Created icd10_entries store with indices')
         }
 
         // Create metadata store
         if (!db.objectStoreNames.contains(META_STORE)) {
           db.createObjectStore(META_STORE, { keyPath: 'key' })
-          console.log('[ICD10-DB] Created metadata store')
+          console.warn('[ICD10-DB] Created metadata store')
         }
       }
     })
@@ -301,7 +301,7 @@ class ICD10Database {
       })
 
       tx.oncomplete = () => {
-        console.log(`[ICD10-DB] Bulk put completed: ${successCount} entries`)
+        console.warn(`[ICD10-DB] Bulk put completed: ${successCount} entries`)
         resolve(successCount)
       }
 
@@ -324,7 +324,7 @@ class ICD10Database {
       const request = store.clear()
 
       request.onsuccess = () => {
-        console.log('[ICD10-DB] Store cleared')
+        console.warn('[ICD10-DB] Store cleared')
         resolve()
       }
       request.onerror = () => reject(request.error)
@@ -482,7 +482,7 @@ class ICD10Database {
       this.db = null
       this.isInitialized = false
       this.initPromise = null
-      console.log('[ICD10-DB] Database closed')
+      console.warn('[ICD10-DB] Database closed')
     }
   }
 
@@ -496,7 +496,7 @@ class ICD10Database {
       const request = indexedDB.deleteDatabase(DB_NAME)
 
       request.onsuccess = () => {
-        console.log('[ICD10-DB] Database deleted')
+        console.warn('[ICD10-DB] Database deleted')
         resolve()
       }
 

@@ -193,8 +193,8 @@ describe('RME payload mapper', () => {
     })
 
     expect(mapped.payload.resep?.ajax.ruangan).toBe('')
-    expect(mapped.payload.resep?.ajax.dokter).toBe('dr. Ferdi')
-    expect(mapped.payload.resep?.ajax.perawat).toBe('Ns. Delia')
+    expect(mapped.payload.resep?.ajax.dokter).toBe('dr. Ferdi Iskandar, S.H., M.Kn., C.LM., CMDC')
+    expect(mapped.payload.resep?.ajax.perawat).toBe('JOSEP ARIANTO, A.Md')
   })
 
   it('prefers solid paracetamol form for 500mg input instead of syrup', () => {

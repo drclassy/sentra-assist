@@ -8,8 +8,6 @@
 // Based on SENTRA-SPEC-001 v1.2.0 Section 4.4
 // Uses @webext-core/messaging for compile-time type safety
 
-import { defineExtensionMessaging } from '@webext-core/messaging'
-import { browser } from 'wxt/browser'
 import type { CDSSEngineStatus } from '@/lib/iskandar-diagnosis-engine/engine'
 import type {
   APIResponse,
@@ -21,6 +19,8 @@ import type {
   PediatricDoseRequest,
   PrescriptionRequestContext,
 } from '@/types/api'
+import { defineExtensionMessaging } from '@webext-core/messaging'
+import { browser } from 'wxt/browser'
 import type {
   AnamnesaFillPayload,
   DiagnosaFillPayload,
@@ -69,8 +69,8 @@ function asNumber(value: unknown, fallback = 0): number {
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return []
   return value
-    .map(item => (typeof item === 'string' ? item.trim() : ''))
-    .filter(item => item.length > 0)
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter((item) => item.length > 0)
 }
 
 function asAturanPakai(value: unknown): Encounter['resep'][number]['aturan_pakai'] {
@@ -175,7 +175,6 @@ interface ProtocolMap {
   // ========================================
   pageReady(info: PageReadyInfo): Promise<void>
   scrapeResult(data: ScrapePayload): Promise<void>
-  updateEncounter(data: Partial<Encounter>): Promise<void>
 
   // ========================================
   // Worker → Content (Direct Commands)
@@ -188,9 +187,6 @@ interface ProtocolMap {
 
   // ========================================
   // Worker → Panel (State Updates)
-  // ========================================
-  encounterUpdated(data: Encounter): Promise<void>
-
   // ========================================
   // Panel → Worker (CDSS AI Requests)
   // ========================================
@@ -265,7 +261,8 @@ interface ProtocolMap {
       facilityName?: string
       payerLabel?: string
       pregnancyRisk?: string
-      pregnancyStatus?: string
+      /** Parsed from ePuskesmas label (boolean | null); not a free-text PHI field */
+      pregnancyStatus?: boolean | null
       specialConditions?: string[]
       allergies?: string[]
     }

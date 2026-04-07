@@ -131,7 +131,7 @@ export async function mapPayloadToFields(
       const cached = await getCachedMapping(pageHash)
 
       if (cached) {
-        console.log('[DAS:Mapper] Cache hit:', pageHash)
+        console.warn('[DAS:Mapper] Cache hit:', pageHash)
 
         // Restore mappings from cache
         const restoredMappings = restoreMappingsFromCache(cached, fields)
@@ -164,7 +164,7 @@ export async function mapPayloadToFields(
     }
 
     // 5. Call Gemini Vision for mapping
-    console.log('[DAS:Mapper] Cache miss, calling Gemini...')
+    console.warn('[DAS:Mapper] Cache miss, calling Gemini...')
     let result: MappingResult
 
     try {
@@ -178,7 +178,7 @@ export async function mapPayloadToFields(
     const safeMappings = enforceConfidenceThresholds(result.mappings)
     const validation = validateMappings(safeMappings)
 
-    console.log('[DAS:Mapper] Validation:', generateValidationSummary(validation))
+    console.warn('[DAS:Mapper] Validation:', generateValidationSummary(validation))
 
     // 7. Filter by confidence threshold
     const qualifiedMappings = safeMappings.filter(m => m.confidence >= opts.minConfidence)
@@ -188,7 +188,7 @@ export async function mapPayloadToFields(
 
     if (cacheableMappings.length > 0 && !opts.bypassCache) {
       await setCachedMapping(pageHash, pageType, cacheableMappings)
-      console.log('[DAS:Mapper] Cached', cacheableMappings.length, 'mappings')
+      console.warn('[DAS:Mapper] Cached', cacheableMappings.length, 'mappings')
     }
 
     // 9. Combine warnings

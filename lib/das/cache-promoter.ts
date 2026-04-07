@@ -66,11 +66,11 @@ export async function executePromotion(
     const candidates = await getPromotionCandidates(criteria)
 
     if (candidates.length === 0) {
-      console.log('[DAS:Promoter] No candidates for promotion')
+      console.warn('[DAS:Promoter] No candidates for promotion')
       return result
     }
 
-    console.log(`[DAS:Promoter] Found ${candidates.length} promotion candidates`)
+    console.warn(`[DAS:Promoter] Found ${candidates.length} promotion candidates`)
 
     // Get current page fields for context
     const scanResult = scanPageFields()
@@ -112,7 +112,7 @@ export async function executePromotion(
       await setCachedMapping(pageHash, pageType || 'unknown', mappingsToCache)
     }
 
-    console.log(`[DAS:Promoter] Promoted ${result.promoted} mappings to cache`)
+    console.warn(`[DAS:Promoter] Promoted ${result.promoted} mappings to cache`)
 
     return result
   } catch (error) {
@@ -224,7 +224,7 @@ export async function runMaintenance(): Promise<{
   cleanedEntries: number
   promotionResult: PromotionResult
 }> {
-  console.log('[DAS:Promoter] Starting maintenance...')
+  console.warn('[DAS:Promoter] Starting maintenance...')
 
   // Clean up old entries
   const cleanedEntries = await cleanupOldEntries()
@@ -232,7 +232,7 @@ export async function runMaintenance(): Promise<{
   // Run promotion
   const promotionResult = await executePromotion()
 
-  console.log('[DAS:Promoter] Maintenance complete')
+  console.warn('[DAS:Promoter] Maintenance complete')
 
   return {
     cleanedEntries,
@@ -251,7 +251,7 @@ export async function resetDAS(): Promise<void> {
   await clearCache()
   // Note: Learning store clear is called separately
 
-  console.log('[DAS:Promoter] DAS system reset complete')
+  console.warn('[DAS:Promoter] DAS system reset complete')
 }
 
 // ============================================================================
@@ -277,7 +277,7 @@ export function startScheduledMaintenance(intervalMs: number = 60 * 60 * 1000): 
     })
   }, intervalMs)
 
-  console.log(`[DAS:Promoter] Scheduled maintenance every ${intervalMs / 1000}s`)
+  console.warn(`[DAS:Promoter] Scheduled maintenance every ${intervalMs / 1000}s`)
 }
 
 /**
@@ -287,6 +287,6 @@ export function stopScheduledMaintenance(): void {
   if (maintenanceInterval) {
     clearInterval(maintenanceInterval)
     maintenanceInterval = null
-    console.log('[DAS:Promoter] Scheduled maintenance stopped')
+    console.warn('[DAS:Promoter] Scheduled maintenance stopped')
   }
 }

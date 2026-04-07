@@ -169,7 +169,7 @@ export async function updateCacheResult(pageHash: string, success: boolean): Pro
       entry.successRate < CACHE_CONFIG.minSuccessRate
     ) {
       await browser.storage.local.remove(key)
-      console.log(`[DAS:Cache] Removed low-success entry: ${pageHash}`)
+      console.warn(`[DAS:Cache] Removed low-success entry: ${pageHash}`)
       return
     }
 
@@ -191,7 +191,7 @@ export async function clearCache(): Promise<void> {
       await browser.storage.local.remove(keysToRemove)
     }
 
-    console.log(`[DAS:Cache] Cleared ${keysToRemove.length} entries`)
+    console.warn(`[DAS:Cache] Cleared ${keysToRemove.length} entries`)
   } catch (error) {
     console.error('[DAS:Cache] Clear error:', error)
   }
@@ -263,7 +263,7 @@ async function cleanupOldEntries(): Promise<void> {
     if (toRemove > 0) {
       const keysToRemove = entries.slice(0, toRemove).map(e => e.key)
       await browser.storage.local.remove(keysToRemove)
-      console.log(`[DAS:Cache] Cleaned up ${toRemove} old entries`)
+      console.warn(`[DAS:Cache] Cleaned up ${toRemove} old entries`)
     }
   } catch (error) {
     console.error('[DAS:Cache] Cleanup error:', error)

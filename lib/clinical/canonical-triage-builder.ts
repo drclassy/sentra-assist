@@ -29,6 +29,9 @@ export interface BuildCanonicalTriageInputArgs {
     temp: number;
     spo2: number;
     glucose: number;
+    avpu?: 'A' | 'C' | 'V' | 'P' | 'U';
+    supplemental_o2?: boolean;
+    pain_score?: number;
   };
   symptomTextRaw?: string;
   keluhanUtama: string;
@@ -42,6 +45,8 @@ export interface BuildCanonicalTriageInputArgs {
   obesityConfirmation?: ObesityConfirmation;
   autosenPreset?: AutosenPreset;
   prefetchedVisits?: VisitRecord[];
+  hasCopd?: boolean;
+  structuredSignsText?: string;
 }
 
 function clampHistoryText(text?: string): string[] {
@@ -73,6 +78,16 @@ function mapPregnancyStatus(
   }
 
   return 'tidak_diisi';
+}
+
+function composeStructuredSignsText(args: BuildCanonicalTriageInputArgs): string | undefined {
+  const parts: string[] = []
+  if (args.keluhanUtama) parts.push(`KU: ${args.keluhanUtama}`)
+  if (args.symptomTextRaw && args.symptomTextRaw !== args.keluhanUtama) parts.push(args.symptomTextRaw)
+  if (args.vitals.avpu && args.vitals.avpu !== 'A') parts.push(`AVPU: ${args.vitals.avpu}`)
+  if (args.vitals.pain_score !== undefined) parts.push(`Nyeri: ${args.vitals.pain_score}/10`)
+  if (args.vitals.supplemental_o2) parts.push('O2 Suplemen: Ya')
+  return parts.length > 0 ? parts.join(' | ') : undefined
 }
 
 export function buildCanonicalRequestId(patientRM: string): string {
@@ -117,6 +132,10 @@ export function buildCanonicalTriageInput(args: BuildCanonicalTriageInputArgs): 
             },
           }
         : {}),
+      ...(args.vitals.avpu !== undefined ? { avpu: args.vitals.avpu } : {}),
+      ...(args.vitals.supplemental_o2 !== undefined ? { supplemental_o2: args.vitals.supplemental_o2 } : {}),
+      ...(args.vitals.pain_score !== undefined ? { pain_score: args.vitals.pain_score } : {}),
+      has_copd: args.hasCopd ?? false,
     },
     narrative: {
       symptom_text_raw: args.symptomTextRaw || args.keluhanTambahan || args.keluhanUtama,
@@ -124,6 +143,10 @@ export function buildCanonicalTriageInput(args: BuildCanonicalTriageInputArgs): 
       keluhan_tambahan: args.keluhanTambahan,
       autosen_preset: args.autosenPreset,
     },
+    ...(() => {
+      const text = args.structuredSignsText ?? composeStructuredSignsText(args)
+      return text ? { bedside_signs: { structured_signs_text: text } } : {}
+    })(),
     context: {
       chronic_diseases: chronicDiseases,
       allergies: args.allergies || [],

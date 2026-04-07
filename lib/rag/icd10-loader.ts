@@ -162,7 +162,7 @@ export class ICD10Loader {
         total_items: inserted,
       })
 
-      console.log(`[ICD10-Loader] Loaded ${inserted} entries from 144 Penyakit Puskesmas`)
+      console.warn(`[ICD10-Loader] Loaded ${inserted} entries from 144 Penyakit Puskesmas`)
 
       return inserted
     } catch (error) {
@@ -405,9 +405,9 @@ export async function ensureICD10DataLoaded(onProgress?: LoaderProgressCallback)
   const needs = await needsDataLoad()
 
   if (needs) {
-    console.log('[ICD10-Loader] Database needs loading, starting...')
+    console.warn('[ICD10-Loader] Database needs loading, starting...')
     await loadICD10Data(onProgress)
   } else {
-    console.log('[ICD10-Loader] Database already loaded (144 Penyakit Puskesmas)')
+    console.warn('[ICD10-Loader] Database already loaded (144 Penyakit Puskesmas)')
   }
 }

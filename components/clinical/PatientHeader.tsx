@@ -196,7 +196,7 @@ export const patientHeaderStyles = `
 
 .patient-bpjs-compact.bpjs-aktif {
   background: rgba(16, 185, 129, 0.15);
-  color: #10B981;
+  color: #6B9B8A;
 }
 
 .patient-bpjs-compact.bpjs-nonaktif {

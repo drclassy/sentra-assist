@@ -4,20 +4,25 @@ Tanggal: 2026-04-06
 
 ## Tujuan
 
-Dokumen ini mengunci kontrak canonical antara `sentra-assist` sebagai workflow-first UI dan `dashboard` sebagai canonical clinical engine.
+Dokumen ini mengunci kontrak canonical antara `sentra-assist` sebagai
+workflow-first UI dan `dashboard` sebagai canonical clinical engine.
 
 Target utamanya:
 
 - `Assist` mengirim payload yang konsisten, lengkap, dan tidak ambigu
-- `Dashboard` mengembalikan output scoring klinis yang bisa langsung dirender di sidebar
-- tidak ada drift semantics antara hasil yang tampil di `Assist` dan hasil yang dihitung engine canonical
+- `Dashboard` mengembalikan output scoring klinis yang bisa langsung dirender di
+  sidebar
+- tidak ada drift semantics antara hasil yang tampil di `Assist` dan hasil yang
+  dihitung engine canonical
 
 ## Prinsip Kontrak
 
 - kontrak mengikuti field nyata yang sudah hidup di `Assist`
 - kontrak selaras dengan `dashboard/src/lib/cdss/types.ts`
-- `Assist` boleh menambah context bedside, tetapi tidak mendefinisikan scoring final sendiri
-- field yang belum tersedia di `Assist` tetap ditandai optional agar rollout fase 1 tidak memblokir UX bedside
+- `Assist` boleh menambah context bedside, tetapi tidak mendefinisikan scoring
+  final sendiri
+- field yang belum tersedia di `Assist` tetap ditandai optional agar rollout
+  fase 1 tidak memblokir UX bedside
 
 ## Source Mapping Saat Ini
 
@@ -93,7 +98,12 @@ interface TriageInput {
     keluhan_utama: string
     keluhan_tambahan?: string
     autocomplete_summary?: string
-    autosen_preset?: 'hypertension' | 'hyperglycemia' | 'hypoglycemia' | 'glucose_tolerance' | 'adl'
+    autosen_preset?:
+      | 'hypertension'
+      | 'hyperglycemia'
+      | 'hypoglycemia'
+      | 'glucose_tolerance'
+      | 'adl'
   }
   context: {
     chronic_diseases: string[]
@@ -220,29 +230,29 @@ interface ClinicalEngineOutput {
 
 ## Field Mapping Assist -> Canonical
 
-| Assist field | Canonical field | Notes |
-|---|---|---|
-| `patientData.rm` | `patient.rm`, `patient.patient_id` | `patient_id` boleh memakai RM pada fase 1 |
-| `patientData.gender` | `patient.gender` | direct |
-| `patientData.age` | `patient.age` | direct |
-| `patientData.dob` | `patient.dob` | optional |
-| `patientData.bpjsStatus` | `patient.bpjs_status` | direct |
-| `clinicalContext.payerLabel` | `patient.payer_label` | prefer extractor direct |
-| `clinicalContext.facilityName` | `patient.facility_name` | direct |
-| `ttvState.sbp` dst | `vitals.*` | parse ke number |
-| `ttvState.glucose` | `vitals.glucose.value` | fase 1 default type `GDS` |
-| `state.symptomText` | `narrative.symptom_text_raw` | raw bedside text |
-| `anamnesaDraft.payload.keluhan_utama` | `narrative.keluhan_utama` | canonical |
-| `anamnesaDraft.payload.keluhan_tambahan` | `narrative.keluhan_tambahan` | canonical |
-| `ttvState.autosenPreset` | `narrative.autosen_preset` | UI helper context |
-| `prefilledHistoryFlags` | `context.chronic_diseases` | map ke label klinis |
-| `ttvState.allergies` + extractor | `context.allergies` | merge + dedupe |
-| `ttvState.pregnancyStatus` | `context.pregnancy_status` | map ke enum |
-| `clinicalContext.pregnancyRisk` | `context.pregnancy_risk` | optional |
-| `clinicalContext.specialConditions` | `context.special_conditions` | optional |
-| `ttvState.disabilityType` | `context.disability_type` | optional |
-| `ttvState.obesityConfirmation` | `context.obesity_confirmation` | optional |
-| `prefetchedVisitHistory.visits` | `history.prefetched_visits` | optional fase 1 |
+| Assist field                             | Canonical field                    | Notes                                     |
+| ---------------------------------------- | ---------------------------------- | ----------------------------------------- |
+| `patientData.rm`                         | `patient.rm`, `patient.patient_id` | `patient_id` boleh memakai RM pada fase 1 |
+| `patientData.gender`                     | `patient.gender`                   | direct                                    |
+| `patientData.age`                        | `patient.age`                      | direct                                    |
+| `patientData.dob`                        | `patient.dob`                      | optional                                  |
+| `patientData.bpjsStatus`                 | `patient.bpjs_status`              | direct                                    |
+| `clinicalContext.payerLabel`             | `patient.payer_label`              | prefer extractor direct                   |
+| `clinicalContext.facilityName`           | `patient.facility_name`            | direct                                    |
+| `ttvState.sbp` dst                       | `vitals.*`                         | parse ke number                           |
+| `ttvState.glucose`                       | `vitals.glucose.value`             | fase 1 default type `GDS`                 |
+| `state.symptomText`                      | `narrative.symptom_text_raw`       | raw bedside text                          |
+| `anamnesaDraft.payload.keluhan_utama`    | `narrative.keluhan_utama`          | canonical                                 |
+| `anamnesaDraft.payload.keluhan_tambahan` | `narrative.keluhan_tambahan`       | canonical                                 |
+| `ttvState.autosenPreset`                 | `narrative.autosen_preset`         | UI helper context                         |
+| `prefilledHistoryFlags`                  | `context.chronic_diseases`         | map ke label klinis                       |
+| `ttvState.allergies` + extractor         | `context.allergies`                | merge + dedupe                            |
+| `ttvState.pregnancyStatus`               | `context.pregnancy_status`         | map ke enum                               |
+| `clinicalContext.pregnancyRisk`          | `context.pregnancy_risk`           | optional                                  |
+| `clinicalContext.specialConditions`      | `context.special_conditions`       | optional                                  |
+| `ttvState.disabilityType`                | `context.disability_type`          | optional                                  |
+| `ttvState.obesityConfirmation`           | `context.obesity_confirmation`     | optional                                  |
+| `prefetchedVisitHistory.visits`          | `history.prefetched_visits`        | optional fase 1                           |
 
 ## Preview-only Logic Yang Masih Boleh Lokal di Assist
 
@@ -279,3 +289,36 @@ Field berikut tidak boleh menjadi semantics final lokal:
 - `docs/architecture/assist-ui-dashboard-engine-architecture.md`
 - `docs/architecture/assist-dashboard-migration-blueprint.md`
 - `docs/adr/ADR-004-dashboard-canonical-clinical-engine.md`
+
+## Runtime Contract Guards (2026-04-08)
+
+Untuk menurunkan risiko drift kontrak saat runtime, `bridge-client` sekarang
+menjalankan guard sebelum output canonical diterima UI:
+
+- `isCanonicalClinicalEngineOutput()`
+- `isCanonicalDifferentialOutput()`
+
+Guard ini digunakan di:
+
+- `evaluateCanonicalClinicalEngine()`
+- `evaluateCanonicalDifferential()`
+
+Artifact schema minimal yang dipakai:
+
+- `CANONICAL_CLINICAL_ENGINE_OUTPUT_SCHEMA`
+- `CANONICAL_DIFFERENTIAL_OUTPUT_SCHEMA`
+
+Jika payload backend tidak sesuai shape minimal, client akan melempar error
+`contract mismatch` agar kegagalan terlihat eksplisit (fail-fast), bukan
+menyebabkan state UI diam-diam korup.
+
+## Contract Parity Test (awal)
+
+Test parity dasar sudah ditambahkan di `lib/api/bridge-client.test.ts` untuk
+memastikan guard menerima payload valid dan menolak payload invalid.
+
+Perintah verifikasi cepat:
+
+```powershell
+pnpm exec vitest run lib/api/bridge-client.test.ts
+```

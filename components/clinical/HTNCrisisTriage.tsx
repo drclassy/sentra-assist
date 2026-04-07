@@ -8,23 +8,23 @@
  * @module components/clinical/HTNCrisisTriage
  */
 
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import {
   BPReading,
   CAPTOPRIL_PROTOCOL,
   HMODRedFlags,
   triageHypertensiveCrisis,
-} from '../../lib/emergency-detector/htn-classifier';
-import { CrisisAlert, RecommendationList } from './ClinicalAlert';
+} from '../../lib/emergency-detector/htn-classifier'
+import { CrisisAlert, RecommendationList } from './ClinicalAlert'
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
 export interface HTNCrisisTriageProps {
-  bp: BPReading;
-  onComplete: (result: HTNCrisisResult) => void;
-  onCancel?: () => void;
+  bp: BPReading
+  onComplete: (result: HTNCrisisResult) => void
+  onCancel?: () => void
 }
 
 /**
@@ -36,19 +36,19 @@ export interface HTNCrisisTriageProps {
  */
 
 export interface HTNCrisisResult {
-  type: 'HTN_URGENCY' | 'HTN_EMERGENCY';
-  red_flags: HMODRedFlags;
-  protocol: 'CAPTOPRIL_SL' | 'IMMEDIATE_ER_REFERRAL';
+  type: 'HTN_URGENCY' | 'HTN_EMERGENCY'
+  red_flags: HMODRedFlags
+  protocol: 'CAPTOPRIL_SL' | 'IMMEDIATE_ER_REFERRAL'
 }
 
-type TriageStep = 'RED_FLAGS' | 'RESULT';
+type TriageStep = 'RED_FLAGS' | 'RESULT'
 
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export const HTNCrisisTriage: React.FC<HTNCrisisTriageProps> = ({ bp, onComplete, onCancel }) => {
-  const [step, setStep] = useState<TriageStep>('RED_FLAGS');
+  const [step, setStep] = useState<TriageStep>('RED_FLAGS')
   const [redFlags, setRedFlags] = useState<HMODRedFlags>({
     chest_pain: false,
     pulmonary_edema: false,
@@ -57,29 +57,29 @@ export const HTNCrisisTriage: React.FC<HTNCrisisTriageProps> = ({ bp, onComplete
     severe_headache: false,
     oliguria: false,
     altered_mental_status: false,
-  });
+  })
 
   const handleRedFlagChange = (flag: keyof HMODRedFlags, value: boolean) => {
-    setRedFlags((prev) => ({ ...prev, [flag]: value }));
-  };
+    setRedFlags((prev) => ({ ...prev, [flag]: value }))
+  }
 
   const handleContinue = () => {
-    setStep('RESULT');
-  };
+    setStep('RESULT')
+  }
 
   const handleComplete = () => {
-    const type = triageHypertensiveCrisis(bp, redFlags);
-    const protocol = type === 'HTN_EMERGENCY' ? 'IMMEDIATE_ER_REFERRAL' : 'CAPTOPRIL_SL';
+    const type = triageHypertensiveCrisis(bp, redFlags)
+    const protocol = type === 'HTN_EMERGENCY' ? 'IMMEDIATE_ER_REFERRAL' : 'CAPTOPRIL_SL'
 
     onComplete({
       type,
       red_flags: redFlags,
       protocol,
-    });
-  };
+    })
+  }
 
-  const hasAnyRedFlag = Object.values(redFlags).some((flag) => flag === true);
-  const crisisType = triageHypertensiveCrisis(bp, redFlags);
+  const hasAnyRedFlag = Object.values(redFlags).some((flag) => flag === true)
+  const crisisType = triageHypertensiveCrisis(bp, redFlags)
 
   return (
     <div className="htn-crisis-triage">
@@ -255,7 +255,7 @@ export const HTNCrisisTriage: React.FC<HTNCrisisTriageProps> = ({ bp, onComplete
                 <p>Red flags detected:</p>
                 <ul>
                   {Object.entries(redFlags)
-                    .filter(([_, value]) => value)
+                    .filter(([, value]) => value)
                     .map(([key]) => (
                       <li key={key}>{formatRedFlagName(key)}</li>
                     ))}
@@ -339,8 +339,8 @@ export const HTNCrisisTriage: React.FC<HTNCrisisTriageProps> = ({ bp, onComplete
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -350,7 +350,7 @@ function formatRedFlagName(key: string): string {
   return key
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(' ')
 }
 
 // ============================================================================
@@ -701,5 +701,4 @@ export const htnCrisisTriageStyles = `
   color: var(--text-secondary);
   margin: 2px 0;
 }
-`;
-
+`

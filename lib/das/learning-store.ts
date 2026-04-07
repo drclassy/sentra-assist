@@ -54,7 +54,7 @@ export async function initLearningStore(
 
     request.onsuccess = () => {
       db = request.result
-      console.log('[DAS:Learning] Database initialized')
+      console.warn('[DAS:Learning] Database initialized')
       resolve()
     }
 
@@ -79,7 +79,7 @@ export async function initLearningStore(
         statsStore.createIndex('successRate', 'successRate', { unique: false })
       }
 
-      console.log('[DAS:Learning] Database schema created')
+      console.warn('[DAS:Learning] Database schema created')
     }
   })
 }
@@ -474,7 +474,7 @@ export async function cleanupOldEntries(): Promise<number> {
         deletedCount++
         cursor.continue()
       } else {
-        console.log(`[DAS:Learning] Cleaned up ${deletedCount} old entries`)
+        console.warn(`[DAS:Learning] Cleaned up ${deletedCount} old entries`)
         resolve(deletedCount)
       }
     }
@@ -496,7 +496,7 @@ export async function clearLearningStore(): Promise<void> {
     tx.objectStore(STATS_STORE).clear()
 
     tx.oncomplete = () => {
-      console.log('[DAS:Learning] All learning data cleared')
+      console.warn('[DAS:Learning] All learning data cleared')
       resolve()
     }
 

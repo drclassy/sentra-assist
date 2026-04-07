@@ -51,7 +51,7 @@ interface DiagnosisSuggestionsProps {
  * Get confidence color based on score
  */
 function getConfidenceColor(confidence: number): string {
-  if (confidence >= 0.85) return '#10B981'; // high
+  if (confidence >= 0.85) return '#6B9B8A'; // high
   if (confidence >= 0.65) return '#F59E0B'; // medium
   return '#EF4444'; // critical
 }
@@ -151,7 +151,7 @@ export const DiagnosisSuggestions: React.FC<DiagnosisSuggestionsProps> = ({
         penyakit_kronis: [],
       };
 
-      console.log('[DiagnosisSuggestions] Filling with payload:', payload);
+      console.warn('[DiagnosisSuggestions] Filling with payload:', payload);
 
       const result = await sendMessage('fillDiagnosa', payload);
 
@@ -361,7 +361,7 @@ export const diagnosisSuggestionsStyles = `
 .badge-audit {
   font-size: 8px;
   font-family: 'JetBrains Mono', monospace;
-  color: #10B981;
+  color: #6B9B8A;
   background: rgba(16, 185, 129, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
@@ -501,7 +501,7 @@ export const diagnosisSuggestionsStyles = `
 }
 
 .diagnosis-suggestion-card.filling {
-  border-color: var(--safe, #10B981);
+  border-color: var(--safe, #6B9B8A);
   animation: pulse-fill 1s ease-in-out infinite;
 }
 
@@ -588,12 +588,12 @@ export const diagnosisSuggestionsStyles = `
 
 .recommendation-icon {
   font-size: 12px;
-  color: #10B981;
+  color: #6B9B8A;
 }
 
 .recommendation-text {
   font-size: 11px;
-  color: #10B981;
+  color: #6B9B8A;
   line-height: 1.4;
 }
 

@@ -20,6 +20,9 @@ const makeState = (
   disabilityType: '',
   obesityConfirmation: '',
   autosenPreset: 'adl',
+  avpu: 'A',
+  supplemental_o2: false,
+  pain_score: '',
   ...overrides,
 });
 

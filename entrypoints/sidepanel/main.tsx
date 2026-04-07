@@ -5,6 +5,7 @@
  */
 
 import type { ScreeningAlert } from '@/components/clinical/TTVInferenceUI'
+import type { MedicationRecommendation } from '@/types/api'
 import { ConsoleLogin } from '@/components/sidepanel/ConsoleLogin'
 import { CreditsView } from '@/components/sidepanel/CreditsView'
 import { DashboardView } from '@/components/sidepanel/DashboardView'
@@ -20,6 +21,7 @@ import type {
 } from '@/lib/clinical/autosen-types'
 import type { TrajectoryAnalysis } from '@/lib/iskandar-diagnosis-engine/trajectory-analyzer'
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store'
+import { buildRMETransferPayload } from '@/lib/rme/payload-mapper'
 import { createLogger } from '@/utils/logger'
 import { sendMessage } from '@/utils/messaging'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
@@ -263,6 +265,8 @@ function App() {
   const [canonicalTrajectoryData, setCanonicalTrajectoryData] =
     useState<CanonicalClinicalEngineOutput | null>(null)
   const [visitCount, setVisitCount] = useState<number>(0)
+  const [diagnosisDraft, setDiagnosisDraft] = useState<{ icd_x: string; nama: string } | null>(null)
+  const [medicationsDraft, setMedicationsDraft] = useState<MedicationRecommendation[]>([])
 
   const visiblePatientName = normalizePatientNameForDisplay(patientData.name)
   const demographicStatus = isLoadingPatient
@@ -398,6 +402,14 @@ function App() {
       setIsLoadingPatient(false)
     }
   }, [patientData.rm])
+
+  const [theme, setTheme] = useState('dark');
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   useEffect(() => {
     const t = setTimeout(() => fetchPatientData(), 500)
@@ -556,6 +568,8 @@ function App() {
                 canonicalOutput={canonicalTrajectoryData}
                 hasVisitHistory={visitCount > 1}
                 onBack={() => setViewState('main')}
+                onDiagnosisChange={setDiagnosisDraft}
+                onMedicationsChange={setMedicationsDraft}
               />
             </Suspense>
           </motion.div>
@@ -587,6 +601,7 @@ function App() {
                     setTTVState(initialTTVState)
                     void fetchPatientData()
                   }}
+                  onToggleTheme={toggleTheme}
                 />
                 <section
                   className="flex-1 min-h-0 overflow-y-auto p-4 relative"
@@ -642,10 +657,47 @@ function App() {
                             canonicalOutput={canonicalTrajectoryData}
                             prefetchedVisits={prefetchedVisitHistory?.visits}
                             onSentraUplink={async () => {
-                              // TODO: wire full RMETransferPayload when anamnesa draft is ready
-                              sidepanelLog.debug('Sentra Uplink triggered', {
-                                patientRM: patientData.rm,
+                              sidepanelLog.debug('Sentra Uplink triggered', { patientRM: patientData.rm })
+
+                              // Resolve dokter/perawat from current ePuskesmas page
+                              let tenagaMedis: { dokterNama?: string; perawatNama?: string } = {}
+                              try {
+                                const tmRes = await sendMessage('resolveTenagaMedis', undefined)
+                                if (tmRes?.success && tmRes.tenagaMedis) {
+                                  tenagaMedis = {
+                                    dokterNama: tmRes.tenagaMedis.dokterNama || undefined,
+                                    perawatNama: tmRes.tenagaMedis.perawatNama || undefined,
+                                  }
+                                }
+                              } catch { /* non-blocking — transfer still proceeds */ }
+
+                              const { payload } = buildRMETransferPayload({
+                                keluhanUtama: anamnesaDraft?.payload.keluhan_utama || ttvState.symptomText || '',
+                                keluhanTambahan: anamnesaDraft?.payload.keluhan_tambahan || '',
+                                patientGender: patientData.gender || 'L',
+                                pregnancyStatus: ttvState.pregnancyStatus,
+                                allergies: ttvState.allergies,
+                                vitalSigns: {
+                                  sbp: parseInt(ttvState.sbp) || undefined,
+                                  dbp: parseInt(ttvState.dbp) || undefined,
+                                  hr: parseInt(ttvState.hr) || undefined,
+                                  rr: parseInt(ttvState.rr) || undefined,
+                                  temp: parseFloat(ttvState.temp) || undefined,
+                                  glucose: parseInt(ttvState.glucose) || undefined,
+                                },
+                                diagnosis: diagnosisDraft,
+                                medications: medicationsDraft.length > 0 ? medicationsDraft : undefined,
+                                tenagaMedis,
+                                trajectory: trajectoryData,
+                                hasVisitHistory: !!(prefetchedVisitHistory?.visits?.length),
+                                // Extended TTV state → fills 40+ extra anamnesa fields
+                                spo2: parseInt(ttvState.spo2) || undefined,
+                                avpu: ttvState.avpu,
+                                painScore: ttvState.pain_score ? parseInt(ttvState.pain_score) : undefined,
+                                disabilityType: ttvState.disabilityType || undefined,
+                                anamnesaDraftPayload: anamnesaDraft?.payload,
                               })
+                              await sendMessage('transferRME', payload)
                             }}
                           />
                         </Suspense>

@@ -38,6 +38,7 @@ interface SidePanelHeaderProps {
   bootMode?: boolean
   doctorOnlineCount?: number
   onInitialisasi?: () => void
+  onToggleTheme?: () => void
 }
 
 const engineButtons: EngineButton[] = [
@@ -58,11 +59,19 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
   bootMode = false,
   doctorOnlineCount = 0,
   onInitialisasi,
+  onToggleTheme,
 }) => {
-  const resolvedAgeText = patientAge > 0 ? `${patientAge} tahun` : '--'
   const isReady = demographicStatus === 'ready'
-  const statusLabel = isLoadingPatient ? 'Syncing' : isReady ? 'Ready' : 'Standby'
   const doctorOnline = doctorOnlineCount > 0
+  const normalizedPatientName = patientName.trim()
+  const patientNameValue = normalizedPatientName || '---'
+  const patientNameDisplay = /^memuat/i.test(patientNameValue)
+    ? 'NAMA .... Memuat'
+    : `NAMA .... ${patientNameValue}`
+  const patientAgeDisplay = patientAge > 0 ? `USIA .... ${patientAge} tahun` : 'USIA .... --'
+  const patientHistoryDisplay = chronicHistorySummary
+    ? `RIWAYAT .... ${chronicHistorySummary}`
+    : 'RIWAYAT .... Menunggu Input'
 
   const skipFocusSyncRef = useRef(true)
 
@@ -126,71 +135,6 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
         </div>
       </div>
 
-      {/* Patient info — exactly 2 rows */}
-      <div className="patient-bar">
-        {/* Row 1: Name (left) + Age (right) + Status dot */}
-        <div className="patient-row-top">
-          <span className="patient-name" title={patientName}>
-            {patientName}
-          </span>
-          <span className="patient-age">{resolvedAgeText}</span>
-          <button
-            type="button"
-            className="status-indicator"
-            onClick={() => void onRefreshPatient?.()}
-            disabled={!onRefreshPatient || isLoadingPatient}
-            aria-label={`Status: ${statusLabel}. Klik untuk refresh`}
-          >
-            <div
-              className={`status-dot ${isReady ? 'status-dot--ready' : ''} ${isLoadingPatient ? 'status-dot--syncing' : ''}`}
-            />
-            <span className="status-text">{statusLabel}</span>
-          </button>
-        </div>
-        {/* Row 2: History (full width, single line ellipsis) */}
-        <div className="patient-row-bottom">
-          <span className="patient-history-label">Riwayat</span>
-          <span className="patient-history" title={chronicHistorySummary}>
-            {chronicHistorySummary}
-          </span>
-        </div>
-      </div>
-
-      {/* Status bar — Inisialisasi | Demograf | Dokter */}
-      <div className="hdr-statusbar" role="group" aria-label="Status sistem">
-        <button
-          type="button"
-          className="hdr-chip hdr-chip--action"
-          onClick={onInitialisasi}
-          aria-label="Inisialisasi — reset dan muat ulang data RME"
-        >
-          <span aria-hidden="true">🔄</span>
-          <span className="hdr-chip__label">Inisialisasi</span>
-        </button>
-
-        <div
-          className={`hdr-chip ${isReady ? 'hdr-chip--ready' : 'hdr-chip--syn'}`}
-          aria-label={`Demografi: ${isReady ? 'Siap' : 'Sinkronisasi'}`}
-          role="status"
-        >
-          <span className={`hdr-chip__status ${isReady ? 'hdr-chip__status--ready' : 'hdr-chip__status--syn'}`}>
-            {isReady ? 'OK' : 'SYN'}
-          </span>
-          <span className="hdr-chip__label">Demograf</span>
-        </div>
-
-        <div
-          className={`hdr-chip ${doctorOnline ? 'hdr-chip--ready' : 'hdr-chip--offline'}`}
-          aria-label={`Dokter: ${doctorOnline ? 'Online' : 'Offline'}`}
-          role="status"
-        >
-          <span className={`hdr-chip__status ${doctorOnline ? 'hdr-chip__status--ready' : 'hdr-chip__status--offline'}`}>
-            {doctorOnline ? 'ON' : 'OFF'}
-          </span>
-          <span className="hdr-chip__label">Dokter</span>
-        </div>
-      </div>
-
       {/* Engine tabs — paired with tabpanels in main.tsx (sidepanel-tabpanel-*) */}
       <div className="engine-row engine-tablist" role="tablist" aria-label="Modul engine klinis">
         {engineButtons.map((engine) => {
@@ -214,6 +158,57 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
             </button>
           )
         })}
+      </div>
+
+      {/* Status bar — Inisialisasi | Demograf | Dokter */}
+      <div className="hdr-statusbar" role="group" aria-label="Status sistem">
+        <button
+          type="button"
+          className="engine-btn engine-tab"
+          onClick={onInitialisasi}
+          aria-label="Inisialisasi — reset dan muat ulang data RME"
+        >
+          Inisialisasi
+        </button>
+
+        <button
+          type="button"
+          className={`engine-btn engine-tab ${isReady ? 'active' : ''}`}
+          aria-label={`Demografi: ${isReady ? 'Siap' : 'Sinkronisasi'}`}
+          onClick={() => void onRefreshPatient?.()}
+          disabled={!onRefreshPatient || isLoadingPatient}
+        >
+          Demograf {isReady ? 'OK' : 'SYN'}
+        </button>
+
+        <div
+          className={`engine-btn engine-tab doctor-avail-chip ${
+            doctorOnline ? 'doctor-avail-chip--available' : 'doctor-avail-chip--unavailable'
+          }`}
+          aria-label={`Dokter: ${doctorOnline ? 'Online' : 'Offline'}`}
+          role="status"
+        >
+          {doctorOnline ? 'Dokter On' : 'Dokter Off'}
+        </div>
+      </div>
+
+      {/* Patient info — 2 rows, uniform LABEL .... VALUE format */}
+      <div className="patient-bar">
+        {/* Row 1: NAMA .... Ahmad   USIA .... 40 tahun */}
+        <div className="patient-row-top">
+          <span className="patient-field" title={patientNameDisplay}>
+            {patientNameDisplay}
+          </span>
+          <span className="patient-field patient-field--right" title={patientAgeDisplay}>
+            {patientAgeDisplay}
+          </span>
+        </div>
+        {/* Row 2: RIWAYAT .... [history] */}
+        <div className="patient-row-bottom">
+          <span className="patient-field patient-field--full" title={patientHistoryDisplay}>
+            {patientHistoryDisplay}
+          </span>
+        </div>
       </div>
     </div>
   )

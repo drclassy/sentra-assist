@@ -349,7 +349,7 @@ function extractFieldSignature(element: HTMLElement, index: number): FieldSignat
  *
  * @example
  * const result = scanPageFields({ includeHidden: false });
- * console.log(`Found ${result.fields.length} fields`);
+ * console.warn(`Found ${result.fields.length} fields`);
  */
 export function scanPageFields(options?: ScanOptions): ScanResult {
   const startTime = performance.now()

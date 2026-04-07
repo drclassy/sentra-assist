@@ -145,7 +145,7 @@ class CDSSAuditLogger {
       }
 
       this.initialized = true
-      console.log(`[AuditLogger] Initialized with ${this.cache.length} entries`)
+      console.warn(`[AuditLogger] Initialized with ${this.cache.length} entries`)
     } catch (error) {
       console.error('[AuditLogger] Failed to initialize:', error)
       this.cache = []
@@ -206,7 +206,7 @@ class CDSSAuditLogger {
     // Persist to storage
     await this.persist()
 
-    console.log(`[AuditLogger] Logged: ${action} (${entry.id.substring(0, 8)}...)`)
+    console.warn(`[AuditLogger] Logged: ${action} (${entry.id.substring(0, 8)}...)`)
   }
 
   /**
@@ -335,7 +335,7 @@ class CDSSAuditLogger {
 
     if (removed > 0) {
       await this.persist()
-      console.log(`[AuditLogger] Cleared ${removed} old entries`)
+      console.warn(`[AuditLogger] Cleared ${removed} old entries`)
     }
 
     return removed

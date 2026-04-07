@@ -87,7 +87,7 @@ class AuditService {
       }
 
       this.initialized = true
-      console.log(`[AuditService] Initialized. ${this.memoryCache.length} entries loaded.`)
+      console.warn(`[AuditService] Initialized. ${this.memoryCache.length} entries loaded.`)
     } catch (e) {
       console.error('[AuditService] Failed to initialize:', e)
       this.memoryCache = [] // Start fresh on critical failure (or safe mode)

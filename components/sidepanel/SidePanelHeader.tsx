@@ -1,6 +1,7 @@
 // Ghost Protocols — Iskandar Diagnosis Engine V1
 // Ported 1:1 from console-boot-demo.html reference design
 
+import { Sun } from 'lucide-react'
 import React, { useCallback, useEffect, useRef } from 'react'
 
 interface EngineButton {

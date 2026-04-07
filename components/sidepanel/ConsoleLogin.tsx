@@ -183,10 +183,6 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
           margin: 0 auto 12px;
         }
 
-        .login-logo img {
-          filter: brightness(1.3);
-        }
-
         .login-brand {
           font-size: 11px;
           font-weight: 500;

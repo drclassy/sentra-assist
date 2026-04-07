@@ -35,6 +35,27 @@
   --alum-dark:       #9CA1A6;
   --alum-highlight:  rgba(255, 255, 255, 0.9);
   --alum-shadow:     rgba(0, 0, 0, 0.08);
+
+  /* ── BACKGROUND GRADIENT ─────────────────────────────────────────────────
+   * Variant A "gelap murni": --bg-start: #0b1220 → --bg-end: #111b27
+   * Variant B "sedikit kontras": --bg-start: #0b1220 → --bg-end: #172633
+   * Switch by changing --bg-end value.
+   * ─────────────────────────────────────────────────────────────────────── */
+  --bg-start: #0b1220;
+  --bg-end:   #172633;  /* Variant B active — swap to #111b27 for Variant A */
+
+  /* ── INPUT TEXT — BLUE SYSTEM ────────────────────────────────────────────
+   * --text-input:       active input text color
+   * --text-input-alt:   alternative formal blue (swap via :root override)
+   * --text-input-ph:    placeholder (40% opacity of active blue)
+   * --text-input-focus: focus ring glow
+   * ─────────────────────────────────────────────────────────────────────── */
+  --text-input:       #00A3FF;                   /* Modern blue — 7.5:1 contrast */
+  --text-input-alt:   #4A90D9;                   /* Formal blue — 6.4:1 contrast */
+  --text-input-ph:    rgba(0, 163, 255, 0.40);   /* Placeholder */
+  --text-input-focus: rgba(0, 163, 255, 0.35);   /* Focus ring */
+  --text-input-sel:   rgba(0, 163, 255, 0.25);   /* Selection bg */
+  --text-input-disabled: rgba(0, 163, 255, 0.22);/* Disabled/readonly */
 }
 
 /* Global Reset */
@@ -51,11 +72,12 @@ html, body {
   overflow-y: auto;
 }
 
-/* Body Styling — matched from console-boot-demo.html */
+/* Body Styling — dark-to-lighter gradient */
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: var(--sentra-bg);
-  background-image: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #050505 60%);
+  background-color: var(--bg-start); /* Fallback solid for old browsers */
+  background-image: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+  background-attachment: fixed;
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -67,19 +89,19 @@ body {
   min-height: 100%;
 }
 
-/* Selection Styling */
+/* Selection Styling — blue-tinted for input coherence */
 ::selection {
-  background-color: rgba(16, 185, 129, 0.3);
+  background-color: var(--text-input-sel);
   color: #fff;
 }
 
-/* Focus Visible */
+/* Focus Visible — blue ring on interactive elements */
 *:focus-visible {
-  outline: 1px solid var(--sentra-green);
+  outline: 2px solid var(--text-input-focus);
   outline-offset: 2px;
 }
 
-/* Input Autofill Styling - Force Dark */
+/* Input Autofill Styling - Force Dark + Blue text */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -87,18 +109,45 @@ textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0px 1000px #0F1012 inset !important;
-  -webkit-text-fill-color: var(--text-main) !important;
+  -webkit-text-fill-color: var(--text-input) !important;
+  caret-color: var(--text-input);
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* Force dark background on all inputs */
-input, textarea {
+/* ── GLOBAL INPUT BLUE TEXT ──────────────────────────────────────────────── */
+input,
+textarea,
+[contenteditable="true"],
+td[contenteditable="true"],
+.editable {
   background-color: #0F1012;
-  color: var(--text-main);
+  color: var(--text-input);
+  caret-color: var(--text-input);
+  transition: color 0.15s ease, box-shadow 0.15s ease;
 }
 
-input::placeholder, textarea::placeholder {
-  color: #6B7280;
+input::placeholder,
+textarea::placeholder,
+[contenteditable="true"][data-placeholder]::before {
+  color: var(--text-input-ph);
+}
+
+/* Input selection — blue tint */
+input::selection,
+textarea::selection,
+[contenteditable="true"]::selection {
+  background-color: var(--text-input-sel);
+  color: #fff;
+}
+
+/* Disabled / read-only — dimmed blue */
+input:disabled,
+input:read-only,
+textarea:disabled,
+textarea:read-only,
+[contenteditable="false"] {
+  color: var(--text-input-disabled);
+  cursor: default;
 }
 
 /* Custom Checkbox Styling */
@@ -194,14 +243,16 @@ input::placeholder, textarea::placeholder {
 /* Neumorphic Input */
 .neu-input {
   background-color: #0F1012 !important;
+  color: var(--text-input);
+  caret-color: var(--text-input);
   box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(255, 255, 255, 0.02);
   border: none;
   outline: none;
-  transition: all 0.2s ease;
+  transition: color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .neu-input:focus {
-  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(255, 255, 255, 0.02), 0 0 0 1px rgba(16, 185, 129, 0.3);
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(255, 255, 255, 0.02), 0 0 0 1px var(--text-input-focus);
 }
 
 /* Card with Top Glow */
@@ -1046,7 +1097,7 @@ input::placeholder, textarea::placeholder {
   transform: rotate(180deg);
 }
 
-/* Neumorphic Inputs — A.C.E. */
+/* Neumorphic Inputs — A.C.E. + Blue Text */
 .neu-textarea,
 .neu-select {
   width: 100%;
@@ -1054,9 +1105,10 @@ input::placeholder, textarea::placeholder {
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 12px 14px;
-  color: var(--text-main);
+  color: var(--text-input);
+  caret-color: var(--text-input);
   font-size: 13px;
-  transition: all 0.2s ease;
+  transition: color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   box-shadow:
     inset 4px 4px 8px rgba(6, 10, 20, 0.52),
     inset -1px -1px 2px rgba(255,255,255,0.02);
@@ -1065,11 +1117,12 @@ input::placeholder, textarea::placeholder {
 .neu-textarea:focus,
 .neu-select:focus {
   outline: none;
-  border-color: rgba(255,255,255,0.1);
+  border-color: var(--text-input-focus);
   background: #0D0E10;
   box-shadow:
     inset 4px 4px 8px rgba(6, 10, 20, 0.56),
-    inset -1px -1px 2px rgba(255,255,255,0.02);
+    inset -1px -1px 2px rgba(255,255,255,0.02),
+    0 0 0 1px var(--text-input-focus);
 }
 
 .neu-textarea {
@@ -1108,7 +1161,7 @@ input::placeholder, textarea::placeholder {
 }
 
 .neu-textarea::placeholder {
-  color: var(--text-muted);
+  color: var(--text-input-ph);
   font-style: italic;
   opacity: 1;
 }
@@ -2755,22 +2808,23 @@ input::placeholder, textarea::placeholder {
   width: 100%;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, calc(0.1 + var(--power-state) * 0.15));
+  border-bottom: 1px solid rgba(201, 205, 208, calc(0.1 + var(--power-state) * 0.15));
   padding: 10px 0;
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
-  color: rgba(244, 239, 230, var(--power-state));
+  color: rgba(0, 163, 255, var(--power-state));
+  caret-color: var(--text-input);
   outline: none;
-  transition: all 0.3s ease;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .input-line input::placeholder {
-  color: rgba(115, 115, 115, calc(0.3 * var(--power-state)));
+  color: rgba(0, 163, 255, calc(0.25 * var(--power-state)));
   font-style: italic;
 }
 
 .input-line input:focus {
-  border-bottom-color: rgba(16, 185, 129, var(--power-state));
+  border-bottom-color: rgba(0, 163, 255, calc(0.6 * var(--power-state)));
 }
 
 .input-glow {
@@ -2779,8 +2833,8 @@ input::placeholder, textarea::placeholder {
   left: 0;
   height: 1px;
   width: 0;
-  background: var(--accent-med);
-  box-shadow: 0 0 6px var(--accent-med);
+  background: var(--text-input);
+  box-shadow: 0 0 6px var(--text-input);
   transition: width 0.3s ease;
 }
 

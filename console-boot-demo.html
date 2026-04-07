@@ -23,13 +23,30 @@
       --alum-dark:      #9CA1A6;
       --alum-highlight: rgba(255, 255, 255, 0.9);
       --alum-shadow:    rgba(0, 0, 0, 0.08);
+
+      /* Background gradient */
+      --bg-start: #0b1220;
+      --bg-end:   #172633;
+
+      /* Input text — blue system */
+      --text-input:       #00A3FF;
+      --text-input-alt:   #4A90D9;
+      --text-input-ph:    rgba(0, 163, 255, 0.40);
+      --text-input-focus: rgba(0, 163, 255, 0.35);
+      --text-input-sel:   rgba(0, 163, 255, 0.25);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* Selection + focus — blue coherent */
+    ::selection { background-color: var(--text-input-sel); color: #fff; }
+    *:focus-visible { outline: 2px solid var(--text-input-focus); outline-offset: 2px; }
+
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--bg-body);
+      background-color: var(--bg-start);
+      background-image: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      background-attachment: fixed;
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
@@ -488,16 +505,17 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 20px;
       font-weight: 600;
-      color: var(--text-main);
+      color: var(--text-input);
+      caret-color: var(--text-input);
       background: transparent;
       border: none;
-      border-bottom: 1px solid rgba(255,255,255,calc(0.1 * var(--power-state)));
+      border-bottom: 1px solid rgba(201,205,208,calc(0.1 * var(--power-state)));
       width: 60px;
       text-align: center;
       padding: 2px;
       opacity: calc(0 + var(--power-state));
       transform: scale(calc(0.9 + var(--power-state) * 0.1));
-      transition: all 0.4s ease;
+      transition: color 0.15s ease, opacity 0.4s ease, transform 0.4s ease;
     }
 
     /* Placeholder saat mati */
@@ -609,25 +627,26 @@
       width: 100%;
       background: transparent;
       border: none;
-      border-bottom: 1px solid rgba(255,255,255,calc(0.1 + var(--power-state) * 0.15));
+      border-bottom: 1px solid rgba(201,205,208,calc(0.1 + var(--power-state) * 0.15));
       padding: 10px 0;
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
-      color: rgba(244,239,230,var(--power-state));
+      color: rgba(0,163,255,var(--power-state));
+      caret-color: var(--text-input);
       outline: none;
-      transition: all 0.3s ease;
+      transition: color 0.15s ease, border-color 0.15s ease;
     }
 
     .input-line input::placeholder {
-      color: rgba(115,115,115,calc(0.3 * var(--power-state)));
+      color: rgba(0,163,255,calc(0.25 * var(--power-state)));
       font-style: italic;
     }
 
     .input-line input:focus {
-      border-bottom-color: rgba(16,185,129,var(--power-state));
+      border-bottom-color: rgba(0,163,255,calc(0.6 * var(--power-state)));
     }
 
-    /* Garis halus animasi saat focus */
+    /* Garis halus animasi saat focus — blue glow */
     .input-line::after {
       content: '';
       position: absolute;
@@ -635,8 +654,8 @@
       left: 0;
       width: 0;
       height: 1px;
-      background: var(--accent-med);
-      box-shadow: 0 0 8px var(--accent-med);
+      background: var(--text-input);
+      box-shadow: 0 0 8px var(--text-input);
       transition: width 0.3s ease;
     }
 
@@ -651,8 +670,8 @@
       left: 0;
       height: 1px;
       width: 0;
-      background: var(--accent-med);
-      box-shadow: 0 0 6px var(--accent-med);
+      background: var(--text-input);
+      box-shadow: 0 0 6px var(--text-input);
       transition: width 0.3s ease;
     }
 

@@ -268,7 +268,7 @@
 </head>
 <body>
   <div class="dashboard-card">
-    <button class="logout-btn" id="logoutBtn" title="Logout — kembali ke login" aria-label="Logout">⏻</button>
+    <button class="logout-btn" id="launchBtn" title="Launch Console — masuk UI utama" aria-label="Launch Console">⏻</button>
 
     <div class="header">
       <div class="logo-icon">
@@ -344,6 +344,11 @@
         </div>
       </div>
     </div>
+
+    <div class="divider"></div>
+    <div style="text-align:center;">
+      <button id="logoutLink" style="background:none;border:none;color:#737373;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;padding:4px 8px;transition:color 0.2s ease;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#737373'">Logout</button>
+    </div>
   </div>
 
   <script>
@@ -364,8 +369,13 @@
       });
     });
 
+    // Launch Console — go to main UI
+    document.getElementById('launchBtn').addEventListener('click', () => {
+      window.location.href = 'page3-main-ui.html';
+    });
+
     // Logout — clear session, back to login
-    document.getElementById('logoutBtn').addEventListener('click', () => {
+    document.getElementById('logoutLink').addEventListener('click', () => {
       sessionStorage.removeItem('sentra_auth');
       window.location.href = 'page1-login.html';
     });

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentra Assist — Secure Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #050505;
+      color: #F4EFE6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 340px;
+      background: #0A0A0C;
+      border-radius: 16px;
+      padding: 48px 36px;
+      border: 1px solid rgba(255,255,255,0.03);
+      text-align: center;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+      position: relative;
+    }
+
+    /* Top line accent */
+    .login-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      opacity: 0.8;
+      filter: brightness(0.9);
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .brand-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(244,239,230,0.08);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 36px;
+    }
+
+    .system-status {
+      font-size: 10px;
+      color: #737373;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #737373;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+
+    /* 2 GARIS TIPIS */
+    .credential-lines {
+      margin-bottom: 28px;
+    }
+
+    .luxury-line {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .luxury-line input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 10px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: rgba(244,239,230,0.7);
+      text-align: center;
+      letter-spacing: 0.08em;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .luxury-line input::placeholder {
+      color: rgba(115,115,115,0.25);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    .luxury-line input:focus {
+      border-bottom-color: rgba(16,185,129,0.4);
+      color: rgba(244,239,230,0.9);
+    }
+
+    /* Power button */
+    .power-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid rgba(16,185,129,0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      position: relative;
+      transition: all 0.4s ease;
+    }
+
+    .power-btn:hover {
+      border-color: #10B981;
+      box-shadow: 0 0 30px rgba(16,185,129,0.2);
+      transform: scale(1.05);
+    }
+
+    .power-ring {
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 1px solid transparent;
+      border-top-color: #10B981;
+      opacity: 0.4;
+      animation: rotate 3s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .power-icon {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: #10B981;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+    }
+
+    .power-label {
+      font-size: 8px;
+      color: #737373;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-top: 12px;
+    }
+
+    .hint-text {
+      font-size: 9px;
+      color: rgba(115,115,115,0.3);
+      letter-spacing: 0.05em;
+      margin-top: 24px;
+    }
+
+    .error-msg {
+      font-size: 9px;
+      color: #ef4444;
+      margin-top: 12px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .error-msg.show {
+      opacity: 1;
+    }
+
+    /* Accessibility — screen reader only */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+
+    /* Loading state */
+    .power-btn.loading {
+      pointer-events: none;
+      border-color: #10B981;
+    }
+
+    .power-btn.loading .power-icon {
+      animation: spin 0.8s linear infinite;
+    }
+
+    .power-btn.loading .power-ring {
+      border-top-color: #10B981;
+      border-right-color: #10B981;
+      opacity: 0.8;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Success flash */
+    .power-btn.success {
+      border-color: #10B981;
+      box-shadow: 0 0 40px rgba(16,185,129,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo">
+      <img src="logo-sentra.png" alt="Sentra">
+    </div>
+    <div class="brand-name">Sentra Assist</div>
+    
+    <div class="system-status">
+      <div class="status-dot"></div>
+      System Off
+    </div>
+
+    <!-- 2 GARIS TIPIS -->
+    <div class="credential-lines">
+      <div class="luxury-line">
+        <label for="username" class="sr-only">Username</label>
+        <input type="text" id="username" placeholder="Username" autocomplete="off" aria-label="Username">
+      </div>
+      <div class="luxury-line">
+        <label for="password" class="sr-only">Password</label>
+        <input type="password" id="password" placeholder="Password" aria-label="Password">
+      </div>
+    </div>
+
+    <!-- POWER BUTTON -->
+    <button class="power-btn" id="powerBtn" aria-label="Login — Initialize system">
+      <div class="power-ring"></div>
+      <svg class="power-icon" viewBox="0 0 24 24">
+        <path d="M12 2v8M8 6a8 8 0 1 0 8 0"/>
+      </svg>
+    </button>
+    <div class="power-label" id="powerLabel">Initialize</div>
+
+    <div class="hint-text" id="hintText">Enter credentials to enable</div>
+    <div class="error-msg" id="errorMsg">Invalid credentials</div>
+  </div>
+
+  <script>
+    const powerBtn = document.getElementById('powerBtn');
+    const powerLabel = document.getElementById('powerLabel');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const hintText = document.getElementById('hintText');
+    const errorMsg = document.getElementById('errorMsg');
+    const statusDot = document.querySelector('.status-dot');
+    const statusText = document.querySelector('.system-status');
+
+    function showError(msg) {
+      powerBtn.style.transform = 'translateX(-3px)';
+      setTimeout(() => powerBtn.style.transform = 'translateX(3px)', 50);
+      setTimeout(() => powerBtn.style.transform = 'translateX(-3px)', 100);
+      setTimeout(() => powerBtn.style.transform = 'translateX(0)', 150);
+
+      errorMsg.textContent = msg;
+      errorMsg.classList.add('show');
+      hintText.style.opacity = '0';
+
+      setTimeout(() => {
+        errorMsg.classList.remove('show');
+        hintText.style.opacity = '1';
+      }, 2500);
+    }
+
+    function handleLogin() {
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!username || !password) {
+        showError('Enter credentials to proceed');
+        return;
+      }
+
+      // ── Loading state ──
+      powerBtn.classList.add('loading');
+      powerLabel.textContent = 'Authenticating...';
+      hintText.style.opacity = '0';
+
+      // Simulated auth delay (replace with fetch in production)
+      setTimeout(() => {
+        // ── Option A: Client-only demo — any non-empty credentials pass ──
+        // For production, replace with:
+        //   fetch('/api/auth/login', { method:'POST', body: JSON.stringify({username, password}) })
+        //   .then(r => r.json()).then(data => { ... })
+
+        // Store session
+        sessionStorage.setItem('sentra_auth', JSON.stringify({
+          user: username,
+          ts: Date.now(),
+        }));
+
+        // Success flash
+        powerBtn.classList.remove('loading');
+        powerBtn.classList.add('success');
+        powerLabel.textContent = 'System Online';
+        statusDot.style.background = '#10B981';
+        statusDot.style.boxShadow = '0 0 6px #10B981';
+        statusDot.style.animation = 'none';
+
+        // Redirect after brief success flash
+        setTimeout(() => {
+          window.location.href = 'page2-dashboard.html';
+        }, 600);
+      }, 800);
+    }
+
+    powerBtn.addEventListener('click', handleLogin);
+
+    // Enter key on both fields
+    usernameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        if (usernameInput.value.trim()) passwordInput.focus();
+        else handleLogin();
+      }
+    });
+
+    passwordInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+
+    // Clear any stale session on login page load
+    sessionStorage.removeItem('sentra_auth');
+  </script>
+</body>
+</html>

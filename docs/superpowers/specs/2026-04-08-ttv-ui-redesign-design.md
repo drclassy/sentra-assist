@@ -92,6 +92,39 @@ Row Tensi mendapat `border: 1px solid rgba(107,155,138,0.3)` — highlight teal 
 
 ---
 
+## 6. Status Bar — 3 Tombol di atas Tab Navigasi
+
+**Change:** Tambah status bar 3 tombol antara PatientHeader dan tab VS/Emergency/Settings.
+
+**Layout:**
+```
+[🔄  Inisialisasi]  [SYN/OK  Demograf]  [OFF/ON  Dokter]
+```
+
+- Grid 3 kolom equal width
+- Setiap tombol: `display:flex; align-items:center; gap:6px`
+- Status/icon di kiri, label uppercase kecil di kanan
+
+**Tombol 1 — Inisialisasi:**
+- Selalu aktif (clickable)
+- Fungsi: reset state + reload data RME dari halaman aktif
+- Icon: 🔄, label: "Inisialisasi"
+- Style: neutral, border abu-abu
+
+**Tombol 2 — Demograf:**
+- Label: "Demograf"
+- State `SYN`: warna amber `#b8860b`, border amber-subtle — extract sedang berjalan / belum selesai
+- State `OK`: warna teal `#6B9B8A`, bg teal-dark, border teal-subtle — extract berhasil
+- Non-clickable (status indicator)
+
+**Tombol 3 — Dokter:**
+- Label: "Dokter"
+- State `OFF`: warna merah `#cc5555`, border merah-subtle — tidak ada dokter online
+- State `ON`: warna teal `#6B9B8A`, bg teal-dark, border teal-subtle — ada dokter online
+- Non-clickable (status indicator)
+
+---
+
 ## Out of Scope
 
 - **Consult Snapshot section** (BPJS/Penjamin, Penyakit Khusus, Risiko Kehamilan) — ditunda, tidak diubah
@@ -107,6 +140,7 @@ Row Tensi mendapat `border: 1px solid rgba(107,155,138,0.3)` — highlight teal 
 |------|-----------|
 | `entrypoints/sidepanel/style.css` | `min-width: 440px` pada shell/card container |
 | `components/clinical/TTVInferenceUI.tsx` | Grid vitals, posisi AutoComplete, teks placeholder, tombol aksi |
+| `components/sidepanel/SidePanelHeader.tsx` | Tambah status bar 3 tombol (Inisialisasi, Demograf, Dokter) |
 | `entrypoints/sidepanel/globals.css` | (opsional) variable lebar jika ada CSS custom property |
 
 ---
@@ -121,3 +155,7 @@ Row Tensi mendapat `border: 1px solid rgba(107,155,138,0.3)` — highlight teal 
 - [ ] Field gender-specific kosong tampil "Mohon diisi" italic muted
 - [ ] Tombol Kirim Dokter disabled sampai Sentra Uplink selesai
 - [ ] Visual separator `›` antara dua tombol aksi
+- [ ] Status bar 3 tombol tampil antara PatientHeader dan tab navigasi
+- [ ] Tombol Inisialisasi clickable, Demograf & Dokter non-clickable (status only)
+- [ ] Demograf: SYN (amber) → OK (teal) sesuai state extract
+- [ ] Dokter: OFF (merah) → ON (teal) sesuai ketersediaan dokter

@@ -59,6 +59,7 @@
   --bg-elevated: #FFFFFF;
 }
 
+:root {
 /* Boot sequence — 0 = off, 1 = on */
 --power-state: 0;
 

@@ -1915,19 +1915,6 @@ export function TTVInferenceUI({
               <div className="screening-mode-indicator">Pediatric screening mode</div>
             ) : null}
           </div>
-          <button
-            type="button"
-            onClick={handleAnalyze}
-            disabled={isAnalyzing}
-            className={`engine-btn engine-btn--autocomplete rounded-[10px] font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
-              hasSymptomDraftPending ? 'engine-btn--pulse' : ''
-            }`}
-            aria-label="Jalankan AutoComplete+"
-          >
-            <span className={hasSymptomDraftPending ? 'engine-btn__text--pulse' : ''}>
-              {isAnalyzing ? 'Processing...' : 'AutoComplete+'}
-            </span>
-          </button>
         </div>
         {isDraftTyping && animatedDraftText ? (
           <div
@@ -2242,17 +2229,6 @@ export function TTVInferenceUI({
               Vital Signs - Cardiopulmonary Metrics
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleAnalyzeVitals}
-            disabled={isAnalyzingVitals || isCanonicalLoading}
-            className="engine-btn engine-btn--autocomplete rounded-[10px] font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Jalankan AutoComplete+ Vital Sign"
-          >
-            <span>
-              {isAnalyzingVitals || isCanonicalLoading ? 'Processing...' : 'AutoComplete+'}
-            </span>
-          </button>
         </div>
         <div className={`vitals-grid vitals-grid--redesign ${isGhostFillAnimating ? 'vitals-grid--ghosting' : ''}`}>
           {/* Row 1 — Tensi (2-col, teal highlight) */}
@@ -2411,6 +2387,26 @@ export function TTVInferenceUI({
           </div>
         </div>
       ) : null}
+
+      {/* AutoComplete — single consolidated button, bottom of form */}
+      <div className="autocomplete-bar">
+        <button
+          type="button"
+          onClick={() => {
+            void handleAnalyze()
+            void handleAnalyzeVitals()
+          }}
+          disabled={isAnalyzing || isAnalyzingVitals || isCanonicalLoading}
+          className={`autocomplete-bar__btn engine-btn--autocomplete disabled:cursor-not-allowed disabled:opacity-50${hasSymptomDraftPending ? ' engine-btn--pulse' : ''}`}
+          aria-label="Jalankan AutoComplete+"
+        >
+          <span>
+            {isAnalyzing || isAnalyzingVitals || isCanonicalLoading
+              ? 'Processing...'
+              : '✨ AutoComplete+ — Isi otomatis dari konteks'}
+          </span>
+        </button>
+      </div>
 
       <div className="form-group">
         <div className="form-group-header">

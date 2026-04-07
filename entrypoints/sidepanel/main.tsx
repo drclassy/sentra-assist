@@ -19,6 +19,8 @@ import { SidePanelHeader } from '@/components/sidepanel/SidePanelHeader';
 import { SidePanelFooter } from '@/components/sidepanel/SidePanelFooter';
 import { PowerButton } from '@/components/sidepanel/PowerButton';
 import { ConsoleLogin } from '@/components/sidepanel/ConsoleLogin';
+import { DashboardView } from '@/components/sidepanel/DashboardView';
+import type { AuthUser } from '@/lib/api/auth-store';
 import type { BridgeConfig } from '@/lib/api/bridge-client';
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store';
 import { sendMessage } from '@/utils/messaging';
@@ -198,9 +200,11 @@ const engineConfig: Record<EngineId, { section: string }> = {
 };
 
 function App() {
-  // Boot sequence state
+  // Boot sequence state: off → booting → login → dashboard → clinical
   const [isPowered, setIsPowered] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(true);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
   const [activeTab, setActiveTab] = useState<TabType>('ttv');
   const [viewState, setViewState] = useState<ViewState>('main');
@@ -244,16 +248,56 @@ function App() {
     document.documentElement.style.setProperty('--power-state', isPowered ? '1' : '0');
   }, [isPowered]);
 
+  // Auto-detect existing session on mount → skip login if already authenticated
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { getStoredSession } = await import('@/lib/api/auth-client');
+        const session = await getStoredSession();
+        if (session?.user) {
+          setAuthUser(session.user);
+          setIsLoggedIn(true);
+          setIsPowered(true);
+          setShowDashboard(false); // Skip dashboard if returning user
+        }
+      } catch {
+        // No stored session — show login flow
+      }
+    })();
+  }, []);
+
   const handlePowerToggle = useCallback(() => {
     const next = !isPowered;
     setIsPowered(next);
     if (!next) {
       setIsLoggedIn(false);
+      setShowDashboard(true);
+      setAuthUser(null);
     }
   }, [isPowered]);
 
-  const handleLoginSuccess = useCallback(() => {
+  const handleLoginSuccess = useCallback((user: AuthUser) => {
+    setAuthUser(user);
     setIsLoggedIn(true);
+    setShowDashboard(true); // Show dashboard after fresh login
+  }, []);
+
+  const handleLaunchConsole = useCallback(() => {
+    setShowDashboard(false);
+  }, []);
+
+  const handleLogout = useCallback(() => {
+    void (async () => {
+      try {
+        const { logout } = await import('@/lib/api/auth-client');
+        await logout();
+      } catch {
+        // Best effort
+      }
+      setIsLoggedIn(false);
+      setShowDashboard(true);
+      setAuthUser(null);
+    })();
   }, []);
 
   const handleEngineChange = useCallback((engineId: string) => {
@@ -584,13 +628,22 @@ function App() {
 
           <div className="console-divider" />
 
-          {/* Login Section — visible when powered but not logged in */}
+          {/* Phase 1: Login — visible when powered but not logged in */}
           {!isLoggedIn && (
             <ConsoleLogin isPowered={isPowered} onLoginSuccess={handleLoginSuccess} />
           )}
 
-          {/* Clinical content — visible after login */}
-          <div className={`console-section--boot ${isLoggedIn ? 'console-section--visible' : ''}`}>
+          {/* Phase 2: Dashboard — visible after login, before clinical */}
+          {isLoggedIn && showDashboard && (
+            <DashboardView
+              user={authUser}
+              onLaunchConsole={handleLaunchConsole}
+              onLogout={handleLogout}
+            />
+          )}
+
+          {/* Phase 3: Clinical content — visible after dashboard launch */}
+          <div className={`console-section--boot ${isLoggedIn && !showDashboard ? 'console-section--visible' : ''}`}>
             <section className="sidepanel-shell-content" aria-label="Konten side panel aktif">
               <div className={activeTab === 'ttv' ? 'tab-panel-active' : 'tab-panel-hidden'}>
                 <Suspense fallback={<div className="ct-loading-bar">Memuat...</div>}>

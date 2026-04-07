@@ -4373,3 +4373,7 @@ textarea:read-only,
   text-align: center;
   margin-top: 4px;
 }
+
+.action-bar__hint--error {
+  color: #cc5555;
+}

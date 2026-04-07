@@ -1039,11 +1039,27 @@ export function TTVInferenceUI({
   const [doctorPickerNotice, setDoctorPickerNotice] = useState('')
   const [isConsultFooterOpen, setIsConsultFooterOpen] = useState(false)
   const [uplinkDone, setUplinkDone] = useState(false)
+  const [isUplinkLoading, setIsUplinkLoading] = useState(false)
+  const [uplinkError, setUplinkError] = useState<string | null>(null)
+
+  // Reset uplink state when patient changes
+  useEffect(() => {
+    setUplinkDone(false)
+    setUplinkError(null)
+  }, [patientRM])
 
   const handleSentraUplink = useCallback(async () => {
     if (!onSentraUplink) return
-    await onSentraUplink()
-    setUplinkDone(true)
+    setIsUplinkLoading(true)
+    setUplinkError(null)
+    try {
+      await onSentraUplink()
+      setUplinkDone(true)
+    } catch (err) {
+      setUplinkError(err instanceof Error ? err.message : 'Uplink gagal')
+    } finally {
+      setIsUplinkLoading(false)
+    }
   }, [onSentraUplink])
   const historyDropdownRef = useRef<HTMLDivElement | null>(null)
   const allergyDropdownRef = useRef<HTMLDivElement | null>(null)
@@ -2680,15 +2696,15 @@ export function TTVInferenceUI({
           type="button"
           className="action-btn action-btn--primary"
           onClick={() => void handleSentraUplink()}
-          disabled={!onSentraUplink}
+          disabled={!onSentraUplink || isUplinkLoading}
           aria-label="Sentra Uplink — isi RME otomatis"
         >
-          📡 Sentra Uplink →
+          {isUplinkLoading ? 'Uploading...' : '📡 Sentra Uplink →'}
         </button>
         <span className="action-bar__sep" aria-hidden="true">›</span>
         <button
           type="button"
-          className={`action-btn action-btn--secondary${!uplinkDone ? ' action-btn--disabled' : ''}`}
+          className="action-btn action-btn--secondary"
           onClick={() => void handleForwardToDoctor()}
           disabled={!canForwardToDoctor || !uplinkDone}
           aria-label="Kirim konsultasi ke dokter"
@@ -2696,7 +2712,9 @@ export function TTVInferenceUI({
           → Kirim Dokter
         </button>
       </div>
-      {!uplinkDone && onSentraUplink ? (
+      {uplinkError ? (
+        <p className="action-bar__hint action-bar__hint--error">{uplinkError}</p>
+      ) : !uplinkDone && onSentraUplink ? (
         <p className="action-bar__hint">Selesaikan Uplink untuk mengaktifkan Kirim Dokter</p>
       ) : null}
 

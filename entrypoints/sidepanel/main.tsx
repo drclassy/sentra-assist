@@ -606,12 +606,7 @@ function App() {
   // ════════════════════════════════════════════════════════════════
   if (!isLoggedIn) {
     return (
-      <div className="sidepanel-shell view-transition">
-        <div className="sidepanel-shell__ambient" aria-hidden="true" />
-        <div className="sidepanel-shell__container">
-          <ConsoleLogin onLoginSuccess={handleLoginSuccess} />
-        </div>
-      </div>
+      <ConsoleLogin onLoginSuccess={handleLoginSuccess} />
     );
   }
 

@@ -147,10 +147,12 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
       <style>{`
         .login-view {
           width: 100%;
-          min-height: calc(100vh - 12px);
+          min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
+          background-color: #050505;
+          background-image: linear-gradient(180deg, #050505 0%, #141618 100%);
           animation: loginFadeIn 0.6s ease;
         }
 

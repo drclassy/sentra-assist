@@ -4381,10 +4381,15 @@ textarea:read-only,
 /* Status bar chips */
 /* Header status bar — scoped to .card-header to avoid colliding with existing .status-bar rules */
 .card-header .status-bar {
-  display: grid;
+  display: grid !important;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 5px;
   padding: 6px 0 2px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  margin-top: 0;
 }
 
 .card-header .status-chip {

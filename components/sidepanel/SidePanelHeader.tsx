@@ -46,9 +46,9 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
 
   return (
     <div className="card-header">
-      {/* header-top: logo + title centered */}
+      {/* Title — compact, no spacers */}
       <div className="header-top">
-        {bootMode ? (
+        {bootMode && (
           <div className="boot-logo-container">
             <svg className="logo-svg" viewBox="0 0 60 40" fill="none" aria-hidden="true">
               <text x="0" y="28" fill="#F4EFE6" fontSize="24" fontWeight="700" fontFamily="Inter">S</text>
@@ -57,17 +57,14 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
             </svg>
             <span className="version-badge">MedPro</span>
           </div>
-        ) : (
-          <div className="spacer" />
         )}
         <div className={bootMode ? 'boot-title-group' : 'title-group'}>
           <h1 className="card-title-main">Sentra Assist</h1>
           <p className="card-title-sub">Architected by dr Ferdi Iskandar</p>
         </div>
-        <div className="spacer" />
       </div>
 
-      {/* Engine buttons - 3 col grid */}
+      {/* 3 uniform buttons — 36px, directly below title */}
       <div className="engine-row">
         {engineButtons.map((engine) => (
           <button
@@ -76,100 +73,94 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
             className={`engine-btn ${activeEngine === engine.id ? 'active' : ''}`}
             onClick={() => onEngineChange(engine.id)}
             aria-pressed={activeEngine === engine.id}
+            aria-label={engine.label}
           >
             {engine.label}
           </button>
         ))}
       </div>
 
-      {/* Status bar - patient info */}
-      <div className="status-bar">
-        <div className="status-row">
-          <div className="status-item">
-            <span className="status-label">Nama</span>
-            <span className="status-value" title={patientName}>{patientName}</span>
-          </div>
-          <div className="status-item">
-            <span className="status-label">Usia</span>
-            <span className="status-value">{resolvedAgeText}</span>
-          </div>
+      {/* Patient info — exactly 2 rows */}
+      <div className="patient-bar">
+        {/* Row 1: Name (left) + Age (right) + Status dot */}
+        <div className="patient-row-top">
+          <span className="patient-name" title={patientName}>{patientName}</span>
+          <span className="patient-age">{resolvedAgeText}</span>
           <button
             type="button"
             className="status-indicator"
             onClick={() => void onRefreshPatient?.()}
             disabled={!onRefreshPatient || isLoadingPatient}
-            aria-label="Refresh konteks pasien"
+            aria-label={`Status: ${statusLabel}. Klik untuk refresh`}
           >
             <div className={`status-dot ${isReady ? 'status-dot--ready' : ''} ${isLoadingPatient ? 'status-dot--syncing' : ''}`} />
             <span className="status-text">{statusLabel}</span>
           </button>
         </div>
-        <div className="status-row">
-          <div className="status-item">
-            <span className="status-label">Riwayat</span>
-            <span className="status-value" title={chronicHistorySummary}>{chronicHistorySummary}</span>
-          </div>
+        {/* Row 2: History (full width, single line ellipsis) */}
+        <div className="patient-row-bottom">
+          <span className="patient-history-label">Riwayat</span>
+          <span className="patient-history" title={chronicHistorySummary}>{chronicHistorySummary}</span>
         </div>
       </div>
 
       {/* ============================================================
-          EXACT CSS from console-boot-demo.html — line-for-line port
+          COMPACT LAYOUT CSS — 8px baseline grid
           ============================================================ */}
       <style>{`
         .card-header {
-          margin-bottom: 16px;
+          margin-bottom: 8px;
           position: relative;
           z-index: 1;
         }
 
         .header-top {
           display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          margin-bottom: 14px;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          margin-bottom: 8px;
         }
 
         .title-group {
           text-align: center;
-          flex: 1;
-        }
-
-        .spacer {
-          width: 50px;
-          opacity: 0;
         }
 
         .card-title-main {
-          font-size: 26px;
+          font-size: 22px;
           font-weight: 700;
           letter-spacing: -0.02em;
+          line-height: 28px;
           background: linear-gradient(135deg, #F4EFE6 0%, #CFC6B8 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          margin: 0 0 4px;
+          margin: 0 0 2px;
         }
 
         .card-title-sub {
           font-size: 10px;
+          line-height: 16px;
           color: var(--text-muted);
           letter-spacing: 0.02em;
           margin: 0;
         }
 
-        /* Engine Row — exact demo values */
+        /* ── Engine Row — 3 uniform 36px buttons ───────────── */
         .engine-row {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 8px;
-          margin-bottom: 12px;
+          margin-bottom: 8px;
         }
 
         .engine-btn {
-          padding: 10px 6px;
-          border-radius: 10px;
-          font-size: 10px;
+          height: 36px;
+          padding: 0 12px;
+          border-radius: 6px;
+          font-size: 11px;
           font-weight: 600;
+          line-height: 20px;
           background: var(--bg-card);
           border: 1px solid rgba(255,255,255,0.08);
           cursor: pointer;
@@ -178,10 +169,13 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
           position: relative;
           overflow: hidden;
           color: #737373;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           box-shadow:
             3px 3px 6px rgba(0,0,0,0.5),
             -1px -1px 3px rgba(255,255,255,0.03);
-          transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: all 0.2s ease;
         }
 
         .engine-btn:hover {
@@ -204,67 +198,111 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
             inset 0 1px 0 rgba(255,255,255,0.05);
         }
 
-        /* Status Bar — exact demo values */
-        .status-bar {
+        .engine-btn:disabled {
+          opacity: 0.5;
+          pointer-events: none;
+        }
+
+        .engine-btn:focus-visible {
+          outline: 2px solid var(--accent-med);
+          outline-offset: 2px;
+        }
+
+        /* ── Patient Bar — exactly 2 rows ──────────────────── */
+        .patient-bar {
           display: flex;
           flex-direction: column;
-          gap: 8px;
-          padding: 10px 12px;
+          gap: 4px;
+          padding: 8px;
           background: var(--neu-inset-bg);
-          border-radius: 10px;
+          border-radius: 8px;
           border: 1px solid rgba(255,255,255,0.06);
           box-shadow:
             inset 2px 2px 6px rgba(0,0,0,0.4),
             inset -1px -1px 2px rgba(255,255,255,0.02);
         }
 
-        .status-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-
-        .status-item {
+        /* Row 1: Name + Age + Status */
+        .patient-row-top {
           display: flex;
           align-items: center;
           gap: 8px;
           min-width: 0;
         }
 
-        .status-label {
+        .patient-name {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 12px;
+          font-weight: 600;
+          line-height: 18px;
+          color: var(--text-main);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .patient-age {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          line-height: 18px;
+          color: var(--text-muted);
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
+        /* Row 2: History label + value */
+        .patient-row-bottom {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+        }
+
+        .patient-history-label {
           font-size: 9px;
           color: var(--text-muted);
           text-transform: uppercase;
           letter-spacing: 0.08em;
           white-space: nowrap;
+          flex-shrink: 0;
         }
 
-        .status-value {
+        .patient-history {
           font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           font-weight: 600;
+          line-height: 18px;
           color: var(--text-main);
+          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          white-space: nowrap;
+          min-width: 0;
+          flex: 1;
         }
 
-        /* Status indicator — clickable refresh */
+        /* Status indicator — inline with patient name */
         .status-indicator {
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 4px;
           background: none;
           border: none;
           cursor: pointer;
           padding: 0;
-          margin-left: auto;
+          flex-shrink: 0;
           transition: all 0.2s ease;
         }
 
         .status-indicator:disabled {
           cursor: default;
+        }
+
+        .status-indicator:focus-visible {
+          outline: 2px solid var(--accent-med);
+          outline-offset: 2px;
+          border-radius: 4px;
         }
 
         .status-dot {
@@ -290,7 +328,7 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
         }
 
         .status-text {
-          font-size: 10px;
+          font-size: 9px;
           color: var(--accent-med);
           font-weight: 500;
           white-space: nowrap;

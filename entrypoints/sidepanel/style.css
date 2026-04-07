@@ -41,8 +41,8 @@
    * Variant B "sedikit kontras": --bg-start: #0b1220 → --bg-end: #172633
    * Switch by changing --bg-end value.
    * ─────────────────────────────────────────────────────────────────────── */
-  --bg-start: #0b1220;
-  --bg-end:   #172633;  /* Variant B active — swap to #111b27 for Variant A */
+  --bg-start: #050505;
+  --bg-end:   #141618;  /* Hitam gelap → sedikit lebih terang (abu gelap) */
 
   /* ── INPUT TEXT — BLUE SYSTEM ────────────────────────────────────────────
    * --text-input:       active input text color

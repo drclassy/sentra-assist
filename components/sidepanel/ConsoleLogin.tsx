@@ -146,10 +146,11 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
 
       <style>{`
         .login-view {
+          width: 100%;
+          min-height: calc(100vh - 12px);
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: calc(100vh - 24px);
           animation: loginFadeIn 0.6s ease;
         }
 
@@ -160,10 +161,9 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
 
         .login-card {
           width: 100%;
-          max-width: 340px;
           background: #0A0A0C;
           border-radius: 16px;
-          padding: 48px 36px;
+          padding: 40px 28px;
           border: 1px solid rgba(255,255,255,0.03);
           text-align: center;
           box-shadow: 0 40px 80px rgba(0,0,0,0.4);

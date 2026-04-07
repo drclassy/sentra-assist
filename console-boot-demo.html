@@ -28,19 +28,18 @@
       --bg-start: #050505;
       --bg-end:   #141618;
 
-      /* Input text — blue system */
-      --text-input:       #00A3FF;
-      --text-input-alt:   #4A90D9;
-      --text-input-ph:    rgba(0, 163, 255, 0.40);
-      --text-input-focus: rgba(0, 163, 255, 0.35);
-      --text-input-sel:   rgba(0, 163, 255, 0.25);
+      /* Input text — warm parchment (industry best practice) */
+      --text-input:       #F4EFE6;
+      --text-input-ph:    rgba(115, 115, 115, 0.80);
+      --text-input-focus: rgba(16, 185, 129, 0.35);
+      --text-input-sel:   rgba(16, 185, 129, 0.25);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Selection + focus — blue coherent */
+    /* Selection + focus — green coherent */
     ::selection { background-color: var(--text-input-sel); color: #fff; }
-    *:focus-visible { outline: 2px solid var(--text-input-focus); outline-offset: 2px; }
+    *:focus-visible { outline: 2px solid var(--accent-med); outline-offset: 2px; }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -505,8 +504,8 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 20px;
       font-weight: 600;
-      color: var(--text-input);
-      caret-color: var(--text-input);
+      color: var(--text-main);
+      caret-color: var(--accent-med);
       background: transparent;
       border: none;
       border-bottom: 1px solid rgba(201,205,208,calc(0.1 * var(--power-state)));
@@ -631,22 +630,22 @@
       padding: 10px 0;
       font-family: 'JetBrains Mono', monospace;
       font-size: 14px;
-      color: rgba(0,163,255,var(--power-state));
-      caret-color: var(--text-input);
+      color: rgba(244,239,230,var(--power-state));
+      caret-color: var(--accent-med);
       outline: none;
       transition: color 0.15s ease, border-color 0.15s ease;
     }
 
     .input-line input::placeholder {
-      color: rgba(0,163,255,calc(0.25 * var(--power-state)));
+      color: rgba(115,115,115,calc(0.5 * var(--power-state)));
       font-style: italic;
     }
 
     .input-line input:focus {
-      border-bottom-color: rgba(0,163,255,calc(0.6 * var(--power-state)));
+      border-bottom-color: rgba(16,185,129,calc(0.6 * var(--power-state)));
     }
 
-    /* Garis halus animasi saat focus — blue glow */
+    /* Garis halus animasi saat focus — green glow */
     .input-line::after {
       content: '';
       position: absolute;
@@ -654,8 +653,8 @@
       left: 0;
       width: 0;
       height: 1px;
-      background: var(--text-input);
-      box-shadow: 0 0 8px var(--text-input);
+      background: var(--accent-med);
+      box-shadow: 0 0 8px var(--accent-med);
       transition: width 0.3s ease;
     }
 
@@ -670,8 +669,8 @@
       left: 0;
       height: 1px;
       width: 0;
-      background: var(--text-input);
-      box-shadow: 0 0 6px var(--text-input);
+      background: var(--accent-med);
+      box-shadow: 0 0 6px var(--accent-med);
       transition: width 0.3s ease;
     }
 

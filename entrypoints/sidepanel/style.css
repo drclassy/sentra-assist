@@ -44,18 +44,15 @@
   --bg-start: #050505;
   --bg-end:   #141618;  /* Hitam gelap → sedikit lebih terang (abu gelap) */
 
-  /* ── INPUT TEXT — BLUE SYSTEM ────────────────────────────────────────────
-   * --text-input:       active input text color
-   * --text-input-alt:   alternative formal blue (swap via :root override)
-   * --text-input-ph:    placeholder (40% opacity of active blue)
-   * --text-input-focus: focus ring glow
+  /* ── INPUT TEXT SYSTEM ────────────────────────────────────────────────────
+   * Best practice: input text = body text (Apple, M3, Vercel, GitHub).
+   * Warm parchment on #0A0A0C = 17.7:1 contrast (WCAG AAA).
    * ─────────────────────────────────────────────────────────────────────── */
-  --text-input:       #00A3FF;                   /* Modern blue — 7.5:1 contrast */
-  --text-input-alt:   #4A90D9;                   /* Formal blue — 6.4:1 contrast */
-  --text-input-ph:    rgba(0, 163, 255, 0.40);   /* Placeholder */
-  --text-input-focus: rgba(0, 163, 255, 0.35);   /* Focus ring */
-  --text-input-sel:   rgba(0, 163, 255, 0.25);   /* Selection bg */
-  --text-input-disabled: rgba(0, 163, 255, 0.22);/* Disabled/readonly */
+  --text-input:       #F4EFE6;                       /* Warm parchment — same as body */
+  --text-input-ph:    rgba(115, 115, 115, 0.80);     /* Muted gray placeholder */
+  --text-input-focus: rgba(16, 185, 129, 0.35);      /* Medical green focus ring */
+  --text-input-sel:   rgba(16, 185, 129, 0.25);      /* Green selection bg */
+  --text-input-disabled: rgba(244, 239, 230, 0.30);  /* Dimmed parchment */
 }
 
 /* Global Reset */
@@ -89,19 +86,19 @@ body {
   min-height: 100%;
 }
 
-/* Selection Styling — blue-tinted for input coherence */
+/* Selection Styling — medical green tint */
 ::selection {
   background-color: var(--text-input-sel);
   color: #fff;
 }
 
-/* Focus Visible — blue ring on interactive elements */
+/* Focus Visible — green ring (accent-med) */
 *:focus-visible {
   outline: 2px solid var(--text-input-focus);
   outline-offset: 2px;
 }
 
-/* Input Autofill Styling - Force Dark + Blue text */
+/* Input Autofill Styling - Force Dark */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -110,7 +107,7 @@ textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0px 1000px #0F1012 inset !important;
   -webkit-text-fill-color: var(--text-input) !important;
-  caret-color: var(--text-input);
+  caret-color: var(--accent-med);
   transition: background-color 5000s ease-in-out 0s;
 }
 
@@ -252,7 +249,7 @@ textarea:read-only,
 }
 
 .neu-input:focus {
-  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(255, 255, 255, 0.02), 0 0 0 1px var(--text-input-focus);
+  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.4), inset -1px -1px 2px rgba(255, 255, 255, 0.02), 0 0 0 1px rgba(16, 185, 129, 0.3);
 }
 
 /* Card with Top Glow */
@@ -1117,12 +1114,12 @@ textarea:read-only,
 .neu-textarea:focus,
 .neu-select:focus {
   outline: none;
-  border-color: var(--text-input-focus);
+  border-color: rgba(255,255,255,0.1);
   background: #0D0E10;
   box-shadow:
     inset 4px 4px 8px rgba(6, 10, 20, 0.56),
     inset -1px -1px 2px rgba(255,255,255,0.02),
-    0 0 0 1px var(--text-input-focus);
+    0 0 0 1px rgba(16, 185, 129, 0.16);
 }
 
 .neu-textarea {
@@ -1161,7 +1158,7 @@ textarea:read-only,
 }
 
 .neu-textarea::placeholder {
-  color: var(--text-input-ph);
+  color: var(--text-muted);
   font-style: italic;
   opacity: 1;
 }
@@ -2812,19 +2809,19 @@ textarea:read-only,
   padding: 10px 0;
   font-family: 'JetBrains Mono', monospace;
   font-size: 14px;
-  color: rgba(0, 163, 255, var(--power-state));
+  color: rgba(244, 239, 230, var(--power-state));
   caret-color: var(--text-input);
   outline: none;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .input-line input::placeholder {
-  color: rgba(0, 163, 255, calc(0.25 * var(--power-state)));
+  color: rgba(115, 115, 115, calc(0.5 * var(--power-state)));
   font-style: italic;
 }
 
 .input-line input:focus {
-  border-bottom-color: rgba(0, 163, 255, calc(0.6 * var(--power-state)));
+  border-bottom-color: rgba(16, 185, 129, calc(0.6 * var(--power-state)));
 }
 
 .input-glow {
@@ -2833,8 +2830,8 @@ textarea:read-only,
   left: 0;
   height: 1px;
   width: 0;
-  background: var(--text-input);
-  box-shadow: 0 0 6px var(--text-input);
+  background: var(--accent-med);
+  box-shadow: 0 0 6px var(--accent-med);
   transition: width 0.3s ease;
 }
 

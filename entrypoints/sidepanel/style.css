@@ -4259,16 +4259,16 @@ textarea:read-only,
   gap: 5px;
 }
 
-.vitals-row {
+.vitals-grid--redesign .vitals-row {
   display: grid;
   gap: 5px;
 }
 
-.vitals-row--2col {
+.vitals-grid--redesign .vitals-row--2col {
   grid-template-columns: 1fr 1fr;
 }
 
-.vitals-row--3col {
+.vitals-grid--redesign .vitals-row--3col {
   grid-template-columns: 1fr 1fr 1fr;
 }
 
@@ -4276,8 +4276,7 @@ textarea:read-only,
   border: 1px solid rgba(107, 155, 138, 0.3);
 }
 
-.vitals-grid--redesign .vital-ghost-item,
-.vitals-grid--redesign [class*="vital-ghost-item"] {
+.vitals-grid--redesign .vital-item {
   display: flex;
   align-items: center;
   padding: 7px 10px;

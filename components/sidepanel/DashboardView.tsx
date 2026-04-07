@@ -229,6 +229,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           margin: 0 auto 10px;
         }
 
+        .dash-logo-icon img {
+          filter: brightness(1.3);
+        }
+
         .dash-title {
           font-size: 22px;
           font-weight: 700;

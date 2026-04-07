@@ -191,7 +191,7 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
         .login-brand {
           font-size: 11px;
           font-weight: 500;
-          color: rgba(244,239,230,0.08);
+          color: rgba(244,239,230,0.45);
           letter-spacing: 0.3em;
           text-transform: uppercase;
           margin-bottom: 36px;
@@ -245,7 +245,7 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
           padding: 10px 0;
           font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
-          color: rgba(244,239,230,0.7);
+          color: rgba(244,239,230,0.9);
           text-align: center;
           letter-spacing: 0.08em;
           outline: none;
@@ -253,7 +253,7 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
         }
 
         .login-luxury-line input::placeholder {
-          color: rgba(115,115,115,0.25);
+          color: rgba(115,115,115,0.55);
           font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.15em;

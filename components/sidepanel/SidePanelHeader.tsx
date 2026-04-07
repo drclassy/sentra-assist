@@ -213,7 +213,7 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
           display: flex;
           flex-direction: column;
           gap: 4px;
-          padding: 8px;
+          padding: 8px 10px;
           background: var(--neu-inset-bg);
           border-radius: 8px;
           border: 1px solid rgba(255,255,255,0.06);
@@ -232,7 +232,7 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
 
         .patient-name {
           font-family: 'JetBrains Mono', monospace;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 600;
           line-height: 18px;
           color: var(--text-main);

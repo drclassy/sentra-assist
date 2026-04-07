@@ -76,7 +76,7 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
       <div className="login-card">
         {/* Logo resmi Sentra */}
         <div className="login-logo">
-          <img src="icon/Logo-fix.png" alt="Sentra" width="48" height="48" />
+          <img src="icon/Logo-fix.png" alt="Sentra" width="88" height="88" />
         </div>
         <div className="login-brand">Sentra Assist</div>
 

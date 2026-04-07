@@ -41,7 +41,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Header */}
         <div className="dash-header">
           <div className="dash-logo-icon">
-            <img src="icon/Logo-fix.png" alt="Sentra" width="44" height="44" />
+            <img src="icon/Logo-fix.png" alt="Sentra" width="72" height="72" />
           </div>
           <h2 className="dash-title">Sentra Assist</h2>
           <p className="dash-subtitle">Intelligent Clinical Decision Support</p>

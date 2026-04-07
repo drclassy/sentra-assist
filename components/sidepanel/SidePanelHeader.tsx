@@ -127,31 +127,6 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
         </div>
       </div>
 
-      {/* Engine tabs — paired with tabpanels in main.tsx (sidepanel-tabpanel-*) */}
-      <div className="engine-row engine-tablist" role="tablist" aria-label="Modul engine klinis">
-        {engineButtons.map((engine) => {
-          const selected = activeEngine === engine.id
-          const panelId = ENGINE_TAB_PANEL_ID[engine.id]
-          const triggerId = ENGINE_TAB_TRIGGER_ID[engine.id]
-          return (
-            <button
-              key={engine.id}
-              id={triggerId}
-              type="button"
-              role="tab"
-              tabIndex={selected ? 0 : -1}
-              aria-selected={selected}
-              aria-controls={panelId}
-              className={`engine-btn engine-tab ${selected ? 'active' : ''}`}
-              onClick={() => onEngineChange(engine.id)}
-              onKeyDown={(e) => handleEngineTabKeyDown(e, engine.id)}
-            >
-              {engine.label}
-            </button>
-          )
-        })}
-      </div>
-
       {/* Patient info — exactly 2 rows */}
       <div className="patient-bar">
         {/* Row 1: Name (left) + Age (right) + Status dot */}
@@ -216,6 +191,31 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
           </span>
           <span className="status-chip__label">Dokter</span>
         </div>
+      </div>
+
+      {/* Engine tabs — paired with tabpanels in main.tsx (sidepanel-tabpanel-*) */}
+      <div className="engine-row engine-tablist" role="tablist" aria-label="Modul engine klinis">
+        {engineButtons.map((engine) => {
+          const selected = activeEngine === engine.id
+          const panelId = ENGINE_TAB_PANEL_ID[engine.id]
+          const triggerId = ENGINE_TAB_TRIGGER_ID[engine.id]
+          return (
+            <button
+              key={engine.id}
+              id={triggerId}
+              type="button"
+              role="tab"
+              tabIndex={selected ? 0 : -1}
+              aria-selected={selected}
+              aria-controls={panelId}
+              className={`engine-btn engine-tab ${selected ? 'active' : ''}`}
+              onClick={() => onEngineChange(engine.id)}
+              onKeyDown={(e) => handleEngineTabKeyDown(e, engine.id)}
+            >
+              {engine.label}
+            </button>
+          )
+        })}
       </div>
     </div>
   )

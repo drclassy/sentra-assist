@@ -258,7 +258,7 @@ function App() {
           setAuthUser(session.user);
           setIsLoggedIn(true);
           setIsPowered(true);
-          setShowDashboard(false); // Skip dashboard if returning user
+          setShowDashboard(true); // Always show credits/dashboard page
         }
       } catch {
         // No stored session — show login flow

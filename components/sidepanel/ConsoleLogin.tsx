@@ -74,13 +74,9 @@ export const ConsoleLogin: React.FC<ConsoleLoginProps> = ({ onLoginSuccess }) =>
   return (
     <div className="login-view">
       <div className="login-card">
-        {/* Logo */}
+        {/* Logo resmi Sentra */}
         <div className="login-logo" aria-hidden="true">
-          <svg viewBox="0 0 60 40" fill="none" width="48" height="32">
-            <text x="4" y="28" fill="#F4EFE6" fontSize="24" fontWeight="700" fontFamily="Inter">S</text>
-            <circle cx="36" cy="20" r="14" stroke="#F4EFE6" strokeWidth="1.5" fill="none" />
-            <circle cx="36" cy="20" r="4" fill="#F4EFE6" />
-          </svg>
+          <img src="/icon/Logo-fix.png" alt="Sentra" width="48" height="48" />
         </div>
         <div className="login-brand">Sentra Assist</div>
 

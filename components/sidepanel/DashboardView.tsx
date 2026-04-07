@@ -41,11 +41,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Header */}
         <div className="dash-header">
           <div className="dash-logo-icon" aria-hidden="true">
-            <svg viewBox="0 0 60 40" fill="none" width="44" height="30">
-              <text x="4" y="28" fill="#F4EFE6" fontSize="24" fontWeight="700" fontFamily="Inter">S</text>
-              <circle cx="36" cy="20" r="14" stroke="#F4EFE6" strokeWidth="1.5" fill="none" />
-              <circle cx="36" cy="20" r="4" fill="#F4EFE6" />
-            </svg>
+            <img src="/icon/Logo-fix.png" alt="Sentra" width="44" height="44" />
           </div>
           <h2 className="dash-title">Sentra Assist</h2>
           <p className="dash-subtitle">Intelligent Clinical Decision Support</p>

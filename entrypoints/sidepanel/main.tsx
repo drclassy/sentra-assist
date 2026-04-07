@@ -581,6 +581,12 @@ function App() {
                   isLoadingPatient={isLoadingPatient}
                   demographicStatus={demographicStatus}
                   historyStatus={historyStatus}
+                  doctorOnlineCount={0}
+                  onInitialisasi={() => {
+                    setPatientData(defaultPatient)
+                    setTTVState(initialTTVState)
+                    void fetchPatientData()
+                  }}
                 />
                 <section
                   className="flex-1 min-h-0 overflow-y-auto p-4 relative"

@@ -1171,7 +1171,7 @@ export async function fillAnamnesaForm(payload: AnamnesaFillPayload): Promise<{
       })
     }
 
-    // Biopsikososial
+    // Biopsikososial (termasuk Ekspresi dan Emosi)
     if (ln.biopsikososial) {
       mappings.push({
         selector: 'textarea[name="Anamnesa[biopsikososial]"], textarea#text_biopsikososial',
@@ -1246,6 +1246,42 @@ export async function fillAnamnesaForm(payload: AnamnesaFillPayload): Promise<{
       success.push(r)
     } else {
       failed.push(r)
+    }
+  }
+
+  // Fill nyeri conditional fields (pencetus/kualitas/lokasi)
+  // These only appear in the DOM AFTER the merasakan_nyeri radio "Ya" is clicked.
+  // We fill them in a separate pass after main fillFields so the radio click has settled.
+  if (payload.assesmen_nyeri?.merasakan_nyeri === '1') {
+    const an = payload.assesmen_nyeri
+    const nyeriConditional: FieldMapping[] = []
+    if (an.pencetus) {
+      nyeriConditional.push({
+        selector: 'textarea[name="PeriksaFisik[nyeri_pencetus]"], textarea#nyeri_pencetus, textarea[name="nyeri_pencetus"]',
+        value: an.pencetus,
+        type: 'textarea',
+      })
+    }
+    if (an.kualitas) {
+      nyeriConditional.push({
+        selector: 'textarea[name="PeriksaFisik[nyeri_kualitas]"], textarea#nyeri_kualitas, textarea[name="nyeri_kualitas"]',
+        value: an.kualitas,
+        type: 'textarea',
+      })
+    }
+    if (an.lokasi) {
+      nyeriConditional.push({
+        selector: 'textarea[name="PeriksaFisik[nyeri_lokasi]"], textarea#nyeri_lokasi, textarea[name="nyeri_lokasi"]',
+        value: an.lokasi,
+        type: 'textarea',
+      })
+    }
+    if (nyeriConditional.length > 0) {
+      const nyeriResults = await fillFields(nyeriConditional, 200)
+      for (const r of nyeriResults) {
+        if (r.success) success.push(r)
+        else skipped.push(`nyeri conditional: ${String(r.field)} — ${r.error || 'not found'}`)
+      }
     }
   }
 

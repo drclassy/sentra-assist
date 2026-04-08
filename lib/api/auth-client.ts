@@ -66,11 +66,13 @@ const ALLOW_PERMISSIVE_OFFLINE_LOGIN = true
 interface AuthConfig {
   baseUrl: string
   enableOfflineMode: boolean
+  automationToken: string
 }
 
 const DEFAULT_CONFIG: AuthConfig = {
   baseUrl: DEFAULT_AUTH_BASE_URL,
   enableOfflineMode: true,
+  automationToken: '',
 }
 
 // ============================================================================
@@ -87,6 +89,7 @@ export async function getAuthConfig(): Promise<AuthConfig> {
       baseUrl: stored.baseUrl?.trim() || DEFAULT_CONFIG.baseUrl,
       // Always respect DEFAULT_CONFIG.enableOfflineMode — ignore stale stored value
       enableOfflineMode: DEFAULT_CONFIG.enableOfflineMode,
+      automationToken: stored.automationToken?.trim() || DEFAULT_CONFIG.automationToken,
     }
   } catch (e) {
     log.warn('[AuthClient] Failed to load config:', e)
@@ -96,7 +99,12 @@ export async function getAuthConfig(): Promise<AuthConfig> {
 
 export async function saveAuthConfig(config: Partial<AuthConfig>): Promise<AuthConfig> {
   const current = await getAuthConfig()
-  const updated = { ...current, ...config }
+  const updated = {
+    ...current,
+    ...config,
+    baseUrl: config.baseUrl?.trim() || current.baseUrl,
+    automationToken: config.automationToken?.trim() || '',
+  }
   await browser.storage.local.set({ [AUTH_CONFIG_KEY]: updated })
   const existingSession = await getSession()
   if (existingSession) {

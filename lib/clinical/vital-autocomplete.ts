@@ -4,6 +4,7 @@ import {
   getVitalScreeningProfile,
   type VitalScreeningProfile,
 } from '@/lib/clinical/vital-screening-thresholds';
+import { generateVitals, type AassistPreset } from '@/lib/clinical/aassist-v2/vital-generator';
 
 export interface VitalAutofillValues {
   sbp: string;
@@ -154,8 +155,27 @@ function applyPresetVitals(
 
 export function buildVitalAutofill(
   preset: AutosenPreset,
-  patientAge: number
+  patientAge: number,
+  seed?: number,
 ): VitalAutofillResult {
+  // For presets that map to the v2 random generator, use it for proper ranges
+  const v2PresetMap: Partial<Record<AutosenPreset, AassistPreset>> = {
+    hypertension:  'hipertensi',
+    hypotension:   'hipotensi',
+    hyperglycemia: 'hiperglikemi',
+  };
+
+  const v2Preset = v2PresetMap[preset];
+  if (v2Preset !== undefined) {
+    const result = generateVitals({ preset: v2Preset, seed });
+    return {
+      physiologyLabel: `Preset ${v2Preset} (v2 random)`,
+      reasoning: result.reasoning,
+      vitals: result.vitals,
+    };
+  }
+
+  // adl / glucose_tolerance / hypoglycemia: use profile-aware deterministic logic with optional jitter
   const profile = getVitalScreeningProfile(patientAge || 0);
   const baseline = buildBaselineVitals(profile);
   const { vitals, reasoning } = applyPresetVitals(preset, profile, baseline);

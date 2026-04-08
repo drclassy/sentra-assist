@@ -77,6 +77,7 @@ export function SettingsConsole(): JSX.Element {
     return loadPersistedSettings()?.workspaceUrl ?? DEFAULT_WORKSPACE_URL
   })
   const [authBaseUrl, setAuthBaseUrl] = useState(DEFAULT_API_BASE_URL)
+  const [automationToken, setAutomationToken] = useState('')
 
   const [apiKey, setApiKey] = useState('••••••••••••••••')
   const [saved, setSaved] = useState(false)
@@ -123,8 +124,10 @@ export function SettingsConsole(): JSX.Element {
       try {
         const authConfig = await getAuthConfig()
         setAuthBaseUrl(authConfig.baseUrl || DEFAULT_API_BASE_URL)
+        setAutomationToken(authConfig.automationToken || '')
       } catch {
         setAuthBaseUrl(DEFAULT_API_BASE_URL)
+        setAutomationToken('')
       }
     }
     void syncAuthConfig()
@@ -143,7 +146,10 @@ export function SettingsConsole(): JSX.Element {
 
     const bridgeEnabled = settings.find((item) => item.id === 'bridge')?.enabled ?? true
     try {
-      await saveAuthConfig({ baseUrl: authBaseUrl.trim() || DEFAULT_API_BASE_URL })
+      await saveAuthConfig({
+        baseUrl: authBaseUrl.trim() || DEFAULT_API_BASE_URL,
+        automationToken,
+      })
       await saveBridgeConfig({ enabled: bridgeEnabled })
       if (!bridgeEnabled) {
         setBridgeRuntimeStatus('disabled')
@@ -163,10 +169,11 @@ export function SettingsConsole(): JSX.Element {
     setSettings(DEFAULT_SETTINGS)
     setWorkspaceUrl(DEFAULT_WORKSPACE_URL)
     setAuthBaseUrl(DEFAULT_API_BASE_URL)
+    setAutomationToken('')
     setApiKey('••••••••••••••••')
     localStorage.removeItem(STORAGE_KEY)
     try {
-      await saveAuthConfig({ baseUrl: DEFAULT_API_BASE_URL })
+      await saveAuthConfig({ baseUrl: DEFAULT_API_BASE_URL, automationToken: '' })
       const bridgeEnabled = DEFAULT_SETTINGS.find((item) => item.id === 'bridge')?.enabled ?? true
       await saveBridgeConfig({ enabled: bridgeEnabled })
       if (!bridgeEnabled) {
@@ -286,6 +293,23 @@ export function SettingsConsole(): JSX.Element {
                 {apiProbeStatus.text}
               </span>
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] text-gray-500">Bridge Automation Token</label>
+            <input
+              type="password"
+              value={automationToken}
+              onChange={(e) => setAutomationToken(e.target.value)}
+              className="w-full px-3 py-2 bg-[#0F1012] rounded-lg text-xs text-gray-200
+                         shadow-[inset_2px_2px_4px_rgba(0,0,0,0.4),inset_-1px_-1px_2px_rgba(255,255,255,0.02)]
+                         border-none outline-none placeholder:text-gray-600
+                         focus:ring-1 focus:ring-[#6B9B8A]/30 transition-all"
+              placeholder="Harus sama dengan CREW_ACCESS_AUTOMATION_TOKEN di dashboard"
+            />
+            <p className="text-[10px] text-gray-500">
+              Dipakai untuk `bridge`, `consult`, dan canonical engine tanpa refresh token login.
+            </p>
           </div>
         </div>
       </div>

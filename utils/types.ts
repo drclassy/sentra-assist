@@ -223,6 +223,9 @@ export interface AnamnesaFillPayload {
   assesmen_nyeri?: {
     merasakan_nyeri: '0' | '1' // 0=Tidak, 1=Ya
     skala_nyeri: number // 0-10 (0=Tidak Nyeri, 1-3=Ringan, 4-6=Sedang, 7-10=Berat)
+    pencetus?: string  // Faktor pencetus/pemberat nyeri (conditional — tampil jika Ya)
+    kualitas?: string  // Kualitas nyeri (conditional)
+    lokasi?: string    // Lokasi nyeri (conditional)
   }
   // Lainnya Section
   lainnya?: {

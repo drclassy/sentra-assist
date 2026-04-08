@@ -18,7 +18,7 @@
   --bg-card: #0F1012;
   --border-glow: rgba(255, 255, 255, 0.12);
   --border-subtle: rgba(255, 255, 255, 0.06);
-  --text-main: #F4EFE6;
+  --text-main: #FDFBF5;
   --text-muted: #737373;
   --neu-inset-bg: #0A0A0C;
   --bg-inset: #0A0A0C;
@@ -59,6 +59,12 @@
   --bg-elevated: #FFFFFF;
 }
 
+html {
+  /* Meningkatkan ukuran font dasar sekitar 1px (dari 16px menjadi 17px) 
+     Ini akan menskalakan semua unit 'rem' secara proporsional di seluruh aplikasi. */
+  font-size: 106.25%;
+}
+
 :root {
 /* Boot sequence — 0 = off, 1 = on */
 --power-state: 0;
@@ -87,7 +93,7 @@
    * aligned vitals. Reserve JetBrains Mono for IDs, codes, timestamps (see .font-mono).
    * Warm parchment on #0A0A0C = strong contrast (WCAG AAA target).
    * ─────────────────────────────────────────────────────────────────────── */
-  --text-input:       #F4EFE6;                       /* Warm parchment — same as body */
+  --text-input:       #FDFBF5;                       /* Warm parchment — same as body */
   --text-input-ph:    rgba(115, 115, 115, 0.80);     /* Muted gray placeholder */
   --text-input-focus: rgba(16, 185, 129, 0.35);      /* Medical green focus ring */
   --text-input-sel:   rgba(16, 185, 129, 0.25);      /* Green selection bg */
@@ -4874,4 +4880,83 @@ textarea:read-only,
 .btn-sentra-uplink:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* ── AASSIST v2 — Sentra Uplink States ───────────────────────────────────── */
+.sentra-uplink--processing {
+  background: linear-gradient(90deg, #cc2200, #ff6b00) !important;
+  border-color: #ff6b00 !important;
+  color: #fff !important;
+  animation: pulse-processing 1.2s ease-in-out infinite;
+  cursor: wait;
+}
+.sentra-uplink--completed {
+  background: #007bff !important;
+  border-color: #007bff !important;
+  color: #fff !important;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+@keyframes pulse-processing {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.78; }
+}
+
+/* Arrow animation between uplink → kirim dokter */
+.uplink-arrow {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #007bff;
+  letter-spacing: -1px;
+  animation: arrow-slide 0.5s ease forwards;
+  margin: 0 4px;
+}
+@keyframes arrow-slide {
+  from { transform: translateX(-10px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+/* Kirim Dokter — blue state when uplink completed */
+.btn--blue {
+  background: #007bff !important;
+  border-color: #007bff !important;
+  color: #fff !important;
+}
+.btn--blue:hover:not(:disabled) {
+  background: #0056cc !important;
+  border-color: #0056cc !important;
+}
+
+/* ── AASSIST v2 — AVPU Suggestion + Confirmed ────────────────────────────── */
+.avpu-suggestion {
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0.9;
+}
+.avpu-confirm-btn {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all 0.15s ease;
+}
+.avpu-confirm-btn:hover:not(:disabled) {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+.avpu-confirm-btn--locked {
+  border-color: #4caf50;
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+  cursor: default;
 }

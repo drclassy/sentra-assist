@@ -377,10 +377,10 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           }
         } catch (error) {
           if (!cancelled) {
-            const message =
-              error instanceof Error ? error.message : 'Gagal memuat trajectory canonical'
-            console.error('[Trajectory] Canonical evaluate error:', message)
-            setCanonicalError(message)
+            // Canonical engine optional — silent fallback, never expose API errors to UI
+            console.warn('[Trajectory] Canonical engine fallback to local:',
+              error instanceof Error ? error.name : String(error))
+            setCanonicalError('')
           }
         } finally {
           if (!cancelled) {

@@ -16,6 +16,7 @@ import type {
   RMETransferResult,
 } from '~/utils/types'
 import { isAuthenticated } from './auth-store'
+import { getAuthConfig } from './auth-client'
 import {
   authedFetch,
   AuthRequiredError,
@@ -119,6 +120,8 @@ export async function saveBridgeConfig(config: Partial<BridgeConfig>): Promise<B
 export async function isBridgeReady(): Promise<boolean> {
   const config = await getBridgeConfig()
   if (!config.enabled) return false
+  const authConfig = await getAuthConfig()
+  if (authConfig.automationToken.trim()) return true
   return isAuthenticated()
 }
 
@@ -127,7 +130,9 @@ export async function isBridgeReady(): Promise<boolean> {
 // ============================================================================
 
 async function bridgeFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const authed = await isAuthenticated()
+  const authConfig = await getAuthConfig()
+  const hasAutomationToken = Boolean(authConfig.automationToken.trim())
+  const authed = hasAutomationToken || (await isAuthenticated())
   if (!authed) {
     throw new AuthRequiredError('Belum login. Silakan login terlebih dahulu.')
   }
@@ -690,10 +695,34 @@ interface ConsultResponse {
   error?: string
 }
 
+/** Hardcode fallback — displayed when DB returns empty or user is offline. */
+const FALLBACK_DOCTORS: OnlineDoctor[] = [
+  {
+    id: 'fallback-ferdi',
+    name: 'dr. Ferdi Iskandar',
+    role: 'dokter',
+    poli: 'Umum',
+    availability_status: 'online',
+  },
+  {
+    id: 'fallback-josep',
+    name: 'dr. Josep Ariyanto S.Gz',
+    role: 'dokter',
+    poli: 'Gizi',
+    availability_status: 'online',
+  },
+]
+
 export async function getOnlineDoctors(): Promise<OnlineDoctor[]> {
-  const res = await bridgeFetch<OnlineDoctorsResponse>('/api/doctors/online')
-  if (!res.ok) throw new Error(res.error || 'Failed to fetch online doctors')
-  return res.doctors
+  try {
+    const authed = await isAuthenticated()
+    if (!authed) return FALLBACK_DOCTORS
+    const res = await bridgeFetch<OnlineDoctorsResponse>('/api/doctors/online')
+    if (!res.ok) return FALLBACK_DOCTORS
+    return res.doctors.length > 0 ? res.doctors : FALLBACK_DOCTORS
+  } catch {
+    return FALLBACK_DOCTORS
+  }
 }
 
 export async function sendConsultToDoctor(

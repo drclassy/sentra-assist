@@ -130,6 +130,7 @@ Mengirim consult klinis dari perawat di Sentra Assist ke dokter tujuan.
 ## Catatan Frontend
 
 - base URL default bridge: `https://crew.puskesmasbalowerti.com`
+- auth untuk endpoint dashboard lintas-origin memakai `CREW_ACCESS_AUTOMATION_TOKEN` yang harus sama antara dashboard dan Sentra Assist
 - sebelum submit, kolom `Dokter Online` menampilkan `Consult Snapshot` yang secara eksplisit merangkum:
   - `BPJS / Penjamin`
   - `Penyakit Khusus`

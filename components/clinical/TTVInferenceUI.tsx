@@ -8,6 +8,13 @@ import {
   type CanonicalClinicalEngineOutput,
   type OnlineDoctor,
 } from '@/lib/api/bridge-client'
+import { AuthRequiredError, BridgeResponseFormatError } from '@/lib/api/authed-fetch'
+import { determineAVPU, type AvpuResult } from '@/lib/clinical/aassist-v2/avpu-engine'
+import {
+  canOverrideField,
+  makeFieldMeta,
+  type FieldMeta,
+} from '@/lib/clinical/aassist-v2/field-priority'
 import {
   buildAnamnesisShadowSuggestion,
   composeAnamnesaDraft,
@@ -105,6 +112,11 @@ interface TTVStateShape {
 }
 
 type VitalFieldKey = 'sbp' | 'dbp' | 'hr' | 'rr' | 'temp' | 'spo2' | 'glucose'
+const VITAL_FIELD_KEYS: readonly VitalFieldKey[] = ['sbp', 'dbp', 'hr', 'rr', 'temp', 'spo2', 'glucose']
+
+// Module-scope constant — not recreated on each render
+const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPRSTUVWXYZ01234!@#$%'
+
 type AvpuValue = 'A' | 'C' | 'V' | 'P' | 'U'
 const AVPU_OPTIONS: AvpuValue[] = ['A', 'C', 'V', 'P', 'U']
 const AVPU_LABELS: Record<AvpuValue, string> = {
@@ -202,6 +214,7 @@ const presetLabels: Record<AutosenPreset, string> = {
   hypertension: 'Hipertensi',
   hyperglycemia: 'Hiperglikema',
   hypoglycemia: 'Hipoglikemi',
+  hypotension: 'Hipotensi',
   glucose_tolerance: 'Gangguan Toleransi glukosa',
   adl: 'ADL Terganggu',
 }
@@ -1067,29 +1080,76 @@ export function TTVInferenceUI({
   const [doctorPickerError, setDoctorPickerError] = useState('')
   const [doctorPickerNotice, setDoctorPickerNotice] = useState('')
   const [isConsultFooterOpen, setIsConsultFooterOpen] = useState(false)
-  const [uplinkDone, setUplinkDone] = useState(false)
-  const [isUplinkLoading, setIsUplinkLoading] = useState(false)
+  const [uplinkState, setUplinkState] = useState<'idle' | 'processing' | 'completed'>('idle')
+  const [uplinkDisplayText, setUplinkDisplayText] = useState('Sentra Uplink →')
   const [uplinkError, setUplinkError] = useState<string | null>(null)
+  const scrambleIntervalRef = useRef<number | null>(null)
+  const [avpuSuggestion, setAvpuSuggestion] = useState<AvpuResult | null>(null)
+  const [avpuLocked, setAvpuLocked] = useState(false)
+  // Ref mirrors avpuLocked for use inside setTimeout callbacks (avoid stale closure)
+  const avpuLockedRef = useRef(false)
+  // Per-field source tracking for autocomplete override protection
+  const [fieldMeta, setFieldMeta] = useState<Partial<Record<VitalFieldKey, FieldMeta>>>({})
+  const fieldMetaRef = useRef<Partial<Record<VitalFieldKey, FieldMeta>>>({})
 
-  // Reset uplink state when patient changes
+  // Keep refs in sync with state (prevents stale closure bugs in setTimeout/setInterval)
+  useEffect(() => { avpuLockedRef.current = avpuLocked }, [avpuLocked])
+  useEffect(() => { fieldMetaRef.current = fieldMeta }, [fieldMeta])
+
+  // Reset uplink + AVPU + field meta when patient changes
   useEffect(() => {
-    setUplinkDone(false)
+    if (scrambleIntervalRef.current !== null) {
+      clearInterval(scrambleIntervalRef.current)
+      scrambleIntervalRef.current = null
+    }
+    setUplinkState('idle')
+    setUplinkDisplayText('Sentra Uplink →')
     setUplinkError(null)
+    setAvpuSuggestion(null)
+    setAvpuLocked(false)
+    setFieldMeta({})
   }, [patientRM])
 
+  const startTextScramble = useCallback((setFn: (t: string) => void): number => {
+    const target = 'MENGISI RME...'
+    let frame = 0
+    const id = window.setInterval(() => {
+      const scrambled = target
+        .split('')
+        .map((ch, i) => {
+          if (ch === ' ') return ' '
+          if (frame > i * 1.5) return target[i]
+          return SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)]
+        })
+        .join('')
+      setFn(scrambled)
+      frame++
+      if (frame > target.length * 2) frame = 0
+    }, 55)
+    return id
+  }, [])
+
   const handleSentraUplink = useCallback(async () => {
-    if (!onSentraUplink) return
-    setIsUplinkLoading(true)
+    if (!onSentraUplink || uplinkState !== 'idle') return
+    setUplinkState('processing')
     setUplinkError(null)
+    const scId = startTextScramble(setUplinkDisplayText)
+    scrambleIntervalRef.current = scId
     try {
       await onSentraUplink()
-      setUplinkDone(true)
+      clearInterval(scId)
+      scrambleIntervalRef.current = null
+      setUplinkDisplayText('Completed')
+      setUplinkState('completed')
+      playSound('notif1.wav')
     } catch (err) {
+      clearInterval(scId)
+      scrambleIntervalRef.current = null
+      setUplinkDisplayText('Sentra Uplink →')
+      setUplinkState('idle')
       setUplinkError(err instanceof Error ? err.message : 'Uplink gagal')
-    } finally {
-      setIsUplinkLoading(false)
     }
-  }, [onSentraUplink])
+  }, [onSentraUplink, uplinkState, startTextScramble])
   const allergyDropdownRef = useRef<HTMLDivElement | null>(null)
   const disabilityDropdownRef = useRef<HTMLDivElement | null>(null)
   const obesityDropdownRef = useRef<HTMLDivElement | null>(null)
@@ -1107,6 +1167,11 @@ export function TTVInferenceUI({
     return () => {
       ghostAnimationTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId))
       ghostAnimationTimeoutsRef.current = []
+      // Also clear scramble interval to prevent state updates on unmounted component
+      if (scrambleIntervalRef.current !== null) {
+        clearInterval(scrambleIntervalRef.current)
+        scrambleIntervalRef.current = null
+      }
     }
   }, [])
 
@@ -1300,7 +1365,8 @@ export function TTVInferenceUI({
     hasMinimalVitals &&
     Boolean(selectedDoctorId) &&
     !isSendingConsult &&
-    (!isFemalePatient || state.pregnancyStatus !== null)
+    // If uplink is completed, bypass pregnancy status requirement — RME already filled
+    (!isFemalePatient || state.pregnancyStatus !== null || uplinkState === 'completed')
   const hasSymptomDraftPending =
     Boolean(state.symptomText.trim()) && state.symptomText.trim() !== lastProcessedSymptomText
   const anamnesaDraft = useMemo(
@@ -1622,6 +1688,15 @@ export function TTVInferenceUI({
       ...prev,
       [field]: value,
     }))
+    // Mark vital fields as ASIST-manual when user types (not when autocomplete fills)
+    if (
+      (VITAL_FIELD_KEYS as string[]).includes(field as string) &&
+      typeof value === 'string' &&
+      value.trim() !== ''
+    ) {
+      const meta = makeFieldMeta(value, 'ASIST-manual')
+      setFieldMeta((prev) => ({ ...prev, [field]: meta }))
+    }
   }
 
   const applyShadowSuggestion = () => {
@@ -1904,10 +1979,29 @@ export function TTVInferenceUI({
     window.setTimeout(() => {
       void (async () => {
         const autofill = buildVitalAutofill(stateRef.current.autosenPreset, patientAge)
+
+        // Apply source-priority guard — do not overwrite RME-manual or ASIST-manual fields
+        const filteredVitals: Partial<Record<VitalFieldKey, string>> = {}
+        for (const field of VITAL_FIELD_KEYS) {
+          if (canOverrideField(fieldMetaRef.current[field], 'ASIST-autocomplete')) {
+            filteredVitals[field] = autofill.vitals[field]
+          }
+          // Blocked fields are silently skipped (logged via audit trail in future)
+        }
+
         const nextState: TTVStateShape = {
           ...stateRef.current,
-          ...autofill.vitals,
+          ...filteredVitals,
         }
+
+        // Mark filled fields as ASIST-autocomplete in fieldMeta
+        const newMeta: Partial<Record<VitalFieldKey, FieldMeta>> = { ...fieldMetaRef.current }
+        for (const field of VITAL_FIELD_KEYS) {
+          if (field in filteredVitals && filteredVitals[field] !== undefined) {
+            newMeta[field] = makeFieldMeta(filteredVitals[field]!, 'ASIST-autocomplete')
+          }
+        }
+        setFieldMeta(newMeta)
         const nextAlerts = buildAlerts(nextState, { patientAge })
 
         const vitalOutput = buildVitalAutocompleteOutput({
@@ -1933,6 +2027,23 @@ export function TTVInferenceUI({
           setGhostActiveLane(null)
           setGhostCompletedLanes([])
           setGhostVisibleValues({})
+
+          // Auto-determine AVPU from filled vital values
+          const sbp     = Number(nextState.sbp)
+          const spo2    = Number(nextState.spo2)
+          const rr      = Number(nextState.rr)
+          const hr      = Number(nextState.hr)
+          const glucose = Number(nextState.glucose)
+          if (sbp > 0 && spo2 > 0) {
+            // Use -1 for unknown/empty glucose — avpu-engine skips glucose checks when < 0
+            const glucoseSafe = glucose > 0 ? glucose : -1
+            const avpuResult = determineAVPU({ sbp, spo2, rr, hr, glucose: glucoseSafe })
+            setAvpuSuggestion(avpuResult)
+            // Use ref (not state) to avoid stale closure — user may have locked between call and execution
+            if (!avpuLockedRef.current) {
+              commitState((prev) => ({ ...prev, avpu: avpuResult.avpu }))
+            }
+          }
         }, 96)
         ghostAnimationTimeoutsRef.current.push(settleGhostId)
 
@@ -1996,11 +2107,23 @@ export function TTVInferenceUI({
             })
           )
         } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Gagal memuat evaluasi canonical vital sign'
           setLocalCanonicalOutput(null)
-          setCanonicalError(message)
-          setOutput(`${vitalOutput}\n\n[CANONICAL STATUS]\nFallback lokal aktif: ${message}`)
+          // Canonical engine is optional — any failure (auth, HTML response, network, server down)
+          // falls back silently. Never show internal API errors to clinical users.
+          const errName = error instanceof Error ? error.name : ''
+          const errMsg  = error instanceof Error ? error.message : ''
+          const isAuthOrFormat =
+            errName === 'AuthRequiredError' ||
+            errName === 'BridgeResponseFormatError' ||
+            errMsg.includes('halaman HTML') ||
+            errMsg.includes('Belum login') ||
+            errMsg.includes('Login diperlukan')
+          if (!isAuthOrFormat) {
+            // Log unexpected errors for diagnostics but still don't show in UI
+            console.warn('[Canonical] fallback to local — unexpected error:', errMsg)
+          }
+          setCanonicalError('')
+          setOutput(`${vitalOutput}\n\n[CANONICAL STATUS]\nFallback lokal aktif (offline mode).`)
         } finally {
           setIsCanonicalLoading(false)
           setIsAnalyzingVitals(false)
@@ -2459,14 +2582,34 @@ export function TTVInferenceUI({
                   key={option}
                   type="button"
                   className={`avpu-btn ${state.avpu === option ? 'avpu-btn--active' : ''}`}
-                  onClick={() => updateField('avpu', option)}
+                  onClick={() => {
+                    if (!avpuLocked) updateField('avpu', option)
+                  }}
                   title={AVPU_LABELS[option]}
                   aria-label={`AVPU ${AVPU_LABELS[option]}`}
-                  disabled={isGhostFillAnimating}
+                  disabled={isGhostFillAnimating || avpuLocked}
                 >
                   {option}
                 </button>
               ))}
+              {avpuSuggestion && (
+                <span
+                  className="avpu-suggestion"
+                  style={{ color: avpuSuggestion.color }}
+                  title={avpuSuggestion.reason.join(' · ')}
+                >
+                  {avpuSuggestion.avpu === 'A' ? '● Normal' : `⚠ ${avpuSuggestion.avpu}`}
+                </span>
+              )}
+              <button
+                type="button"
+                className={`avpu-confirm-btn${avpuLocked ? ' avpu-confirm-btn--locked' : ''}`}
+                onClick={() => setAvpuLocked(true)}
+                disabled={avpuLocked}
+                aria-label="Konfirmasi status AVPU"
+              >
+                {avpuLocked ? '✓ Confirmed' : 'Confirmed'}
+              </button>
             </div>
           </div>
           <div className="vital-assessment-group vital-assessment-group--pain">
@@ -2633,21 +2776,29 @@ export function TTVInferenceUI({
       <div className="action-bar action-bar--sequential">
         <button
           type="button"
-          className="btn-sentra-uplink"
+          className={[
+            'btn-sentra-uplink',
+            uplinkState === 'processing' ? 'sentra-uplink--processing' : '',
+            uplinkState === 'completed'  ? 'sentra-uplink--completed'  : '',
+          ].filter(Boolean).join(' ')}
           onClick={() => void handleSentraUplink()}
-          disabled={!onSentraUplink || isUplinkLoading}
+          disabled={!onSentraUplink || uplinkState === 'processing'}
           aria-label="Sentra Uplink — isi RME otomatis"
         >
-          {isUplinkLoading ? 'Uploading...' : 'Sentra Uplink →'}
+          {uplinkDisplayText}
         </button>
-        <span className="action-bar__sep" aria-hidden="true">
-          ›
-        </span>
+        {uplinkState === 'completed' && (
+          <span className="uplink-arrow" aria-hidden="true">{'----->'}</span>
+        )}
+        <span className="action-bar__sep" aria-hidden="true">›</span>
         <button
           type="button"
-          className="action-btn action-btn--secondary"
+          className={[
+            'action-btn',
+            uplinkState === 'completed' ? 'action-btn--primary btn--blue' : 'action-btn--secondary',
+          ].join(' ')}
           onClick={() => void handleForwardToDoctor()}
-          disabled={!canForwardToDoctor || !uplinkDone}
+          disabled={!canForwardToDoctor || uplinkState !== 'completed'}
           aria-label="Kirim konsultasi ke dokter"
         >
           → Kirim Dokter
@@ -2655,7 +2806,7 @@ export function TTVInferenceUI({
       </div>
       {uplinkError ? (
         <p className="action-bar__hint action-bar__hint--error">{uplinkError}</p>
-      ) : !uplinkDone && onSentraUplink ? (
+      ) : uplinkState === 'idle' && onSentraUplink ? (
         <p className="action-bar__hint">Selesaikan Uplink untuk mengaktifkan Kirim Dokter</p>
       ) : null}
 
@@ -2665,7 +2816,7 @@ export function TTVInferenceUI({
         </div>
       ) : null}
 
-      {canonicalError && outputMode === 'vital' ? (
+      {canonicalError && canonicalError.length > 0 && outputMode === 'vital' ? (
         <div className="doctor-picker-panel__feedback doctor-picker-panel__feedback--error">
           Canonical vital sign fallback ke hasil lokal: {canonicalError}
         </div>

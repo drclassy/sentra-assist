@@ -4,6 +4,7 @@
 
 import { createLogger } from '~/utils/logger'
 import { clearSession, getSession, storeSession, type AuthSession } from './auth-store'
+import { getAuthConfig } from './auth-client'
 
 const log = createLogger('AuthedFetch', 'background')
 
@@ -167,19 +168,52 @@ async function doRefresh(session: AuthSession): Promise<string> {
   return updated.tokens.accessToken
 }
 
+type BridgeAuthContext =
+  | {
+      mode: 'automation-token'
+      baseUrl: string
+      token: string
+    }
+  | {
+      mode: 'session'
+      baseUrl: string
+      token: string
+      session: AuthSession
+    }
+
+async function resolveBridgeAuthContext(): Promise<BridgeAuthContext> {
+  const session = await getSession()
+  const config = await getAuthConfig()
+  const baseUrl = (session?.serverBaseUrl || config.baseUrl).replace(/\/$/, '')
+  const automationToken = config.automationToken.trim()
+
+  if (automationToken) {
+    return {
+      mode: 'automation-token',
+      baseUrl,
+      token: automationToken,
+    }
+  }
+
+  if (!session) {
+    throw new AuthRequiredError()
+  }
+
+  return {
+    mode: 'session',
+    baseUrl,
+    token: await refreshTokenIfNeeded(session),
+    session,
+  }
+}
+
 // ============================================================================
 // MAIN FETCH WRAPPER
 // ============================================================================
 
 export async function authedFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const session = await getSession()
-  if (!session) {
-    throw new AuthRequiredError()
-  }
-
-  const token = await refreshTokenIfNeeded(session)
-  const baseUrl = session.serverBaseUrl.replace(/\/$/, '')
-  const url = `${baseUrl}${path}`
+  const authContext = await resolveBridgeAuthContext()
+  const url = `${authContext.baseUrl}${path}`
   const correlationId = `ghost-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
 
   log.debug(`[AuthedFetch] >>> ${options.method || 'GET'} ${url}`, { correlationId })
@@ -191,7 +225,7 @@ export async function authedFetch<T>(path: string, options: RequestInit = {}): P
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        'X-Crew-Access-Token': token,
+        'X-Crew-Access-Token': authContext.token,
         'X-Correlation-Id': correlationId,
         ...options.headers,
       },
@@ -205,11 +239,21 @@ export async function authedFetch<T>(path: string, options: RequestInit = {}): P
 
   // Token rejected — attempt one refresh then retry
   if (response.status === 401) {
+    if (authContext.mode === 'automation-token') {
+      const errorBody = await response.text().catch(() => '')
+      log.error(`[AuthedFetch] FAIL ${response.status}: ${errorBody.slice(0, 200)}`, {
+        correlationId,
+      })
+      throw new BridgeApiError(
+        response.status,
+        errorBody || 'Unauthorized. Cek CREW_ACCESS_AUTOMATION_TOKEN pada dashboard dan extension.'
+      )
+    }
+
     log.warn('[AuthedFetch] 401 received — attempting token refresh')
     try {
-      const freshSession = await getSession()
-      if (freshSession) {
-        const newToken = await doRefresh(freshSession)
+      if (authContext.session) {
+        const newToken = await doRefresh(authContext.session)
         const retryResponse = await fetch(url, {
           ...options,
           headers: {

@@ -23,6 +23,7 @@ import type {
 import type { TrajectoryAnalysis } from '@/lib/iskandar-diagnosis-engine/trajectory-analyzer'
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store'
 import { buildRMETransferPayload } from '@/lib/rme/payload-mapper'
+import type { RMETransferResult } from '@/utils/types'
 import { createLogger } from '@/utils/logger'
 import { sendMessage } from '@/utils/messaging'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
@@ -699,7 +700,11 @@ function App() {
                                 disabilityType: ttvState.disabilityType || undefined,
                                 anamnesaDraftPayload: anamnesaDraft?.payload,
                               })
-                              await sendMessage('transferRME', payload)
+                              const result = await sendMessage('transferRME', payload) as RMETransferResult | null
+                              if (result && result.state === 'failed') {
+                                const reason = result.reasonCodes?.join(', ') || 'unknown'
+                                throw new Error(`Gagal mengisi RME (${reason}). Reload halaman ePuskesmas lalu coba lagi.`)
+                              }
                             }}
                           />
                         </Suspense>

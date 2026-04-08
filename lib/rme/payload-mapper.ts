@@ -535,10 +535,15 @@ const AVPU_KESADARAN_MAP: Record<AvpuValue, KesadaranValue> = {
 function buildPeriksaFisikExtended(
   avpu: AvpuValue,
   spo2: number,
-  disabilityType: string | undefined
+  disabilityType: string | undefined,
+  obesityConfirmation?: boolean
 ): AnamnesaFillPayload['periksa_fisik'] {
   const gcs = AVPU_GCS_MAP[avpu]
   const adl: '0' | '1' | '2' = disabilityType ? '1' : '0'
+  // IMT: use obesity-confirmed value (30.5) or default normal (22.0)
+  // Handler skips falsy (0), so we always provide a non-zero estimate
+  const imt = obesityConfirmation ? 30.5 : 22.0
+  const hasil_imt = obesityConfirmation ? 'Obesitas' : 'Normal'
   return {
     gcs_membuka_mata: gcs.mata,
     gcs_respon_verbal: gcs.verbal,
@@ -546,8 +551,8 @@ function buildPeriksaFisikExtended(
     tinggi: 0,         // not captured — handler skips falsy
     berat: 0,
     lingkar_perut: 0,
-    imt: 0,
-    hasil_imt: 'Normal',
+    imt,
+    hasil_imt,
     saturasi: spo2,
     mobilisasi: adl,
     toileting: adl,
@@ -585,7 +590,7 @@ function buildLainnyaFromMedications(
   return {
     terapi: terapiObat,
     terapi_non_obat: 'Istirahat cukup, minum air putih 2 liter/hari, diet sesuai anjuran dokter',
-    bmhp: 'Tidak ada',
+    bmhp: 'Kassa steril, plester, dan sarung tangan bersih.',
     merokok: '0',
     konsumsi_alkohol: '0',
     kurang_sayur_buah: '0',
@@ -593,7 +598,7 @@ function buildLainnyaFromMedications(
     askep,
     observasi: 'Pantau tanda vital per 4-6 jam. Monitor respons terapi. Perhatikan perubahan kondisi klinis seperti penurunan kesadaran, nyeri memberat, atau gejala baru.',
     keterangan: 'Pasien kooperatif, edukasi telah diberikan dan dipahami.',
-    biopsikososial: `Pasien dalam kondisi stabil secara biologis. Tidak ada gangguan psikologis yang bermakna. Dukungan keluarga baik. Kondisi sosial ekonomi cukup untuk mendukung proses penyembuhan terkait ${dxLabel}.`,
+    biopsikososial: `Pasien dalam kondisi stabil secara biologis. Ekspresi dan emosi pasien tampak cemas terkait kondisinya, namun dukungan keluarga baik. Kondisi sosial ekonomi cukup untuk mendukung proses penyembuhan terkait ${dxLabel}.`,
     tindakan_keperawatan: tindakanKeperawatan,
   }
 }
@@ -633,6 +638,25 @@ function buildTindakanKeperawatan(keluhan: string): string {
   tindakan.push('Memberikan edukasi kepada pasien dan keluarga.')
   tindakan.push('Mendokumentasikan seluruh tindakan keperawatan.')
   return tindakan.join(' ')
+}
+
+/** Derive nyeri detail fields from keluhan text */
+function buildNyeriDetails(keluhan: string): { lokasi: string; kualitas: string; pencetus: string } {
+  const k = keluhan.toLowerCase()
+  let lokasi = 'Tidak spesifik'
+  if (/kepala|pusing|migrain/.test(k)) lokasi = 'Kepala'
+  if (/perut|abdomen|mulas|ulu hati/.test(k)) lokasi = 'Abdomen'
+  if (/dada/.test(k)) lokasi = 'Dada'
+  if (/gigi|gusi/.test(k)) lokasi = 'Gigi/Mulut'
+  if (/kaki|betis|lutut|tungkai|paha|pergelangan kaki/.test(k)) lokasi = 'Kaki/Ekstremitas Bawah'
+  if (/tangan|lengan|siku|pergelangan tangan|jari/.test(k)) lokasi = 'Tangan/Ekstremitas Atas'
+  if (/punggung|pinggang/.test(k)) lokasi = 'Punggung/Pinggang'
+  if (/leher/.test(k)) lokasi = 'Leher'
+  return {
+    lokasi,
+    kualitas: 'Nyeri tumpul seperti ditekan',
+    pencetus: 'Diperberat oleh aktivitas, membaik dengan istirahat',
+  }
 }
 
 // Symptom → organ system mapping for keadaan_fisik
@@ -695,13 +719,30 @@ function buildKeadaanFisikFromKeluhan(
 
   if (activeOrgans.size === 0) return undefined
 
+  const hasNyeriKeluhan = /nyeri|sakit|pegal|linu|ngilu/.test(keluhan)
+  const NYERI_PALPASI = 'Pasien teraba tegang dengan nyeri dirasakan oleh pasien'
+
   const result: Partial<NonNullable<AnamnesaFillPayload['keadaan_fisik']>> = {}
   for (const organ of activeOrgans) {
+    const base = { ...(ORGAN_NORMAL_FINDINGS[organ] as Record<string, string>) }
+    if (hasNyeriKeluhan) {
+      // Override palpasi field for musculoskeletal organs based on pain complaint
+      if (organ === 'ekstremitas_bawah' || organ === 'ekstremitas_atas') {
+        base['palpasi'] = NYERI_PALPASI
+      }
+      if (organ === 'abdomen_perut') {
+        base['palpasi_kuadran'] = 'Terdapat nyeri tekan pada area keluhan, tidak teraba hepatomegali/splenomegali'
+      }
+      if (organ === 'kepala') {
+        base['palpasi'] = 'Terdapat nyeri tekan pada area keluhan'
+      }
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(result as any)[organ] = ORGAN_NORMAL_FINDINGS[organ]
+    ;(result as any)[organ] = base
   }
   return result as AnamnesaFillPayload['keadaan_fisik']
 }
+
 
 function buildAnamnesaPayload(input: RMETransferMapperInput): {
   payload: AnamnesaFillPayload
@@ -719,6 +760,11 @@ function buildAnamnesaPayload(input: RMETransferMapperInput): {
 
   // lama_sakit: prefer pre-built draft (has parsed duration), fallback to default
   const lamaSakit = input.anamnesaDraftPayload?.lama_sakit ?? { thn: 0, bln: 0, hr: 1 }
+
+  // assesmen_nyeri logic
+  const nyeriKeywords = /nyeri|sakit|pegal|linu/i
+  const hasNyeriKeluhan = nyeriKeywords.test(keluhanUtama)
+  const shouldFillNyeri = input.painScore !== undefined || hasNyeriKeluhan
 
   const payload: AnamnesaFillPayload = {
     keluhan_utama: keluhanUtama,
@@ -752,18 +798,25 @@ function buildAnamnesaPayload(input: RMETransferMapperInput): {
         }
       : {}),
 
-    // periksa_fisik: GCS + SpO2 + ADL from AVPU + spo2 + disabilityType
-    periksa_fisik: buildPeriksaFisikExtended(avpu, spo2, input.disabilityType),
+    // periksa_fisik: GCS + SpO2 + ADL + IMT from AVPU + spo2 + disabilityType + obesityConfirmation
+    periksa_fisik: buildPeriksaFisikExtended(avpu, spo2, input.disabilityType, input.obesityConfirmation ?? false),
 
-    // assesmen_nyeri: from pain_score
-    ...(input.painScore !== undefined
+    // assesmen_nyeri: from pain_score, or inferred from keluhan
+    // pencetus/kualitas/lokasi are conditional fields (appear after "Ya" radio click)
+    ...((shouldFillNyeri)
       ? {
           assesmen_nyeri: {
-            merasakan_nyeri: input.painScore > 0 ? '1' : '0',
-            skala_nyeri: input.painScore,
+            merasakan_nyeri: '1',
+            skala_nyeri: input.painScore ?? 4,
+            ...buildNyeriDetails(keluhanUtama),
           },
         }
-      : {}),
+      : {
+          assesmen_nyeri: {
+            merasakan_nyeri: '0',
+            skala_nyeri: 0,
+          },
+        }),
 
     // resiko_jatuh: based on consciousness
     resiko_jatuh: {

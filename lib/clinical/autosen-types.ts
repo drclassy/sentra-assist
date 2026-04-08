@@ -2,6 +2,7 @@ export type AutosenPreset =
   | 'hypertension'
   | 'hyperglycemia'
   | 'hypoglycemia'
+  | 'hypotension'
   | 'glucose_tolerance'
   | 'adl';
 

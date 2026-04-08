@@ -15,6 +15,7 @@ import {
   type ComposedAnamnesaDraft,
 } from '@/lib/clinical/anamnesa-composer'
 import { AutosenPreset, DisabilityType, ObesityConfirmation } from '@/lib/clinical/autosen-types'
+import { playSound } from '@/lib/utils/sound'
 import {
   buildCanonicalRequestId,
   buildCanonicalTriageInput,
@@ -1771,6 +1772,7 @@ export function TTVInferenceUI({
         canonicalOutput,
       })
       setDoctorPickerNotice(successMessage)
+      playSound('notif1.wav')
       setOutput((prev) => `${prev ? `${prev}\n\n` : ''}${forwardSummary}`)
     } catch (error) {
       setDoctorPickerError(error instanceof Error ? error.message : 'Gagal mengirim consult')

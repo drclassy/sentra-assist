@@ -12,6 +12,7 @@ import { DashboardView } from '@/components/sidepanel/DashboardView'
 import { SidePanelFooter } from '@/components/sidepanel/SidePanelFooter'
 import { SidePanelHeader } from '@/components/sidepanel/SidePanelHeader'
 import type { AuthUser } from '@/lib/api/auth-store'
+import { playSound } from '@/lib/utils/sound'
 import type { CanonicalClinicalEngineOutput } from '@/lib/api/bridge-client'
 import type { ComposedAnamnesaDraft } from '@/lib/clinical/anamnesa-composer'
 import type {
@@ -302,6 +303,7 @@ function App() {
     setAuthUser(user)
     setIsLoggedIn(true)
     setShowDashboard(true)
+    playSound('hello.mp3')
   }, [])
   const handleLaunchConsole = useCallback(() => setShowDashboard(false), [])
   const handleLogout = useCallback(() => {

@@ -26,7 +26,7 @@ import {
   buildCanonicalRequestId,
   buildCanonicalTriageInput,
 } from '@/lib/clinical/canonical-triage-builder'
-import { buildVitalAutofill } from '@/lib/clinical/vital-autocomplete'
+import { generateVitals, type GenerateVitalsOptions } from '@/lib/clinical/aassist-v2/vital-generator'
 import { getVitalScreeningProfile } from '@/lib/clinical/vital-screening-thresholds'
 import {
   calculateBaseline,
@@ -115,6 +115,16 @@ const VITAL_FIELD_KEYS: readonly VitalFieldKey[] = ['sbp', 'dbp', 'hr', 'rr', 't
 
 // Module-scope constant — not recreated on each render
 const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPRSTUVWXYZ01234!@#$%'
+
+/** Map AutosenPreset → vital-generator preset */
+function toVitalGeneratorPreset(preset: AutosenPreset): GenerateVitalsOptions['preset'] {
+  switch (preset) {
+    case 'hypertension':  return 'hipertensi'
+    case 'hypotension':   return 'hipotensi'
+    case 'hyperglycemia': return 'hiperglikemi'
+    default:              return null
+  }
+}
 
 /** Derive physical exam context from keluhan + AVPU for Intelligence Dashboard consult */
 function buildPhysicalExamContext(keluhan: string, avpu: string): Record<string, string> {
@@ -2010,13 +2020,16 @@ export function TTVInferenceUI({
 
     window.setTimeout(() => {
       void (async () => {
-        const autofill = buildVitalAutofill(stateRef.current.autosenPreset, patientAge)
+        const generated = generateVitals({
+          preset: toVitalGeneratorPreset(stateRef.current.autosenPreset),
+          seed: Date.now(),
+        })
 
         // Apply source-priority guard — do not overwrite RME-manual or ASIST-manual fields
         const filteredVitals: Partial<Record<VitalFieldKey, string>> = {}
         for (const field of VITAL_FIELD_KEYS) {
           if (canOverrideField(fieldMetaRef.current[field], 'ASIST-autocomplete')) {
-            filteredVitals[field] = autofill.vitals[field]
+            filteredVitals[field] = generated.vitals[field as keyof typeof generated.vitals]
           }
           // Blocked fields are silently skipped (logged via audit trail in future)
         }
@@ -2046,8 +2059,8 @@ export function TTVInferenceUI({
             patientRM,
           },
           autofillReasoning: [
-            `Preset ${presetLabels[nextState.autosenPreset]} mengisi field dengan profile ${autofill.physiologyLabel}.`,
-            ...autofill.reasoning,
+            `Preset ${presetLabels[nextState.autosenPreset]} — seed ${generated.metadata.seedUsed}.`,
+            ...generated.reasoning,
           ],
         })
 

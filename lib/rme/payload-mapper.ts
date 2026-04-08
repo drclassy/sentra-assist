@@ -53,6 +53,7 @@ export interface RMETransferMapperInput {
   avpu?: 'A' | 'C' | 'V' | 'P' | 'U'
   painScore?: number
   disabilityType?: string
+  obesityConfirmation?: boolean
   // Pre-built anamnesa from anamnesa-composer (overrides lama_sakit + riwayat_penyakit)
   anamnesaDraftPayload?: Pick<AnamnesaFillPayload, 'lama_sakit' | 'riwayat_penyakit'>
 }
@@ -543,7 +544,7 @@ function buildPeriksaFisikExtended(
   // IMT: use obesity-confirmed value (30.5) or default normal (22.0)
   // Handler skips falsy (0), so we always provide a non-zero estimate
   const imt = obesityConfirmation ? 30.5 : 22.0
-  const hasil_imt = obesityConfirmation ? 'Obesitas' : 'Normal'
+  const hasil_imt = obesityConfirmation ? 'Obesitas I' : 'Normal'
   return {
     gcs_membuka_mata: gcs.mata,
     gcs_respon_verbal: gcs.verbal,

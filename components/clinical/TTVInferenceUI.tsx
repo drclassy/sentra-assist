@@ -8,7 +8,6 @@ import {
   type CanonicalClinicalEngineOutput,
   type OnlineDoctor,
 } from '@/lib/api/bridge-client'
-import { AuthRequiredError, BridgeResponseFormatError } from '@/lib/api/authed-fetch'
 import { determineAVPU, type AvpuResult } from '@/lib/clinical/aassist-v2/avpu-engine'
 import {
   canOverrideField,
@@ -116,6 +115,30 @@ const VITAL_FIELD_KEYS: readonly VitalFieldKey[] = ['sbp', 'dbp', 'hr', 'rr', 't
 
 // Module-scope constant — not recreated on each render
 const SCRAMBLE_CHARS = 'ABCDEFGHIJKLMNOPRSTUVWXYZ01234!@#$%'
+
+/** Derive physical exam context from keluhan + AVPU for Intelligence Dashboard consult */
+function buildPhysicalExamContext(keluhan: string, avpu: string): Record<string, string> {
+  const k = keluhan.toLowerCase()
+  const findings: Record<string, string> = {}
+  const hasNyeri = /nyeri|sakit|pegal|linu|ngilu/.test(k)
+
+  if (/kaki|lutut|betis|tungkai|paha|pergelangan kaki/.test(k))
+    findings['ekstremitas_bawah'] = hasNyeri ? 'Nyeri tekan (+), ROM terbatas' : 'Dalam batas normal'
+  if (/tangan|lengan|siku|pergelangan tangan|jari/.test(k))
+    findings['ekstremitas_atas'] = hasNyeri ? 'Nyeri tekan (+)' : 'Dalam batas normal'
+  if (/perut|abdomen|mulas|ulu hati|mual|diare/.test(k))
+    findings['abdomen'] = hasNyeri ? 'Nyeri tekan (+), bising usus normal' : 'Supel, bising usus normal'
+  if (/dada|sesak|nafas|batuk/.test(k))
+    findings['thorax'] = /sesak|nafas/.test(k) ? 'Auskultasi: evaluasi pernafasan' : 'Dalam batas normal'
+  if (/kepala|pusing|migrain|vertigo/.test(k))
+    findings['kepala'] = 'Tidak ada jejas, nyeri tekan kepala (+)'
+  if (/leher|kaku kuduk/.test(k))
+    findings['leher'] = hasNyeri ? 'Nyeri gerak leher (+)' : 'Dalam batas normal'
+  if (avpu && avpu !== 'A')
+    findings['kesadaran'] = `AVPU ${avpu} — perlu asesmen lanjutan`
+
+  return findings
+}
 
 type AvpuValue = 'A' | 'C' | 'V' | 'P' | 'U'
 const AVPU_OPTIONS: AvpuValue[] = ['A', 'C', 'V', 'P', 'U']
@@ -1752,6 +1775,13 @@ export function TTVInferenceUI({
       const assistSessionId = canonicalOutput?.request_id ?? buildCanonicalRequestId(patientRM)
       const facilitySlug = (extractedFacilityName || 'unknown').trim() || 'unknown'
 
+      const keluhanForConsult = anamnesaDraft.payload.keluhan_utama || state.symptomText.trim() || '-'
+      const isObese = state.obesityConfirmation === 'confirmed'
+      const estTinggi = patientGender === 'P' ? 155 : 165
+      const estIMT = isObese ? 30.5 : 22.0
+      const estBerat = Math.round(estIMT * Math.pow(estTinggi / 100, 2))
+      const estLingkarPerut = isObese ? (patientGender === 'P' ? 90 : 95) : (patientGender === 'P' ? 72 : 80)
+
       const { consultId, eventId: _consultEventId } = await sendConsultToDoctor({
         patient: {
           name: patientName,
@@ -1771,19 +1801,21 @@ export function TTVInferenceUI({
           spo2: state.spo2,
           glucose: state.glucose,
         },
-        keluhan_utama: anamnesaDraft.payload.keluhan_utama || state.symptomText.trim() || '-',
+        keluhan_utama: keluhanForConsult,
         keluhan_tambahan: anamnesaDraft.payload.keluhan_tambahan,
         risk_factors:
           alerts.length > 0
             ? alerts.map((alert) => `${alert.severity.toUpperCase()} • ${alert.title}`)
             : ['Tidak ada alert prioritas tinggi'],
         anthropometrics: {
-          tinggi: 0,
-          berat: 0,
-          imt: 0,
-          hasil_imt: '',
-          lingkar_perut: 0,
+          tinggi: estTinggi,
+          berat: estBerat,
+          imt: estIMT,
+          hasil_imt: isObese ? 'Obesitas (estimasi)' : 'Normal (estimasi)',
+          lingkar_perut: estLingkarPerut,
         },
+        avpu: (state.avpu as 'A' | 'C' | 'V' | 'P' | 'U') || undefined,
+        physical_exam_context: buildPhysicalExamContext(keluhanForConsult, state.avpu),
         penyakit_kronis: chronicHistoryLabels,
         alergi: state.allergies,
         status_kehamilan:

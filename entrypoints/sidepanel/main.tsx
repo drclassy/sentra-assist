@@ -759,18 +759,52 @@ function App() {
 // --- SUBCOMPONENTS (EmergencyDashboard, ErrorBoundary) ---
 function EmergencyDashboard({ alerts }: { alerts: ScreeningAlert[] }) {
   return (
-    <div className="tab-panel-stack flex flex-col gap-4 p-4">
-      <h2 className="text-lg font-bold text-red-500">Emergency Alerts ({alerts.length})</h2>
-      {alerts.length === 0 && <p className="text-muted text-sm">Tidak ada alert aktif.</p>}
-      {alerts.map((a) => (
-        <div
-          key={a.id}
-          className={`p-3 rounded-lg border ${a.severity === 'critical' ? 'bg-red-900/20 border-red-500' : 'bg-orange-900/20 border-orange-500'}`}
-        >
-          <div className="font-bold text-sm uppercase tracking-wider mb-1">{a.title}</div>
-          <p className="text-xs text-slate-300">{a.reasoning}</p>
+    <div className="emergency-dashboard">
+      <div className="emergency-header">
+        <div className="emergency-header__eyebrow">SENTRA ASSIST — EMERGENCY</div>
+        <h2>Alert Klinis Aktif</h2>
+        <div className="emergency-header__stats">
+          <div className="emergency-stat-pill">
+            <span className="emergency-stat-pill__label">TOTAL</span>
+            <span className="emergency-stat-pill__value">{alerts.length}</span>
+          </div>
+          <div className="emergency-stat-pill">
+            <span className="emergency-stat-pill__label">KRITIS</span>
+            <span className="emergency-stat-pill__value">
+              {alerts.filter((a) => a.severity === 'critical').length}
+            </span>
+          </div>
         </div>
-      ))}
+      </div>
+
+      {alerts.length === 0 ? (
+        <div className="emergency-empty">
+          <p>Tidak ada alert aktif</p>
+          <span>Sistem monitoring berjalan normal</span>
+        </div>
+      ) : (
+        <div className="emergency-section">
+          <div className="emergency-cards">
+            {alerts.map((a) => (
+              <div
+                key={a.id}
+                className={`emergency-card emergency-card-${a.severity}`}
+              >
+                <div className="emergency-card-header">
+                  <div className="emergency-card-heading">
+                    <span className="emergency-card-kicker">{a.severity.toUpperCase()}</span>
+                    <span className="emergency-card-title">{a.title}</span>
+                  </div>
+                  <div className={`emergency-indicator ${a.severity}`} />
+                </div>
+                {a.reasoning ? (
+                  <p className="emergency-card-reasoning">{a.reasoning}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

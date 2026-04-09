@@ -15,8 +15,7 @@ import type {
   RMETransferPayload,
   RMETransferResult,
 } from '~/utils/types';
-import { getAuthConfig } from './auth-client';
-import { getSession } from './auth-store';
+import { getAuthConfig, getStoredSession } from './auth-client';
 import {
   authedFetch,
   AuthRequiredError,
@@ -27,8 +26,11 @@ import type { PatientSyncPayload } from './patient-sync-payload';
 
 const log = createLogger('BridgeClient', 'background');
 const COOKIE_SESSION_ACCESS_TOKEN = 'cookie-session';
-const BRIDGE_TOKEN_REQUIRED_MESSAGE =
-  'Login Dashboard diperlukan agar Assist terhubung ke crew yang online. Jika diperlukan, Bridge Automation Token dapat dipakai sebagai fallback.';
+/** Pesan singkat — dipakai saat API bridge dipanggil tanpa sesi/token */
+export const BRIDGE_AUTH_REQUIRED_HINT =
+  'Bridge memerlukan sesi Dashboard (host sama dengan Crew API di Settings) atau Bridge Automation Token di Settings → Agent.';
+
+const BRIDGE_TOKEN_REQUIRED_MESSAGE = BRIDGE_AUTH_REQUIRED_HINT;
 
 // ============================================================================
 // TYPES
@@ -86,8 +88,25 @@ export interface BridgeConfig {
   pollIntervalMinutes: number;
 }
 
+export type BridgeAuthSource = 'none' | 'dashboard-session' | 'automation-token';
+export type BridgeRuntimeReadiness =
+  | 'ready'
+  | 'disabled'
+  | 'auth_required'
+  | 'server_unreachable'
+  | 'server_error';
+
+export interface BridgeRuntimeStatus {
+  readiness: BridgeRuntimeReadiness;
+  authSource: BridgeAuthSource;
+  enabled: boolean;
+  serverReachable: boolean;
+  serverAuthorized: boolean;
+  message: string;
+}
+
 const DEFAULT_CONFIG: BridgeConfig = {
-  enabled: false,
+  enabled: true,
   pollIntervalMinutes: 0.5,
 };
 
@@ -96,10 +115,17 @@ function hasBridgeAutomationToken(token: string | null | undefined): boolean {
 }
 
 async function hasBridgeSessionAuth(): Promise<boolean> {
-  const session = await getSession();
+  const session = await getStoredSession();
   if (!session?.tokens?.accessToken) return false;
   if (session.tokens.expiresAt <= Date.now() + 60_000) return false;
   return session.tokens.accessToken === COOKIE_SESSION_ACCESS_TOKEN;
+}
+
+async function getBridgeAuthSource(): Promise<BridgeAuthSource> {
+  const authConfig = await getAuthConfig();
+  if (hasBridgeAutomationToken(authConfig.automationToken)) return 'automation-token';
+  if (await hasBridgeSessionAuth()) return 'dashboard-session';
+  return 'none';
 }
 
 export async function getBridgeConfig(): Promise<BridgeConfig> {
@@ -132,11 +158,8 @@ export async function saveBridgeConfig(config: Partial<BridgeConfig>): Promise<B
  * Check if bridge is ready (authenticated + enabled).
  */
 export async function isBridgeReady(): Promise<boolean> {
-  const config = await getBridgeConfig();
-  if (!config.enabled) return false;
-  const authConfig = await getAuthConfig();
-  if (hasBridgeAutomationToken(authConfig.automationToken)) return true;
-  return hasBridgeSessionAuth();
+  const status = await getBridgeRuntimeStatus();
+  return status.readiness === 'ready';
 }
 
 // ============================================================================
@@ -225,6 +248,112 @@ interface OnlineDoctorsResponse {
   ok: boolean;
   doctors: OnlineDoctor[];
   error?: string;
+}
+
+function isNetworkReachabilityError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return (
+    error.message.includes('Tidak dapat terhubung') || error.message.includes('Request timeout')
+  );
+}
+
+function getBridgeVerificationMessage(authSource: BridgeAuthSource): string {
+  if (authSource === 'automation-token') {
+    return 'Bridge terverifikasi ke server via automation token.';
+  }
+  if (authSource === 'dashboard-session') {
+    return 'Bridge terverifikasi ke server via sesi Dashboard.';
+  }
+  return BRIDGE_AUTH_REQUIRED_HINT;
+}
+
+export async function getBridgeRuntimeStatus(): Promise<BridgeRuntimeStatus> {
+  const config = await getBridgeConfig();
+  if (!config.enabled) {
+    return {
+      readiness: 'disabled',
+      authSource: 'none',
+      enabled: false,
+      serverReachable: false,
+      serverAuthorized: false,
+      message: 'Bridge dimatikan di Settings.',
+    };
+  }
+
+  const authSource = await getBridgeAuthSource();
+  if (authSource === 'none') {
+    return {
+      readiness: 'auth_required',
+      authSource,
+      enabled: true,
+      serverReachable: false,
+      serverAuthorized: false,
+      message: BRIDGE_AUTH_REQUIRED_HINT,
+    };
+  }
+
+  try {
+    const res = await bridgeFetch<OnlineDoctorsResponse>('/api/doctors/online');
+    if (!res.ok) {
+      return {
+        readiness: 'server_error',
+        authSource,
+        enabled: true,
+        serverReachable: true,
+        serverAuthorized: true,
+        message: res.error || 'Server bridge menolak verifikasi runtime.',
+      };
+    }
+
+    return {
+      readiness: 'ready',
+      authSource,
+      enabled: true,
+      serverReachable: true,
+      serverAuthorized: true,
+      message: getBridgeVerificationMessage(authSource),
+    };
+  } catch (error) {
+    if (
+      error instanceof AuthRequiredError ||
+      (error instanceof BridgeApiError && (error.status === 401 || error.status === 403))
+    ) {
+      return {
+        readiness: 'auth_required',
+        authSource,
+        enabled: true,
+        serverReachable: true,
+        serverAuthorized: false,
+        message: error.message || BRIDGE_AUTH_REQUIRED_HINT,
+      };
+    }
+
+    if (isNetworkReachabilityError(error)) {
+      return {
+        readiness: 'server_unreachable',
+        authSource,
+        enabled: true,
+        serverReachable: false,
+        serverAuthorized: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Server bridge tidak dapat dijangkau. Periksa koneksi dan Base URL.',
+      };
+    }
+
+    return {
+      readiness: 'server_error',
+      authSource,
+      enabled: true,
+      serverReachable: true,
+      serverAuthorized: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : 'Verifikasi bridge gagal karena error yang tidak dikenali.',
+    };
+  }
 }
 
 export type CanonicalPregnancyStatus = 'hamil' | 'tidak_hamil' | 'tidak_relevan' | 'tidak_diisi';
@@ -727,6 +856,25 @@ export interface ConsultPayload {
   avpu?: 'A' | 'C' | 'V' | 'P' | 'U';
   /** Physical exam context derived from keluhan + TTV — keyed by organ system */
   physical_exam_context?: Record<string, string>;
+  /**
+   * Riwayat kunjungan terakhir pasien dari ePuskesmas (max 5, scraped).
+   * Digunakan Dashboard untuk clinical trajectory engine (Iskandar CDSS).
+   */
+  visit_history?: Array<{
+    encounter_id: string;
+    timestamp: string;
+    vitals: {
+      sbp: number;
+      dbp: number;
+      hr: number;
+      rr: number;
+      temp: number;
+      glucose: number;
+      spo2?: number;
+    };
+    keluhan_utama: string;
+    diagnosa?: { icd_x: string; nama: string } | null;
+  }>;
   target_doctor_id: string;
   sent_at: string;
   /** UUID v4 generated by ASSIST before POST; used for audit idempotency */
@@ -751,24 +899,6 @@ interface ConsultResponse {
   event_id?: string;
   error?: string;
 }
-
-/** Hardcode fallback — displayed when DB returns empty or user is offline. */
-const FALLBACK_DOCTORS: OnlineDoctor[] = [
-  {
-    id: 'fallback-ferdi',
-    name: 'dr. Ferdi Iskandar',
-    role: 'dokter',
-    poli: 'Umum',
-    availability_status: 'online',
-  },
-  {
-    id: 'fallback-josep',
-    name: 'dr. Josep Ariyanto S.Gz',
-    role: 'dokter',
-    poli: 'Gizi',
-    availability_status: 'online',
-  },
-];
 
 /**
  * Filters API doctor list for UI display:
@@ -800,21 +930,16 @@ export function filterDoctorsForDisplay(doctors: OnlineDoctor[]): OnlineDoctor[]
 }
 
 export async function getOnlineDoctors(): Promise<OnlineDoctor[]> {
-  const authConfig = await getAuthConfig();
-  const hasSessionAuth = await hasBridgeSessionAuth();
-
-  // Without dashboard session or automation token, keep a safe placeholder list.
-  if (!hasBridgeAutomationToken(authConfig.automationToken) && !hasSessionAuth) {
-    return FALLBACK_DOCTORS;
+  const authSource = await getBridgeAuthSource();
+  if (authSource === 'none') {
+    throw new AuthRequiredError(BRIDGE_TOKEN_REQUIRED_MESSAGE);
   }
 
-  // Authenticated — fetch real list. Throw on failure so callers can surface the error.
   const res = await bridgeFetch<OnlineDoctorsResponse>('/api/doctors/online');
   if (!res.ok) {
     throw new Error(res.error || 'Gagal memuat daftar dokter dari server.');
   }
 
-  // Filter: only dokter role, professional names, deduplicate
   return filterDoctorsForDisplay(res.doctors);
 }
 

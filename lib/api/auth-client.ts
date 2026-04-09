@@ -42,32 +42,12 @@ export interface AuthResponse {
 const AUTH_CONFIG_KEY = 'sentra:auth-config';
 
 // Primary: Crew Dashboard API
-// Fallback: Local storage auth (development)
 const DEFAULT_AUTH_BASE_URL = 'https://crew.puskesmasbalowerti.com';
-const OFFLINE_AUTH_USERNAME = (import.meta.env.VITE_DEV_LOGIN_USERNAME || 'dr.ferdi')
-  .trim()
-  .toLowerCase();
-const OFFLINE_AUTH_PASSWORD = (import.meta.env.VITE_DEV_LOGIN_PASSWORD || 'sentra123').trim();
-const OFFLINE_AUTH_NAME = (import.meta.env.VITE_DEV_LOGIN_NAME || 'dr. Ferdi Iskandar').trim();
-const OFFLINE_AUTH_ROLE = (
-  import.meta.env.VITE_DEV_LOGIN_ROLE === 'admin' || import.meta.env.VITE_DEV_LOGIN_ROLE === 'nurse'
-    ? import.meta.env.VITE_DEV_LOGIN_ROLE
-    : 'doctor'
-) as AuthUser['role'];
-const OFFLINE_AUTH_FACILITY_ID = (
-  import.meta.env.VITE_DEV_LOGIN_FACILITY_ID || 'PUSKESMAS_BALOWERTI'
-).trim();
-const OFFLINE_AUTH_FACILITY_NAME = (
-  import.meta.env.VITE_DEV_LOGIN_FACILITY_NAME || 'Puskesmas Balowerti'
-).trim();
-const OFFLINE_AUTH_POLI = (import.meta.env.VITE_DEV_LOGIN_POLI || 'Umum').trim();
-const ALLOW_PERMISSIVE_OFFLINE_LOGIN = false;
 const COOKIE_SESSION_ACCESS_TOKEN = 'cookie-session';
 const COOKIE_SESSION_REFRESH_TOKEN = 'cookie-session';
 
 interface AuthConfig {
   baseUrl: string;
-  enableOfflineMode: boolean;
   automationToken: string;
 }
 
@@ -86,9 +66,43 @@ type DashboardSessionResponse = {
 
 const DEFAULT_CONFIG: AuthConfig = {
   baseUrl: DEFAULT_AUTH_BASE_URL,
-  enableOfflineMode: true,
   automationToken: '',
 };
+
+function isCookieBackedSession(session: AuthSession): boolean {
+  return (
+    session.tokens.accessToken === COOKIE_SESSION_ACCESS_TOKEN &&
+    session.tokens.refreshToken === COOKIE_SESSION_REFRESH_TOKEN
+  );
+}
+
+function isSyntheticLocalSession(session: AuthSession): boolean {
+  const accessToken = session.tokens.accessToken;
+  return (
+    accessToken.startsWith('dev-token-') ||
+    accessToken.startsWith('offline-token-') ||
+    accessToken.startsWith('fallback-token-')
+  );
+}
+
+async function verifyDashboardSession(session: AuthSession): Promise<boolean> {
+  try {
+    const response = await fetch(`${session.serverBaseUrl.replace(/\/$/, '')}/api/auth/session`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = (await response.json()) as DashboardSessionResponse;
+    return Boolean(data.ok && data.user);
+  } catch {
+    return false;
+  }
+}
 
 // ============================================================================
 // CONFIG MANAGEMENT
@@ -102,8 +116,6 @@ export async function getAuthConfig(): Promise<AuthConfig> {
 
     return {
       baseUrl: stored.baseUrl?.trim() || DEFAULT_CONFIG.baseUrl,
-      // Always respect DEFAULT_CONFIG.enableOfflineMode — ignore stale stored value
-      enableOfflineMode: DEFAULT_CONFIG.enableOfflineMode,
       automationToken: stored.automationToken?.trim() || DEFAULT_CONFIG.automationToken,
     };
   } catch (e) {
@@ -142,8 +154,21 @@ export async function getStoredSession(): Promise<AuthSession | null> {
   // Check token expiration (with 5 min buffer)
   if (session.tokens.expiresAt < Date.now() + 5 * 60 * 1000) {
     log.debug('[AuthClient] Session expired');
+    await clearAuthStore();
     return null;
   }
+
+  if (isSyntheticLocalSession(session)) {
+    log.warn('[AuthClient] Rejecting legacy synthetic local session');
+    await clearAuthStore();
+    return null;
+  }
+
+  // Cookie-backed sessions: skip re-verification via Dashboard ping.
+  // verifyDashboardSession() calls /api/auth/session with credentials:include,
+  // which does not work cross-origin from a Chrome extension context —
+  // cookies are not forwarded and the check always fails, clearing valid sessions.
+  // The session was already verified at login time; expiry check above is sufficient.
 
   return session;
 }
@@ -159,6 +184,8 @@ export async function clearSession(): Promise<void> {
 }
 
 export async function isAuthenticated(): Promise<boolean> {
+  const session = await getStoredSession();
+  if (!session) return false;
   return checkAuthenticated();
 }
 
@@ -356,31 +383,16 @@ export async function probeApiBaseUrl(baseUrl: string): Promise<ApiBaseUrlProbeR
 // ============================================================================
 
 /**
- * Login with credentials
- * Supports both online (Crew Dashboard) and offline (development) modes
+ * Login with credentials against Dashboard server auth.
  */
 export async function login(credentials: AuthCredentials): Promise<AuthResponse> {
   const normalizedCredentials: AuthCredentials = {
     username: credentials.username.trim(),
-    password: credentials.password.trim(),
+    password: credentials.password,
   };
 
   const config = await getAuthConfig();
 
-  // Offline mode
-  if (config.enableOfflineMode) {
-    const offlineResult = await handleOfflineLogin(normalizedCredentials);
-    if (offlineResult.success) {
-      return offlineResult;
-    }
-
-    // Fallback to server auth when offline dev credentials do not match.
-    if (offlineResult.error?.code !== 'INVALID_CREDENTIALS') {
-      return offlineResult;
-    }
-  }
-
-  // Online mode - call Crew Dashboard API
   const result = await authFetch<{
     ok?: boolean;
     user?: DashboardSessionResponse['user'];
@@ -391,13 +403,7 @@ export async function login(credentials: AuthCredentials): Promise<AuthResponse>
     body: JSON.stringify(normalizedCredentials),
   });
 
-  if (!result.success) {
-    if (config.enableOfflineMode && ALLOW_PERMISSIVE_OFFLINE_LOGIN) {
-      log.warn('[AuthClient] Using permissive offline fallback session');
-      return createPermissiveOfflineSession(normalizedCredentials, config.baseUrl);
-    }
-    return { success: false, error: result.error };
-  }
+  if (!result.success) return { success: false, error: result.error };
 
   const dashboardUser = result.data.user;
   if (!dashboardUser) {
@@ -501,23 +507,6 @@ export async function refreshToken(): Promise<AuthResponse> {
     }
   }
 
-  const config = await getAuthConfig();
-  const useOfflineMode = config.enableOfflineMode;
-
-  if (useOfflineMode) {
-    // In offline mode, just extend the session
-    const extendedSession: AuthSession = {
-      ...session,
-      serverBaseUrl: session.serverBaseUrl || config.baseUrl,
-      tokens: {
-        ...session.tokens,
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // +24 hours
-      },
-    };
-    await saveSession(extendedSession);
-    return { success: true, session: extendedSession };
-  }
-
   const result = await authFetch<{
     tokens: AuthTokens;
   }>('/api/auth/refresh', {
@@ -548,148 +537,6 @@ export async function refreshToken(): Promise<AuthResponse> {
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const session = await getStoredSession();
   return session?.user || null;
-}
-
-// ============================================================================
-// OFFLINE MODE (Development)
-// ============================================================================
-
-const DEV_USERS: Record<string, { password: string; user: AuthUser }> = {
-  [OFFLINE_AUTH_USERNAME]: {
-    password: OFFLINE_AUTH_PASSWORD,
-    user: {
-      id: 'crew-dev-001',
-      username: OFFLINE_AUTH_USERNAME,
-      name: OFFLINE_AUTH_NAME,
-      role: OFFLINE_AUTH_ROLE,
-      facilityId: OFFLINE_AUTH_FACILITY_ID,
-      facilityName: OFFLINE_AUTH_FACILITY_NAME,
-      poli: OFFLINE_AUTH_POLI,
-    },
-  },
-  sentraone: {
-    password: 'Sentra#21052010',
-    user: {
-      id: 'crew-001',
-      username: 'sentraone',
-      name: 'Sentra One',
-      role: 'doctor',
-      facilityId: 'PUSKESMAS_BALOWERTI',
-      facilityName: 'Puskesmas Balowerti Kota Kediri',
-      poli: 'Umum',
-    },
-  },
-  'dr.ferdi': {
-    password: 'sentra123',
-    user: {
-      id: 'dev-doc-001',
-      username: 'dr.ferdi',
-      name: 'dr. Ferdi Iskandar',
-      role: 'doctor',
-      facilityId: 'PUSKESMAS_BALOWERTI',
-      facilityName: 'Puskesmas Balowerti',
-      poli: 'Umum',
-    },
-  },
-  admin: {
-    password: 'sentra123',
-    user: {
-      id: 'dev-admin-001',
-      username: 'admin',
-      name: 'Administrator Sentra',
-      role: 'admin',
-      facilityId: 'PUSKESMAS_BALOWERTI',
-      facilityName: 'Puskesmas Balowerti',
-      poli: 'Admin',
-    },
-  },
-  perawat: {
-    password: 'sentra123',
-    user: {
-      id: 'dev-nurse-001',
-      username: 'perawat',
-      name: 'Perawat Sentra',
-      role: 'nurse',
-      facilityId: 'PUSKESMAS_BALOWERTI',
-      facilityName: 'Puskesmas Balowerti',
-      poli: 'Umum',
-    },
-  },
-};
-
-async function handleOfflineLogin(credentials: AuthCredentials): Promise<AuthResponse> {
-  if (!OFFLINE_AUTH_USERNAME || !OFFLINE_AUTH_PASSWORD) {
-    return {
-      success: false,
-      error: {
-        code: 'OFFLINE_AUTH_NOT_CONFIGURED',
-        message: 'Offline auth tidak dikonfigurasi untuk environment ini.',
-      },
-    };
-  }
-
-  const username = credentials.username.trim().toLowerCase();
-  const password = credentials.password.trim();
-  const devUser = DEV_USERS[username];
-
-  if (!devUser || devUser.password !== password) {
-    // Add small delay to simulate network
-    await new Promise((r) => setTimeout(r, 500));
-
-    if (ALLOW_PERMISSIVE_OFFLINE_LOGIN) {
-      const config = await getAuthConfig();
-      return createPermissiveOfflineSession({ username, password }, config.baseUrl);
-    }
-
-    return {
-      success: false,
-      error: { code: 'INVALID_CREDENTIALS', message: 'Username atau password salah' },
-    };
-  }
-
-  const config = await getAuthConfig();
-  const session: AuthSession = {
-    user: devUser.user,
-    tokens: {
-      accessToken: `dev-token-${Date.now()}`,
-      refreshToken: `dev-refresh-${Date.now()}`,
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-    },
-    serverBaseUrl: config.baseUrl,
-  };
-
-  await saveSession(session);
-
-  return { success: true, session };
-}
-
-async function createPermissiveOfflineSession(
-  credentials: AuthCredentials,
-  baseUrl: string
-): Promise<AuthResponse> {
-  const username = credentials.username.trim().toLowerCase();
-  const safeUsername = username || 'offline-user';
-
-  const session: AuthSession = {
-    user: {
-      id: `offline-${safeUsername}`,
-      username: safeUsername,
-      name: safeUsername,
-      role: 'doctor',
-      facilityId: OFFLINE_AUTH_FACILITY_ID,
-      facilityName: OFFLINE_AUTH_FACILITY_NAME,
-      poli: OFFLINE_AUTH_POLI,
-    },
-    tokens: {
-      accessToken: `offline-token-${Date.now()}`,
-      refreshToken: `offline-refresh-${Date.now()}`,
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-    },
-    serverBaseUrl: baseUrl,
-  };
-
-  await saveSession(session);
-  return { success: true, session };
 }
 
 // ============================================================================

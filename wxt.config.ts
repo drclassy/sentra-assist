@@ -43,7 +43,7 @@ export default defineConfig({
     },
     content_security_policy: {
       extension_pages:
-        "script-src 'self'; object-src 'self'; font-src 'self' https://*.vscode-cdn.net data:;",
+        "script-src 'self'; object-src 'self'; font-src 'self' data:;",
     },
     web_accessible_resources: [
       {

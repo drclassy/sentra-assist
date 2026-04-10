@@ -8,26 +8,26 @@
 // Based on SENTRA-SPEC-001 v1.2.0 Section 4.3
 // Handles: message routing, state management, side panel site-lock, CDSS API routing
 
-import { AUTH_STORE_KEYS } from '@/lib/api/auth-store'
-import { syncPatientToDashboard } from '@/lib/api/bridge-client'
+import { AUTH_STORE_KEYS } from '@/lib/api/auth-store';
+import { syncPatientToDashboard } from '@/lib/api/bridge-client';
 import {
   registerBridgeExecutor,
   startBridgePoller,
   stopBridgePoller,
-} from '@/lib/api/bridge-poller'
-import { buildPatientSyncPayload } from '@/lib/api/patient-sync-payload'
-import { SentraAPI } from '@/lib/api/sentra-api'
-import { getCDSSEngineStatus, initCDSSEngine } from '@/lib/iskandar-diagnosis-engine'
-import { runGetSuggestionsFlow } from '@/lib/iskandar-diagnosis-engine/get-suggestions-flow'
-import { RMETransferOrchestrator } from '@/lib/rme/transfer-orchestrator'
-import { auditService } from '@/lib/services/audit-service'
+} from '@/lib/api/bridge-poller';
+import { buildPatientSyncPayload } from '@/lib/api/patient-sync-payload';
+import { SentraAPI } from '@/lib/api/sentra-api';
+import { getCDSSEngineStatus, initCDSSEngine } from '@/lib/iskandar-diagnosis-engine';
+import { runGetSuggestionsFlow } from '@/lib/iskandar-diagnosis-engine/get-suggestions-flow';
+import { RMETransferOrchestrator } from '@/lib/rme/transfer-orchestrator';
+import { auditService } from '@/lib/services/audit-service';
 import type {
   AllergyCheckRequest,
   DiagnosisRequestContext,
   PediatricDoseRequest,
   PrescriptionRequestContext,
-} from '@/types/api'
-import { createLogger } from '~/utils/logger'
+} from '@/types/api';
+import { createLogger } from '~/utils/logger';
 import {
   classifyTabMessageError,
   MESSAGE_TIMEOUTS,
@@ -37,8 +37,13 @@ import {
   parseResepData,
   sendMessage,
   sendMessageToTabWithTimeout,
-} from '~/utils/messaging'
-import { createEmptyEncounter, getEncounter, saveEncounter, updateEncounter } from '~/utils/storage'
+} from '~/utils/messaging';
+import {
+  createEmptyEncounter,
+  getEncounter,
+  saveEncounter,
+  updateEncounter,
+} from '~/utils/storage';
 import type {
   Encounter,
   FillResult,
@@ -48,95 +53,95 @@ import type {
   RMETransferStepResult,
   RMETransferStepStatus,
   ScrapePayload,
-} from '~/utils/types'
+} from '~/utils/types';
 
-const bgLog = createLogger('Background', 'background')
-const riwayatLog = createLogger('BG:scanVisitHistory', 'riwayat')
+const bgLog = createLogger('Background', 'background');
+const riwayatLog = createLogger('BG:scanVisitHistory', 'riwayat');
 
-bgLog.debug('[Background] worker boot marker', {
+bgLog.debug('worker boot marker', {
   version: '1.0.5',
   build: '2026-03-16 bridge-poller-wired',
-})
-const transferLog = createLogger('BG:RMETransfer', 'background')
-const rmeTransferOrchestrator = new RMETransferOrchestrator()
+});
+const transferLog = createLogger('BG:RMETransfer', 'background');
+const rmeTransferOrchestrator = new RMETransferOrchestrator();
 
 type ScanFieldsResponse = {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
   fields: Array<{
-    tag: string
-    type: string
-    name: string
-    id: string
-    placeholder: string
-    className: string
-  }>
-}
+    tag: string;
+    type: string;
+    name: string;
+    id: string;
+    placeholder: string;
+    className: string;
+  }>;
+};
 
 type ScanMedicalHistoryResponse = {
-  success: boolean
-  error?: string
+  success: boolean;
+  error?: string;
   history: Array<{
-    code: string
-    description: string
-    shortLabel: string
-  }>
-}
+    code: string;
+    description: string;
+    shortLabel: string;
+  }>;
+};
 
 type ScanVisitHistoryResponse = {
-  success: boolean
-  error?: string
-  diagnostics?: string[]
+  success: boolean;
+  error?: string;
+  diagnostics?: string[];
   visits: Array<{
-    encounter_id: string
-    date: string
+    encounter_id: string;
+    date: string;
     vitals: {
-      sbp: number
-      dbp: number
-      hr: number
-      rr: number
-      temp: number
-      glucose: number
-    }
-    keluhan_utama: string
-    diagnosa: { icd_x: string; nama: string } | null
-  }>
-}
+      sbp: number;
+      dbp: number;
+      hr: number;
+      rr: number;
+      temp: number;
+      glucose: number;
+    };
+    keluhan_utama: string;
+    diagnosa: { icd_x: string; nama: string } | null;
+  }>;
+};
 
 type TenagaMedisSnapshot = {
-  dokterNama: string
-  perawatNama: string
-  source: string[]
-  capturedAt: string
-}
+  dokterNama: string;
+  perawatNama: string;
+  source: string[];
+  capturedAt: string;
+};
 
 type ResolveTenagaMedisResponse = {
-  success: boolean
-  error?: string
-  tenagaMedis?: TenagaMedisSnapshot
-}
+  success: boolean;
+  error?: string;
+  tenagaMedis?: TenagaMedisSnapshot;
+};
 
-const TENAGA_MEDIS_CACHE_KEY = 'sentra:tenaga-medis-cache'
-const DIRECT_PATIENT_SYNC_CACHE_KEY = 'sentra:patient-sync:last-direct'
-const DIRECT_PATIENT_SYNC_WINDOW_MS = 2 * 60 * 1000
+const TENAGA_MEDIS_CACHE_KEY = 'sentra:tenaga-medis-cache';
+const DIRECT_PATIENT_SYNC_CACHE_KEY = 'sentra:patient-sync:last-direct';
+const DIRECT_PATIENT_SYNC_WINDOW_MS = 2 * 60 * 1000;
 
 function normalizeTenagaMedisName(value: unknown): string {
-  if (typeof value !== 'string') return ''
-  return value.replace(/\s+/g, ' ').trim()
+  if (typeof value !== 'string') return '';
+  return value.replace(/\s+/g, ' ').trim();
 }
 
 function hasTenagaMedisValue(snapshot: Partial<TenagaMedisSnapshot> | null | undefined): boolean {
-  if (!snapshot) return false
+  if (!snapshot) return false;
   return Boolean(
     normalizeTenagaMedisName(snapshot.dokterNama) || normalizeTenagaMedisName(snapshot.perawatNama)
-  )
+  );
 }
 
 async function readTenagaMedisCache(): Promise<TenagaMedisSnapshot | null> {
   try {
-    const raw = await browser.storage.local.get(TENAGA_MEDIS_CACHE_KEY)
-    const cached = raw[TENAGA_MEDIS_CACHE_KEY] as Partial<TenagaMedisSnapshot> | undefined
-    if (!hasTenagaMedisValue(cached)) return null
+    const raw = await browser.storage.local.get(TENAGA_MEDIS_CACHE_KEY);
+    const cached = raw[TENAGA_MEDIS_CACHE_KEY] as Partial<TenagaMedisSnapshot> | undefined;
+    if (!hasTenagaMedisValue(cached)) return null;
     return {
       dokterNama: normalizeTenagaMedisName(cached?.dokterNama),
       perawatNama: normalizeTenagaMedisName(cached?.perawatNama),
@@ -147,32 +152,32 @@ async function readTenagaMedisCache(): Promise<TenagaMedisSnapshot | null> {
         typeof cached?.capturedAt === 'string' && cached.capturedAt
           ? cached.capturedAt
           : new Date().toISOString(),
-    }
+    };
   } catch (error) {
-    transferLog.warn('[Background] Failed to read tenaga medis cache', error)
-    return null
+    transferLog.warn('Failed to read tenaga medis cache', error);
+    return null;
   }
 }
 
 type RecentPatientSyncSnapshot = {
-  rm: string
-  syncedAt: string
-}
+  rm: string;
+  syncedAt: string;
+};
 
 async function readRecentDirectPatientSync(): Promise<RecentPatientSyncSnapshot | null> {
   try {
-    const raw = await browser.storage.local.get(DIRECT_PATIENT_SYNC_CACHE_KEY)
+    const raw = await browser.storage.local.get(DIRECT_PATIENT_SYNC_CACHE_KEY);
     const cached = raw[DIRECT_PATIENT_SYNC_CACHE_KEY] as
       | Partial<RecentPatientSyncSnapshot>
-      | undefined
-    if (!cached?.rm || !cached?.syncedAt) return null
+      | undefined;
+    if (!cached?.rm || !cached?.syncedAt) return null;
     return {
       rm: String(cached.rm).trim(),
       syncedAt: String(cached.syncedAt),
-    }
+    };
   } catch (error) {
-    bgLog.debug('[Background] Failed to read recent direct patient sync cache', error)
-    return null
+    bgLog.debug('Failed to read recent direct patient sync cache', error);
+    return null;
   }
 }
 
@@ -180,32 +185,32 @@ function hasRecentDirectPatientSync(
   snapshot: RecentPatientSyncSnapshot | null,
   patientRm: string | undefined
 ): boolean {
-  if (!snapshot || !patientRm) return false
-  if (snapshot.rm !== patientRm.trim()) return false
+  if (!snapshot || !patientRm) return false;
+  if (snapshot.rm !== patientRm.trim()) return false;
 
-  const syncedAt = Date.parse(snapshot.syncedAt)
-  if (Number.isNaN(syncedAt)) return false
-  return Date.now() - syncedAt <= DIRECT_PATIENT_SYNC_WINDOW_MS
+  const syncedAt = Date.parse(snapshot.syncedAt);
+  if (Number.isNaN(syncedAt)) return false;
+  return Date.now() - syncedAt <= DIRECT_PATIENT_SYNC_WINDOW_MS;
 }
 
 async function writeTenagaMedisCache(snapshot: TenagaMedisSnapshot): Promise<void> {
   try {
-    await browser.storage.local.set({ [TENAGA_MEDIS_CACHE_KEY]: snapshot })
+    await browser.storage.local.set({ [TENAGA_MEDIS_CACHE_KEY]: snapshot });
   } catch (error) {
-    transferLog.warn('[Background] Failed to write tenaga medis cache', error)
+    transferLog.warn('Failed to write tenaga medis cache', error);
   }
 }
 
 async function resolveTenagaMedisForTab(tabId: number): Promise<TenagaMedisSnapshot | null> {
-  const request = { type: 'resolveTenagaMedis' } as const
+  const request = { type: 'resolveTenagaMedis' } as const;
 
   try {
     const response = await sendMessageToTabWithTimeout<ResolveTenagaMedisResponse>(
       tabId,
       request,
       3000
-    )
-    const live = response?.tenagaMedis
+    );
+    const live = response?.tenagaMedis;
     if (hasTenagaMedisValue(live)) {
       const snapshot: TenagaMedisSnapshot = {
         dokterNama: normalizeTenagaMedisName(live?.dokterNama),
@@ -215,21 +220,21 @@ async function resolveTenagaMedisForTab(tabId: number): Promise<TenagaMedisSnaps
           typeof live?.capturedAt === 'string' && live.capturedAt
             ? live.capturedAt
             : new Date().toISOString(),
-      }
-      await writeTenagaMedisCache(snapshot)
-      return snapshot
+      };
+      await writeTenagaMedisCache(snapshot);
+      return snapshot;
     }
   } catch (error) {
     if (classifyTabMessageError(error) === 'NO_RECEIVER') {
-      const injected = await tryInjectContentScripts(tabId)
+      const injected = await tryInjectContentScripts(tabId);
       if (injected) {
         try {
           const retry = await sendMessageToTabWithTimeout<ResolveTenagaMedisResponse>(
             tabId,
             request,
             3000
-          )
-          const live = retry?.tenagaMedis
+          );
+          const live = retry?.tenagaMedis;
           if (hasTenagaMedisValue(live)) {
             const snapshot: TenagaMedisSnapshot = {
               dokterNama: normalizeTenagaMedisName(live?.dokterNama),
@@ -239,20 +244,20 @@ async function resolveTenagaMedisForTab(tabId: number): Promise<TenagaMedisSnaps
                 typeof live?.capturedAt === 'string' && live.capturedAt
                   ? live.capturedAt
                   : new Date().toISOString(),
-            }
-            await writeTenagaMedisCache(snapshot)
-            return snapshot
+            };
+            await writeTenagaMedisCache(snapshot);
+            return snapshot;
           }
         } catch (retryError) {
-          transferLog.debug('[Background] resolveTenagaMedis retry failed', retryError)
+          transferLog.debug('resolveTenagaMedis retry failed', retryError);
         }
       }
     } else {
-      transferLog.debug('[Background] resolveTenagaMedis live fetch failed', error)
+      transferLog.debug('resolveTenagaMedis live fetch failed', error);
     }
   }
 
-  return readTenagaMedisCache()
+  return readTenagaMedisCache();
 }
 
 async function hydrateTenagaMedisPayload<TStep extends RMETransferStepStatus>(
@@ -261,23 +266,23 @@ async function hydrateTenagaMedisPayload<TStep extends RMETransferStepStatus>(
   tabId: number
 ): Promise<RMETransferStepPayload[TStep]> {
   if (step !== 'anamnesa' && step !== 'resep') {
-    return payload
+    return payload;
   }
 
-  const resolved = await resolveTenagaMedisForTab(tabId)
+  const resolved = await resolveTenagaMedisForTab(tabId);
   if (!resolved) {
-    return payload
+    return payload;
   }
 
   if (step === 'anamnesa') {
-    const anamnesaPayload = payload as NonNullable<RMETransferPayload['anamnesa']>
+    const anamnesaPayload = payload as NonNullable<RMETransferPayload['anamnesa']>;
     const dokterNama =
-      normalizeTenagaMedisName(anamnesaPayload.tenaga_medis?.dokter_nama) || resolved.dokterNama
+      normalizeTenagaMedisName(anamnesaPayload.tenaga_medis?.dokter_nama) || resolved.dokterNama;
     const perawatNama =
-      normalizeTenagaMedisName(anamnesaPayload.tenaga_medis?.perawat_nama) || resolved.perawatNama
+      normalizeTenagaMedisName(anamnesaPayload.tenaga_medis?.perawat_nama) || resolved.perawatNama;
 
     if (!dokterNama && !perawatNama) {
-      return payload
+      return payload;
     }
 
     return {
@@ -286,15 +291,15 @@ async function hydrateTenagaMedisPayload<TStep extends RMETransferStepStatus>(
         dokter_nama: dokterNama,
         perawat_nama: perawatNama,
       },
-    } as RMETransferStepPayload[TStep]
+    } as RMETransferStepPayload[TStep];
   }
 
-  const resepPayload = payload as NonNullable<RMETransferPayload['resep']>
-  const dokterNama = normalizeTenagaMedisName(resepPayload.ajax?.dokter) || resolved.dokterNama
-  const perawatNama = normalizeTenagaMedisName(resepPayload.ajax?.perawat) || resolved.perawatNama
+  const resepPayload = payload as NonNullable<RMETransferPayload['resep']>;
+  const dokterNama = normalizeTenagaMedisName(resepPayload.ajax?.dokter) || resolved.dokterNama;
+  const perawatNama = normalizeTenagaMedisName(resepPayload.ajax?.perawat) || resolved.perawatNama;
 
   if (!dokterNama && !perawatNama) {
-    return payload
+    return payload;
   }
 
   return {
@@ -304,28 +309,28 @@ async function hydrateTenagaMedisPayload<TStep extends RMETransferStepStatus>(
       dokter: dokterNama,
       perawat: perawatNama,
     },
-  } as RMETransferStepPayload[TStep]
+  } as RMETransferStepPayload[TStep];
 }
 
 function toTabCommunicationError(error: unknown, fallbackMessage: string): string {
-  const kind = classifyTabMessageError(error)
+  const kind = classifyTabMessageError(error);
   if (kind === 'TIMEOUT') {
-    return 'Waktu habis menunggu respons dari halaman ePuskesmas.'
+    return 'Waktu habis menunggu respons dari halaman ePuskesmas.';
   }
   if (kind === 'NO_RECEIVER') {
-    return 'Halaman ePuskesmas belum siap. Muat ulang halaman lalu coba lagi.'
+    return 'Halaman ePuskesmas belum siap. Muat ulang halaman lalu coba lagi.';
   }
   if (kind === 'TAB_CLOSED') {
-    return 'Tab ePuskesmas tidak tersedia. Buka ulang halaman dan ulangi aksi.'
+    return 'Tab ePuskesmas tidak tersedia. Buka ulang halaman dan ulangi aksi.';
   }
-  return fallbackMessage
+  return fallbackMessage;
 }
 
 type RMETransferStepPayload = {
-  anamnesa: NonNullable<RMETransferPayload['anamnesa']>
-  diagnosa: NonNullable<RMETransferPayload['diagnosa']>
-  resep: NonNullable<RMETransferPayload['resep']>
-}
+  anamnesa: NonNullable<RMETransferPayload['anamnesa']>;
+  diagnosa: NonNullable<RMETransferPayload['diagnosa']>;
+  resep: NonNullable<RMETransferPayload['resep']>;
+};
 
 async function safeAuditLog(action: string, context: unknown, outcome: unknown): Promise<void> {
   try {
@@ -334,39 +339,39 @@ async function safeAuditLog(action: string, context: unknown, outcome: unknown):
       action,
       context,
       outcome,
-    })
+    });
   } catch (error) {
-    transferLog.warn('[Background] Audit log write failed', error)
+    transferLog.warn('Audit log write failed', error);
   }
 }
 
 async function broadcastTransferProgress(event: RMETransferProgressEvent): Promise<void> {
   try {
-    await browser.runtime.sendMessage({ type: 'RME_TRANSFER_PROGRESS', data: event })
+    await browser.runtime.sendMessage({ type: 'RME_TRANSFER_PROGRESS', data: event });
   } catch {
     // Side panel may be closed; non-blocking by design.
   }
 }
 
 async function resolveTransferTabId(): Promise<number | undefined> {
-  const activeTabs = await browser.tabs.query({ active: true, currentWindow: true })
+  const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
   if (activeTabs[0]?.id && activeTabs[0]?.url?.includes('epuskesmas.id')) {
-    return activeTabs[0].id
+    return activeTabs[0].id;
   }
 
-  const epuskesmasTabs = await browser.tabs.query({ url: '*://*.epuskesmas.id/*' })
+  const epuskesmasTabs = await browser.tabs.query({ url: '*://*.epuskesmas.id/*' });
   if (epuskesmasTabs[0]?.id) {
-    return epuskesmasTabs[0].id
+    return epuskesmasTabs[0].id;
   }
 
-  return activeTabs[0]?.id
+  return activeTabs[0]?.id;
 }
 
 const STEP_URL_ALIASES: Record<RMETransferStepStatus, string[]> = {
   anamnesa: ['anamnesa', 'anamnesis', 'soap'],
   diagnosa: ['diagnosa', 'diagnosis', 'icd10', 'icd-10'],
   resep: ['resep', 'terapi', 'obat', 'prescription'],
-}
+};
 
 const STEP_DOM_HINTS: Record<RMETransferStepStatus, string[]> = {
   anamnesa: [
@@ -398,74 +403,74 @@ const STEP_DOM_HINTS: Record<RMETransferStepStatus, string[]> = {
     'perawat_nama',
     'ruangan',
   ],
-}
+};
 
 function isStepUrl(url: string, step: RMETransferStepStatus): boolean {
-  const normalized = url.toLowerCase()
+  const normalized = url.toLowerCase();
   return STEP_URL_ALIASES[step].some(
     (alias) =>
       normalized.includes(`/${alias}/`) ||
       normalized.includes(`/${alias}?`) ||
       normalized.endsWith(`/${alias}`)
-  )
+  );
 }
 
 function isStepPageType(pageType: string | null | undefined, step: RMETransferStepStatus): boolean {
-  if (!pageType) return false
-  const normalized = pageType.toLowerCase()
-  if (step === 'anamnesa') return normalized === 'anamnesa' || normalized === 'soap'
-  return normalized === step
+  if (!pageType) return false;
+  const normalized = pageType.toLowerCase();
+  if (step === 'anamnesa') return normalized === 'anamnesa' || normalized === 'soap';
+  return normalized === step;
 }
 
 function fieldProbeToken(field: {
-  tag?: string
-  type?: string
-  name?: string
-  id?: string
-  className?: string
-  placeholder?: string
+  tag?: string;
+  type?: string;
+  name?: string;
+  id?: string;
+  className?: string;
+  placeholder?: string;
 }): string {
   return `${field.tag || ''} ${field.type || ''} ${field.name || ''} ${field.id || ''} ${field.className || ''} ${field.placeholder || ''}`
     .toLowerCase()
-    .trim()
+    .trim();
 }
 
 function isStepDomReady(
   fields: ScanFieldsResponse['fields'],
   step: RMETransferStepStatus
 ): boolean {
-  const hints = STEP_DOM_HINTS[step]
-  let hitCount = 0
+  const hints = STEP_DOM_HINTS[step];
+  let hitCount = 0;
 
   for (const field of fields) {
-    const token = fieldProbeToken(field)
-    if (!token) continue
+    const token = fieldProbeToken(field);
+    if (!token) continue;
     if (hints.some((hint) => token.includes(hint))) {
-      hitCount += 1
-      if (hitCount >= 1) return true
+      hitCount += 1;
+      if (hitCount >= 1) return true;
     }
   }
 
-  return false
+  return false;
 }
 
 interface TransferPageProbe {
-  pageType: string | null
-  url: string
+  pageType: string | null;
+  url: string;
 }
 
 async function probeTransferPage(tabId: number, allowInject: boolean): Promise<TransferPageProbe> {
-  const currentTab = await browser.tabs.get(tabId)
+  const currentTab = await browser.tabs.get(tabId);
   const fallback: TransferPageProbe = {
     pageType: null,
     url: currentTab.url || '',
-  }
+  };
 
   try {
     const response = await sendMessageToTabWithTimeout<{
-      pageType?: unknown
-      url?: unknown
-    }>(tabId, { type: 'getCurrentPageType' }, 2500)
+      pageType?: unknown;
+      url?: unknown;
+    }>(tabId, { type: 'getCurrentPageType' }, 2500);
 
     return {
       pageType:
@@ -473,15 +478,15 @@ async function probeTransferPage(tabId: number, allowInject: boolean): Promise<T
           ? response.pageType.trim().toLowerCase()
           : null,
       url: typeof response?.url === 'string' && response.url ? response.url : fallback.url,
-    }
+    };
   } catch (error) {
     if (allowInject && classifyTabMessageError(error) === 'NO_RECEIVER') {
-      const injected = await tryInjectContentScripts(tabId)
+      const injected = await tryInjectContentScripts(tabId);
       if (injected) {
-        return probeTransferPage(tabId, false)
+        return probeTransferPage(tabId, false);
       }
     }
-    return fallback
+    return fallback;
   }
 }
 
@@ -495,68 +500,68 @@ async function probeTransferStepDom(
       tabId,
       { type: 'scanFields' },
       3000
-    )
-    if (!scan?.success || !Array.isArray(scan.fields)) return false
-    return isStepDomReady(scan.fields, step)
+    );
+    if (!scan?.success || !Array.isArray(scan.fields)) return false;
+    return isStepDomReady(scan.fields, step);
   } catch (error) {
     if (allowInject && classifyTabMessageError(error) === 'NO_RECEIVER') {
-      const injected = await tryInjectContentScripts(tabId)
+      const injected = await tryInjectContentScripts(tabId);
       if (injected) {
-        return probeTransferStepDom(tabId, step, false)
+        return probeTransferStepDom(tabId, step, false);
       }
     }
-    return false
+    return false;
   }
 }
 
 function isStepContextReady(context: TransferPageProbe, step: RMETransferStepStatus): boolean {
-  return isStepPageType(context.pageType, step) || isStepUrl(context.url, step)
+  return isStepPageType(context.pageType, step) || isStepUrl(context.url, step);
 }
 
 function resolveStartStepFromContext(context: TransferPageProbe): RMETransferStepStatus {
-  if (isStepContextReady(context, 'resep')) return 'resep'
-  if (isStepContextReady(context, 'diagnosa')) return 'diagnosa'
-  return 'anamnesa'
+  if (isStepContextReady(context, 'resep')) return 'resep';
+  if (isStepContextReady(context, 'diagnosa')) return 'diagnosa';
+  return 'anamnesa';
 }
 
 async function ensureTransferStepPage(tabId: number, step: RMETransferStepStatus): Promise<void> {
-  const initial = await probeTransferPage(tabId, true)
-  if (!initial.url.includes('epuskesmas.id')) return
-  if (isStepContextReady(initial, step)) return
+  const initial = await probeTransferPage(tabId, true);
+  if (!initial.url.includes('epuskesmas.id')) return;
+  if (isStepContextReady(initial, step)) return;
 
-  const domReady = await probeTransferStepDom(tabId, step, true)
+  const domReady = await probeTransferStepDom(tabId, step, true);
   if (domReady) {
-    transferLog.debug('[Background] Step readiness resolved by DOM probe', {
+    transferLog.debug('Step readiness resolved by DOM probe', {
       step,
       pageType: initial.pageType || 'unknown',
       url: initial.url,
-    })
-    return
+    });
+    return;
   }
 
-  const activePage = initial.pageType || 'unknown'
+  const activePage = initial.pageType || 'unknown';
   throw new Error(
     `Halaman ${step} belum siap. Halaman aktif: ${activePage}. Buka halaman ${step} lalu klik Uplink ${step} lagi.`
-  )
+  );
 }
 
 async function executeRMEFillStep<TStep extends RMETransferStepStatus>(
   step: TStep,
   payload: RMETransferStepPayload[TStep]
 ): Promise<unknown> {
-  transferLog.debug('[Background] executeRMEFillStep called', { step })
+  transferLog.debug('executeRMEFillStep called', { step });
 
-  const tabId = await resolveTransferTabId()
-  transferLog.debug('[Background] transfer tab resolved', { hasTabId: Boolean(tabId) })
+  const tabId = await resolveTransferTabId();
+  transferLog.debug('transfer tab resolved', { hasTabId: Boolean(tabId) });
 
   if (!tabId) {
-    throw new Error('No active tab')
+    throw new Error('No active tab');
   }
 
-  const hydratedPayload = await hydrateTenagaMedisPayload(step, payload, tabId)
+  const hydratedPayload = await hydrateTenagaMedisPayload(step, payload, tabId);
 
-  await ensureTransferStepPage(tabId, step)
-  transferLog.debug('[Background] transfer step page ready', { step, tabId })
+  await ensureTransferStepPage(tabId, step);
+  transferLog.debug('transfer step page ready', { step, tabId });
 
   const fillMessage = {
     type: 'execFill',
@@ -564,29 +569,29 @@ async function executeRMEFillStep<TStep extends RMETransferStepStatus>(
       type: step,
       encounter: hydratedPayload,
     },
-  } as const
-  const timeout = step === 'anamnesa' ? 45000 : step === 'resep' ? 30000 : 18000
+  } as const;
+  const timeout = step === 'anamnesa' ? 45000 : step === 'resep' ? 30000 : 18000;
 
-  transferLog.debug('[Background] sending transfer fill message', { step, tabId, timeout })
+  transferLog.debug('sending transfer fill message', { step, tabId, timeout });
 
   try {
-    const result = await sendMessageToTabWithTimeout<unknown>(tabId, fillMessage, timeout)
-    transferLog.debug('[Background] transfer fill result received', { step, tabId })
-    return result
+    const result = await sendMessageToTabWithTimeout<unknown>(tabId, fillMessage, timeout);
+    transferLog.debug('transfer fill result received', { step, tabId });
+    return result;
   } catch (error) {
-    transferLog.error('[Background] transfer fill error', { step, tabId, error })
+    transferLog.error('transfer fill error', { step, tabId, error });
     if (classifyTabMessageError(error) === 'NO_RECEIVER') {
-      transferLog.warn('[Background] NO_RECEIVER during transfer fill, attempting inject', {
+      transferLog.warn('NO_RECEIVER during transfer fill, attempting inject', {
         step,
         tabId,
-      })
-      const injected = await tryInjectContentScripts(tabId)
-      transferLog.debug('[Background] transfer fill inject result', { step, tabId, injected })
+      });
+      const injected = await tryInjectContentScripts(tabId);
+      transferLog.debug('transfer fill inject result', { step, tabId, injected });
       if (injected) {
-        return sendMessageToTabWithTimeout<unknown>(tabId, fillMessage, timeout)
+        return sendMessageToTabWithTimeout<unknown>(tabId, fillMessage, timeout);
       }
     }
-    throw error
+    throw error;
   }
 }
 
@@ -596,36 +601,36 @@ async function executeRMEFillStep<TStep extends RMETransferStepStatus>(
 // Access it directly from chrome/browser object with fallback
 // =============================================================================
 interface SidePanelAPI {
-  setPanelBehavior: (options: { openPanelOnActionClick: boolean }) => Promise<void>
+  setPanelBehavior: (options: { openPanelOnActionClick: boolean }) => Promise<void>;
 }
 
 interface BrowserGlobalWithSidePanel {
-  sidePanel?: SidePanelAPI
+  sidePanel?: SidePanelAPI;
   scripting?: {
     executeScript: (options: {
-      target: { tabId: number }
-      world?: 'MAIN' | 'ISOLATED'
-      func?: (...args: unknown[]) => void
-      args?: unknown[]
-      files?: string[]
-    }) => Promise<unknown>
-  }
+      target: { tabId: number };
+      world?: 'MAIN' | 'ISOLATED';
+      func?: (...args: unknown[]) => void;
+      args?: unknown[];
+      files?: string[];
+    }) => Promise<unknown>;
+  };
 }
 
 function getSidePanel(): SidePanelAPI | undefined {
-  const chromeGlobal = (globalThis as { chrome?: BrowserGlobalWithSidePanel }).chrome
-  const browserGlobal = (globalThis as { browser?: BrowserGlobalWithSidePanel }).browser
-  return chromeGlobal?.sidePanel || browserGlobal?.sidePanel
+  const chromeGlobal = (globalThis as { chrome?: BrowserGlobalWithSidePanel }).chrome;
+  const browserGlobal = (globalThis as { browser?: BrowserGlobalWithSidePanel }).browser;
+  return chromeGlobal?.sidePanel || browserGlobal?.sidePanel;
 }
 
 async function tryInjectContentScripts(
   tabId: number,
   diag?: (msg: string) => void
 ): Promise<boolean> {
-  const chromeGlobal = (globalThis as { chrome?: BrowserGlobalWithSidePanel }).chrome
+  const chromeGlobal = (globalThis as { chrome?: BrowserGlobalWithSidePanel }).chrome;
   if (!chromeGlobal?.scripting?.executeScript) {
-    diag?.('INJECT_SKIP: chrome.scripting unavailable')
-    return false
+    diag?.('INJECT_SKIP: chrome.scripting unavailable');
+    return false;
   }
 
   try {
@@ -633,47 +638,47 @@ async function tryInjectContentScripts(
       target: { tabId },
       files: ['content-scripts/content.js'],
       world: 'ISOLATED',
-    })
+    });
     await chromeGlobal.scripting.executeScript({
       target: { tabId },
       files: ['content-scripts/inject.js'],
       world: 'MAIN',
-    })
+    });
     // Give runtime listener a moment to register before retry.
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    diag?.(`INJECT_OK: tab=${tabId}`)
-    return true
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    diag?.(`INJECT_OK: tab=${tabId}`);
+    return true;
   } catch (error) {
-    diag?.(`INJECT_FAIL: ${error instanceof Error ? error.message : String(error)}`)
-    return false
+    diag?.(`INJECT_FAIL: ${error instanceof Error ? error.message : String(error)}`);
+    return false;
   }
 }
 
 // Audio playback helper for icon click
-const OPENING_SOUND_URL = '/assets/sounds/opening.mp3'
+const OPENING_SOUND_URL = '/assets/sounds/opening.mp3';
 
 function playOpeningSound(): void {
   try {
-    const audio = new Audio(OPENING_SOUND_URL)
-    audio.volume = 0.7
+    const audio = new Audio(OPENING_SOUND_URL);
+    audio.volume = 0.7;
     audio.play().catch((err) => {
       // Audio play failed (likely due to user interaction not yet triggered)
-      bgLog.debug('[Background] Audio play skipped:', err.message)
-    })
+      bgLog.debug('Audio play skipped:', err.message);
+    });
   } catch (error) {
-    bgLog.debug('[Background] Audio creation failed:', error)
+    bgLog.debug('Audio creation failed:', error);
   }
 }
 
 export default defineBackground(() => {
-  bgLog.debug('[Background] Sentra Assist service worker initialized')
+  bgLog.debug('Sentra Assist service worker initialized');
 
   // ========================================
   // Icon Click Sound Effect
   // ========================================
   browser.action?.onClicked?.addListener(() => {
-    playOpeningSound()
-  })
+    playOpeningSound();
+  });
 
   // Note: Sound is also played by login popup when it opens
   // SidePanel doesn't have onOpened event in MV3, so we rely on the popup
@@ -685,11 +690,11 @@ export default defineBackground(() => {
   // Initialize CDSS engine (async, non-blocking)
   initCDSSEngine()
     .then((ready) => {
-      bgLog.debug('[Background] CDSS Engine initialized:', ready ? 'SUCCESS' : 'FAILED')
+      bgLog.debug('CDSS Engine initialized:', ready ? 'SUCCESS' : 'FAILED');
     })
     .catch((error) => {
-      bgLog.error('[Background] CDSS Engine initialization error:', error)
-    })
+      bgLog.error('CDSS Engine initialization error:', error);
+    });
 
   // ========================================
   // Bridge Poller — Dashboard ↔ Assist Transfer
@@ -697,17 +702,17 @@ export default defineBackground(() => {
 
   // Register RME transfer executor so bridge-poller can auto-fill ePuskesmas
   registerBridgeExecutor(async (_entryId, _pelayananId, payload) => {
-    bgLog.debug(`[Background] Bridge transfer: ${_entryId} (pelayanan: ${_pelayananId})`)
+    bgLog.debug(`Bridge transfer: ${_entryId} (pelayanan: ${_pelayananId})`);
     return rmeTransferOrchestrator.run(payload, executeRMEFillStep, {
       timeoutMs: { anamnesa: 45000, diagnosa: 18000, resep: 30000 },
       retryByStep: { anamnesa: 1, diagnosa: 1, resep: 1 },
-    })
-  })
+    });
+  });
 
   // Start polling dashboard for pending transfers
   startBridgePoller()
-    .then(() => bgLog.debug('[Background] Bridge poller started'))
-    .catch((err) => bgLog.error('[Background] Bridge poller failed to start:', err))
+    .then(() => bgLog.debug('Bridge poller started'))
+    .catch((err) => bgLog.error('Bridge poller failed to start:', err));
 
   // ========================================
   // Auth State Listener — auto-start/stop bridge on login/logout
@@ -715,62 +720,64 @@ export default defineBackground(() => {
   browser.storage.onChanged.addListener((changes, area) => {
     const sessionChanged =
       (area === 'session' && AUTH_STORE_KEYS.session in changes) ||
-      (area === 'local' && AUTH_STORE_KEYS.persisted in changes)
+      (area === 'local' && AUTH_STORE_KEYS.persisted in changes);
 
-    if (!sessionChanged) return
+    if (!sessionChanged) return;
 
-    const key = area === 'session' ? AUTH_STORE_KEYS.session : AUTH_STORE_KEYS.persisted
-    const newValue = changes[key]?.newValue as { tokens?: { accessToken?: string } } | undefined
+    const key = area === 'session' ? AUTH_STORE_KEYS.session : AUTH_STORE_KEYS.persisted;
+    const newValue = changes[key]?.newValue as { tokens?: { accessToken?: string } } | undefined;
 
     if (newValue?.tokens?.accessToken) {
-      bgLog.debug('[Background] Auth session detected — starting bridge poller')
+      bgLog.debug('Auth session detected — starting bridge poller');
       startBridgePoller().catch((err) =>
-        bgLog.error('[Background] Bridge poller restart failed:', err)
-      )
+        bgLog.error('Bridge poller restart failed:', err)
+      );
     } else {
-      bgLog.debug('[Background] Auth session cleared — stopping bridge poller')
-      stopBridgePoller().catch((err) => bgLog.error('[Background] Bridge poller stop failed:', err))
+      bgLog.debug('Auth session cleared — stopping bridge poller');
+      stopBridgePoller().catch((err) =>
+        bgLog.error('Bridge poller stop failed:', err)
+      );
     }
-  })
+  });
 
   // Handle AUTH_STATE_CHANGED message from login popup
   browser.runtime.onMessage.addListener((message) => {
     if (message?.type === 'AUTH_STATE_CHANGED') {
-      bgLog.debug('[Background] AUTH_STATE_CHANGED received — restarting bridge poller')
+      bgLog.debug('AUTH_STATE_CHANGED received — restarting bridge poller');
       startBridgePoller().catch((err) =>
-        bgLog.error('[Background] Bridge poller restart failed:', err)
-      )
+        bgLog.error('Bridge poller restart failed:', err)
+      );
     }
-  })
+  });
 
   // ========================================
   // Side Panel Setup - SIMPLIFIED FOR DEBUG
   // ========================================
-  const sidePanel = getSidePanel()
-  bgLog.debug('[Background] sidePanel object:', sidePanel)
+  const sidePanel = getSidePanel();
+  bgLog.debug('sidePanel object:', sidePanel);
 
   bgLog.debug(
-    '[Background] chrome object:',
+    'chrome object:',
     typeof (globalThis as { chrome?: BrowserGlobalWithSidePanel }).chrome !== 'undefined'
       ? 'exists'
       : 'undefined'
-  )
+  );
 
   if (sidePanel?.setPanelBehavior) {
     sidePanel
       .setPanelBehavior({ openPanelOnActionClick: true })
-      .then(() => bgLog.debug('[Background] setPanelBehavior SUCCESS'))
-      .catch((e: unknown) => bgLog.error('[Background] setPanelBehavior FAILED:', e))
+      .then(() => bgLog.debug('setPanelBehavior SUCCESS'))
+      .catch((e: unknown) => bgLog.error('setPanelBehavior FAILED:', e));
   } else {
-    bgLog.error('[Background] sidePanel API not available')
+    bgLog.error('sidePanel API not available');
     bgLog.error(
-      '[Background] globalThis.chrome?.sidePanel:',
+      'globalThis.chrome?.sidePanel:',
       (globalThis as { chrome?: BrowserGlobalWithSidePanel }).chrome?.sidePanel
-    )
+    );
     bgLog.error(
-      '[Background] globalThis.browser?.sidePanel:',
+      'globalThis.browser?.sidePanel:',
       (globalThis as { browser?: BrowserGlobalWithSidePanel }).browser?.sidePanel
-    )
+    );
   }
 
   // ========================================
@@ -780,98 +787,98 @@ export default defineBackground(() => {
   // Content → Worker: Page ready notification
   onMessage('pageReady', async (message) => {
     // Extract data from message - @webext-core/messaging passes data directly
-    const info = message.data as PageReadyInfo
-    bgLog.debug('[Background] Page ready:', info)
+    const info = message.data as PageReadyInfo;
+    bgLog.debug('Page ready:', info);
 
     // Load or create encounter for this pelayanan_id
     if (info.pelayananId) {
-      let encounter = await getEncounter()
+      let encounter = await getEncounter();
 
       // Create new encounter if pelayanan_id changed
       if (!encounter || encounter.id !== info.pelayananId) {
-        bgLog.debug('[Background] Creating new encounter:', info.pelayananId)
-        encounter = createEmptyEncounter(info.pelayananId, 'PATIENT_TBD')
-        await saveEncounter(encounter)
+        bgLog.debug('Creating new encounter:', info.pelayananId);
+        encounter = createEmptyEncounter(info.pelayananId, 'PATIENT_TBD');
+        await saveEncounter(encounter);
       }
     }
 
     try {
-      await sendMessage('pageReady', info)
+      await sendMessage('pageReady', info);
     } catch (error) {
-      bgLog.warn('[Background] Failed to forward pageReady to panel:', error)
+      bgLog.warn('Failed to forward pageReady to panel:', error);
     }
-  })
+  });
 
   // Content → Worker: Scrape result
   onMessage('scrapeResult', async (message) => {
     // Extract data from message
-    const scrapeData = message.data as ScrapePayload
-    bgLog.debug('[Background] Scrape result received:', scrapeData)
+    const scrapeData = message.data as ScrapePayload;
+    bgLog.debug('Scrape result received:', scrapeData);
 
-    const encounter = await getEncounter()
+    const encounter = await getEncounter();
     if (!encounter) {
-      bgLog.warn('[Background] No encounter to update')
-      return
+      bgLog.warn('No encounter to update');
+      return;
     }
 
     // Merge scraped data into encounter
-    const updated: Partial<Encounter> = {}
+    const updated: Partial<Encounter> = {};
 
     if (scrapeData.pageType === 'anamnesa' && scrapeData.data) {
-      const parsed = parseAnamnesaData(scrapeData.data)
+      const parsed = parseAnamnesaData(scrapeData.data);
       if (parsed.ok && parsed.value) {
-        updated.anamnesa = parsed.value
+        updated.anamnesa = parsed.value;
       } else {
-        bgLog.warn('[Background] Rejected anamnesa scrape payload', { reasons: parsed.reasons })
+        bgLog.warn('Rejected anamnesa scrape payload', { reasons: parsed.reasons });
       }
 
       // Note: vital_signs and patient_demographics are passed through scrapeData.data
       // and read directly in syncPatientToDashboard below (not stored in Encounter)
     } else if (scrapeData.pageType === 'diagnosa' && scrapeData.data) {
-      const parsed = parseDiagnosaData(scrapeData.data)
+      const parsed = parseDiagnosaData(scrapeData.data);
       if (parsed.ok && parsed.value) {
-        updated.diagnosa = parsed.value
+        updated.diagnosa = parsed.value;
       } else {
-        bgLog.warn('[Background] Rejected diagnosa scrape payload', { reasons: parsed.reasons })
+        bgLog.warn('Rejected diagnosa scrape payload', { reasons: parsed.reasons });
       }
     } else if (scrapeData.pageType === 'resep' && scrapeData.data) {
-      const parsed = parseResepData(scrapeData.data)
+      const parsed = parseResepData(scrapeData.data);
       if (parsed.ok && parsed.value) {
-        updated.resep = parsed.value
+        updated.resep = parsed.value;
         if (parsed.reasons.length > 0) {
-          bgLog.warn('[Background] Resep scrape accepted with dropped rows', {
+          bgLog.warn('Resep scrape accepted with dropped rows', {
             reasons: parsed.reasons,
-          })
+          });
         }
       } else {
-        bgLog.warn('[Background] Rejected resep scrape payload', { reasons: parsed.reasons })
+        bgLog.warn('Rejected resep scrape payload', { reasons: parsed.reasons });
       }
     }
 
     if (Object.keys(updated).length === 0) {
-      bgLog.warn('[Background] No valid scrape data to merge')
-      return
+      bgLog.warn('No valid scrape data to merge');
+      return;
     }
 
-    await updateEncounter(updated)
-    bgLog.debug('[Background] Encounter updated from scrape')
+    await updateEncounter(updated);
+    bgLog.debug('Encounter updated from scrape');
 
     // Auto-sync to Dashboard when anamnesa is scraped (contains vitals + keluhan)
     if (scrapeData.pageType === 'anamnesa' && updated.anamnesa) {
-      const fullEncounter = await getEncounter()
+      const fullEncounter = await getEncounter();
       if (fullEncounter) {
         // Use freshly scraped data (from enhanced scraper) — vitals come from DOM, not Encounter
-        const rawData = scrapeData.data as Record<string, unknown>
-        const scrapedVitals = rawData.vital_signs as Record<string, number | undefined> | undefined
-        const scrapedDemo = rawData.patient_demographics as Record<string, unknown> | undefined
-        const patientRm = (scrapedDemo?.no_rm as string) || fullEncounter.patient_id
-        const recentDirectSync = await readRecentDirectPatientSync()
+        const rawData = scrapeData.data as Record<string, unknown>;
+        const scrapedVitals = rawData.vital_signs as Record<string, number | undefined> | undefined;
+        const scrapedDemo = rawData.patient_demographics as Record<string, unknown> | undefined;
+        const patientRm = (scrapedDemo?.no_rm as string) || fullEncounter.patient_id;
+        const recentDirectSync = await readRecentDirectPatientSync();
 
         if (hasRecentDirectPatientSync(recentDirectSync, patientRm)) {
-          bgLog.debug('[Background] Skipping duplicate patient-sync after recent direct relay', {
+          bgLog.debug('Skipping duplicate patient-sync after recent direct relay', {
             patientRm,
-          })
-          return
+          });
+          return;
         }
 
         const syncPayload = buildPatientSyncPayload({
@@ -898,40 +905,42 @@ export default defineBackground(() => {
           medicalHistory: fullEncounter.anamnesa?.riwayat_penyakit
             ? [fullEncounter.anamnesa.riwayat_penyakit]
             : undefined,
-        })
+        });
 
-        const syncResult = await syncPatientToDashboard(syncPayload)
+        const syncResult = await syncPatientToDashboard(syncPayload);
         // Relay result to side panel so UI can show feedback
-        browser.runtime.sendMessage({
-          type: 'BRIDGE_SYNC_RESULT',
-          data: { ok: syncResult.ok, error: syncResult.error, id: syncResult.id },
-        }).catch(() => {
-          // Panel may not be open — safe to ignore
-        })
+        browser.runtime
+          .sendMessage({
+            type: 'BRIDGE_SYNC_RESULT',
+            data: { ok: syncResult.ok, error: syncResult.error, id: syncResult.id },
+          })
+          .catch(() => {
+            // Panel may not be open — safe to ignore
+          });
       }
     }
-  })
+  });
 
   // Panel → Worker: Fill command
   onMessage('fillResep', async (message) => {
     // Extract actual payload from message.data (webext-core/messaging wraps it)
-    const resepPayload = message.data
-    bgLog.debug('[Background] Fill Resep request:', resepPayload)
+    const resepPayload = message.data;
+    bgLog.debug('Fill Resep request:', resepPayload);
 
     // Get active tab
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-    const tabId = tabs[0]?.id
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const tabId = tabs[0]?.id;
 
     if (!tabId) {
-      bgLog.error('[Background] No active tab found')
+      bgLog.error('No active tab found');
       return {
         success: [],
         failed: [{ field: 'all', error: 'No active tab' }],
         skipped: [],
-      }
+      };
     }
 
-    bgLog.debug('[Background] Forwarding to tab:', tabId)
+    bgLog.debug('Forwarding to tab:', tabId);
 
     // Forward to content script using native tabs.sendMessage
     try {
@@ -945,11 +954,11 @@ export default defineBackground(() => {
           },
         },
         MESSAGE_TIMEOUTS.fill
-      )
-      bgLog.debug('[Background] Fill result:', result)
-      return result
+      );
+      bgLog.debug('Fill result:', result);
+      return result;
     } catch (error) {
-      bgLog.error('[Background] Fill failed:', error)
+      bgLog.error('Fill failed:', error);
       return {
         success: [],
         failed: [
@@ -962,30 +971,30 @@ export default defineBackground(() => {
           },
         ],
         skipped: [],
-      }
+      };
     }
-  })
+  });
 
   // Panel → Worker: Fill Anamnesa command (TTV + Keluhan)
   onMessage('fillAnamnesa', async (message) => {
     // Extract actual payload from message.data (webext-core/messaging wraps it)
-    const anamnesaPayload = message.data
-    bgLog.debug('[Background] Fill Anamnesa request:', anamnesaPayload)
+    const anamnesaPayload = message.data;
+    bgLog.debug('Fill Anamnesa request:', anamnesaPayload);
 
     // Get active tab
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-    const tabId = tabs[0]?.id
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const tabId = tabs[0]?.id;
 
     if (!tabId) {
-      bgLog.error('[Background] No active tab found')
+      bgLog.error('No active tab found');
       return {
         success: [],
         failed: [{ field: 'all', error: 'No active tab' }],
         skipped: [],
-      }
+      };
     }
 
-    bgLog.debug('[Background] Forwarding Anamnesa fill to tab:', tabId)
+    bgLog.debug('Forwarding Anamnesa fill to tab:', tabId);
 
     // Forward to content script using native tabs.sendMessage
     try {
@@ -999,11 +1008,11 @@ export default defineBackground(() => {
           },
         },
         MESSAGE_TIMEOUTS.fill
-      )
-      bgLog.debug('[Background] Anamnesa fill result:', result)
-      return result
+      );
+      bgLog.debug('Anamnesa fill result:', result);
+      return result;
     } catch (error) {
-      bgLog.error('[Background] Anamnesa fill failed:', error)
+      bgLog.error('Anamnesa fill failed:', error);
       return {
         success: [],
         failed: [
@@ -1016,39 +1025,39 @@ export default defineBackground(() => {
           },
         ],
         skipped: [],
-      }
+      };
     }
-  })
+  });
 
   // AUTH TOKEN RELAY - Content scripts can't access chrome.identity directly
   chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     if (request.type === 'GET_AUTH_TOKEN') {
       chrome.identity.getAuthToken({ interactive: true }, (token) => {
         if (chrome.runtime.lastError) {
-          sendResponse({ error: chrome.runtime.lastError.message })
+          sendResponse({ error: chrome.runtime.lastError.message });
         } else {
-          sendResponse({ token })
+          sendResponse({ token });
         }
-      })
-      return true // Keep channel open for async response
+      });
+      return true; // Keep channel open for async response
     }
-  })
+  });
 
   // Panel → Worker: Fill Diagnosa command
   onMessage('fillDiagnosa', async (message) => {
     // Extract actual payload from message.data (webext-core/messaging wraps it)
-    const diagnosaPayload = message.data
-    bgLog.debug('[Background] Fill Diagnosa request:', diagnosaPayload)
+    const diagnosaPayload = message.data;
+    bgLog.debug('Fill Diagnosa request:', diagnosaPayload);
 
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-    const tabId = tabs[0]?.id
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const tabId = tabs[0]?.id;
 
     if (!tabId) {
       return {
         success: [],
         failed: [{ field: 'all', error: 'No active tab' }],
         skipped: [],
-      }
+      };
     }
 
     try {
@@ -1062,8 +1071,8 @@ export default defineBackground(() => {
           },
         },
         MESSAGE_TIMEOUTS.fill
-      )
-      return result
+      );
+      return result;
     } catch (error) {
       return {
         success: [],
@@ -1077,51 +1086,51 @@ export default defineBackground(() => {
           },
         ],
         skipped: [],
-      }
+      };
     }
-  })
+  });
 
   onMessage('transferRME', async (message) => {
-    const payload = message.data as RMETransferPayload
-    transferLog.debug('[Background] transferRME request received', {
+    const payload = message.data as RMETransferPayload;
+    transferLog.debug('transferRME request received', {
       hasAnamnesa: Boolean(payload.anamnesa),
       hasDiagnosa: Boolean(payload.diagnosa),
       hasResep: Boolean(payload.resep),
       options: payload.options || null,
-    })
-    let transferPayload = payload
+    });
+    let transferPayload = payload;
 
     try {
-      const hasExplicitStep = Boolean(payload.options?.onlyStep || payload.options?.startFromStep)
+      const hasExplicitStep = Boolean(payload.options?.onlyStep || payload.options?.startFromStep);
       if (!hasExplicitStep) {
-        const tabId = await resolveTransferTabId()
+        const tabId = await resolveTransferTabId();
         if (tabId) {
-          const pageContext = await probeTransferPage(tabId, true)
-          const startFromStep = resolveStartStepFromContext(pageContext)
+          const pageContext = await probeTransferPage(tabId, true);
+          const startFromStep = resolveStartStepFromContext(pageContext);
           transferPayload = {
             ...payload,
             options: {
               ...payload.options,
               startFromStep,
             },
-          }
-          transferLog.debug('[Background] transfer start context resolved', {
+          };
+          transferLog.debug('transfer start context resolved', {
             startFromStep,
             pageType: pageContext.pageType || 'unknown',
             url: pageContext.url,
-          })
+          });
         }
       } else {
-        transferLog.debug('[Background] transfer step fixed by caller', {
+        transferLog.debug('transfer step fixed by caller', {
           startFromStep: payload.options?.startFromStep || null,
           onlyStep: payload.options?.onlyStep || null,
-        })
+        });
       }
     } catch (error) {
-      transferLog.warn('[Background] transfer start context probing failed', error)
+      transferLog.warn('transfer start context probing failed', error);
     }
 
-    const startedAt = Date.now()
+    const startedAt = Date.now();
     await safeAuditLog(
       'RME_TRANSFER_STARTED',
       {
@@ -1132,7 +1141,7 @@ export default defineBackground(() => {
         onlyStep: transferPayload.options?.onlyStep || null,
       },
       { status: 'started' }
-    )
+    );
 
     const result = await rmeTransferOrchestrator.run(transferPayload, executeRMEFillStep, {
       timeoutMs: {
@@ -1146,7 +1155,7 @@ export default defineBackground(() => {
         resep: 1,
       },
       onProgress: (event) => {
-        void broadcastTransferProgress(event)
+        void broadcastTransferProgress(event);
       },
       onStepFinal: async (step: RMETransferStepResult) => {
         await safeAuditLog(
@@ -1165,16 +1174,16 @@ export default defineBackground(() => {
             failedCount: step.failedCount,
             skippedCount: step.skippedCount,
           }
-        )
+        );
       },
-    })
+    });
 
     const stepLatency = (
       Object.entries(result.steps) as Array<[RMETransferStepStatus, RMETransferStepResult]>
     ).reduce<Record<string, number>>((acc, [stepKey, stepResult]) => {
-      acc[stepKey] = stepResult.latencyMs
-      return acc
-    }, {})
+      acc[stepKey] = stepResult.latencyMs;
+      return acc;
+    }, {});
 
     const lifecycleAction =
       result.state === 'success'
@@ -1183,7 +1192,7 @@ export default defineBackground(() => {
           ? 'RME_TRANSFER_PARTIAL'
           : result.state === 'cancelled'
             ? 'RME_TRANSFER_CANCELLED'
-            : 'RME_TRANSFER_FAILED'
+            : 'RME_TRANSFER_FAILED';
 
     await safeAuditLog(
       lifecycleAction,
@@ -1198,33 +1207,33 @@ export default defineBackground(() => {
         state: result.state,
         elapsedMs: Date.now() - startedAt,
       }
-    )
+    );
 
-    transferLog.debug('[Background] transferRME finished', {
+    transferLog.debug('transferRME finished', {
       state: result.state,
       reasonCodes: result.reasonCodes,
-    })
-    return result
-  })
+    });
+    return result;
+  });
 
   onMessage('cancelRMETransfer', async (message) => {
-    const data = message.data as { runId?: string }
-    const runId = data?.runId?.trim()
+    const data = message.data as { runId?: string };
+    const runId = data?.runId?.trim();
     if (!runId) {
       return {
         success: false,
         reasonCode: 'UNKNOWN_STEP_FAILURE',
         message: 'runId wajib diisi',
-      }
+      };
     }
 
-    const cancelled = rmeTransferOrchestrator.cancelRun(runId)
+    const cancelled = rmeTransferOrchestrator.cancelRun(runId);
     if (!cancelled) {
       return {
         success: false,
         reasonCode: 'UNKNOWN_STEP_FAILURE',
         message: 'Run tidak ditemukan atau sudah selesai',
-      }
+      };
     }
 
     await broadcastTransferProgress({
@@ -1271,11 +1280,11 @@ export default defineBackground(() => {
       },
       reasonCodes: ['USER_CANCELLED'],
       updatedAt: new Date().toISOString(),
-    })
+    });
 
-    await safeAuditLog('RME_TRANSFER_CANCEL_REQUESTED', { runId }, { status: 'accepted' })
-    return { success: true, reasonCode: 'USER_CANCELLED' }
-  })
+    await safeAuditLog('RME_TRANSFER_CANCEL_REQUESTED', { runId }, { status: 'accepted' });
+    return { success: true, reasonCode: 'USER_CANCELLED' };
+  });
 
   // ========================================
   // CDSS AI API Handlers
@@ -1284,38 +1293,38 @@ export default defineBackground(() => {
   // Panel → Worker: Get diagnosis suggestions (REAL CDSS ENGINE)
   onMessage('getSuggestions', async (message) => {
     // Extract context from message
-    const context = message.data as DiagnosisRequestContext
-    bgLog.debug('[Background] AI Diagnosis suggestion request')
+    const context = message.data as DiagnosisRequestContext;
+    bgLog.debug('AI Diagnosis suggestion request');
 
     try {
       // Get current encounter
-      let encounter = await getEncounter()
+      let encounter = await getEncounter();
 
       if (!encounter) {
-        bgLog.warn('[Background] No active encounter, creating v3-only transient encounter')
-        const generatedEncounterId = `alpha-v3-${Date.now()}`
-        encounter = createEmptyEncounter(generatedEncounterId, 'UNKNOWN')
+        bgLog.warn('No active encounter, creating v3-only transient encounter');
+        const generatedEncounterId = `alpha-v3-${Date.now()}`;
+        encounter = createEmptyEncounter(generatedEncounterId, 'UNKNOWN');
 
         if (context.keluhan_utama) {
-          encounter.anamnesa.keluhan_utama = context.keluhan_utama
+          encounter.anamnesa.keluhan_utama = context.keluhan_utama;
         }
         if (context.keluhan_tambahan) {
-          encounter.anamnesa.keluhan_tambahan = context.keluhan_tambahan
+          encounter.anamnesa.keluhan_tambahan = context.keluhan_tambahan;
         }
         if (context.allergies?.length) {
-          encounter.anamnesa.alergi.obat = [...context.allergies]
+          encounter.anamnesa.alergi.obat = [...context.allergies];
         }
         if (context.chronic_diseases?.length) {
-          encounter.diagnosa.penyakit_kronis = [...context.chronic_diseases]
+          encounter.diagnosa.penyakit_kronis = [...context.chronic_diseases];
         }
 
-        await saveEncounter(encounter)
+        await saveEncounter(encounter);
       }
 
       // Ensure encounter has anamnesa data for AI analysis
       // If encounter storage is missing keluhan but context has it, inject from context
       if (!encounter.anamnesa?.keluhan_utama && context.keluhan_utama) {
-        bgLog.debug('[Background] Injecting keluhan_utama from request context into encounter')
+        bgLog.debug('Injecting keluhan_utama from request context into encounter');
         if (!encounter.anamnesa) {
           encounter.anamnesa = {
             keluhan_utama: context.keluhan_utama,
@@ -1323,135 +1332,135 @@ export default defineBackground(() => {
             lama_sakit: { thn: 0, bln: 0, hr: 0 },
             riwayat_penyakit: null,
             alergi: { obat: [], makanan: [], udara: [], lainnya: [] },
-          }
+          };
         } else {
-          encounter.anamnesa.keluhan_utama = context.keluhan_utama
+          encounter.anamnesa.keluhan_utama = context.keluhan_utama;
         }
-        await saveEncounter(encounter)
+        await saveEncounter(encounter);
       }
 
       if (!encounter.anamnesa?.keluhan_utama) {
-        bgLog.warn('[Background] Encounter missing keluhan_utama and no context fallback')
+        bgLog.warn('Encounter missing keluhan_utama and no context fallback');
         return {
           success: false,
           error: {
             code: 'MISSING_DATA',
             message: 'Keluhan utama tidak tersedia. Isi keluhan di form anamnesa.',
           },
-        }
+        };
       }
 
       // Run REAL CDSS Engine
-      bgLog.debug('[Background] Running CDSS Engine for encounter:', encounter.id)
-      return await runGetSuggestionsFlow(encounter, context)
+      bgLog.debug('Running CDSS Engine for encounter:', encounter.id);
+      return await runGetSuggestionsFlow(encounter, context);
     } catch (error) {
-      bgLog.error('[Background] CDSS Engine failed:', error)
+      bgLog.error('CDSS Engine failed:', error);
       return {
         success: false,
         error: {
           code: 'ENGINE_ERROR',
           message: error instanceof Error ? error.message : 'Unknown engine error',
         },
-      }
+      };
     }
-  })
+  });
 
   // Panel → Worker: Get prescription recommendations
   onMessage('getRecommendations', async (message) => {
-    const rawContext = message.data as PrescriptionRequestContext
+    const rawContext = message.data as PrescriptionRequestContext;
     const legacyPregnancyStatus = (
       rawContext as PrescriptionRequestContext & { pregnancyStatus?: unknown }
-    ).pregnancyStatus
+    ).pregnancyStatus;
     const normalizedIsPregnant =
       typeof rawContext.is_pregnant === 'boolean'
         ? rawContext.is_pregnant
         : typeof legacyPregnancyStatus === 'boolean'
           ? legacyPregnancyStatus
-          : false
+          : false;
     const context: PrescriptionRequestContext = {
       ...rawContext,
       is_pregnant: normalizedIsPregnant,
-    }
-    bgLog.debug('[Background] AI Prescription recommendation request')
+    };
+    bgLog.debug('AI Prescription recommendation request');
 
     try {
-      const result = await SentraAPI.recommendPrescription(context)
-      bgLog.debug('[Background] Prescription recommendations received:', result.success)
-      return result
+      const result = await SentraAPI.recommendPrescription(context);
+      bgLog.debug('Prescription recommendations received:', result.success);
+      return result;
     } catch (error) {
-      bgLog.error('[Background] Prescription recommendation failed:', error)
+      bgLog.error('Prescription recommendation failed:', error);
       return {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
           message: error instanceof Error ? error.message : 'Unknown error',
         },
-      }
+      };
     }
-  })
+  });
 
   // Panel → Worker: Check drug interactions
   onMessage('checkInteractions', async (message) => {
-    const drugs = message.data as string[]
-    bgLog.debug('[Background] DDI check request for:', drugs)
+    const drugs = message.data as string[];
+    bgLog.debug('DDI check request for:', drugs);
 
     try {
-      const result = await SentraAPI.checkDrugInteractions({ drugs })
-      bgLog.debug('[Background] DDI check completed:', result.success)
-      return result
+      const result = await SentraAPI.checkDrugInteractions({ drugs });
+      bgLog.debug('DDI check completed:', result.success);
+      return result;
     } catch (error) {
-      bgLog.error('[Background] DDI check failed:', error)
+      bgLog.error('DDI check failed:', error);
       return {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
           message: error instanceof Error ? error.message : 'Unknown error',
         },
-      }
+      };
     }
-  })
+  });
 
   // Panel → Worker: Check allergy contraindications
   onMessage('checkAllergies', async (message) => {
-    const context = message.data as AllergyCheckRequest
-    bgLog.debug('[Background] Allergy check request')
+    const context = message.data as AllergyCheckRequest;
+    bgLog.debug('Allergy check request');
 
     try {
-      const result = await SentraAPI.checkAllergies(context)
-      bgLog.debug('[Background] Allergy check completed:', result.success)
-      return result
+      const result = await SentraAPI.checkAllergies(context);
+      bgLog.debug('Allergy check completed:', result.success);
+      return result;
     } catch (error) {
-      bgLog.error('[Background] Allergy check failed:', error)
+      bgLog.error('Allergy check failed:', error);
       return {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
           message: error instanceof Error ? error.message : 'Unknown error',
         },
-      }
+      };
     }
-  })
+  });
 
   // Panel → Worker: Calculate pediatric dose
   onMessage('calculatePediatricDose', async (message) => {
-    const context = message.data as PediatricDoseRequest
-    bgLog.debug('[Background] Pediatric dose calculation request')
+    const context = message.data as PediatricDoseRequest;
+    bgLog.debug('Pediatric dose calculation request');
 
     try {
-      const result = await SentraAPI.calculatePediatricDose(context)
-      bgLog.debug('[Background] Pediatric dose calculated:', result.success)
-      return result
+      const result = await SentraAPI.calculatePediatricDose(context);
+      bgLog.debug('Pediatric dose calculated:', result.success);
+      return result;
     } catch (error) {
-      bgLog.error('[Background] Pediatric dose calculation failed:', error)
+      bgLog.error('Pediatric dose calculation failed:', error);
       return {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
           message: error instanceof Error ? error.message : 'Unknown error',
         },
-      }
+      };
     }
-  })
+  });
 
   // ========================================
   // Field Diagnostic Handler
@@ -1459,13 +1468,13 @@ export default defineBackground(() => {
 
   // Panel → Worker: Scan fields on current page
   onMessage('scanFields', async () => {
-    bgLog.debug('[Background] Scan fields request')
+    bgLog.debug('Scan fields request');
 
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-    const tabId = tabs[0]?.id
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const tabId = tabs[0]?.id;
 
     if (!tabId) {
-      return { success: false, error: 'No active tab', fields: [] }
+      return { success: false, error: 'No active tab', fields: [] };
     }
 
     try {
@@ -1475,11 +1484,11 @@ export default defineBackground(() => {
           type: 'scanFields',
         },
         MESSAGE_TIMEOUTS.scrape
-      )
-      bgLog.debug('[Background] Scan result:', result)
-      return result
+      );
+      bgLog.debug('Scan result:', result);
+      return result;
     } catch (error) {
-      bgLog.error('[Background] Scan failed:', error)
+      bgLog.error('Scan failed:', error);
       return {
         success: false,
         error: toTabCommunicationError(
@@ -1487,19 +1496,19 @@ export default defineBackground(() => {
           error instanceof Error ? error.message : String(error)
         ),
         fields: [],
-      }
+      };
     }
-  })
+  });
 
   // Panel → Content: Scan medical history from page
   onMessage('scanMedicalHistory', async () => {
-    bgLog.debug('[Background] Scan medical history request')
+    bgLog.debug('Scan medical history request');
 
-    const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-    const tabId = tabs[0]?.id
+    const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+    const tabId = tabs[0]?.id;
 
     if (!tabId) {
-      return { success: false, error: 'No active tab', history: [] }
+      return { success: false, error: 'No active tab', history: [] };
     }
 
     try {
@@ -1510,11 +1519,11 @@ export default defineBackground(() => {
           timestamp: Date.now(),
         },
         MESSAGE_TIMEOUTS.scrape
-      )
-      bgLog.debug('[Background] Medical history result:', result)
-      return result
+      );
+      bgLog.debug('Medical history result:', result);
+      return result;
     } catch (error) {
-      bgLog.error('[Background] Medical history scan failed:', error)
+      bgLog.error('Medical history scan failed:', error);
       return {
         success: false,
         error: toTabCommunicationError(
@@ -1522,89 +1531,89 @@ export default defineBackground(() => {
           error instanceof Error ? error.message : String(error)
         ),
         history: [],
-      }
+      };
     }
-  })
+  });
 
   // Panel → Content: Resolve dokter/perawat names with cache fallback
   onMessage('resolveTenagaMedis', async () => {
-    const activeTabs = await browser.tabs.query({ active: true, currentWindow: true })
-    let tabId = activeTabs[0]?.id
+    const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
+    let tabId = activeTabs[0]?.id;
 
     if (!tabId) {
-      const epTabs = await browser.tabs.query({ url: '*://*.epuskesmas.id/*' })
-      tabId = epTabs[0]?.id
+      const epTabs = await browser.tabs.query({ url: '*://*.epuskesmas.id/*' });
+      tabId = epTabs[0]?.id;
     }
 
     if (!tabId) {
-      const cached = await readTenagaMedisCache()
+      const cached = await readTenagaMedisCache();
       if (cached) {
-        return { success: true, tenagaMedis: cached }
+        return { success: true, tenagaMedis: cached };
       }
-      return { success: false, error: 'No active ePuskesmas tab', tenagaMedis: undefined }
+      return { success: false, error: 'No active ePuskesmas tab', tenagaMedis: undefined };
     }
 
-    const resolved = await resolveTenagaMedisForTab(tabId)
+    const resolved = await resolveTenagaMedisForTab(tabId);
     if (!resolved) {
       return {
         success: false,
         error: 'Nama dokter/perawat tidak tersedia',
         tenagaMedis: undefined,
-      }
+      };
     }
 
     return {
       success: true,
       tenagaMedis: resolved,
-    }
-  })
+    };
+  });
 
   // Panel → Content: Scan visit history from ePuskesmas page
   onMessage('scanVisitHistory', async () => {
-    const bgDiag: string[] = []
+    const bgDiag: string[] = [];
     const d = (msg: string) => {
-      bgDiag.push(msg)
-      riwayatLog.debug(msg)
-    }
+      bgDiag.push(msg);
+      riwayatLog.debug(msg);
+    };
 
     // 3-strategy tab finding (same robust approach as scanMedicalHistory)
-    let tabId: number | undefined
-    let tabUrl = 'unknown'
+    let tabId: number | undefined;
+    let tabUrl = 'unknown';
 
     // Strategy 1: Active tab if it's ePuskesmas
-    const activeTabs = await browser.tabs.query({ active: true, currentWindow: true })
-    d(`S1: activeTabs=${activeTabs.length} url=${activeTabs[0]?.url?.slice(0, 60) || 'none'}`)
+    const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
+    d(`S1: activeTabs=${activeTabs.length} url=${activeTabs[0]?.url?.slice(0, 60) || 'none'}`);
     if (activeTabs[0]?.url?.includes('epuskesmas.id')) {
-      tabId = activeTabs[0].id
-      tabUrl = activeTabs[0].url || 'unknown'
-      d(`S1_HIT: epuskesmas tab=${tabId}`)
+      tabId = activeTabs[0].id;
+      tabUrl = activeTabs[0].url || 'unknown';
+      d(`S1_HIT: epuskesmas tab=${tabId}`);
     }
 
     // Strategy 2: Search ALL tabs for ePuskesmas
     if (!tabId) {
-      const epTabs = await browser.tabs.query({ url: '*://*.epuskesmas.id/*' })
-      d(`S2: epuskesmas tabs found=${epTabs.length}`)
+      const epTabs = await browser.tabs.query({ url: '*://*.epuskesmas.id/*' });
+      d(`S2: epuskesmas tabs found=${epTabs.length}`);
       if (epTabs[0]?.id) {
-        tabId = epTabs[0].id
-        tabUrl = epTabs[0].url || 'unknown'
-        d(`S2_HIT: tab=${tabId} url=${tabUrl.slice(0, 60)}`)
+        tabId = epTabs[0].id;
+        tabUrl = epTabs[0].url || 'unknown';
+        d(`S2_HIT: tab=${tabId} url=${tabUrl.slice(0, 60)}`);
       }
     }
 
     // Strategy 3: Fallback to any active tab
     if (!tabId && activeTabs[0]?.id) {
-      tabId = activeTabs[0].id
-      tabUrl = activeTabs[0].url || 'unknown'
-      d(`S3_FALLBACK: tab=${tabId}`)
+      tabId = activeTabs[0].id;
+      tabUrl = activeTabs[0].url || 'unknown';
+      d(`S3_FALLBACK: tab=${tabId}`);
     }
 
     if (!tabId) {
-      d('NO_TAB: all 3 strategies failed')
-      return { success: false, error: 'No ePuskesmas tab found', visits: [], diagnostics: bgDiag }
+      d('NO_TAB: all 3 strategies failed');
+      return { success: false, error: 'No ePuskesmas tab found', visits: [], diagnostics: bgDiag };
     }
 
     try {
-      d(`SEND: tab=${tabId} url=${tabUrl.slice(0, 60)}`)
+      d(`SEND: tab=${tabId} url=${tabUrl.slice(0, 60)}`);
       const result = await sendMessageToTabWithTimeout<ScanVisitHistoryResponse>(
         tabId,
         {
@@ -1612,16 +1621,16 @@ export default defineBackground(() => {
           timestamp: Date.now(),
         },
         MESSAGE_TIMEOUTS.visitFetch
-      )
-      d(`RECV: success=${result.success} visits=${result.visits.length}`)
+      );
+      d(`RECV: success=${result.success} visits=${result.visits.length}`);
       return {
         ...result,
         diagnostics: [...bgDiag, ...(result.diagnostics || [])],
-      }
+      };
     } catch (error) {
       if (classifyTabMessageError(error) === 'NO_RECEIVER') {
-        d('NO_RECEIVER: attempting content-script self-heal')
-        const injected = await tryInjectContentScripts(tabId, d)
+        d('NO_RECEIVER: attempting content-script self-heal');
+        const injected = await tryInjectContentScripts(tabId, d);
         if (injected) {
           try {
             const retryResult = await sendMessageToTabWithTimeout<ScanVisitHistoryResponse>(
@@ -1631,19 +1640,19 @@ export default defineBackground(() => {
                 timestamp: Date.now(),
               },
               MESSAGE_TIMEOUTS.visitFetch
-            )
-            d(`RETRY_RECV: success=${retryResult.success} visits=${retryResult.visits.length}`)
+            );
+            d(`RETRY_RECV: success=${retryResult.success} visits=${retryResult.visits.length}`);
             return {
               ...retryResult,
               diagnostics: [...bgDiag, ...(retryResult.diagnostics || [])],
-            }
+            };
           } catch (retryError) {
             d(
               `RETRY_SEND_ERROR: ${toTabCommunicationError(
                 retryError,
                 retryError instanceof Error ? retryError.message : String(retryError)
               )}`
-            )
+            );
           }
         }
       }
@@ -1651,30 +1660,30 @@ export default defineBackground(() => {
       const mappedError = toTabCommunicationError(
         error,
         error instanceof Error ? error.message : String(error)
-      )
-      d(`SEND_ERROR: ${mappedError}`)
+      );
+      d(`SEND_ERROR: ${mappedError}`);
       return {
         success: false,
         error: mappedError,
         visits: [],
         diagnostics: [...bgDiag, 'Content script unreachable or threw'],
-      }
+      };
     }
-  })
+  });
 
   // Content → Worker → Panel: Visit history scraped acknowledgment
   onMessage('visitHistoryScraped', async (message) => {
-    const data = message.data
-    bgLog.debug(`[Background] visitHistoryScraped received: ${data.visits?.length || 0} visits`)
+    const data = message.data;
+    bgLog.debug(`visitHistoryScraped received: ${data.visits?.length || 0} visits`);
 
     try {
       // Forward to side panel
-      await sendMessage('visitHistoryScraped', data)
-      bgLog.debug('[Background] visitHistoryScraped forwarded to panel')
+      await sendMessage('visitHistoryScraped', data);
+      bgLog.debug('visitHistoryScraped forwarded to panel');
     } catch (error) {
-      bgLog.error('[Background] Failed to forward visitHistoryScraped:', error)
+      bgLog.error('Failed to forward visitHistoryScraped:', error);
     }
-  })
+  });
 
   // ========================================
   // CDSS Engine Status Handlers
@@ -1682,61 +1691,61 @@ export default defineBackground(() => {
 
   // Panel → Worker: Get CDSS status
   onMessage('getCDSSStatus', async () => {
-    bgLog.debug('[Background] CDSS status request')
+    bgLog.debug('CDSS status request');
 
     try {
-      const status = await getCDSSEngineStatus()
-      bgLog.debug('[Background] CDSS status:', status)
-      return status
+      const status = await getCDSSEngineStatus();
+      bgLog.debug('CDSS status:', status);
+      return status;
     } catch (error) {
-      bgLog.error('[Background] CDSS status check failed:', error)
+      bgLog.error('CDSS status check failed:', error);
       return {
         ready: false,
         icd10_count: 0,
         model: 'gemini-1.5-flash-002',
         audit_entries: 0,
         last_error: error instanceof Error ? error.message : 'Unknown error',
-      }
+      };
     }
-  })
+  });
 
   // Panel → Worker: Initialize CDSS (manual trigger)
   onMessage('initializeCDSS', async () => {
-    bgLog.debug('[Background] CDSS initialization request')
+    bgLog.debug('CDSS initialization request');
 
     try {
-      const ready = await initCDSSEngine()
-      bgLog.debug('[Background] CDSS initialized:', ready)
-      return ready
+      const ready = await initCDSSEngine();
+      bgLog.debug('CDSS initialized:', ready);
+      return ready;
     } catch (error) {
-      bgLog.error('[Background] CDSS initialization failed:', error)
-      return false
+      bgLog.error('CDSS initialization failed:', error);
+      return false;
     }
-  })
+  });
 
   // ========================================
   // NATIVE MESSAGE LISTENER (for sidepanel native chrome.runtime.sendMessage)
   // ========================================
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    const msg = message as { type?: string; data?: unknown }
-    bgLog.debug('[Background] Native message received:', msg.type, 'from:', sender.url)
+    const msg = message as { type?: string; data?: unknown };
+    bgLog.debug('Native message received:', msg.type, 'from:', sender.url);
 
     // Handle scanFields
     if (msg.type === 'scanFields') {
-      ;(async () => {
-        const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-        const tabId = tabs[0]?.id
+      (async () => {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const tabId = tabs[0]?.id;
         if (!tabId) {
-          sendResponse({ success: false, error: 'No active tab', fields: [] })
-          return
+          sendResponse({ success: false, error: 'No active tab', fields: [] });
+          return;
         }
         try {
           const result = await sendMessageToTabWithTimeout<ScanFieldsResponse>(
             tabId,
             { type: 'scanFields' },
             MESSAGE_TIMEOUTS.scrape
-          )
-          sendResponse(result)
+          );
+          sendResponse(result);
         } catch (error) {
           sendResponse({
             success: false,
@@ -1745,59 +1754,59 @@ export default defineBackground(() => {
               error instanceof Error ? error.message : String(error)
             ),
             fields: [],
-          })
+          });
         }
-      })()
-      return true // Keep channel open for async
+      })();
+      return true; // Keep channel open for async
     }
 
     // Handle scanMedicalHistory
     if (msg.type === 'scanMedicalHistory') {
-      ;(async () => {
-        bgLog.debug('[Background] scanMedicalHistory received')
+      (async () => {
+        bgLog.debug('scanMedicalHistory received');
 
         // Try multiple strategies to find ePuskesmas tab
-        let tabId: number | undefined
+        let tabId: number | undefined;
 
         // Strategy 1: Active tab in current window
-        const activeTabs = await browser.tabs.query({ active: true, currentWindow: true })
+        const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
         if (activeTabs[0]?.url?.includes('epuskesmas.id')) {
-          tabId = activeTabs[0].id
-          bgLog.debug('[Background] Found ePuskesmas in active tab:', tabId)
+          tabId = activeTabs[0].id;
+          bgLog.debug('Found ePuskesmas in active tab:', tabId);
         }
 
         // Strategy 2: Search all tabs for ePuskesmas
         if (!tabId) {
-          const allTabs = await browser.tabs.query({ url: '*://*.epuskesmas.id/*' })
+          const allTabs = await browser.tabs.query({ url: '*://*.epuskesmas.id/*' });
           if (allTabs[0]?.id) {
-            tabId = allTabs[0].id
-            bgLog.debug('[Background] Found ePuskesmas tab by URL:', tabId)
+            tabId = allTabs[0].id;
+            bgLog.debug('Found ePuskesmas tab by URL:', tabId);
           }
         }
 
         // Strategy 3: Fall back to any active tab
         if (!tabId && activeTabs[0]?.id) {
-          tabId = activeTabs[0].id
-          bgLog.debug('[Background] Fallback to active tab:', tabId)
+          tabId = activeTabs[0].id;
+          bgLog.debug('Fallback to active tab:', tabId);
         }
 
         if (!tabId) {
-          bgLog.error('[Background] No ePuskesmas tab found')
-          sendResponse({ success: false, error: 'No ePuskesmas tab found', history: [] })
-          return
+          bgLog.error('No ePuskesmas tab found');
+          sendResponse({ success: false, error: 'No ePuskesmas tab found', history: [] });
+          return;
         }
 
         try {
-          bgLog.debug('[Background] Sending scanMedicalHistory to tab:', tabId)
+          bgLog.debug('Sending scanMedicalHistory to tab:', tabId);
           const result = await sendMessageToTabWithTimeout<ScanMedicalHistoryResponse>(
             tabId,
             { type: 'scanMedicalHistory', timestamp: Date.now() },
             MESSAGE_TIMEOUTS.scrape
-          )
-          bgLog.debug('[Background] scanMedicalHistory result:', result)
-          sendResponse(result)
+          );
+          bgLog.debug('scanMedicalHistory result:', result);
+          sendResponse(result);
         } catch (error) {
-          bgLog.error('[Background] scanMedicalHistory failed:', error)
+          bgLog.error('scanMedicalHistory failed:', error);
           sendResponse({
             success: false,
             error: toTabCommunicationError(
@@ -1805,31 +1814,31 @@ export default defineBackground(() => {
               error instanceof Error ? error.message : String(error)
             ),
             history: [],
-          })
+          });
         }
-      })()
-      return true // Keep channel open for async
+      })();
+      return true; // Keep channel open for async
     }
 
     // Handle fillAnamnesa
     if (msg.type === 'fillAnamnesa') {
-      ;(async () => {
-        bgLog.debug('Native fillAnamnesa request received')
-        bgLog.debug('[Background] Native fillAnamnesa request:', msg.data)
-        const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-        const tabId = tabs[0]?.id
-        bgLog.debug('Active tab ID:', tabId)
+      (async () => {
+        bgLog.debug('Native fillAnamnesa request received');
+        bgLog.debug('Native fillAnamnesa request:', msg.data);
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const tabId = tabs[0]?.id;
+        bgLog.debug('Active tab ID:', tabId);
         if (!tabId) {
-          bgLog.warn('No active tab found for native fillAnamnesa')
+          bgLog.warn('No active tab found for native fillAnamnesa');
           sendResponse({
             success: [],
             failed: [{ field: 'all', error: 'No active tab' }],
             skipped: [],
-          })
-          return
+          });
+          return;
         }
         try {
-          bgLog.debug('Forwarding native execFill to tab', tabId)
+          bgLog.debug('Forwarding native execFill to tab', tabId);
           const result = await sendMessageToTabWithTimeout<FillResult>(
             tabId,
             {
@@ -1837,12 +1846,12 @@ export default defineBackground(() => {
               data: { type: 'anamnesa', encounter: msg.data },
             },
             MESSAGE_TIMEOUTS.fill
-          )
-          bgLog.debug('Native content response:', result)
-          bgLog.debug('[Background] Native fillAnamnesa result:', result)
-          sendResponse(result)
+          );
+          bgLog.debug('Native content response:', result);
+          bgLog.debug('Native fillAnamnesa result:', result);
+          sendResponse(result);
         } catch (error) {
-          bgLog.error('[Background] Native fillAnamnesa failed:', error)
+          bgLog.error('Native fillAnamnesa failed:', error);
           sendResponse({
             success: [],
             failed: [
@@ -1855,57 +1864,57 @@ export default defineBackground(() => {
               },
             ],
             skipped: [],
-          })
+          });
         }
-      })()
-      return true // Keep channel open for async
+      })();
+      return true; // Keep channel open for async
     }
 
     // Handle triggerRiwayatClick — calls showRiwayatPelayanan() in page's MAIN world
     // Content script cannot call page functions due to isolated world + CSP blocking
     // chrome.scripting.executeScript with world: 'MAIN' is the official bypass
     if (msg.type === 'triggerRiwayatClick') {
-      const { dataId } = msg as { type: string; dataId: string }
-      ;(async () => {
-        const tabs = await browser.tabs.query({ active: true, currentWindow: true })
-        const tabId = tabs[0]?.id
+      const { dataId } = msg as { type: string; dataId: string };
+      (async () => {
+        const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+        const tabId = tabs[0]?.id;
         if (!tabId) {
-          sendResponse({ success: false, error: 'No active tab' })
-          return
+          sendResponse({ success: false, error: 'No active tab' });
+          return;
         }
         try {
-          const chrome = (globalThis as { chrome?: BrowserGlobalWithSidePanel }).chrome
+          const chrome = (globalThis as { chrome?: BrowserGlobalWithSidePanel }).chrome;
           if (!chrome?.scripting?.executeScript) {
-            sendResponse({ success: false, error: 'chrome.scripting is not available' })
-            return
+            sendResponse({ success: false, error: 'chrome.scripting is not available' });
+            return;
           }
           await chrome.scripting.executeScript({
             target: { tabId },
             world: 'MAIN',
             func: (...args: unknown[]) => {
-              const id = args[0] as string
-              const el = document.querySelector(`a[data-id="${id}"]`)
+              const id = args[0] as string;
+              const el = document.querySelector(`a[data-id="${id}"]`);
               const maybeWindow = window as Window & {
-                showRiwayatPelayanan?: (element: Element) => void
-              }
+                showRiwayatPelayanan?: (element: Element) => void;
+              };
               if (el && typeof maybeWindow.showRiwayatPelayanan === 'function') {
-                maybeWindow.showRiwayatPelayanan(el)
+                maybeWindow.showRiwayatPelayanan(el);
               }
             },
             args: [dataId],
-          })
-          bgLog.debug(`[Background] triggerRiwayatClick executed for data-id=${dataId}`)
-          sendResponse({ success: true })
+          });
+          bgLog.debug(`triggerRiwayatClick executed for data-id=${dataId}`);
+          sendResponse({ success: true });
         } catch (error) {
-          bgLog.error('[Background] triggerRiwayatClick failed:', error)
-          sendResponse({ success: false, error: String(error) })
+          bgLog.error('triggerRiwayatClick failed:', error);
+          sendResponse({ success: false, error: String(error) });
         }
-      })()
-      return true
+      })();
+      return true;
     }
 
-    return false // Not handled
-  })
+    return false; // Not handled
+  });
 
-  bgLog.debug('[Background] Message handlers registered (including CDSS Engine + Native listener)')
-})
+  bgLog.debug('Message handlers registered (including CDSS Engine + Native listener)');
+});

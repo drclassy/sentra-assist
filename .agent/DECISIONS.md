@@ -42,3 +42,9 @@
 
 ---
 <!-- Agent: append new decisions below this line -->
+
+### [2026-04-10] AI Communication Language Preference
+**Context:** CEO Sentra (dr. Ferdi Iskandar/Claudesy) memberikan instruksi agar selalu menggunakan bahasa Indonesia.
+**Decision:** Seluruh operasional dan komunikasi oleh agent (Gravity) di dalam environment ini wajib menggunakan bahasa Indonesia.
+**Rationale:** Penyesuaian bahasa untuk optimalisasi pemahaman dan efektivitas komunikasi antara CEO dan AI assistant.
+**Consequences:** Agent harus selalu memastikan tone komunikasi tetap profesional, langsung, tanpa filler words, dan tanpa menggunakan kata ganti ("kamu", "anda") namun dalam bahasa Indonesia penuh.

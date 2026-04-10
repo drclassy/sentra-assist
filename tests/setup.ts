@@ -1,3 +1,1 @@
-// Minimal Vitest setup file required by vitest.config.ts.
-// Add shared test hooks here when the suite needs them.
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest'

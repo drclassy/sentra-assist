@@ -1,8 +1,8 @@
 // Ghost Protocols — Iskandar Diagnosis Engine V1
 // Ported 1:1 from console-boot-demo.html reference design
 
-import { Sun } from 'lucide-react'
 import React, { useCallback, useEffect, useRef } from 'react'
+import ThemeToggle from '../ui/ThemeToggle'
 
 interface EngineButton {
   id: string
@@ -39,7 +39,6 @@ interface SidePanelHeaderProps {
   bootMode?: boolean
   doctorOnlineCount?: number
   onInitialisasi?: () => void
-  onToggleTheme?: () => void
 }
 
 const engineButtons: EngineButton[] = [
@@ -60,7 +59,6 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
   bootMode = false,
   doctorOnlineCount = 0,
   onInitialisasi,
-  onToggleTheme,
 }) => {
   const isReady = demographicStatus === 'ready'
   const doctorOnline = doctorOnlineCount > 0
@@ -116,21 +114,12 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
 
   return (
     <div className="card-header">
-      {/* Title — compact, no spacers */}
-      <div className="header-top">
-        {bootMode && (
-          <div className="boot-logo-container">
-            <svg className="logo-svg" viewBox="0 0 60 40" fill="none" aria-hidden="true">
-              <text x="0" y="28" fill="#F4EFE6" fontSize="24" fontWeight="700" fontFamily="Inter">
-                S
-              </text>
-              <circle cx="32" cy="20" r="14" stroke="#F4EFE6" strokeWidth="2" fill="none" />
-              <circle cx="32" cy="20" r="5" fill="#F4EFE6" />
-            </svg>
-            <span className="version-badge">MedPro</span>
-          </div>
-        )}
-        <div className={bootMode ? 'boot-title-group' : 'title-group'}>
+      {/* Title — knob kiri atas, judul tengah */}
+      <div className="header-top relative flex justify-center items-start">
+        <div className="absolute left-0 top-0">
+          <ThemeToggle />
+        </div>
+        <div className="title-group text-center">
           <h1 className="card-title-main">Sentra Assist</h1>
           <p className="card-title-sub">Architected by dr Ferdi Iskandar</p>
         </div>

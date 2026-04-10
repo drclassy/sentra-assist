@@ -30,6 +30,11 @@ import {
   sendMessageToTabWithTimeout,
 } from '~/utils/messaging'
 
+function getErrorText(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}
+
 describe('messaging runtime hardening', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -92,9 +97,14 @@ describe('messaging runtime hardening', () => {
   it('throws timeout error when tab does not respond in time', async () => {
     mockSendMessage.mockImplementation(() => new Promise(() => {}))
 
-    await expect(sendMessageToTabWithTimeout(11, { type: 'execFill' }, 25)).rejects.toThrow(
-      'timeout'
-    )
+    let caughtError: unknown
+    try {
+      await sendMessageToTabWithTimeout(11, { type: 'execFill' }, 25)
+    } catch (e) {
+      caughtError = e
+    }
+    expect(caughtError).toBeInstanceOf(Error)
+    expect(getErrorText(caughtError).toLowerCase()).toContain('timeout')
   })
 
   it('injects timestamp for native tab messages to satisfy messaging validator', async () => {
@@ -120,9 +130,14 @@ describe('messaging runtime hardening', () => {
       new Error('Could not establish connection. Receiving end does not exist.')
     )
 
-    await expect(sendMessageToTabWithTimeout(11, { type: 'scanFields' }, 100)).rejects.toThrow(
-      'No content-script receiver'
-    )
+    let caughtError: unknown
+    try {
+      await sendMessageToTabWithTimeout(11, { type: 'scanFields' }, 100)
+    } catch (e) {
+      caughtError = e
+    }
+    expect(caughtError).toBeInstanceOf(Error)
+    expect(getErrorText(caughtError)).toContain('No content-script receiver')
   })
 
   it('treats BFCache closed-channel errors as no-receiver for self-healing retry', async () => {
@@ -132,9 +147,14 @@ describe('messaging runtime hardening', () => {
       )
     )
 
-    await expect(sendMessageToTabWithTimeout(11, { type: 'scanFields' }, 100)).rejects.toThrow(
-      'No content-script receiver'
-    )
+    let caughtError: unknown
+    try {
+      await sendMessageToTabWithTimeout(11, { type: 'scanFields' }, 100)
+    } catch (e) {
+      caughtError = e
+    }
+    expect(caughtError).toBeInstanceOf(Error)
+    expect(getErrorText(caughtError)).toContain('No content-script receiver')
   })
 
   it('classifies wrapped no-receiver errors from sendMessageToTabWithTimeout retries', () => {

@@ -1,4 +1,5 @@
 export type AutosenPreset =
+  | ''
   | 'hypertension'
   | 'hyperglycemia'
   | 'hypoglycemia'

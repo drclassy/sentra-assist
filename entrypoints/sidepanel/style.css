@@ -46,21 +46,82 @@
   --light-mode: 0; /* 0 for dark, 1 for light */
 }
 
+/* Tema terang — dark theme yang "diterangi": bukan putih, bukan terang.
+   Cukup angkat brightness surface ~2 stop dari #050505 ke #1A1C1E.
+   Teks dan aksen tetap sama — hanya surface yang naik sedikit. */
+html.light,
 :root[data-theme="light"] {
   --light-mode: 1;
-  --sentra-bg: #EAEAEA;
-  --sentra-card: #FFFFFF;
-  --border-glow: rgba(0, 0, 0, 0.15);
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --text-main: #1A1A1A;
-  --text-muted: #6B7280;
-  --neu-inset-bg: #F5F5F5;
-  --bg-inset: #F5F5F5;
-  --bg-elevated: #FFFFFF;
+  --sentra-bg: #111314;
+  --sentra-card: #191B1F;
+  --sentra-border: rgba(255, 255, 255, 0.08);
+  --sentra-muted: #7A7A7A;
+  --bg-body: #111314;
+  --bg-card: #191B1F;
+  --border-glow: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --text-main: #FCF8F0;
+  --text-muted: #7A7A7A;
+  --neu-inset-bg: #151719;
+  --bg-inset: #151719;
+  --bg-elevated: #1F2228;
+  --accent-med: #7AB8A4;
+  --bg-start: #111314;
+  --bg-end: #151719;
+  --text-input: #FCF8F0;
+  --text-input-ph: rgba(122, 122, 122, 0.80);
+  --text-input-focus: rgba(122, 184, 164, 0.35);
+  --text-input-sel: rgba(122, 184, 164, 0.15);
+  --text-input-disabled: rgba(252, 248, 240, 0.30);
+  --alum-light: #1F2228;
+  --alum-mid: #282B32;
+  --alum-dark: #444444;
+  --alum-highlight: rgba(255, 255, 255, 0.08);
+  --alum-shadow: rgba(0, 0, 0, 0.25);
+}
+
+/*
+  Mode terang: kartu login/dashboard sebelumnya tetap “gelap” karena box-shadow hitam tebal
+  dan text-shadow gelap — variabel latar saja tidak cukup terlihat beda.
+*/
+html.light .login-card {
+  border: 1px solid var(--sentra-border);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.2),
+    0 14px 36px -10px rgba(0, 0, 0, 0.35);
+}
+
+html.light .login-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+}
+
+html.light .login-disclaimer,
+html.light .login-wordmark-line,
+html.light .login-system-status {
+  text-shadow: none;
+}
+
+html.light .luxury-line::after {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.light .dash-card {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 16px 36px -14px rgba(0, 0, 0, 0.35);
+}
+
+html.light .dash-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+}
+
+html.light .login-view button:not(:hover):not(:focus-visible):not(.active),
+html.light .dash-view button:not(:hover):not(:focus-visible):not(.active) {
+  border-color: var(--border-subtle) !important;
 }
 
 html {
-  /* Meningkatkan ukuran font dasar sekitar 1px (dari 16px menjadi 17px) 
+  /* Meningkatkan ukuran font dasar sekitar 1px (dari 16px menjadi 17px)
      Ini akan menskalakan semua unit 'rem' secara proporsional di seluruh aplikasi. */
   font-size: 106.25%;
 }
@@ -125,6 +186,116 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/*
+ * Transisi tema — metafora lampu di sudut kanan atas (dekat ThemeToggle):
+ * → terang: bercak cahaya membesar + sedikit brighten global (bukan sepia penuh layar).
+ * → gelap: “gelap” meluas dari titik yang sama (clip-path).
+ */
+@keyframes theme-lamp-brighten-support {
+  0% {
+    filter: brightness(0.68);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+@keyframes theme-lamp-bloom-light {
+  0% {
+    opacity: 0.92;
+    transform: scale(0.18);
+  }
+  45% {
+    opacity: 0.55;
+    transform: scale(1.85);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(4.25);
+  }
+}
+
+@keyframes theme-lamp-dim-support {
+  0% {
+    filter: brightness(1.05);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+@keyframes theme-darkness-from-lamp {
+  0% {
+    clip-path: circle(0px at 92% 6%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.88;
+  }
+  88% {
+    clip-path: circle(135vmax at 92% 6%);
+    opacity: 0.45;
+  }
+  100% {
+    clip-path: circle(150vmax at 92% 6%);
+    opacity: 0;
+  }
+}
+
+html.theme-lamp-transition[data-theme-direction='to-light'] #root {
+  animation: theme-lamp-brighten-support 1.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: filter;
+}
+
+html.theme-lamp-transition[data-theme-direction='to-light'] #root::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  transform-origin: 92% 6%;
+  background: radial-gradient(
+    circle farthest-corner at 92% 6%,
+    rgba(255, 252, 246, 0.5) 0%,
+    rgba(255, 248, 238, 0.14) 32%,
+    transparent 58%
+  );
+  mix-blend-mode: soft-light;
+  animation: theme-lamp-bloom-light 1.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+html.theme-lamp-transition[data-theme-direction='to-dark'] #root {
+  animation: theme-lamp-dim-support 1.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: filter;
+}
+
+html.theme-lamp-transition[data-theme-direction='to-dark'] #root::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background: rgba(5, 5, 8, 0.82);
+  clip-path: circle(0px at 92% 6%);
+  opacity: 0;
+  animation: theme-darkness-from-lamp 1.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: clip-path, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-lamp-transition[data-theme-direction] #root {
+    animation: none !important;
+    filter: none !important;
+    will-change: auto;
+  }
+  html.theme-lamp-transition[data-theme-direction] #root::after {
+    animation: none !important;
+    content: none !important;
+    will-change: auto;
+  }
+}
+
 /* Global button edge: setiap tombol border tipis cream per request */
 .login-view button,
 .dash-view button,
@@ -142,10 +313,16 @@ body {
   border-color: rgba(244, 239, 230, 0.25) !important;
 }
 
-/* Root Container */
+/* Root Container — stacking untuk lapisan transisi tema (::after) */
 #root {
   width: 100%;
   min-height: 100%;
+  position: relative;
+  isolation: isolate;
+}
+
+#root::after {
+  content: none;
 }
 
 /* ============================================================================
@@ -686,6 +863,21 @@ body {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   pointer-events: none;
+}
+
+/* Toggle tema — terlihat di dashboard (bukan hanya setelah Launch Console) */
+.dash-theme-toggle {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 3;
+}
+
+.login-theme-toggle {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
 }
 
 .dash-launch-orb {
@@ -2342,6 +2534,8 @@ textarea:read-only,
 
 .field-summary-prominent--placeholder {
   font-size: 11px;
+  color: var(--text-muted, #666);
+  font-style: italic;
 }
 
 .select-prominent {
@@ -2419,17 +2613,17 @@ textarea:read-only,
   font-style: normal;
   line-height: 1.7;
   font-variant-numeric: tabular-nums;
-  height: 86px;
-  min-height: 86px;
-  max-height: 86px;
+  height: 128px;
+  min-height: 128px;
+  max-height: 128px;
   overflow-y: auto;
   resize: none;
 }
 
 .neu-textarea--animated {
-  height: 86px;
-  min-height: 86px;
-  max-height: 86px;
+  height: 128px;
+  min-height: 128px;
+  max-height: 128px;
   overflow-y: auto;
   font-family: var(--font-ui);
   font-size: 12px;
@@ -3197,9 +3391,9 @@ textarea:read-only,
 }
 
 .doctor-picker-panel__feedback--success {
-  background: rgba(16,185,129,0.08);
-  border: 1px solid rgba(16,185,129,0.2);
-  color: #A7F3D0;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #a7f3d0;
 }
 
 .doctor-picker-panel__empty {
@@ -4850,8 +5044,8 @@ textarea:read-only,
   width: 100%;
   min-height: 34px;
   padding: 7px 14px;
-  background: #1e0c07;
-  border: 1px solid rgba(235, 89, 57, 0.55);
+  background: #0a1628;
+  border: 1px solid rgba(59, 130, 246, 0.55);
   border-radius: 8px;
   color: #f4efe6;
   font-size: 11px;
@@ -4865,17 +5059,17 @@ textarea:read-only,
     color 150ms ease;
 }
 .btn-sentra-uplink:hover:not(:disabled) {
-  background: #2c1109;
-  border-color: rgba(235, 89, 57, 0.8);
-  color: #f97a5a;
+  background: #0f1f3d;
+  border-color: rgba(59, 130, 246, 0.8);
+  color: #93bbfd;
 }
 .btn-sentra-uplink:active:not(:disabled) {
-  background: #140905;
+  background: #071020;
 }
 .btn-sentra-uplink:focus-visible {
   outline: none;
-  border-color: #eb5939;
-  box-shadow: 0 0 0 2px rgba(235, 89, 57, 0.25);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
 }
 .btn-sentra-uplink:disabled {
   opacity: 0.35;

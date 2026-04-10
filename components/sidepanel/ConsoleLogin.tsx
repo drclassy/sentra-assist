@@ -4,41 +4,7 @@ import { motion } from 'framer-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 
-const ALLOW_BREAK_GLASS_LOGIN = true;
 const LOGIN_SOUND = '/assets/sounds/hello.mp3';
-
-const createFallbackUser = (rawUsername: string): AuthUser => {
-  const normalized = rawUsername.trim().toLowerCase() || 'offline';
-  return {
-    id: `fallback-${normalized}`,
-    username: normalized,
-    name: normalized,
-    role: 'doctor',
-    facilityId: 'PUSKESMAS_BALOWERTI',
-    facilityName: 'Puskesmas Balowerti',
-    poli: 'Umum',
-  };
-};
-
-const persistFallbackSession = async (user: AuthUser): Promise<void> => {
-  try {
-    const { storeSession } = await import('@/lib/api/auth-store');
-    const { getAuthConfig } = await import('@/lib/api/auth-client');
-    const authConfig = await getAuthConfig();
-    const now = Date.now();
-    await storeSession({
-      user,
-      tokens: {
-        accessToken: `fallback-token-${now}`,
-        refreshToken: `fallback-refresh-${now}`,
-        expiresAt: now + 24 * 60 * 60 * 1000,
-      },
-      serverBaseUrl: authConfig.baseUrl,
-    });
-  } catch {
-    // Non-blocking: fallback login can continue even if session persistence fails.
-  }
-};
 
 const LoginWordmark: React.FC = () => (
   <div className="login-wordmark" role="img" aria-label="Sentra Artificial Intelligence">
@@ -81,9 +47,9 @@ export const ConsoleLogin: React.FC<{ onLoginSuccess: (user: AuthUser) => void }
   }, []);
 
   const handleLogin = useCallback(async () => {
-    if (!username || !password) return;
+    if (!username.trim() || !password) return;
     const normalizedUsername = username.trim().toLowerCase();
-    const normalizedPassword = password.trim();
+    const rawPassword = password;
 
     // Memancing audio tepat saat klik untuk menghindari blokade browser
     if (audioRef.current) {
@@ -93,22 +59,10 @@ export const ConsoleLogin: React.FC<{ onLoginSuccess: (user: AuthUser) => void }
     setIsLoading(true);
     setLoginError(null);
     try {
-      if (
-        ALLOW_BREAK_GLASS_LOGIN &&
-        normalizedUsername === 'offline' &&
-        normalizedPassword === 'offline'
-      ) {
-        const user = createFallbackUser('offline');
-        await persistFallbackSession(user);
-        playSound();
-        setTimeout(() => onLoginSuccess(user), 400);
-        return;
-      }
-
       const { login } = await import('@/lib/api/auth-client');
       const result = await login({
         username: normalizedUsername,
-        password: normalizedPassword,
+        password: rawPassword,
       });
       if (result.success && result.session) {
         playSound();

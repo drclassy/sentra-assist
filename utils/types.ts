@@ -37,6 +37,12 @@ export interface AnamnesisExtractionResult {
   keparahan: number | null
   faktor_pemicu: string[]
   faktor_peredam: string[]
+  chronology_summary?: string | null
+  associated_symptoms?: string[]
+  pertinent_negatives?: string[]
+  functional_impact?: string | null
+  red_flag_signs?: string[]
+  clinician_questions?: string[]
   data_belum_lengkap: AnamnesisMissingField[]
 }
 

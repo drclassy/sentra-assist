@@ -1,6 +1,7 @@
-import type { AuthUser } from '@/lib/api/auth-store'
-import React, { useState } from 'react'
-import { browser } from 'wxt/browser'
+import ThemeToggle from '@/components/ui/ThemeToggle';
+import type { AuthUser } from '@/lib/api/auth-store';
+import React from 'react';
+import { browser } from 'wxt/browser';
 
 /** Paths under `public/` for browser.runtime.getURL */
 type PublicAssetPath =
@@ -10,16 +11,16 @@ type PublicAssetPath =
   | '/anthropic.svg'
   | '/openai.svg'
   | '/kimi.svg'
-  | '/vertexai.svg'
+  | '/vertexai.svg';
 
 type PartnerDef = {
-  id: string
-  name: string
-  desc: string
-  logoPath: PublicAssetPath
-  logoClass?: string
-  variant?: 'melinda' | 'default'
-}
+  id: string;
+  name: string;
+  desc: string;
+  logoPath: PublicAssetPath;
+  logoClass?: string;
+  variant?: 'melinda' | 'default';
+};
 
 const PARTNERS: PartnerDef[] = [
   {
@@ -65,12 +66,12 @@ const PARTNERS: PartnerDef[] = [
     logoPath: '/icon/langflow.png',
     logoClass: 'dash-partner-logo-img--langflow',
   },
-]
+];
 
 interface DashboardViewProps {
-  user: AuthUser | null
-  onLaunchConsole: () => void
-  onLogout: () => void
+  user: AuthUser | null;
+  onLaunchConsole: () => void;
+  onLogout: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -78,11 +79,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onLaunchConsole,
   onLogout,
 }) => {
-  const [activeAssist, setActiveAssist] = useState('clinical')
-
   return (
     <div className="dash-view">
       <div className="dash-card">
+        <div className="dash-theme-toggle">
+          <ThemeToggle />
+        </div>
         <button
           type="button"
           className="dash-launch-orb"
@@ -112,28 +114,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           ) : null}
           <div
             className="dashboard-mantra mt-4 mb-2 text-[10px] opacity-70 tracking-[0.4em] font-mono"
-            style={{ color: 'var(--text-main)', textShadow: '0 0 8px rgba(244, 239, 230, 0.2)' }}
+            style={{ color: 'var(--text-main)' }}
           >
             DIAGNOSA | TERAPI | REPEAT
           </div>
         </header>
 
-        <div className="dash-assist-row" role="group" aria-label="Mode assist">
-          {['CLINICAL', 'DIAGNOSTIC', 'THERAPY'].map((label, i) => {
-            const id = label.toLowerCase()
-            return (
-              <button
-                key={i}
-                type="button"
-                className={`dash-assist-btn ${activeAssist === id ? 'active' : ''}`}
-                onClick={() => setActiveAssist(id)}
-                aria-pressed={activeAssist === id}
-              >
-                {label}
-              </button>
-            )
-          })}
+        <div className="px-6 mt-4 mb-2">
+          <button
+            type="button"
+            onClick={onLaunchConsole}
+            className="w-full py-3 rounded-lg text-sm font-semibold tracking-wide
+                       border transition-all duration-200"
+            style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              borderColor: 'var(--sentra-border)',
+              color: 'var(--text-main)',
+            }}
+          >
+            Masuk ke ASSIST →
+          </button>
         </div>
+
+        <div className="dash-divider my-6" aria-hidden="true" />
 
         <div className="dashboard-links-section my-6 text-center">
           <div className="text-[9px] uppercase tracking-[0.2em] opacity-40 mb-2">
@@ -144,7 +147,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               href="https://sentrahai.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#737373] hover:text-[#10B981] transition-colors"
+              className="text-[var(--text-muted)] hover:text-[var(--accent-med)] transition-colors"
             >
               Sentra Artificial Intelligence
             </a>
@@ -153,22 +156,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               href="https://ferdiiskandar.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#737373] hover:text-[#10B981] transition-colors"
+              className="text-[var(--text-muted)] hover:text-[var(--accent-med)] transition-colors"
             >
               dr. Ferdi Iskandar
             </a>
-          </div>
-        </div>
-
-        <div className="dash-credits-box">
-          <div className="dash-credits-text text-[14px]">
-            Dirancang dan dikembangkan oleh <span className="author">dr. Ferdi Iskandar</span>
-            <br />
-            Hak milik <span className="company">Sentra Artificial Intelligence</span>
-            <br />
-            <span className="rag italic opacity-60 text-[12px]">
-              &quot;Masterplan and masterpiece by Claudesy.&quot;
-            </span>
           </div>
         </div>
 
@@ -203,5 +194,5 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

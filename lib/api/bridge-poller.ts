@@ -18,14 +18,18 @@ import {
   reportFailed,
   reportProcessing,
 } from './bridge-client'
+import { AuthRequiredError, BridgeApiError } from './authed-fetch'
 
 const log = createLogger('BridgePoller', 'background')
 
 const ALARM_NAME = 'sentra-bridge-poll'
 const POLL_STALE_MS = 60_000 // 60s — if poll flag is stuck longer, force reset
+const MAX_BACKOFF_MS = 5 * 60_000 // 5 minutes max backoff
 let isPolling = false
 let pollStartedAt = 0
 let listenerRegistered = false
+let consecutiveNetworkErrors = 0
+let backoffUntilMs = 0
 
 export type BridgeTransferExecutor = (
   entryId: string,
@@ -103,8 +107,17 @@ async function pollOnce(): Promise<void> {
     isPolling = false
     return
   }
+  // Backoff: skip if we're in a cooldown window from repeated network errors
+  if (backoffUntilMs > Date.now()) {
+    const remaining = Math.ceil((backoffUntilMs - Date.now()) / 1000)
+    log.debug(`[BridgePoller] Backoff active — skipping poll (${remaining}s remaining)`)
+    isPolling = false
+    return
+  }
+
   try {
     const pending = await fetchPendingEntries()
+    consecutiveNetworkErrors = 0 // reset on success
     if (pending.length === 0) return
 
     log.debug(`[BridgePoller] Found ${pending.length} pending entries`)
@@ -113,7 +126,27 @@ async function pollOnce(): Promise<void> {
     const entry = pending[0]
     await processEntry(entry)
   } catch (error) {
-    log.error('[BridgePoller] Poll failed:', error)
+    const isAuthError =
+      error instanceof AuthRequiredError ||
+      (error instanceof BridgeApiError && (error.status === 401 || error.status === 403))
+
+    if (isAuthError) {
+      log.error(
+        '[BridgePoller] Auth error detected — stopping poller. Cek: Settings → Bridge Automation Token harus sama dengan CREW_ACCESS_AUTOMATION_TOKEN di Railway.'
+      )
+      await stopBridgePoller()
+    } else {
+      // Network / server error — apply exponential backoff
+      consecutiveNetworkErrors++
+      const config = await getBridgeConfig().catch(() => ({ pollIntervalMinutes: 0.5 }))
+      const baseMs = (config.pollIntervalMinutes || 0.5) * 60_000
+      const backoffMs = Math.min(baseMs * Math.pow(2, consecutiveNetworkErrors - 1), MAX_BACKOFF_MS)
+      backoffUntilMs = Date.now() + backoffMs
+      log.warn(
+        `[BridgePoller] Poll failed (attempt ${consecutiveNetworkErrors}) — backoff ${Math.round(backoffMs / 1000)}s:`,
+        error
+      )
+    }
   } finally {
     isPolling = false
   }

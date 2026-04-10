@@ -1,0 +1,267 @@
+{
+  "accessibility-audit": {
+    "category": "security",
+    "description": "Perform a comprehensive accessibility (a11y) audit for any stack",
+    "tags": ["a11y", "accessibility", "audit"]
+  },
+  "ai-agent": {
+    "category": "ai-tools",
+    "description": "Create AI agents with tools and capabilities",
+    "tags": ["ai", "agent", "llm"]
+  },
+  "antigravity": {
+    "category": "core",
+    "description": "Unified Operational Protocol (JET System J1-J9 / FR1-FR9)",
+    "tags": ["protocol", "jet", "execution"]
+  },
+  "api-docs": {
+    "category": "maintenance",
+    "description": "Generate and maintain API documentation",
+    "tags": ["api", "docs", "documentation"]
+  },
+  "architecture": {
+    "category": "development",
+    "description": "Design and document system architecture",
+    "tags": ["architecture", "design", "system"]
+  },
+  "auth-implementation": {
+    "category": "security",
+    "description": "Implement authentication and authorization flows",
+    "tags": ["auth", "security", "identity"]
+  },
+  "ci-cd": {
+    "category": "deployment",
+    "description": "Configure continuous integration and deployment pipelines",
+    "tags": ["ci", "cd", "devops"]
+  },
+  "cli-tool": {
+    "category": "maintenance",
+    "description": "Build and maintain command-line interface tools",
+    "tags": ["cli", "tooling", "terminal"]
+  },
+  "code-review-agent": {
+    "category": "ai-tools",
+    "description": "AI-powered code review and feedback",
+    "tags": ["ai", "review", "quality"]
+  },
+  "code-review": {
+    "category": "maintenance",
+    "description": "Standardized manual code review process",
+    "tags": ["review", "pr", "quality"]
+  },
+  "dashboard-ui": {
+    "category": "ui-ux",
+    "description": "Design and build dashboard user interfaces",
+    "tags": ["ui", "dashboard", "react"]
+  },
+  "db-migrate": {
+    "category": "database",
+    "description": "Manage database migrations and schema updates",
+    "tags": ["db", "migration", "sql"]
+  },
+  "db-schema": {
+    "category": "database",
+    "description": "Design and document database schemas",
+    "tags": ["db", "schema", "design"]
+  },
+  "db-seed": {
+    "category": "database",
+    "description": "Seed database with initial or test data",
+    "tags": ["db", "seed", "data"]
+  },
+  "debug-error": {
+    "category": "debugging",
+    "description": "Systematic debugging of runtime errors",
+    "tags": ["debug", "error", "fix"]
+  },
+  "debug-log": {
+    "category": "debugging",
+    "description": "Log analysis and debugging from traces",
+    "tags": ["debug", "logs", "analysis"]
+  },
+  "dependency-check": {
+    "category": "maintenance",
+    "description": "Audit and update project dependencies",
+    "tags": ["deps", "security", "update"]
+  },
+  "deploy": {
+    "category": "deployment",
+    "description": "Standard deployment process",
+    "tags": ["deploy", "release", "cloud"]
+  },
+  "design-system": {
+    "category": "ui-ux",
+    "description": "Manage and update project design system",
+    "tags": ["design", "ui", "tokens"]
+  },
+  "docker": {
+    "category": "deployment",
+    "description": "Containerize applications using Docker",
+    "tags": ["docker", "container", "devops"]
+  },
+  "e2e-test": {
+    "category": "testing",
+    "description": "Implement and run end-to-end tests",
+    "tags": ["test", "e2e", "qa"]
+  },
+  "email-template": {
+    "category": "development",
+    "description": "Design and implement HTML email templates",
+    "tags": ["email", "ui", "template"]
+  },
+  "env-config": {
+    "category": "maintenance",
+    "description": "Manage environment variables and configurations",
+    "tags": ["env", "config", "security"]
+  },
+  "font-expert": {
+    "category": "development",
+    "description": "Typography and font optimization expert",
+    "tags": ["font", "ui", "typography"]
+  },
+  "git-commit": {
+    "category": "git",
+    "description": "Conventional commit message generator",
+    "tags": ["git", "commit", "convention"]
+  },
+  "git-conflict": {
+    "category": "git",
+    "description": "Resolve complex git merge conflicts",
+    "tags": ["git", "conflict", "merge"]
+  },
+  "git-pr": {
+    "category": "git",
+    "description": "Create and manage pull requests",
+    "tags": ["git", "pr", "github"]
+  },
+  "git-rebase": {
+    "category": "git",
+    "description": "Manage safe git rebase operations",
+    "tags": ["git", "rebase", "history"]
+  },
+  "landing-page": {
+    "category": "ui-ux",
+    "description": "Build high-conversion landing pages",
+    "tags": ["ui", "marketing", "web"]
+  },
+  "library": {
+    "category": "development",
+    "description": "Build and publish shared libraries",
+    "tags": ["lib", "npm", "shared"]
+  },
+  "migrate": {
+    "category": "database",
+    "description": "System migration workflow",
+    "tags": ["migration", "system", "data"]
+  },
+  "new-api": {
+    "category": "development",
+    "description": "Scaffold and implement new API endpoints",
+    "tags": ["api", "backend", "scaffold"]
+  },
+  "new-component": {
+    "category": "development",
+    "description": "Create new UI components following patterns",
+    "tags": ["ui", "component", "react"]
+  },
+  "new-feature": {
+    "category": "development",
+    "description": "End-to-end new feature implementation",
+    "tags": ["feat", "development", "fullstack"]
+  },
+  "new-project": {
+    "category": "development",
+    "description": "Initialize new application or service",
+    "tags": ["init", "project", "scaffold"]
+  },
+  "nextjs-app": {
+    "category": "development",
+    "description": "Next.js 15+ application development",
+    "tags": ["nextjs", "react", "fullstack"]
+  },
+  "performance-optimalisation": {
+    "category": "performance",
+    "description": "Optimize application performance and bundle size",
+    "tags": ["perf", "optimize", "speed"]
+  },
+  "performance": {
+    "category": "performance",
+    "description": "Audit and improve runtime performance",
+    "tags": ["perf", "audit", "ux"]
+  },
+  "playwright-test": {
+    "category": "testing",
+    "description": "E2E testing with Playwright",
+    "tags": ["test", "playwright", "e2e"]
+  },
+  "prompt-engineering": {
+    "category": "ai-tools",
+    "description": "Expert level LLM prompt engineering",
+    "tags": ["ai", "prompt", "llm"]
+  },
+  "rag-pipeline": {
+    "category": "ai-tools",
+    "description": "Implement Retrieval Augmented Generation",
+    "tags": ["ai", "rag", "search"]
+  },
+  "railway-deploy": {
+    "category": "deployment",
+    "description": "Deploy applications to Railway",
+    "tags": ["deploy", "railway", "paas"]
+  },
+  "readme-generator": {
+    "category": "development",
+    "description": "Generate comprehensive README files",
+    "tags": ["docs", "readme", "github"]
+  },
+  "readme": {
+    "category": "development",
+    "description": "Maintain project README and documentation",
+    "tags": ["docs", "readme", "documentation"]
+  },
+  "refactor": {
+    "category": "maintenance",
+    "description": "Refactor code for clarity and maintainability",
+    "tags": ["refactor", "quality", "clean"]
+  },
+  "refactoring": {
+    "category": "maintenance",
+    "description": "Large scale codebase refactoring",
+    "tags": ["refactor", "migration", "technical-debt"]
+  },
+  "security-audit": {
+    "category": "security",
+    "description": "Perform comprehensive security audit",
+    "tags": ["security", "audit", "vuln"]
+  },
+  "strong-reasoning": {
+    "category": "ai-tools",
+    "description": "Advanced multi-step reasoning protocol",
+    "tags": ["reasoning", "ai", "planning"]
+  },
+  "test-coverage": {
+    "category": "testing",
+    "description": "Analyze and improve test coverage",
+    "tags": ["test", "coverage", "quality"]
+  },
+  "testing-best": {
+    "category": "testing",
+    "description": "General testing best practices",
+    "tags": ["test", "qa", "best-practices"]
+  },
+  "unit-test": {
+    "category": "testing",
+    "description": "Implement and run unit tests",
+    "tags": ["test", "unit", "vitest"]
+  },
+  "vercel-deploy": {
+    "category": "deployment",
+    "description": "Deploy applications to Vercel",
+    "tags": ["deploy", "vercel", "nextjs"]
+  },
+  "workflow-creator": {
+    "category": "core",
+    "description": "Create new stack-agnostic workflows",
+    "tags": ["workflow", "tooling", "generator"]
+  }
+}

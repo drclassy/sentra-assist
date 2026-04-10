@@ -9,7 +9,6 @@
     "**/*.test.tsx",
     "**/*.spec.ts",
     "**/*.spec.tsx",
-    "**/archieved/**",
     "**/.wxt/**",
     "**/.output/**"
   ],

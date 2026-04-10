@@ -175,6 +175,8 @@ function splitSymptomPhrases(text: string): string[] {
   const normalized = normalizeWhitespace(text)
     .replace(/\n+/g, ', ')
     .replace(/[;|/]+/g, ', ')
+    .replace(/\s+(disertai|dibarengi|dengan keluhan|keluhan lain berupa|keluhan penyerta berupa)\s+/gi, ', ')
+    .replace(/\s+serta\s+/gi, ', ')
     .replace(/\s+dan\s+/gi, ', ')
 
   const rawParts = normalized
@@ -194,6 +196,11 @@ function splitSymptomPhrases(text: string): string[] {
   return fallback ? [fallback] : []
 }
 
+function sanitizeClinicalFragment(value: string): string {
+  return normalizeWhitespace(value)
+    .replace(/^[,.\-:;]+|[,.\-:;]+$/g, '')
+}
+
 function toSentenceCase(value: string): string {
   if (!value) return value
   return value.charAt(0).toUpperCase() + value.slice(1)
@@ -206,17 +213,90 @@ function joinClinicalList(items: string[]): string {
   return `${items.slice(0, -1).join(', ')}, dan ${items[items.length - 1]}`
 }
 
-function buildFollowUpLine(missingFacts: string[]): string | null {
-  if (missingFacts.length === 0) return null
-  const uniqueFacts = Array.from(
-    new Set(
-      missingFacts.filter(
-        (fact) => fact !== 'durasi belum disebutkan' && fact !== 'onset/durasi belum jelas'
-      )
+function uniqueClinicalItems(items: Array<string | null | undefined>): string[] {
+  const unique: string[] = []
+  for (const item of items) {
+    const normalized = sanitizeClinicalFragment(item || '')
+    if (!normalized) continue
+    const duplicate = unique.some(
+      (existing) => existing.toLowerCase() === normalized.toLowerCase()
     )
-  ).slice(0, 2)
-  if (uniqueFacts.length === 0) return null
-  return `Perlu pendalaman anamnesis: ${joinClinicalList(uniqueFacts)}.`
+    if (!duplicate) unique.push(normalized)
+  }
+  return unique
+}
+
+function buildAssociatedSymptoms(
+  primaryComplaint: string,
+  fallbackSymptoms: string[],
+  extractedSymptoms?: string[]
+): string[] {
+  const source = extractedSymptoms && extractedSymptoms.length > 0 ? extractedSymptoms : fallbackSymptoms.slice(1)
+  return uniqueClinicalItems(source).filter(
+    (item) => item.toLowerCase() !== primaryComplaint.toLowerCase()
+  )
+}
+
+function buildOpeningLine(primaryComplaint: string, chronologySummary: string): string {
+  const complaint = primaryComplaint.toLowerCase() || 'keluhan belum terdefinisi'
+  if (chronologySummary) {
+    return `Pasien datang dengan keluhan utama ${complaint} ${chronologySummary.toLowerCase()}.`
+  }
+  return `Pasien datang dengan keluhan utama ${complaint} tanpa keterangan durasi yang jelas.`
+}
+
+function buildSymptomDetailsLine(
+  details: Array<string | null | undefined>,
+  prefix = 'Keluhan dirasakan'
+): string | null {
+  const cleaned = uniqueClinicalItems(details)
+  if (cleaned.length === 0) return null
+  return `${prefix} ${cleaned.join(', ')}.`
+}
+
+function buildAssociatedSymptomsLine(associatedSymptoms: string[]): string | null {
+  if (associatedSymptoms.length === 0) return null
+  return `Keluhan disertai ${joinClinicalList(associatedSymptoms).toLowerCase()}.`
+}
+
+function buildPertinentNegativeLine(pertinentNegatives?: string[]): string | null {
+  const cleaned = uniqueClinicalItems(pertinentNegatives || [])
+  if (cleaned.length === 0) return null
+  return `Saat anamnesis awal, pasien menyangkal ${joinClinicalList(cleaned).toLowerCase()}.`
+}
+
+function buildFunctionalImpactLine(
+  explicitImpact: string | null | undefined,
+  fallbackSymptoms: string[]
+): string | null {
+  const cleaned = sanitizeClinicalFragment(explicitImpact || '')
+  if (cleaned) {
+    return `Keluhan ini berdampak pada ${cleaned.toLowerCase()}.`
+  }
+
+  const inferredImpact = getSymptomImpact(fallbackSymptoms)
+  if (!inferredImpact) return null
+  return `Kondisi ini dirasakan ${inferredImpact}.`
+}
+
+function buildChronologySummary(
+  durationLabel: string,
+  explicitChronology?: string | null,
+  explicitOnset?: string | null
+): string {
+  const chronology = sanitizeClinicalFragment(explicitChronology || '')
+  if (chronology) return chronology
+
+  const onset = sanitizeClinicalFragment(explicitOnset || '')
+  if (onset) {
+    return onset.toLowerCase().startsWith('sejak') ? onset : `sejak ${onset}`
+  }
+
+  if (durationLabel) {
+    return durationLabel.startsWith('sejak') ? durationLabel : `sejak ${durationLabel}`
+  }
+
+  return ''
 }
 
 function formatVitalNumber(value: number | undefined, digits = 0): string {
@@ -334,6 +414,9 @@ export function composeAnamnesaDraft(input: ComposeAnamnesaInput): ComposedAnamn
   )
   const symptoms = splitSymptomPhrases(normalizedSymptomText)
   const duration = parseDuration(normalizedSymptomText)
+  const primaryComplaint = toSentenceCase(symptoms[0] || 'keluhan belum terdefinisi')
+  const chronologySummary = buildChronologySummary(duration.label)
+  const associatedSymptoms = buildAssociatedSymptoms(primaryComplaint, symptoms)
   const chiefComplaint = buildChiefComplaint(symptoms, duration.label)
   const chronicDiseases = (input.chronicDiseases || []).filter(Boolean)
   const allergies = (input.allergies || []).filter(Boolean)
@@ -359,17 +442,16 @@ export function composeAnamnesaDraft(input: ComposeAnamnesaInput): ComposedAnamn
 
   const sentences: string[] = []
 
-  // Sentences building for composeAnamnesaDraft
-  const onsetStr = duration.label ? `sejak ${duration.label.toLowerCase()}` : 'tanpa keterangan durasi yang jelas'
-  sentences.push(`Pasien datang dengan keluhan utama ${chiefComplaint.toLowerCase()} ${onsetStr}.`)
+  sentences.push(buildOpeningLine(primaryComplaint, chronologySummary))
 
-  const impact = getSymptomImpact(symptoms)
-  if (impact) {
-    sentences.push(`Kondisi ini dirasakan ${impact}.`)
+  const associatedSymptomsLine = buildAssociatedSymptomsLine(associatedSymptoms)
+  if (associatedSymptomsLine) {
+    sentences.push(associatedSymptomsLine)
   }
 
-  if (symptoms.length > 1) {
-    sentences.push(`Gejala penyerta meliputi ${joinClinicalList(symptoms)}.`)
+  const impactLine = buildFunctionalImpactLine(null, symptoms)
+  if (impactLine) {
+    sentences.push(impactLine)
   }
 
   const medicalHistory: string[] = []
@@ -401,7 +483,7 @@ export function composeAnamnesaDraft(input: ComposeAnamnesaInput): ComposedAnamn
   if (disabilityLine) sentences.push(disabilityLine)
   if (obesityLine) sentences.push(obesityLine)
 
-  const presentIllness = sentences.join(' ')
+  const presentIllness = sentences.filter(Boolean).join(' ')
   const riwayatPenyakit =
     chronicDiseases.length > 0 || specialConditions.length > 0
       ? {
@@ -489,6 +571,19 @@ export function composeAnamnesaDraftFromExtraction(
   )
   const symptoms = splitSymptomPhrases(normalizedSymptomText)
   const duration = parseDuration(normalizedSymptomText)
+  const primaryComplaint = toSentenceCase(
+    sanitizeClinicalFragment(extraction.keluhan_utama) || symptoms[0] || 'Keluhan belum terdefinisi'
+  )
+  const chronologySummary = buildChronologySummary(
+    duration.label,
+    extraction.chronology_summary,
+    extraction.onset
+  )
+  const associatedSymptoms = buildAssociatedSymptoms(
+    primaryComplaint,
+    symptoms,
+    extraction.associated_symptoms
+  )
   const chronicDiseases = (input.chronicDiseases || []).filter(Boolean)
   const allergies = (input.allergies || []).filter(Boolean)
   const specialConditions = (input.specialConditions || []).filter(Boolean)
@@ -504,26 +599,27 @@ export function composeAnamnesaDraftFromExtraction(
         : null
   const sentences: string[] = []
 
-  const durationStr = extraction.onset || duration.label
-  const onsetStr = durationStr ? `sejak ${durationStr.toLowerCase()}` : 'tanpa keterangan durasi yang jelas'
-  const utamaStr = (extraction.keluhan_utama || 'keluhan tidak spesifik').toLowerCase()
-  sentences.push(`Pasien datang dengan keluhan utama ${utamaStr} ${onsetStr}.`)
+  sentences.push(buildOpeningLine(primaryComplaint, chronologySummary))
 
-  const impact = getSymptomImpact(symptoms)
-  if (impact) {
-    sentences.push(`Kondisi ini dirasakan ${impact}.`)
+  const associatedSymptomsLine = buildAssociatedSymptomsLine(associatedSymptoms)
+  if (associatedSymptomsLine) {
+    sentences.push(associatedSymptomsLine)
   }
 
-  if (symptoms.length > 1) {
-    sentences.push(`Gejala penyerta meliputi ${joinClinicalList(symptoms)}.`)
+  const detailLine = buildSymptomDetailsLine([
+    extraction.lokasi ? `di area ${extraction.lokasi.toLowerCase()}` : null,
+    extraction.kualitas ? `dengan karakteristik ${extraction.kualitas.toLowerCase()}` : null,
+    typeof extraction.keparahan === 'number'
+      ? `dengan intensitas sekitar ${Math.round(extraction.keparahan)}/10`
+      : null,
+  ])
+  if (detailLine) {
+    sentences.push(detailLine)
   }
 
-  if (extraction.lokasi || extraction.kualitas || typeof extraction.keparahan === 'number') {
-    const details = []
-    if (extraction.lokasi) details.push(`di area ${extraction.lokasi.toLowerCase()}`)
-    if (extraction.kualitas) details.push(`dengan karakteristik ${extraction.kualitas.toLowerCase()}`)
-    if (typeof extraction.keparahan === 'number') details.push(`berskala nyeri ${Math.round(extraction.keparahan)}/10`)
-    sentences.push(`Kondisi ini dirasakan ${details.join(', ')}.`)
+  const impactLine = buildFunctionalImpactLine(extraction.functional_impact, symptoms)
+  if (impactLine) {
+    sentences.push(impactLine)
   }
 
   if (extraction.faktor_pemicu.length > 0 || extraction.faktor_peredam.length > 0) {
@@ -531,6 +627,11 @@ export function composeAnamnesaDraftFromExtraction(
     if (extraction.faktor_pemicu.length > 0) factors.push(`diperberat oleh ${joinClinicalList(extraction.faktor_pemicu)}`)
     if (extraction.faktor_peredam.length > 0) factors.push(`dapat diringankan dengan ${joinClinicalList(extraction.faktor_peredam)}`)
     sentences.push(`Keluhan cenderung ${factors.join(' dan ')}.`)
+  }
+
+  const pertinentNegativeLine = buildPertinentNegativeLine(extraction.pertinent_negatives)
+  if (pertinentNegativeLine) {
+    sentences.push(pertinentNegativeLine)
   }
 
   const medicalHistory: string[] = []
@@ -561,7 +662,7 @@ export function composeAnamnesaDraftFromExtraction(
   if (disabilityLine) sentences.push(disabilityLine)
   if (obesityLine) sentences.push(obesityLine)
 
-  const presentIllness = sentences.join(' ')
+  const presentIllness = sentences.filter(Boolean).join(' ')
   const extractionMissingFacts = createExtractionMissingFacts(extraction, duration.label)
 
   const riwayatPenyakit =
@@ -587,10 +688,10 @@ export function composeAnamnesaDraftFromExtraction(
         }
 
   return {
-    chiefComplaint: toSentenceCase(extraction.keluhan_utama || 'Keluhan belum terdefinisi'),
+    chiefComplaint: primaryComplaint,
     presentIllness,
     payload: {
-      keluhan_utama: toSentenceCase(extraction.keluhan_utama || 'Keluhan belum terdefinisi'),
+      keluhan_utama: primaryComplaint,
       keluhan_tambahan: presentIllness,
       lama_sakit: duration.lamaSakit,
       ...(input.patientGender === 'P' && typeof input.pregnancyStatus === 'boolean'

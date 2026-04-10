@@ -292,7 +292,7 @@ const createEmptyHistoryFlags = (): Record<string, boolean> =>
     {} as Record<string, boolean>
   );
 
-const AVAILABILITY_LABELS: Record<NonNullable<OnlineDoctor['availability_status']>, string> = {
+export const AVAILABILITY_LABELS: Record<NonNullable<OnlineDoctor['availability_status']>, string> = {
   online: 'ONLINE',
   busy: 'BUSY',
   away: 'AWAY',
@@ -311,7 +311,7 @@ const normalizeText = (value?: string): string => (value || '').trim().toLowerCa
 const HYBRID_AUTOTEXT_ENABLED = import.meta.env.VITE_ENABLE_HYBRID_AUTOTEXT !== 'false';
 const ttvLog = createLogger('TTVInferenceUI', 'content');
 
-const getDoctorInitials = (name: string): string =>
+export const getDoctorInitials = (name: string): string =>
   name
     .trim()
     .split(/\s+/)
@@ -319,7 +319,7 @@ const getDoctorInitials = (name: string): string =>
     .map((part) => part.charAt(0).toUpperCase())
     .join('');
 
-const formatLastSeenRelative = (iso?: string): string => {
+export const formatLastSeenRelative = (iso?: string): string => {
   if (!iso) return 'Tidak ada data aktivitas';
 
   const timestamp = new Date(iso).getTime();
@@ -335,7 +335,7 @@ const formatLastSeenRelative = (iso?: string): string => {
   return `Aktif ${Math.max(1, Math.floor(diffMs / (24 * 60 * 60_000)))} hari lalu`;
 };
 
-const toSafeAutoTextReason = (error: unknown, fallback: string): string => {
+export const toSafeAutoTextReason = (error: unknown, fallback: string): string => {
   const message = error instanceof Error ? error.message : fallback;
   const normalized = message.trim().toLowerCase();
   if (normalized.startsWith('<!doctype html') || normalized.startsWith('<html')) {
@@ -414,7 +414,7 @@ const formatPayerLabel = (
 
 const humanize = (value: string): string => value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
 
-const matchesPreferredPoli = (doctor: OnlineDoctor, keywords: string[]): boolean => {
+export const matchesPreferredPoli = (doctor: OnlineDoctor, keywords: string[]): boolean => {
   const poli = normalizeText(doctor.poli);
   if (!poli) {
     return false;
@@ -423,7 +423,7 @@ const matchesPreferredPoli = (doctor: OnlineDoctor, keywords: string[]): boolean
   return keywords.some((keyword) => poli.includes(keyword));
 };
 
-const matchesPreferredFacility = (doctor: OnlineDoctor, facilityName?: string): boolean => {
+export const matchesPreferredFacility = (doctor: OnlineDoctor, facilityName?: string): boolean => {
   const locationHint = normalizeText(facilityName);
   if (!locationHint) {
     return false;
@@ -2739,7 +2739,7 @@ export function TTVInferenceUI({
                   disabled={avpuLocked}
                   aria-label="Konfirmasi status AVPU"
                 >
-                  {avpuLocked ? '✓ Confirmed' : 'Confirmed'}
+                  {avpuLocked ? '✓' : 'OK'}
                 </button>
               </div>
             </div>

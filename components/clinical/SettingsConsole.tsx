@@ -1,9 +1,15 @@
 // Designed and constructed by Claudesy.
 
 import { getAuthConfig, probeApiBaseUrl, saveAuthConfig } from '@/lib/api/auth-client'
-import { getBridgeConfig, isBridgeReady, saveBridgeConfig } from '@/lib/api/bridge-client'
+import {
+  getBridgeConfig,
+  getBridgeRuntimeStatus,
+  saveBridgeConfig,
+  type BridgeRuntimeReadiness,
+} from '@/lib/api/bridge-client'
 import { Bell, Database, Moon, RotateCcw, Save, Settings, Shield, Wifi } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
+import { browser } from 'wxt/browser'
 
 interface SettingItem {
   id: string
@@ -50,6 +56,21 @@ const DEFAULT_SETTINGS: SettingItem[] = [
   },
 ]
 
+function getExtensionBuildInfo(): { version: string; buildLabel: string } {
+  try {
+    const manifest = browser.runtime.getManifest()
+    return {
+      version: manifest.version,
+      buildLabel: manifest.version_name?.trim() || 'Manifest build',
+    }
+  } catch {
+    return {
+      version: 'unknown',
+      buildLabel: 'Manifest unavailable',
+    }
+  }
+}
+
 function loadPersistedSettings(): {
   toggles: Record<string, boolean>
   workspaceUrl: string
@@ -64,6 +85,7 @@ function loadPersistedSettings(): {
 }
 
 export function SettingsConsole(): JSX.Element {
+  const buildInfo = getExtensionBuildInfo()
   const [settings, setSettings] = useState<SettingItem[]>(() => {
     const persisted = loadPersistedSettings()
     if (!persisted) return DEFAULT_SETTINGS
@@ -79,11 +101,11 @@ export function SettingsConsole(): JSX.Element {
   const [authBaseUrl, setAuthBaseUrl] = useState(DEFAULT_API_BASE_URL)
   const [automationToken, setAutomationToken] = useState('')
 
-  const [apiKey, setApiKey] = useState('••••••••••••••••')
   const [saved, setSaved] = useState(false)
-  const [bridgeRuntimeStatus, setBridgeRuntimeStatus] = useState<
-    'ready' | 'disabled' | 'auth_required' | 'error' | 'unknown'
-  >('unknown')
+  const [bridgeRuntimeStatus, setBridgeRuntimeStatus] = useState<BridgeRuntimeReadiness | 'unknown'>(
+    'unknown'
+  )
+  const [bridgeRuntimeMessage, setBridgeRuntimeMessage] = useState('Verifikasi server belum dijalankan.')
   const [apiProbeStatus, setApiProbeStatus] = useState<{
     tone: 'neutral' | 'success' | 'error'
     text: string
@@ -105,14 +127,12 @@ export function SettingsConsole(): JSX.Element {
         setSettings((prev) =>
           prev.map((item) => (item.id === 'bridge' ? { ...item, enabled: config.enabled } : item))
         )
-        if (!config.enabled) {
-          setBridgeRuntimeStatus('disabled')
-          return
-        }
-        const ready = await isBridgeReady()
-        setBridgeRuntimeStatus(ready ? 'ready' : 'auth_required')
+        const runtimeStatus = await getBridgeRuntimeStatus()
+        setBridgeRuntimeStatus(runtimeStatus.readiness)
+        setBridgeRuntimeMessage(runtimeStatus.message)
       } catch {
-        setBridgeRuntimeStatus('error')
+        setBridgeRuntimeStatus('server_error')
+        setBridgeRuntimeMessage('Verifikasi bridge gagal dijalankan.')
       }
     }
 
@@ -151,14 +171,12 @@ export function SettingsConsole(): JSX.Element {
         automationToken,
       })
       await saveBridgeConfig({ enabled: bridgeEnabled })
-      if (!bridgeEnabled) {
-        setBridgeRuntimeStatus('disabled')
-      } else {
-        const ready = await isBridgeReady()
-        setBridgeRuntimeStatus(ready ? 'ready' : 'auth_required')
-      }
+      const runtimeStatus = await getBridgeRuntimeStatus()
+      setBridgeRuntimeStatus(runtimeStatus.readiness)
+      setBridgeRuntimeMessage(runtimeStatus.message)
     } catch {
-      setBridgeRuntimeStatus('error')
+      setBridgeRuntimeStatus('server_error')
+      setBridgeRuntimeMessage('Bridge gagal disimpan atau diverifikasi.')
     }
 
     setSaved(true)
@@ -170,20 +188,17 @@ export function SettingsConsole(): JSX.Element {
     setWorkspaceUrl(DEFAULT_WORKSPACE_URL)
     setAuthBaseUrl(DEFAULT_API_BASE_URL)
     setAutomationToken('')
-    setApiKey('••••••••••••••••')
     localStorage.removeItem(STORAGE_KEY)
     try {
       await saveAuthConfig({ baseUrl: DEFAULT_API_BASE_URL, automationToken: '' })
       const bridgeEnabled = DEFAULT_SETTINGS.find((item) => item.id === 'bridge')?.enabled ?? true
       await saveBridgeConfig({ enabled: bridgeEnabled })
-      if (!bridgeEnabled) {
-        setBridgeRuntimeStatus('disabled')
-      } else {
-        const ready = await isBridgeReady()
-        setBridgeRuntimeStatus(ready ? 'ready' : 'auth_required')
-      }
+      const runtimeStatus = await getBridgeRuntimeStatus()
+      setBridgeRuntimeStatus(runtimeStatus.readiness)
+      setBridgeRuntimeMessage(runtimeStatus.message)
     } catch {
-      setBridgeRuntimeStatus('error')
+      setBridgeRuntimeStatus('server_error')
+      setBridgeRuntimeMessage('Reset bridge gagal diverifikasi.')
     }
     setApiProbeStatus({ tone: 'neutral', text: 'Belum dites' })
   }
@@ -203,10 +218,11 @@ export function SettingsConsole(): JSX.Element {
 
   const bridgeRuntimeStatusLabel: Record<typeof bridgeRuntimeStatus, string> = {
     unknown: 'Runtime: loading',
-    ready: 'Runtime: ready',
+    ready: 'Runtime: server verified',
     disabled: 'Runtime: disabled',
     auth_required: 'Runtime: auth required',
-    error: 'Runtime: error',
+    server_unreachable: 'Runtime: server unreachable',
+    server_error: 'Runtime: server error',
   }
 
   const settingIcons: Record<string, React.ReactNode> = {
@@ -223,51 +239,38 @@ export function SettingsConsole(): JSX.Element {
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
         <Settings className="w-4 h-4 text-[#6B9B8A]" />
-        <h2 className="text-sm font-semibold text-gray-200">Pengaturan</h2>
+        <h2 className="text-sm font-semibold text-[var(--text-main)]">Pengaturan</h2>
       </div>
 
       {/* Workspace Configuration */}
       <div className="space-y-3">
-        <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+        <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
           Workspace
         </label>
 
         <div className="space-y-2">
           <div className="space-y-1">
-            <label className="text-[10px] text-gray-500">ePuskesmas URL</label>
+            <label className="text-[10px] text-[var(--text-muted)]">ePuskesmas URL</label>
             <input
               type="text"
               value={workspaceUrl}
               onChange={(e) => setWorkspaceUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0F1012] rounded-lg text-xs text-gray-200
-                         shadow-[inset_2px_2px_4px_rgba(0,0,0,0.4),inset_-1px_-1px_2px_rgba(255,255,255,0.02)]
-                         border-none outline-none placeholder:text-gray-600
+              className="w-full px-3 py-2 bg-[var(--neu-inset-bg)] rounded-lg text-xs text-[var(--text-main)]
+                         shadow-light-soft-inset
+                         border border-[var(--sentra-border)] outline-none placeholder:text-[var(--text-muted)]
                          focus:ring-1 focus:ring-[#6B9B8A]/30 transition-all"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] text-gray-500">API Key</label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0F1012] rounded-lg text-xs text-gray-200
-                         shadow-[inset_2px_2px_4px_rgba(0,0,0,0.4),inset_-1px_-1px_2px_rgba(255,255,255,0.02)]
-                         border-none outline-none placeholder:text-gray-600
-                         focus:ring-1 focus:ring-[#6B9B8A]/30 transition-all"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] text-gray-500">Crew API Base URL</label>
+            <label className="text-[10px] text-[var(--text-muted)]">Crew API Base URL</label>
             <input
               type="text"
               value={authBaseUrl}
               onChange={(e) => setAuthBaseUrl(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0F1012] rounded-lg text-xs text-gray-200
-                         shadow-[inset_2px_2px_4px_rgba(0,0,0,0.4),inset_-1px_-1px_2px_rgba(255,255,255,0.02)]
-                         border-none outline-none placeholder:text-gray-600
+              className="w-full px-3 py-2 bg-[var(--neu-inset-bg)] rounded-lg text-xs text-[var(--text-main)]
+                         shadow-light-soft-inset
+                         border border-[var(--sentra-border)] outline-none placeholder:text-[var(--text-muted)]
                          focus:ring-1 focus:ring-[#6B9B8A]/30 transition-all"
               placeholder="https://crew.example.com"
             />
@@ -275,9 +278,9 @@ export function SettingsConsole(): JSX.Element {
               <button
                 onClick={() => void handleTestApiBaseUrl()}
                 disabled={isApiProbeLoading}
-                className="px-2.5 py-1.5 bg-[#0F1012] rounded-md text-[10px] text-gray-300
-                           shadow-[3px_3px_6px_rgba(0,0,0,0.5),-1px_-1px_3px_rgba(255,255,255,0.03)]
-                           hover:text-white transition-all duration-200 disabled:opacity-50"
+                className="px-2.5 py-1.5 bg-[var(--neu-inset-bg)] rounded-md text-[10px] text-[var(--text-main)]
+                           shadow-light-soft border border-[var(--sentra-border)]
+                           hover:text-[var(--accent-med)] transition-all duration-200 disabled:opacity-50"
               >
                 {isApiProbeLoading ? 'Testing...' : 'Test API'}
               </button>
@@ -287,7 +290,7 @@ export function SettingsConsole(): JSX.Element {
                     ? 'text-[#6B9B8A]'
                     : apiProbeStatus.tone === 'error'
                       ? 'text-[#ef4444]'
-                      : 'text-gray-500'
+                      : 'text-[var(--text-muted)]'
                 }`}
               >
                 {apiProbeStatus.text}
@@ -296,18 +299,18 @@ export function SettingsConsole(): JSX.Element {
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] text-gray-500">Bridge Automation Token</label>
+            <label className="text-[10px] text-[var(--text-muted)]">Bridge Automation Token</label>
             <input
               type="password"
               value={automationToken}
               onChange={(e) => setAutomationToken(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0F1012] rounded-lg text-xs text-gray-200
-                         shadow-[inset_2px_2px_4px_rgba(0,0,0,0.4),inset_-1px_-1px_2px_rgba(255,255,255,0.02)]
-                         border-none outline-none placeholder:text-gray-600
+              className="w-full px-3 py-2 bg-[var(--neu-inset-bg)] rounded-lg text-xs text-[var(--text-main)]
+                         shadow-light-soft-inset
+                         border border-[var(--sentra-border)] outline-none placeholder:text-[var(--text-muted)]
                          focus:ring-1 focus:ring-[#6B9B8A]/30 transition-all"
               placeholder="Harus sama dengan CREW_ACCESS_AUTOMATION_TOKEN di dashboard"
             />
-            <p className="text-[10px] text-gray-500">
+            <p className="text-[10px] text-[var(--text-muted)]">
               Dipakai untuk `bridge`, `consult`, dan canonical engine tanpa refresh token login.
             </p>
           </div>
@@ -316,35 +319,38 @@ export function SettingsConsole(): JSX.Element {
 
       {/* Toggle Settings */}
       <div className="space-y-2">
-        <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+        <label className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wide">
           Features
         </label>
         <div className="space-y-2">
           {settings.map((setting) => (
             <div
               key={setting.id}
-              className="flex items-center justify-between p-2.5 bg-[#0F1012] rounded-lg
-                         shadow-[3px_3px_6px_rgba(0,0,0,0.5),-1px_-1px_3px_rgba(255,255,255,0.03)]
-                         hover:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.4),inset_-1px_-1px_2px_rgba(255,255,255,0.02)]
+              className="flex items-center justify-between p-2.5 bg-[var(--neu-inset-bg)] rounded-lg
+                         border border-[var(--sentra-border)] shadow-light-soft
+                         hover:shadow-light-soft-inset
                          transition-all duration-200"
             >
               <div className="flex items-center gap-2.5">
-                <div className="text-gray-500">{settingIcons[setting.id]}</div>
+                <div className="text-[var(--text-muted)]">{settingIcons[setting.id]}</div>
                 <div>
-                  <span className="text-xs text-gray-300 block">{setting.label}</span>
-                  <span className="text-[10px] text-gray-500">{setting.description}</span>
+                  <span className="text-xs text-[var(--text-main)] block">{setting.label}</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">{setting.description}</span>
                   {setting.id === 'bridge' ? (
-                    <span className="text-[10px] text-[#6B9B8A]">
-                      {bridgeRuntimeStatusLabel[bridgeRuntimeStatus]}
-                    </span>
+                    <>
+                      <span className="text-[10px] text-[#6B9B8A]">
+                        {bridgeRuntimeStatusLabel[bridgeRuntimeStatus]}
+                      </span>
+                      <span className="block text-[10px] text-[var(--text-muted)]">{bridgeRuntimeMessage}</span>
+                    </>
                   ) : null}
                 </div>
               </div>
               <button
                 onClick={() => toggleSetting(setting.id)}
                 className={`relative w-9 h-5 rounded-full transition-colors duration-200
-                           ${setting.enabled ? 'bg-[#6B9B8A]' : 'bg-gray-700'}
-                           shadow-[inset_2px_2px_4px_rgba(0,0,0,0.3)]`}
+                           ${setting.enabled ? 'bg-[#6B9B8A]' : 'bg-[var(--alum-dark)]'}
+                           shadow-light-soft-inset`}
               >
                 <div
                   className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md
@@ -363,23 +369,23 @@ export function SettingsConsole(): JSX.Element {
         <button
           onClick={handleSave}
           className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-medium
-                     shadow-[3px_3px_6px_rgba(0,0,0,0.5),-1px_-1px_3px_rgba(255,255,255,0.03)]
+                     border border-[var(--sentra-border)] shadow-light-soft
                      transition-all duration-200
                      ${
                        saved
-                         ? 'bg-[#6B9B8A]/20 text-[#6B9B8A] shadow-[0_0_10px_rgba(16,185,129,0.3)]'
-                         : 'bg-[#0F1012] text-gray-300 hover:text-white hover:shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                         ? 'bg-[#6B9B8A]/20 text-[#6B9B8A] shadow-glow-green-soft'
+                         : 'bg-[var(--neu-inset-bg)] text-[var(--text-main)] hover:text-[var(--accent-med)] hover:shadow-glow-green-soft'
                      }`}
         >
           <Save className="w-3.5 h-3.5" />
           {saved ? 'Saved!' : 'Save Settings'}
         </button>
         <button
-          onClick={handleReset}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0F1012] rounded-lg
-                     text-xs font-medium text-gray-400
-                     shadow-[3px_3px_6px_rgba(0,0,0,0.5),-1px_-1px_3px_rgba(255,255,255,0.03)]
-                     hover:text-gray-200 hover:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.4),inset_-1px_-1px_2px_rgba(255,255,255,0.02)]
+          onClick={() => void handleReset()}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--neu-inset-bg)] rounded-lg
+                     text-xs font-medium text-[var(--text-muted)]
+                     border border-[var(--sentra-border)] shadow-light-soft
+                     hover:text-[var(--text-main)] hover:shadow-light-soft-inset
                      transition-all duration-200"
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -387,10 +393,10 @@ export function SettingsConsole(): JSX.Element {
       </div>
 
       {/* Version Info */}
-      <div className="mt-auto pt-3 border-t border-[#1a1a1a]">
-        <div className="flex items-center justify-between text-[10px] text-gray-500">
-          <span>Sentra Assist v2.1.0</span>
-          <span>Build 2024.12.15</span>
+      <div className="mt-auto pt-3 border-t border-[var(--sentra-border)]">
+        <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)]">
+          <span>{`Sentra Assist v${buildInfo.version}`}</span>
+          <span>{buildInfo.buildLabel}</span>
         </div>
       </div>
     </div>

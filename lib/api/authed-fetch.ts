@@ -3,8 +3,8 @@
 // Reads token from auth-store, handles refresh at point-of-use.
 
 import { createLogger } from '~/utils/logger';
-import { getAuthConfig } from './auth-client';
-import { clearSession, getSession, storeSession, type AuthSession } from './auth-store';
+import { getAuthConfig, getStoredSession } from './auth-client';
+import { clearSession, storeSession, type AuthSession } from './auth-store';
 
 const log = createLogger('AuthedFetch', 'background');
 const COOKIE_SESSION_ACCESS_TOKEN = 'cookie-session';
@@ -133,7 +133,7 @@ async function refreshTokenIfNeeded(session: AuthSession): Promise<string> {
 
 async function doRefresh(session: AuthSession): Promise<string> {
   // Re-read — another context may have refreshed already
-  const current = await getSession();
+  const current = await getStoredSession();
   if (current && current.tokens.expiresAt > Date.now() + 60_000) {
     return current.tokens.accessToken;
   }
@@ -183,7 +183,7 @@ type BridgeAuthContext =
     };
 
 async function resolveBridgeAuthContext(): Promise<BridgeAuthContext> {
-  const session = await getSession();
+  const session = await getStoredSession();
   const config = await getAuthConfig();
   const baseUrl = (session?.serverBaseUrl || config.baseUrl).replace(/\/$/, '');
   const automationToken = config.automationToken.trim();
@@ -231,16 +231,12 @@ export async function authedFetch<T>(path: string, options: RequestInit = {}): P
   const timeoutId = setTimeout(() => controller.abort(), 30_000);
 
   try {
-    const sessionHeaders =
+    const sessionHeaders: Record<string, string> =
       authContext.mode === 'automation-token'
-        ? {
-            'X-Crew-Access-Token': authContext.token,
-          }
+        ? { 'X-Crew-Access-Token': authContext.token }
         : isCookieBackedSession(authContext.session)
           ? {}
-          : {
-              'X-Crew-Access-Token': await refreshTokenIfNeeded(authContext.session),
-            };
+          : { 'X-Crew-Access-Token': await refreshTokenIfNeeded(authContext.session) };
 
     response = await fetch(url, {
       ...options,

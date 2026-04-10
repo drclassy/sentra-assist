@@ -874,34 +874,39 @@ export default defineBackground(() => {
           return
         }
 
-        syncPatientToDashboard(
-          buildPatientSyncPayload({
-            patient: {
-              name: (scrapedDemo?.nama as string) || fullEncounter.patient_id || 'Unknown',
-              age: (scrapedDemo?.umur as number) || 0,
-              gender: ((scrapedDemo?.jenis_kelamin as string) === 'P' ? 'P' : 'L') as 'L' | 'P',
-              rm: patientRm,
-              noBpjs: (scrapedDemo?.no_bpjs as string) || undefined,
-              isPregnant: fullEncounter.anamnesa?.is_pregnant,
-            },
-            vitals: {
-              sbp: scrapedVitals?.tekanan_darah_sistolik,
-              dbp: scrapedVitals?.tekanan_darah_diastolik,
-              hr: scrapedVitals?.nadi,
-              rr: scrapedVitals?.respirasi,
-              temp: scrapedVitals?.suhu,
-              glucose: scrapedVitals?.gula_darah,
-            },
-            narrative: {
-              keluhan_utama: fullEncounter.anamnesa?.keluhan_utama || '',
-              keluhan_tambahan: fullEncounter.anamnesa?.keluhan_tambahan || '',
-            },
-            medicalHistory: fullEncounter.anamnesa?.riwayat_penyakit
-              ? [fullEncounter.anamnesa.riwayat_penyakit]
-              : undefined,
-          })
-        ).catch((err) => {
-          bgLog.error('[Background] Failed to sync patient to Dashboard:', err)
+        const syncPayload = buildPatientSyncPayload({
+          patient: {
+            name: (scrapedDemo?.nama as string) || fullEncounter.patient_id || 'Unknown',
+            age: (scrapedDemo?.umur as number) || 0,
+            gender: ((scrapedDemo?.jenis_kelamin as string) === 'P' ? 'P' : 'L') as 'L' | 'P',
+            rm: patientRm,
+            noBpjs: (scrapedDemo?.no_bpjs as string) || undefined,
+            isPregnant: fullEncounter.anamnesa?.is_pregnant,
+          },
+          vitals: {
+            sbp: scrapedVitals?.tekanan_darah_sistolik,
+            dbp: scrapedVitals?.tekanan_darah_diastolik,
+            hr: scrapedVitals?.nadi,
+            rr: scrapedVitals?.respirasi,
+            temp: scrapedVitals?.suhu,
+            glucose: scrapedVitals?.gula_darah,
+          },
+          narrative: {
+            keluhan_utama: fullEncounter.anamnesa?.keluhan_utama || '',
+            keluhan_tambahan: fullEncounter.anamnesa?.keluhan_tambahan || '',
+          },
+          medicalHistory: fullEncounter.anamnesa?.riwayat_penyakit
+            ? [fullEncounter.anamnesa.riwayat_penyakit]
+            : undefined,
+        })
+
+        const syncResult = await syncPatientToDashboard(syncPayload)
+        // Relay result to side panel so UI can show feedback
+        browser.runtime.sendMessage({
+          type: 'BRIDGE_SYNC_RESULT',
+          data: { ok: syncResult.ok, error: syncResult.error, id: syncResult.id },
+        }).catch(() => {
+          // Panel may not be open — safe to ignore
         })
       }
     }

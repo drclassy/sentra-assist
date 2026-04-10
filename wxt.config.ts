@@ -1,15 +1,16 @@
 // Designed and constructed by Claudesy.
-import { defineConfig } from 'wxt'
+import { defineConfig } from 'wxt';
 
 export default defineConfig({
   outDir: '.output',
   outDirTemplate: 'chrome-mv3-dev',
   entrypointsDir: 'entrypoints',
   manifest: {
-    name: 'Ghost Protocols — Iskandar Diagnosis Engine V1',
+    name: 'Sentra Assist 2.1',
+    version_name: 'Sentra Assist 2.1 — Clinical Decision Support',
     description:
-      'Sentra Assist delivers trustworthy clinical decision support for ePuskesmas with safer diagnosis workflows, smarter medication guidance, and doctor-first efficiency.',
-    version: '1.0.5',
+      'AI-powered clinical decision support for primary care physicians. ICD-10 diagnosis workflows, smart vital screening, automatic drug interaction checks, and seamless ePuskesmas integration — safe, accurate, and efficient.',
+    version: '2.1.0',
     icons: {
       16: 'icon/16.png',
       32: 'icon/32.png',
@@ -26,8 +27,9 @@ export default defineConfig({
       'http://localhost:*/*',
     ],
     action: {
-      default_title: 'Open Ghost Protocols',
-      default_popup: 'login.html',
+      default_title: 'Sentra Assist',
+      // Jangan set default_popup: klik ikon harus membuka side panel (sidepanel.html),
+      // bukan popup login — itu bundle terpisah sehingga "bypass login" di sidepanel tidak terlihat.
       default_icon: {
         16: 'icon/16.png',
         32: 'icon/32.png',
@@ -59,4 +61,4 @@ export default defineConfig({
       chunkSizeWarningLimit: 2000,
     },
   }),
-})
+});

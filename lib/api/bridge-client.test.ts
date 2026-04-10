@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CANONICAL_CLINICAL_ENGINE_OUTPUT_SCHEMA,
   CANONICAL_DIFFERENTIAL_OUTPUT_SCHEMA,
+  BRIDGE_AUTH_REQUIRED_HINT,
   filterDoctorsForDisplay,
+  getBridgeRuntimeStatus,
+  getOnlineDoctors,
   isAnamnesisExtractionResult,
   isBridgeReady,
   isCanonicalClinicalEngineOutput,
@@ -11,16 +14,25 @@ import {
 } from './bridge-client';
 
 const browserStorageGet = vi.fn();
+const fetchMock = vi.fn();
+
+const sessionStorageGet = vi.fn().mockResolvedValue({});
+
+function getErrorText(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
 
 beforeEach(() => {
   browserStorageGet.mockReset();
+  fetchMock.mockReset();
+  sessionStorageGet.mockReset().mockResolvedValue({});
   (
     globalThis as typeof globalThis & {
       browser?: {
         storage: {
-          local: {
-            get: typeof browserStorageGet;
-          };
+          local: { get: typeof browserStorageGet };
+          session: Record<string, ReturnType<typeof vi.fn>>;
         };
       };
     }
@@ -29,8 +41,14 @@ beforeEach(() => {
       local: {
         get: browserStorageGet,
       },
+      session: {
+        get: sessionStorageGet,
+        set: vi.fn().mockResolvedValue(undefined),
+        remove: vi.fn().mockResolvedValue(undefined),
+      },
     },
   };
+  globalThis.fetch = fetchMock as typeof fetch;
 });
 
 function isUUIDv4(str: string): boolean {
@@ -249,6 +267,7 @@ describe('bridge readiness guard', () => {
     });
 
     await expect(isBridgeReady()).resolves.toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('returns true when bridge is enabled and cookie-backed dashboard session exists', async () => {
@@ -279,13 +298,28 @@ describe('bridge readiness guard', () => {
             tokens: {
               accessToken: 'cookie-session',
               refreshToken: 'cookie-session',
-              expiresAt: Date.now() + 5 * 60_000,
+              expiresAt: Date.now() + 10 * 60_000,
             },
             serverBaseUrl: 'https://crew.puskesmasbalowerti.com',
           },
         };
       }
       return {};
+    });
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.endsWith('/api/auth/session')) {
+        return new Response(JSON.stringify({ ok: true, user: { username: 'perawat' } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      return new Response(JSON.stringify({ ok: true, doctors: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
     });
 
     await expect(isBridgeReady()).resolves.toBe(true);
@@ -306,8 +340,120 @@ describe('bridge readiness guard', () => {
       }
       return {};
     });
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, doctors: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
 
     await expect(isBridgeReady()).resolves.toBe(true);
+  });
+
+  it('returns false when auth exists but protected server probe fails', async () => {
+    browserStorageGet.mockImplementation(async (key: string) => {
+      if (key === 'sentra:bridge-config') {
+        return { 'sentra:bridge-config': { enabled: true, pollIntervalMinutes: 0.5 } };
+      }
+      if (key === 'sentra:auth-config') {
+        return {
+          'sentra:auth-config': {
+            baseUrl: 'https://crew.puskesmasbalowerti.com',
+            automationToken: 'token-crew-valid',
+          },
+        };
+      }
+      return {};
+    });
+    fetchMock.mockRejectedValue(
+      new Error('Tidak dapat terhubung ke server. Periksa koneksi internet.')
+    );
+
+    await expect(isBridgeReady()).resolves.toBe(false);
+  });
+});
+
+describe('bridge runtime status', () => {
+  it('returns auth_required when bridge has no valid auth source', async () => {
+    browserStorageGet.mockImplementation(async (key: string) => {
+      if (key === 'sentra:bridge-config') {
+        return { 'sentra:bridge-config': { enabled: true, pollIntervalMinutes: 0.5 } };
+      }
+      if (key === 'sentra:auth-config') {
+        return {
+          'sentra:auth-config': {
+            baseUrl: 'https://crew.puskesmasbalowerti.com',
+            automationToken: '',
+          },
+        };
+      }
+      return {};
+    });
+
+    await expect(getBridgeRuntimeStatus()).resolves.toMatchObject({
+      readiness: 'auth_required',
+      authSource: 'none',
+      serverReachable: false,
+      serverAuthorized: false,
+      message: BRIDGE_AUTH_REQUIRED_HINT,
+    });
+  });
+
+  it('returns server_unreachable when protected probe cannot reach the server', async () => {
+    browserStorageGet.mockImplementation(async (key: string) => {
+      if (key === 'sentra:bridge-config') {
+        return { 'sentra:bridge-config': { enabled: true, pollIntervalMinutes: 0.5 } };
+      }
+      if (key === 'sentra:auth-config') {
+        return {
+          'sentra:auth-config': {
+            baseUrl: 'https://crew.puskesmasbalowerti.com',
+            automationToken: 'token-crew-valid',
+          },
+        };
+      }
+      return {};
+    });
+    fetchMock.mockRejectedValue(
+      new Error('Tidak dapat terhubung ke server. Periksa koneksi internet.')
+    );
+
+    await expect(getBridgeRuntimeStatus()).resolves.toMatchObject({
+      readiness: 'server_unreachable',
+      authSource: 'automation-token',
+      serverReachable: false,
+      serverAuthorized: false,
+    });
+  });
+});
+
+describe('doctor loading must be server-backed', () => {
+  it('throws auth hint instead of returning fallback doctors when bridge auth is missing', async () => {
+    browserStorageGet.mockImplementation(async (key: string) => {
+      if (key === 'sentra:auth-config') {
+        return {
+          'sentra:auth-config': {
+            baseUrl: 'https://crew.puskesmasbalowerti.com',
+            automationToken: '',
+          },
+        };
+      }
+      if (key === 'sentra:bridge-config') {
+        return { 'sentra:bridge-config': { enabled: true, pollIntervalMinutes: 0.5 } };
+      }
+      return {};
+    });
+
+    let caughtError: unknown;
+    try {
+      await getOnlineDoctors();
+    } catch (e) {
+      caughtError = e;
+    }
+    expect(caughtError).toBeDefined();
+    expect(caughtError).toBeInstanceOf(Error);
+    expect(getErrorText(caughtError)).toBe(BRIDGE_AUTH_REQUIRED_HINT);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

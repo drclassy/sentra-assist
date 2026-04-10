@@ -1,0 +1,18 @@
+# Memory Rules
+
+## Operational Execution Protocol (JET System)
+
+### **Definitions:**
+- **JET (Justified):** Fase di mana riset selesai, referensi telah dipelajari, dan rencana eksekusi telah disintesis. AI menyatakan "JET" untuk mengonfirmasi kesiapan kognitif.
+- **GO (Execute):** Instruksi eksplisit dari Chief untuk memulai tindakan fisik/modifikasi pada sistem.
+
+### **Tahapan Wajib:**
+1. **Research Phase:** Kumpulkan update & best practices.
+2. **Synthesis Phase:** Sajikan Brief Notes & Rencana Eksekusi.
+3. **Checkpoint:** Nyatakan kesiapan dengan **"JET?"**.
+4. **Execution Gate:** Dilarang eksekusi sebelum ada perintah **"GO"**.
+
+## User Preferences
+- Panggilan: **Chief in Command**.
+- Bahasa: Bahasa Indonesia Profesional/Akademik.
+- Lokasi Kerja Utama: `C:\Users\claud\.gemini\`.

@@ -41,8 +41,11 @@ describe('composeAnamnesaDraft', () => {
     })
 
     expect(result.payload.keluhan_utama).toBe('Pusing, mual, dan lemas sejak 2 hari')
+    expect(result.payload.keluhan_tambahan).toContain(
+      'Pasien datang dengan keluhan utama pusing sejak 2 hari.'
+    )
+    expect(result.payload.keluhan_tambahan).toContain('Keluhan disertai mual dan lemas.')
     expect(result.payload.lama_sakit).toEqual({ thn: 0, bln: 0, hr: 2 })
-    expect(result.payload.keluhan_tambahan).toContain('sejak 2 hari')
     expect(result.payload.keluhan_tambahan).toContain('alergi terhadap Debu dan Obat')
     expect(result.payload.keluhan_tambahan).toContain('berstatus tidak hamil')
     expect(result.payload.keluhan_tambahan).toContain('Risiko kehamilan: KSPR rendah')
@@ -121,6 +124,9 @@ describe('hybrid autotext helpers', () => {
         keparahan: 6,
         faktor_pemicu: ['bergerak'],
         faktor_peredam: ['istirahat'],
+        associated_symptoms: ['mual', 'nafsu makan turun'],
+        pertinent_negatives: ['muntah proyektil', 'perdarahan'],
+        functional_impact: 'aktivitas harian dan mobilisasi',
         data_belum_lengkap: ['faktor_peredam'],
       },
       {
@@ -135,9 +141,21 @@ describe('hybrid autotext helpers', () => {
     )
 
     expect(result.payload.keluhan_utama).toBe('Nyeri perut kanan bawah')
+    expect(result.payload.keluhan_tambahan).toContain(
+      'Pasien datang dengan keluhan utama nyeri perut kanan bawah sejak kemarin.'
+    )
+    expect(result.payload.keluhan_tambahan).toContain(
+      'Keluhan disertai mual dan nafsu makan turun.'
+    )
     expect(result.payload.keluhan_tambahan).toContain('di area perut kanan bawah')
     expect(result.payload.keluhan_tambahan).toContain('dengan karakteristik tertusuk')
-    expect(result.payload.keluhan_tambahan).toContain('berskala nyeri 6/10')
+    expect(result.payload.keluhan_tambahan).toContain('dengan intensitas sekitar 6/10')
+    expect(result.payload.keluhan_tambahan).toContain(
+      'Keluhan ini berdampak pada aktivitas harian dan mobilisasi.'
+    )
+    expect(result.payload.keluhan_tambahan).toContain(
+      'Saat anamnesis awal, pasien menyangkal muntah proyektil dan perdarahan.'
+    )
     expect(result.metadata.missingFacts).toContain('faktor peredam belum disebutkan')
   })
 
@@ -165,14 +183,29 @@ describe('hybrid autotext helpers', () => {
       },
     })
 
-    expect(result.payload.keluhan_utama).toBe('Sakit kepala mual sejak 3 hari')
+    expect(result.payload.keluhan_utama).toBe('Sakit kepala dan mual sejak 3 hari')
+    expect(result.payload.keluhan_tambahan).toContain(
+      'Pasien datang dengan keluhan utama sakit kepala sejak 3 hari.'
+    )
+    expect(result.payload.keluhan_tambahan).toContain('Keluhan disertai mual.')
     expect(result.payload.keluhan_tambahan).toContain(
       'Pemeriksaan tanda vital menunjukkan TD 150/95 mmHg, nadi 98 x/menit.'
     )
-    expect(result.payload.keluhan_tambahan).toContain('sejak 3 hari')
     expect(result.payload.keluhan_tambahan).toContain('alergi terhadap penisilin')
     expect(result.payload.keluhan_tambahan).not.toContain('Perlu pendalaman anamnesis')
     expect(result.payload.keluhan_tambahan).not.toContain('Preset:')
     expect(countSentences(result.payload.keluhan_tambahan)).toBeLessThanOrEqual(6)
+  })
+
+  it('does not repeat duration twice in the drafted narrative', () => {
+    const result = composeAnamnesaDraft({
+      symptomText: 'demam, batuk sejak 2 hari',
+      patientGender: 'L',
+    })
+
+    expect(result.payload.keluhan_tambahan).toContain(
+      'Pasien datang dengan keluhan utama demam sejak 2 hari.'
+    )
+    expect(result.payload.keluhan_tambahan).not.toContain('sejak 2 hari sejak 2 hari')
   })
 })

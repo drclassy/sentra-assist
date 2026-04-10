@@ -2,16 +2,16 @@
 // Integrates design from page1-login.html + page2-dashboard.html
 // Backend Auth Integration
 
-import { AuthClient, type AuthUser } from '@/lib/api/auth-client'
-import { createLogger } from '@/utils/logger'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import ReactDOM from 'react-dom/client'
-import { browser } from 'wxt/browser'
-import './style.css'
+import { AuthClient, type AuthUser } from '@/lib/api/auth-client';
+import { createLogger } from '@/utils/logger';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom/client';
+import { browser } from 'wxt/browser';
+import './style.css';
 
 // Audio file path
-const LOGIN_SOUND_PATH = 'assets/sounds/hello.mp3'
-const loginLog = createLogger('LoginMain', 'global')
+const LOGIN_SOUND_PATH = 'assets/sounds/hello.mp3';
+const loginLog = createLogger('LoginMain', 'global');
 
 // Inline Logo component - most reliable method
 const LogoSentra: React.FC<{ className?: string }> = ({ className }) => (
@@ -29,17 +29,17 @@ const LogoSentra: React.FC<{ className?: string }> = ({ className }) => (
       SENTRA ARTIFICIAL INTELLIGENCE
     </text>
   </svg>
-)
+);
 
 // ============================================================================
 // TYPES
 // ============================================================================
-type LoginState = 'login' | 'dashboard' | 'loading'
+type LoginState = 'login' | 'dashboard' | 'loading';
 
 interface EngineConfig {
-  id: string
-  label: string
-  active?: boolean
+  id: string;
+  label: string;
+  active?: boolean;
 }
 
 // ============================================================================
@@ -49,44 +49,47 @@ const ENGINES: EngineConfig[] = [
   { id: 'clinical', label: 'Clinical Assist', active: true },
   { id: 'diagnostic', label: 'Diagnostic Assist' },
   { id: 'therapy', label: 'Therapy Assist' },
-]
+];
 
 // ============================================================================
 // AUDIO HOOK
 // ============================================================================
 const useAudio = () => {
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     // Preload audio with proper extension URL
-    const url = browser.runtime.getURL(LOGIN_SOUND_PATH)
-    audioRef.current = new Audio(url)
-    audioRef.current.preload = 'auto'
-    audioRef.current.volume = 0.7
+    // WXT's PublicPath only covers HTML entry points; sound assets are valid at runtime
+    const url = browser.runtime.getURL(
+      LOGIN_SOUND_PATH as unknown as Parameters<typeof browser.runtime.getURL>[0]
+    );
+    audioRef.current = new Audio(url);
+    audioRef.current.preload = 'auto';
+    audioRef.current.volume = 0.7;
 
     return () => {
       if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
+        audioRef.current.pause();
+        audioRef.current = null;
       }
-    }
-  }, [])
+    };
+  }, []);
 
   const play = useCallback(() => {
     if (audioRef.current) {
       // Reset to start and play
-      audioRef.current.currentTime = 0
-      const playPromise = audioRef.current.play()
+      audioRef.current.currentTime = 0;
+      const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => {
-          loginLog.warn('Audio play failed', err)
-        })
+          loginLog.warn('Audio play failed', err);
+        });
       }
     }
-  }, [])
+  }, []);
 
-  return { play }
-}
+  return { play };
+};
 
 // ============================================================================
 // POWER BUTTON ICON
@@ -102,26 +105,26 @@ const PowerIcon: React.FC<{ className?: string }> = ({ className }) => (
   >
     <path d="M12 2v8M8 6a8 8 0 1 0 8 0" />
   </svg>
-)
+);
 
 // ============================================================================
 // LOGIN PAGE COMPONENT
 // ============================================================================
 const LoginPage: React.FC<{ onLogin: (user: AuthUser) => void }> = ({ onLogin }) => {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const { play: playOpeningSound } = useAudio()
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { play: playOpeningSound } = useAudio();
 
   const handleSubmit = useCallback(async () => {
-    if (!username.trim() || !password.trim()) return
-    setIsLoading(true)
-    const result = await AuthClient.login({ username: username.trim(), password: password.trim() })
-    setIsLoading(false)
-    if (!result.success) return
-    playOpeningSound()
-    setTimeout(() => onLogin(result.session!.user), 400)
-  }, [username, password, onLogin, playOpeningSound])
+    if (!username.trim() || !password) return;
+    setIsLoading(true);
+    const result = await AuthClient.login({ username: username.trim(), password });
+    setIsLoading(false);
+    if (!result.success) return;
+    playOpeningSound();
+    setTimeout(() => onLogin(result.session!.user), 400);
+  }, [username, password, onLogin, playOpeningSound]);
 
   return (
     <div className="login-container">
@@ -156,14 +159,14 @@ const LoginPage: React.FC<{ onLogin: (user: AuthUser) => void }> = ({ onLogin })
         <PowerIcon />
       </button>
     </div>
-  )
-}
+  );
+};
 
 const DashboardPage: React.FC<{ user: AuthUser; onLogout: () => void }> = ({ user, onLogout }) => {
-  const [activeEngine, setActiveEngine] = useState('clinical')
+  const [activeEngine, setActiveEngine] = useState('clinical');
   const handleLaunch = () => {
-    window.location.href = '/sidepanel.html'
-  }
+    window.location.href = '/sidepanel.html';
+  };
 
   return (
     <div className="dashboard-container">
@@ -173,7 +176,10 @@ const DashboardPage: React.FC<{ user: AuthUser; onLogout: () => void }> = ({ use
         <div className="text-subtitle mt-4">
           {user.name} • {user.facilityName}
         </div>
-        <div className="dashboard-mantra mt-6 mb-2 text-mono opacity-30" style={{ fontSize: '8px', letterSpacing: '0.4em' }}>
+        <div
+          className="dashboard-mantra mt-6 mb-2 text-mono opacity-30"
+          style={{ fontSize: '8px', letterSpacing: '0.4em' }}
+        >
           DIAGNOSA | TERAPI | REPEAT
         </div>
       </div>
@@ -193,26 +199,44 @@ const DashboardPage: React.FC<{ user: AuthUser; onLogout: () => void }> = ({ use
       <div className="system-stats-grid">
         <div className="stat-item">
           <div className="text-mono stat-value">24ms</div>
-          <div className="text-subtitle opacity-40" style={{ fontSize: '7px' }}>Latency</div>
+          <div className="text-subtitle opacity-40" style={{ fontSize: '7px' }}>
+            Latency
+          </div>
         </div>
         <div className="stat-item">
           <div className="text-mono stat-value">AES-256</div>
-          <div className="text-subtitle opacity-40" style={{ fontSize: '7px' }}>Security</div>
+          <div className="text-subtitle opacity-40" style={{ fontSize: '7px' }}>
+            Security
+          </div>
         </div>
         <div className="stat-item">
           <div className="text-mono stat-value">Active</div>
-          <div className="text-subtitle opacity-40" style={{ fontSize: '7px' }}>Neural Core</div>
+          <div className="text-subtitle opacity-40" style={{ fontSize: '7px' }}>
+            Neural Core
+          </div>
         </div>
       </div>
 
       <div className="dashboard-links-section">
-        <div className="text-subtitle opacity-40 mb-2" style={{ fontSize: '7px' }}>Kunjungi kami di sini</div>
+        <div className="text-subtitle opacity-40 mb-2" style={{ fontSize: '7px' }}>
+          Kunjungi kami di sini
+        </div>
         <div className="flex items-center justify-center gap-3 text-[10px] tracking-wide">
-          <a href="https://sentrahai.com/" target="_blank" rel="noopener noreferrer" className="hover:text-[#10B981] transition-colors">
+          <a
+            href="https://sentrahai.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[#10B981] transition-colors"
+          >
             Sentra Artificial Intelligence
           </a>
           <span className="opacity-20">|</span>
-          <a href="https://ferdiiskandar.com/" target="_blank" rel="noopener noreferrer" className="hover:text-[#10B981] transition-colors">
+          <a
+            href="https://ferdiiskandar.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[#10B981] transition-colors"
+          >
             dr. Ferdi Iskandar
           </a>
         </div>
@@ -300,45 +324,45 @@ const DashboardPage: React.FC<{ user: AuthUser; onLogout: () => void }> = ({ use
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // ============================================================================
 // MAIN APP COMPONENT
 // ============================================================================
 const App: React.FC = () => {
-  const [loginState, setLoginState] = useState<LoginState>('loading')
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
+  const [loginState, setLoginState] = useState<LoginState>('loading');
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
 
   // Check if already logged in
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const session = await AuthClient.getStoredSession()
+        const session = await AuthClient.getStoredSession();
         if (session) {
-          setCurrentUser(session.user)
-          setLoginState('dashboard')
+          setCurrentUser(session.user);
+          setLoginState('dashboard');
         } else {
-          setLoginState('login')
+          setLoginState('login');
         }
       } catch {
-        setLoginState('login')
+        setLoginState('login');
       }
-    }
+    };
 
-    checkAuth()
-  }, [])
+    checkAuth();
+  }, []);
 
   const handleLogin = useCallback(async (user: AuthUser) => {
-    setCurrentUser(user)
-    setLoginState('dashboard')
-  }, [])
+    setCurrentUser(user);
+    setLoginState('dashboard');
+  }, []);
 
   const handleLogout = useCallback(async () => {
-    await AuthClient.logout()
-    setCurrentUser(null)
-    setLoginState('login')
-  }, [])
+    await AuthClient.logout();
+    setCurrentUser(null);
+    setLoginState('login');
+  }, []);
 
   if (loginState === 'loading') {
     return (
@@ -346,28 +370,28 @@ const App: React.FC = () => {
         <div className="loading-spinner" />
         <span>Initializing...</span>
       </div>
-    )
+    );
   }
 
   if (loginState === 'login') {
-    return <LoginPage onLogin={handleLogin} />
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   return currentUser ? (
     <DashboardPage user={currentUser} onLogout={handleLogout} />
   ) : (
     <LoginPage onLogin={handleLogin} />
-  )
-}
+  );
+};
 
 // ============================================================================
 // MOUNT
 // ============================================================================
-const rootEl = document.getElementById('root')
+const rootEl = document.getElementById('root');
 if (rootEl) {
   ReactDOM.createRoot(rootEl).render(
     <React.StrictMode>
       <App />
     </React.StrictMode>
-  )
+  );
 }

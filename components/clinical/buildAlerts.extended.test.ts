@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildAlerts } from './TTVInferenceUI';
 import type { HistoricalBP } from '@/lib/emergency-detector/occult-shock-detector';
+import type { DisabilityType, ObesityConfirmation } from '@/lib/clinical/autosen-types';
 
 // Helper: build a minimal TTVStateShape (all strings, empty by default)
 function makeState(overrides: Partial<{
@@ -10,7 +11,7 @@ function makeState(overrides: Partial<{
   return {
     sbp: '', dbp: '', hr: '', rr: '', temp: '', spo2: '', glucose: '',
     symptomText: '', allergies: [], pregnancyStatus: null,
-    disabilityType: '', obesityConfirmation: '', autosenPreset: 'adl' as const,
+    disabilityType: '' as DisabilityType, obesityConfirmation: '' as ObesityConfirmation, autosenPreset: 'adl' as const,
     avpu: 'A' as const, supplemental_o2: false, pain_score: '',
     ...overrides,
   };

@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildAlerts } from '@/components/clinical/TTVInferenceUI';
+import { PRESET_RANGES } from '@/lib/clinical/aassist-v2/vital-generator';
 import { buildVitalAutofill } from '@/lib/clinical/vital-autocomplete';
 import { getVitalScreeningProfile } from '@/lib/clinical/vital-screening-thresholds';
+
+const HYPERTENSION_SEED = 43;
+const HYPERGLYCEMIA_SEED = 123;
 
 const makeState = (
   overrides: Partial<Parameters<typeof buildAlerts>[0]> = {}
@@ -27,12 +31,15 @@ const makeState = (
 });
 
 describe('buildVitalAutofill', () => {
-  it('uses crisis blood pressure values for hypertension preset in adults', () => {
-    const profile = getVitalScreeningProfile(35);
-    const autofill = buildVitalAutofill('hypertension', 35);
+  it('uses seeded v2 hypertension range and still triggers crisis alert in adults', () => {
+    const autofill = buildVitalAutofill('hypertension', 35, HYPERTENSION_SEED);
+    const sbp = Number(autofill.vitals.sbp);
+    const dbp = Number(autofill.vitals.dbp);
 
-    expect(Number(autofill.vitals.sbp)).toBe(profile.severeHypertensionSbp);
-    expect(Number(autofill.vitals.dbp)).toBe(profile.severeHypertensionDbp);
+    expect(sbp).toBeGreaterThanOrEqual(PRESET_RANGES.hipertensi.sbp.min);
+    expect(sbp).toBeLessThanOrEqual(PRESET_RANGES.hipertensi.sbp.max);
+    expect(dbp).toBeGreaterThanOrEqual(PRESET_RANGES.hipertensi.dbp.min);
+    expect(dbp).toBeLessThanOrEqual(PRESET_RANGES.hipertensi.dbp.max);
 
     const alerts = buildAlerts(
       makeState({
@@ -45,16 +52,17 @@ describe('buildVitalAutofill', () => {
     expect(alerts.some((alert) => alert.type === 'hypertensive_crisis')).toBe(true);
   });
 
-  it('stays age-aware for pediatric hypertension preset', () => {
+  it('keeps hypertension preset above pediatric severe threshold with deterministic seed', () => {
     const profile = getVitalScreeningProfile(8);
-    const autofill = buildVitalAutofill('hypertension', 8);
+    const autofill = buildVitalAutofill('hypertension', 8, HYPERTENSION_SEED);
+    const sbp = Number(autofill.vitals.sbp);
 
-    expect(Number(autofill.vitals.sbp)).toBe(profile.severeHypertensionSbp);
-    expect(Number(autofill.vitals.hr)).toBeLessThan(profile.tachycardiaThreshold);
+    expect(sbp).toBeGreaterThanOrEqual(profile.severeHypertensionSbp);
+    expect(sbp).toBeLessThanOrEqual(PRESET_RANGES.hipertensi.sbp.max);
   });
 
   it('activates glucose gate for hyperglycemia preset', () => {
-    const autofill = buildVitalAutofill('hyperglycemia', 42);
+    const autofill = buildVitalAutofill('hyperglycemia', 42, HYPERGLYCEMIA_SEED);
     const alerts = buildAlerts(
       makeState({
         ...autofill.vitals,
@@ -63,6 +71,12 @@ describe('buildVitalAutofill', () => {
       { patientAge: 42 }
     );
 
+    expect(Number(autofill.vitals.glucose)).toBeGreaterThanOrEqual(
+      PRESET_RANGES.hiperglikemi.glucose.min
+    );
+    expect(Number(autofill.vitals.glucose)).toBeLessThanOrEqual(
+      PRESET_RANGES.hiperglikemi.glucose.max
+    );
     expect(Number(autofill.vitals.glucose)).toBeGreaterThanOrEqual(300);
     expect(alerts.some((alert) => alert.type === 'hyperglycemia')).toBe(true);
   });

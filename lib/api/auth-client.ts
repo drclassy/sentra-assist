@@ -69,13 +69,6 @@ const DEFAULT_CONFIG: AuthConfig = {
   automationToken: '',
 };
 
-function isCookieBackedSession(session: AuthSession): boolean {
-  return (
-    session.tokens.accessToken === COOKIE_SESSION_ACCESS_TOKEN &&
-    session.tokens.refreshToken === COOKIE_SESSION_REFRESH_TOKEN
-  );
-}
-
 function isSyntheticLocalSession(session: AuthSession): boolean {
   const accessToken = session.tokens.accessToken;
   return (
@@ -83,25 +76,6 @@ function isSyntheticLocalSession(session: AuthSession): boolean {
     accessToken.startsWith('offline-token-') ||
     accessToken.startsWith('fallback-token-')
   );
-}
-
-async function verifyDashboardSession(session: AuthSession): Promise<boolean> {
-  try {
-    const response = await fetch(`${session.serverBaseUrl.replace(/\/$/, '')}/api/auth/session`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-    });
-
-    if (!response.ok) {
-      return false;
-    }
-
-    const data = (await response.json()) as DashboardSessionResponse;
-    return Boolean(data.ok && data.user);
-  } catch {
-    return false;
-  }
 }
 
 // ============================================================================
@@ -254,7 +228,10 @@ function normalizeRole(role: unknown): AuthUser['role'] {
 }
 
 function toExpiryTimestamp(expiresAt: string | number | undefined): number {
-  if (typeof expiresAt === 'number' && Number.isFinite(expiresAt)) return expiresAt;
+  if (typeof expiresAt === 'number' && Number.isFinite(expiresAt)) {
+    // Unix seconds (< 1e10) → convert to ms. Already-ms values pass through.
+    return expiresAt < 1e10 ? expiresAt * 1000 : expiresAt;
+  }
   if (typeof expiresAt === 'string') {
     const parsed = Date.parse(expiresAt);
     if (!Number.isNaN(parsed)) return parsed;

@@ -3,6 +3,7 @@
 const { fontFamily } = require('tailwindcss/defaultTheme')
 
 module.exports = {
+  darkMode: 'class',
   content: ['./entrypoints/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
@@ -58,6 +59,19 @@ module.exports = {
           silver: '#737373',
           medical: '#10B981',
         },
+        /*
+         * Light mode — dark theme "diterangi": surface naik ~2 stop,
+         * teks dan aksen tetap. Bukan putih — tetap gelap, cuma lebih terang.
+         */
+        light: {
+          background: '#111314',
+          'background-darker': '#151719',
+          text: '#FCF8F0',
+          'text-muted': '#7A7A7A',
+          'highlight-soft': 'rgba(255, 255, 255, 0.08)',
+          'shadow-soft': 'rgba(0, 0, 0, 0.25)',
+          primary: '#7AB8A4',
+        },
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif', ...fontFamily.sans],
@@ -66,28 +80,14 @@ module.exports = {
         inter: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       boxShadow: {
-        // Realistic Carbon Shadows - Multi-layer depth
-        carbon:
-          '0 1px 1px rgba(0,0,0,0.3), 0 2px 2px rgba(0,0,0,0.25), 0 4px 4px rgba(0,0,0,0.2), 0 8px 8px rgba(0,0,0,0.15), 0 16px 16px rgba(0,0,0,0.1)',
-        'carbon-sm':
-          '0 1px 1px rgba(0,0,0,0.25), 0 2px 2px rgba(0,0,0,0.2), 0 4px 4px rgba(0,0,0,0.15)',
-        'carbon-lg':
-          '0 2px 2px rgba(0,0,0,0.3), 0 4px 4px rgba(0,0,0,0.25), 0 8px 8px rgba(0,0,0,0.2), 0 16px 16px rgba(0,0,0,0.15), 0 32px 32px rgba(0,0,0,0.1)',
-        'carbon-inset': 'inset 0 2px 4px rgba(0,0,0,0.4), inset 0 -1px 2px rgba(255,255,255,0.03)',
-        'carbon-pressed':
-          'inset 0 3px 6px rgba(0,0,0,0.5), inset 0 -1px 1px rgba(255,255,255,0.02)',
-        highlight: 'inset 0 1px 0 rgba(255,255,255,0.05)',
-        'glow-pulse': '0 0 20px rgba(255,69,0,0.4), 0 0 40px rgba(255,69,0,0.2)',
-        // Neumorphic Shadows - Exact Specifications
-        'neu-btn': '3px 3px 6px rgba(0,0,0,0.5), -1px -1px 3px rgba(255,255,255,0.03)',
-        'neu-btn-hover': '4px 4px 8px rgba(0,0,0,0.6), -1px -1px 3px rgba(255,255,255,0.05)',
-        'neu-btn-active': 'inset 2px 2px 4px rgba(0,0,0,0.4), inset -1px -1px 2px rgba(255,255,255,0.02)',
-        'neu-input': 'inset 2px 2px 4px rgba(0,0,0,0.4), inset -1px -1px 2px rgba(255,255,255,0.02)',
-        'neu-inset': 'inset 2px 2px 4px rgba(0,0,0,0.4), inset -1px -1px 2px rgba(255,255,255,0.02)',
+        // ... (existing shadows)
         'neu-card': '0 0 0 1px rgba(255,255,255,0.05), 0 20px 40px -10px rgba(0,0,0,0.8)',
         'glow-green': '0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.3)',
         'glow-green-soft': '0 0 12px rgba(16, 185, 129, 0.2)',
         'top-glow': 'inset 0 1px 0 rgba(255,255,255,0.08)',
+        /* Elevasi light — tetap gelap, shadow lebih lembut dari dark */
+        'light-soft': '0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 14px rgba(0, 0, 0, 0.15)',
+        'light-soft-inset': 'inset 0 1px 2px rgba(0, 0, 0, 0.18)',
       },
       borderColor: {
         glow: 'rgba(255, 255, 255, 0.12)',
@@ -95,22 +95,17 @@ module.exports = {
         medical: '#10B981',
       },
       backgroundImage: {
-        // Ghost Protocols carbon gradients
-        'carbon-surface': 'linear-gradient(145deg, #22222a 0%, #1a1b1c 100%)',
-        'carbon-card': 'linear-gradient(155deg, #24242a 0%, #202026 100%)',
-        'carbon-raised': 'linear-gradient(145deg, #2a2a32 0%, #22222a 100%)',
-        'carbon-pressed': 'linear-gradient(145deg, #1a1b1c 0%, #16161a 100%)',
-        'pulse-gradient': 'linear-gradient(135deg, #ff4500 0%, #ff5722 50%, #e53935 100%)',
-        'highlight-edge': 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 50%)',
-        // Sentra Dark Theme Gradients
-        'sentra-radial': 'radial-gradient(ellipse at center top, rgba(20, 20, 25, 0.8) 0%, transparent 70%)',
+        // ... (existing gradients)
         'sentra-card': 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 10%)',
+        /* Hampir flat: beda nilai minimal supaya tidak terlihat “dicat gradien” */
+        'light-gradient': 'linear-gradient(180deg, #191B1F 0%, #151719 100%)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         float: 'float 6s ease-in-out infinite',
         'pulse-green': 'pulse-green 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'fade-in': 'fade-in 0.2s ease-out',
+        'theme-reveal': 'theme-reveal 0.8s cubic-bezier(0.22, 1, 0.36, 1)',
       },
       keyframes: {
         float: {
@@ -124,6 +119,10 @@ module.exports = {
         'fade-in': {
           '0%': { opacity: '0', transform: 'translateY(4px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'theme-reveal': {
+          '0%': { 'clip-path': 'circle(0% at 95% 5%)' },
+          '100%': { 'clip-path': 'circle(150% at 95% 5%)' },
         },
       },
     },

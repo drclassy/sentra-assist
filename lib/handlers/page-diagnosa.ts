@@ -1397,38 +1397,3 @@ function scrapeDoctorNurseNames(): { dokter: string | null; perawat: string | nu
   }
 }
 
-/**
- * Try to find pre-filled doctor name in the diagnosis form itself
- */
-function findPrefilledDoctorName(): string | null {
-  const dokterInputs = Array.from(
-    document.querySelectorAll(
-      'input[name*="dokter"], input[placeholder*="dokter"], input[placeholder*="Dokter"]'
-    )
-  )
-  for (const input of dokterInputs) {
-    if (input instanceof HTMLInputElement && input.value && input.value.trim()) {
-      const sanitized = sanitizeStaffName(input.value)
-      if (sanitized) return sanitized
-    }
-  }
-  return null
-}
-
-/**
- * Try to find pre-filled nurse name in the diagnosis form itself
- */
-function findPrefilledNurseName(): string | null {
-  const perawatInputs = Array.from(
-    document.querySelectorAll(
-      'input[name*="perawat"], input[name*="bidan"], input[placeholder*="perawat"], input[placeholder*="Perawat"], input[placeholder*="bidan"], input[placeholder*="Bidan"]'
-    )
-  )
-  for (const input of perawatInputs) {
-    if (input instanceof HTMLInputElement && input.value && input.value.trim()) {
-      const sanitized = sanitizeStaffName(input.value)
-      if (sanitized) return sanitized
-    }
-  }
-  return null
-}

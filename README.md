@@ -471,7 +471,7 @@ Sentra Assist is dual-licensed. See [LICENSE](LICENSE) for full terms.
 | Puskesmas / clinic / hospital deployment | Enterprise license required |
 | Vendor / integrator / government program | Enterprise license required |
 
-Commercial licensing: [sentra-dfi.com](https://sentra-dfi.com)
+Commercial licensing: [sentra-dfi.com](https://sentrahai.com)
 
 ---
 

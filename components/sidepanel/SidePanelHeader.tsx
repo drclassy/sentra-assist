@@ -36,7 +36,6 @@ interface SidePanelHeaderProps {
   isLoadingPatient?: boolean
   demographicStatus?: ShellStatus
   historyStatus?: ShellStatus
-  bootMode?: boolean
   doctorOnlineCount?: number
   onInitialisasi?: () => void
 }
@@ -56,7 +55,6 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
   onRefreshPatient,
   isLoadingPatient = false,
   demographicStatus = 'standby',
-  bootMode = false,
   doctorOnlineCount = 0,
   onInitialisasi,
 }) => {

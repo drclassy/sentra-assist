@@ -1,5 +1,13 @@
 # ADR-001: Direct RME Extraction First
 
+## Metadata
+
+- **Decision Date**: 2026-03-15
+- **Decision Maker**: Chief / Claudesy
+- **Review Date**: 2026-06-15
+- **Status**: Implemented
+- **Related ADRs**: ADR-004
+
 ## Status
 
 Accepted
@@ -40,3 +48,17 @@ Prioritas:
 - `Risiko Kehamilan`
 - `Riwayat Alergi`
 - `Status Kehamilan`
+
+## Alternatives Considered
+
+### 1. Pure table-based extraction
+
+Ditolak karena tabel RME memiliki variasi DOM yang tinggi dan sering tidak konsisten antar faskes.
+
+### 2. Full AI-based DOM parsing
+
+Ditolak karena latensi tinggi dan biaya Vertex AI untuk setiap scraping operation.
+
+### 3. Hybrid regex-first approach
+
+Ditolak karena regex rentan terhadap perubahan label lokal dan format regional.

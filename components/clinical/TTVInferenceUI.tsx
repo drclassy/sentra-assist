@@ -1,5 +1,5 @@
 // Designed and constructed by Claudesy.
-import { TextEffect } from '@/components/ui/text-effect';
+import { TextEffect } from '@/components/ui/TextEffect';
 import {
   BRIDGE_AUTH_REQUIRED_HINT,
   evaluateCanonicalClinicalEngine,

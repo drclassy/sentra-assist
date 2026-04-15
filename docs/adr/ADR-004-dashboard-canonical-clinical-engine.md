@@ -1,8 +1,16 @@
 # ADR-004: Dashboard as Canonical Clinical Engine
 
-Status: Accepted
+## Metadata
 
-Tanggal: 2026-04-06
+- **Decision Date**: 2026-04-06
+- **Decision Maker**: Chief / Claudesy
+- **Review Date**: 2026-07-06
+- **Status**: Implemented
+- **Related ADRs**: ADR-001, ADR-002, ADR-003
+
+## Status
+
+Accepted
 
 ## Context
 

@@ -193,6 +193,99 @@ pnpm --filter @the-abyss/sentra-assist format
 
 ---
 
+## 9. Onboarding New Team Members
+
+Welcome to Sentra Assist. Follow this checklist to get up to speed:
+
+1. **Read Documentation in Order:**
+   - `README.md`
+   - `AGENTS.md`
+   - `CODING_STANDARD.md`
+   - `docs/architecture/`
+   - `docs/adr/`
+
+2. **Set Up Local Development Environment:**
+   - Install Node.js ≥22 and pnpm ≥9
+   - Run `pnpm install`
+   - Copy `.env.example` to `.env.local`
+   - Load the unpacked extension in Chrome
+
+3. **Complete First Contribution:**
+   - Pick a `good first issue` or small bug fix
+   - Follow the JET Workflow Protocol (§3)
+   - Request code review from a senior team member
+
+4. **Participate in Code Review:**
+   - Review at least one PR before merging your own
+   - Understand the Pre-PR Checklist (§8)
+
+---
+
+## 10. Emergency Procedures
+
+If you encounter a **critical issue** (production outage, data breach, patient safety concern, or security vulnerability):
+
+1. **Stop all changes** immediately. Do not commit or push.
+2. **Document the issue** in `.agent/HANDOFF.md` with:
+   - What happened
+   - When it happened
+   - Impact assessment
+   - Steps taken so far
+3. **Contact the Primary Contact:** Chief / Claudesy (Project Owner)
+4. **Escalation Path:**
+   - Level 1: Chief / Claudesy
+   - Level 2: Sentra (Principal Infrastructure Engineer)
+   - Level 3: Healthcare compliance officer (for PHI/PHI issues)
+5. **Do not attempt a fix alone** for Class C issues (security/PHI/infrastructure).
+
+---
+
+## 11. Tool Usage Guidelines
+
+### IDE & Editor
+
+- Use VS Code with the recommended extensions (see `.vscode/extensions.json` if present).
+- Enable Format on Save with Prettier.
+- Use the TypeScript strict language server.
+
+### Git
+
+- Commit early, commit often.
+- Use Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`).
+- Always include the commit trailer: `Agent: Claude · Phase: Execution · Handoff: [session-id]`.
+- Never commit `.env.local`, secrets, or patient data.
+
+### Debugging
+
+- Use `VITE_DEBUG=true` for verbose logging during development.
+- Use Chrome DevTools for background script and content script debugging.
+- Use `console.warn` and `console.error` sparingly; prefer `createLogger()` from `~/utils/logger`.
+
+### AI Assistants
+
+- All AI-generated code must be reviewed before commit.
+- Never ask AI to generate or refactor code that handles PHI/PHI without human oversight.
+- AI must follow JET Protocol for all non-trivial tasks.
+
+---
+
+## 12. Code Review Checklist
+
+Reviewers must verify the following before approving a PR:
+
+- [ ] **Functionality:** The code does what it claims to do.
+- [ ] **Type Safety:** No `any` types; strict TypeScript compliance.
+- [ ] **Error Handling:** No silent catch blocks; all errors are logged or re-thrown.
+- [ ] **Security:** No secrets, credentials, or PHI/PHI in the diff.
+- [ ] **Testing:** New code has corresponding tests; all tests pass.
+- [ ] **Performance:** No obvious N+1 queries or unnecessary re-renders.
+- [ ] **Accessibility:** Interactive elements are keyboard-accessible and have proper ARIA attributes.
+- [ ] **Documentation:** Public APIs have JSDoc comments; ADRs are updated for architectural changes.
+- [ ] **Style:** Follows Prettier and ESLint rules; imports are grouped correctly.
+- [ ] **WXT Safety:** `wxt.config.ts` was not modified without explicit Chief approval.
+
+---
+
 ## 8. Pre-PR Checklist
 
 - [ ] `test`, `test:contract`, `lint`, `typecheck` all pass

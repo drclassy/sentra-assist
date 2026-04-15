@@ -1,5 +1,13 @@
 # ADR-003: Forward to Doctor via Crew Dashboard
 
+## Metadata
+
+- **Decision Date**: 2026-03-25
+- **Decision Maker**: Chief / Claudesy
+- **Review Date**: 2026-06-25
+- **Status**: Implemented
+- **Related ADRs**: ADR-004
+
 ## Status
 
 Accepted
@@ -46,3 +54,17 @@ UI harus menjelaskan ranking dengan marker ringan:
 
 - kualitas ranking bergantung pada metadata dokter dari server
 - UX online doctor tetap tergantung freshness heartbeat server
+
+## Alternatives Considered
+
+### 1. Built-in real-time chat in sidepanel
+
+Ditolak karena akan membuat extension terlalu kompleks dan sulit diaudit.
+
+### 2. Third-party messaging integration
+
+Ditolak karena menambah dependency eksternal dan risiko keamanan data pasien.
+
+### 3. Static doctor list without ranking
+
+Ditolak karena UX buruk — dokter yang tidak tersedia atau tidak relevan akan muncul di daftar.

@@ -23,14 +23,14 @@
     "quality": "npm run typecheck && npm run lint && npm run test",
     "docs:generate": "typedoc",
     "docs:serve": "npx http-server ./docs/api -p 8080 -o",
-    "docs:auto": "node scripts/auto-document.js",
-    "docs:auto:lib": "node scripts/auto-document.js lib",
-    "docs:auto:utils": "node scripts/auto-document.js utils",
-    "docs:auto:components": "node scripts/auto-document.js components",
-    "docs:all": "node scripts/docs-all.js",
-    "commit": "node scripts/auto-commit.js",
-    "commit:push": "node scripts/auto-commit.js push",
-    "commit:watch": "node scripts/auto-commit.js watch"
+    "docs:auto": "node scripts/dev/auto-document.js",
+    "docs:auto:lib": "node scripts/dev/auto-document.js lib",
+    "docs:auto:utils": "node scripts/dev/auto-document.js utils",
+    "docs:auto:components": "node scripts/dev/auto-document.js components",
+    "docs:all": "node scripts/dev/docs-all.js",
+    "commit": "node scripts/dev/auto-commit.js",
+    "commit:push": "node scripts/dev/auto-commit.js push",
+    "commit:watch": "node scripts/dev/auto-commit.js watch"
   },
   "keywords": [],
   "author": "",
@@ -89,7 +89,9 @@
       "rollup@>=4.0.0 <4.59.0": "4.59.0",
       "esbuild@<0.25.0": "0.25.12",
       "markdown-it@<14.1.1": "14.1.1",
-      "ajv@>=6.0.0 <6.14.0": "6.14.0"
+      "ajv@>=6.0.0 <6.14.0": "6.14.0",
+      "vite": "6.0.7",
+      "@vitejs/plugin-react": "4.3.4"
     }
   }
 }

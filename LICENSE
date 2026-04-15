@@ -1,166 +1,126 @@
-SENTRA ASSIST — PROPRIETARY SOFTWARE LICENSE
+SENTRA ASSIST — DUAL LICENSE
 
 Copyright (c) 2024–2026 Claudesy (dr. Ferdi Iskandar)
 All rights reserved.
 
 ================================================================================
-IMPORTANT: READ THIS LICENSE AGREEMENT CAREFULLY BEFORE INSTALLING, ACCESSING,
-OR USING SENTRA ASSIST. BY INSTALLING OR USING THIS SOFTWARE, YOU AGREE TO BE
-BOUND BY THE TERMS OF THIS LICENSE.
+SENTRA ASSIST IS DUAL-LICENSED:
+
+  1. COMMUNITY LICENSE (Apache 2.0)   — for individual and non-commercial use
+  2. ENTERPRISE LICENSE               — for commercial and organizational use
+
+Read both sections below to determine which applies to you.
 ================================================================================
 
 
-1. DEFINITIONS
+────────────────────────────────────────────────────────────────────────────────
+PART 1 — COMMUNITY LICENSE (Apache License, Version 2.0)
+────────────────────────────────────────────────────────────────────────────────
 
-   "Software" means Sentra Assist, including the Iskandar Diagnosis Engine, Data
-   Ascension System (DAS), DDI database, clinical knowledge base, source code,
-   compiled binaries, documentation, and all associated intellectual property.
+This license applies if ALL of the following are true:
 
-   "Licensor" means Claudesy (dr. Ferdi Iskandar), the sole owner and author
-   of the Software.
+  (a) You are an individual clinician, researcher, or student
+  (b) Your use is non-commercial (no revenue, no client billing, no resale)
+  (c) You are not deploying on behalf of a healthcare organization or facility
+  (d) You are not integrating Sentra Assist into a commercial product or service
 
-   "Licensee" means any individual, healthcare facility, organization, or legal
-   entity that has obtained a valid commercial license from the Licensor.
+If the above conditions apply, Sentra Assist is licensed to you under the
+Apache License, Version 2.0 (the "Apache License").
 
-   "Authorized Deployment" means installation and use of the Software at a
-   single healthcare facility location as specified in the commercial license
-   agreement.
+You may obtain a copy of the Apache License at:
+https://www.apache.org/licenses/LICENSE-2.0
 
-
-2. GRANT OF LICENSE
-
-   Subject to the terms of a separate written commercial license agreement
-   executed between the Licensor and the Licensee, the Licensor grants the
-   Licensee a limited, non-exclusive, non-transferable, non-sublicensable
-   license to:
-
-   (a) Install and use the Software solely within the Authorized Deployment;
-   (b) Allow authorized clinical personnel at the Licensee's facility to use
-       the Software for clinical decision support purposes;
-   (c) Make a single backup copy of the Software for disaster recovery purposes.
+Unless required by applicable law or agreed to in writing, software distributed
+under the Apache License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
+OR CONDITIONS OF ANY KIND, either express or implied. See the Apache License for
+the specific language governing permissions and limitations.
 
 
-3. RESTRICTIONS
+────────────────────────────────────────────────────────────────────────────────
+PART 2 — ENTERPRISE LICENSE (Proprietary Commercial)
+────────────────────────────────────────────────────────────────────────────────
 
-   Unless expressly permitted in a separate written agreement with the Licensor,
-   the Licensee shall NOT:
+This license applies if ANY of the following are true:
 
-   (a) Copy, reproduce, distribute, or redistribute the Software or any portion
-       thereof to any third party;
-   (b) Sublicense, sell, resell, transfer, assign, or otherwise commercialize
-       the Software or any rights therein;
-   (c) Modify, adapt, translate, reverse engineer, decompile, disassemble, or
-       create derivative works based on the Software;
-   (d) Remove, alter, or obscure any proprietary notices, labels, or marks on
-       the Software;
-   (e) Use the Software to build a competing product or service;
-   (f) Deploy the Software at any location other than the Authorized Deployment;
-   (g) Make the Software available as a hosted or managed service for the benefit
-       of third parties;
-   (h) Use the Iskandar Diagnosis Engine, DAS system, DDI database, clinical
-       knowledge base, or epidemiology weights independently of or outside the
-       Software.
+  (a) You are deploying Sentra Assist at or on behalf of a healthcare facility,
+      clinic, hospital, puskesmas, or any healthcare organization
+  (b) You are integrating Sentra Assist into a commercial product or service
+  (c) You are using Sentra Assist to generate revenue, directly or indirectly
+  (d) You are a vendor, system integrator, or reseller
+
+Commercial use requires a separate written Enterprise License Agreement executed
+with the Licensor. Unauthorized commercial use is a violation of this License.
 
 
-4. INTELLECTUAL PROPERTY
+ENTERPRISE LICENSE TERMS
 
-   The Software, including the Iskandar Diagnosis Engine, Data Ascension System
-   (DAS), DDI clinical interaction database (173,000+ entries), epidemiology
-   weights derived from 45,030 Indonesian clinical cases, and all associated
-   algorithms, models, and data, is the exclusive proprietary intellectual
-   property of the Licensor.
+1. GRANT OF LICENSE
 
-   No title or ownership of the Software or any part thereof is transferred to
-   the Licensee under this License. All rights not expressly granted are
-   reserved by the Licensor.
+   Subject to the terms of an executed Enterprise License Agreement, the
+   Licensor grants the Licensee a limited, non-exclusive, non-transferable
+   license to install and use the Software at the Authorized Deployment(s)
+   specified in that agreement.
 
+2. RESTRICTIONS
 
-5. CLINICAL DISCLAIMER
+   The Licensee shall NOT:
 
-   THE SOFTWARE IS A CLINICAL DECISION SUPPORT TOOL AND IS INTENDED TO ASSIST
-   QUALIFIED HEALTHCARE PROFESSIONALS. IT DOES NOT REPLACE CLINICAL JUDGMENT.
+   (a) Redistribute or resell the Software or any portion thereof
+   (b) Sublicense, transfer, or assign any rights under this License
+   (c) Reverse engineer, decompile, or create derivative works for commercial
+       purposes
+   (d) Remove or alter any proprietary notices or marks
+   (e) Use the Software to build a competing clinical decision support product
+   (f) Deploy at locations beyond those specified in the license agreement
+   (g) Provide the Software as a hosted or managed service to third parties
+       without a separate agreement
 
-   THE LICENSOR MAKES NO WARRANTIES THAT THE SOFTWARE'S RECOMMENDATIONS ARE
-   COMPLETE, ACCURATE, OR APPROPRIATE FOR ANY SPECIFIC PATIENT. ALL CLINICAL
-   DECISIONS REMAIN THE SOLE RESPONSIBILITY OF THE TREATING HEALTHCARE
-   PROFESSIONAL AND THE LICENSEE ORGANIZATION.
+3. INTELLECTUAL PROPERTY
 
+   The Iskandar Diagnosis Engine, Data Ascension System (DAS), DDI clinical
+   interaction database (173,000+ entries), and epidemiology weights derived
+   from 45,030 Indonesian clinical cases are the exclusive proprietary
+   intellectual property of the Licensor. No ownership is transferred.
 
-6. DATA PRIVACY AND SECURITY
+4. CLINICAL DISCLAIMER
 
-   (a) The Licensee is solely responsible for compliance with applicable data
-       protection laws, including but not limited to Indonesia's Personal Data
-       Protection Law (UU PDP No. 27/2022) and applicable Ministry of Health
-       regulations governing patient health information.
+   THE SOFTWARE IS A CLINICAL DECISION SUPPORT TOOL. IT DOES NOT REPLACE
+   CLINICAL JUDGMENT. ALL CLINICAL DECISIONS REMAIN THE SOLE RESPONSIBILITY
+   OF THE TREATING HEALTHCARE PROFESSIONAL.
 
-   (b) The Licensor does not store, transmit, or retain patient health
-       information except as required for authenticated session management
-       and as explicitly disclosed in the Software's privacy documentation.
+5. DATA PRIVACY
 
-   (c) The Licensee must ensure that access to the Software is restricted to
-       authorized clinical personnel with appropriate training.
+   The Licensee is solely responsible for compliance with Indonesia's Personal
+   Data Protection Law (UU PDP No. 27/2022) and applicable Ministry of Health
+   regulations governing patient health information.
 
+6. WARRANTY DISCLAIMER
 
-7. CONFIDENTIALITY
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. THE LICENSOR
+   DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED.
 
-   The Software contains trade secrets and proprietary information of the
-   Licensor. The Licensee agrees to maintain the confidentiality of the
-   Software and to take all reasonable precautions to prevent unauthorized
-   disclosure or use.
+7. LIMITATION OF LIABILITY
 
+   THE LICENSOR'S TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNTS PAID BY THE
+   LICENSEE IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
 
-8. WARRANTY DISCLAIMER
+8. GOVERNING LAW
 
-   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. TO THE
-   MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSOR DISCLAIMS ALL
-   WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES
-   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
-
-
-9. LIMITATION OF LIABILITY
-
-   TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSOR SHALL NOT
-   BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE
-   DAMAGES, OR DAMAGES FOR LOSS OF PROFITS, REVENUE, DATA, OR BUSINESS
-   OPPORTUNITIES ARISING OUT OF OR RELATED TO THIS LICENSE OR THE USE OF THE
-   SOFTWARE, EVEN IF THE LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
-   DAMAGES.
-
-   IN NO EVENT SHALL THE LICENSOR'S TOTAL LIABILITY EXCEED THE AMOUNTS PAID BY
-   THE LICENSEE FOR THE SOFTWARE LICENSE IN THE TWELVE (12) MONTHS PRECEDING
-   THE CLAIM.
-
-
-10. TERM AND TERMINATION
-
-    This License is effective upon installation or first use of the Software
-    and continues for the term specified in the commercial license agreement.
-
-    The Licensor may terminate this License immediately upon written notice if
-    the Licensee materially breaches any term of this License and fails to cure
-    such breach within thirty (30) days of receiving notice.
-
-    Upon termination, the Licensee must immediately cease all use of the
-    Software and destroy all copies in its possession.
-
-
-11. GOVERNING LAW
-
-    This License shall be governed by and construed in accordance with the laws
-    of the Republic of Indonesia. Any disputes arising under this License shall
-    be subject to the exclusive jurisdiction of the courts of Indonesia.
-
-
-12. ENTIRE AGREEMENT
-
-    This License, together with any executed commercial license agreement,
-    constitutes the entire agreement between the parties regarding the Software
-    and supersedes all prior and contemporaneous understandings, agreements,
-    representations, and warranties.
+   This License is governed by the laws of the Republic of Indonesia.
 
 
 ================================================================================
-For commercial licensing inquiries, contact:
+WHICH LICENSE APPLIES TO ME?
+
+  Individual doctor using for personal practice     → Community (Apache 2.0)
+  Medical student or researcher                     → Community (Apache 2.0)
+  Puskesmas or clinic deployment                    → Enterprise License required
+  Hospital or health system                         → Enterprise License required
+  Vendor bundling into a product                    → Enterprise License required
+  Government health program (Dinkes, Kemenkes)      → Enterprise License required
+
+================================================================================
+Enterprise licensing inquiries:
 
   Claudesy — dr. Ferdi Iskandar
   Sentra Artificial Intelligence

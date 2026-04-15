@@ -34,7 +34,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "@google-cloud/vertexai": "^1.10.0",
     "@pieces.app/pieces-os-client": "^4.1.0",

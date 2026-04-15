@@ -10,7 +10,7 @@
  * Ensures clinical safety by validating AI mappings before execution.
  * Enforces confidence thresholds and blocks critical field auto-fills.
  *
- * @module lib/das/safety-validator
+ * @module lib/scraper/adaptive/safety-validator
  */
 
 import type { ClinicalFieldCategory, FieldMapping, FieldSignature, ValidationResult } from './types'

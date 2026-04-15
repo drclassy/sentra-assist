@@ -21,7 +21,7 @@
  * 10. Tenaga Medis
  */
 
-import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/constants/tenaga-medis'
+import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/clinical/tenaga-medis'
 import {
   activateCheckboxWithOnclick,
   type FieldMapping,

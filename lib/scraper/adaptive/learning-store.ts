@@ -10,7 +10,7 @@
  * IndexedDB-based learning feedback loop for improving mapping accuracy.
  * Tracks fill outcomes and promotes successful mappings to cache.
  *
- * @module lib/das/learning-store
+ * @module lib/scraper/adaptive/learning-store
  */
 
 import type {

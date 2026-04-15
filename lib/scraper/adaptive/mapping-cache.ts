@@ -10,7 +10,7 @@
  * Caches successful field mappings for fast retrieval.
  * Reduces API calls and provides offline resilience.
  *
- * @module lib/das/mapping-cache
+ * @module lib/scraper/adaptive/mapping-cache
  */
 
 import type { CacheStats, FieldMapping, FieldSignature, MappingCacheEntry, PageType } from './types'

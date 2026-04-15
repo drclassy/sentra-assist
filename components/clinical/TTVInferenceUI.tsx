@@ -35,7 +35,7 @@ import {
   type HistoricalBP,
 } from '@/lib/emergency-detector/occult-shock-detector';
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store';
-import { playSound } from '@/lib/utils/sound';
+import { playSound } from '@/utils/sound';
 import { createLogger } from '@/utils/logger';
 import type { AnamnesisMissingField } from '@/utils/types';
 import { AlertTriangle, ChevronDown, RefreshCw, ShieldAlert } from 'lucide-react';

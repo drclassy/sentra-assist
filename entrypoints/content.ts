@@ -15,7 +15,7 @@
  */
 
 // DAS - Data Ascension System
-import type { MapperOptions, ScanOptions } from '@/lib/das/types'
+import type { MapperOptions, ScanOptions } from '@/lib/scraper/adaptive/types'
 import { fillAnamnesaForm, initAnamnesaPage } from '@/lib/handlers/page-anamnesa'
 import { fillDiagnosaForm, initDiagnosaPage } from '@/lib/handlers/page-diagnosa'
 import { fillResepForm, initResepPage, scrapeResepForm } from '@/lib/handlers/page-resep'
@@ -1421,7 +1421,7 @@ export default defineContentScript({
 
         try {
           // Dynamic import to reduce initial bundle size
-          const { scanPageFields } = await import('@/lib/das')
+          const { scanPageFields } = await import('@/lib/scraper/adaptive')
           const result = scanPageFields(options)
 
           debug(`DAS: Found ${result.fields.length} fields in ${result.scanDuration}ms`)
@@ -1448,7 +1448,7 @@ export default defineContentScript({
         }
 
         try {
-          const { mapPayloadToFields } = await import('@/lib/das')
+          const { mapPayloadToFields } = await import('@/lib/scraper/adaptive')
           const result = await mapPayloadToFields(request.payload, request.options)
 
           debug(`DAS: Mapped ${result.mappings.length} fields, ${result.unmapped.length} unmapped`)
@@ -1474,7 +1474,7 @@ export default defineContentScript({
         }
 
         try {
-          const { previewMapping } = await import('@/lib/das')
+          const { previewMapping } = await import('@/lib/scraper/adaptive')
           const result = await previewMapping(request.payload)
 
           return { success: true, ...result }

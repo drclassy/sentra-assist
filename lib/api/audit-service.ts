@@ -5,7 +5,7 @@
  * Purpose: Secure, tamper-evident logging of all clinical decisions.
  * Mechanism: Cryptographic chaining (Blockchain-lite). Entry N includes Hash of N-1.
  *
- * @module lib/services/audit-service
+ * @module lib/api/audit-service
  */
 
 import { storage } from '@wxt-dev/storage'

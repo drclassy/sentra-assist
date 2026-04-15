@@ -29,6 +29,9 @@ dist/
 .env.local
 .env.*.local
 
+# Agent operational memory and session logs
+.agent/
+
 # Local design specs and internal planning docs
 docs/superpowers/
 

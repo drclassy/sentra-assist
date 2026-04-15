@@ -15,7 +15,7 @@ import { fillAutocomplete, fillSelect, fillTextField } from '@/lib/filler/filler
 import { fillViaMainWorld, type MainWorldFieldMapping } from '@/lib/filler/main-world-bridge'
 import { waitForElement } from '@/lib/scraper/dom-utils'
 import { createLogger } from '@/utils/logger'
-import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/constants/tenaga-medis'
+import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/clinical/tenaga-medis'
 import type { AturanPakai, ResepFillPayload, ResepMedication } from '@/utils/types'
 
 // =============================================================================

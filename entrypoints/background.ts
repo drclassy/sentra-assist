@@ -20,7 +20,7 @@ import { SentraAPI } from '@/lib/api/sentra-api';
 import { getCDSSEngineStatus, initCDSSEngine } from '@/lib/iskandar-diagnosis-engine';
 import { runGetSuggestionsFlow } from '@/lib/iskandar-diagnosis-engine/get-suggestions-flow';
 import { RMETransferOrchestrator } from '@/lib/rme/transfer-orchestrator';
-import { auditService } from '@/lib/services/audit-service';
+import { auditService } from '@/lib/api/audit-service';
 import type {
   AllergyCheckRequest,
   DiagnosisRequestContext,

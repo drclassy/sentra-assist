@@ -29,7 +29,7 @@
  * - Field Classifier: Categorize fields for safety
  * - Pattern Matching: ePuskesmas-specific field detection
  *
- * @module lib/das
+ * @module lib/scraper/adaptive
  * @version 1.0.0
  */
 

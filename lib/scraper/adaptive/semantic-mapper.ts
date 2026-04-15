@@ -10,7 +10,7 @@
  * Main entry point for AI-powered form field mapping.
  * Coordinates: DOM Scanner → Cache → Gemini Vision → Safety Validation
  *
- * @module lib/das/semantic-mapper
+ * @module lib/scraper/adaptive/semantic-mapper
  */
 
 import { scanPageFields } from './dom-scanner'

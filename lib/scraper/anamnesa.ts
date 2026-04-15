@@ -5,7 +5,20 @@
  */
 
 import { getInputValue, getTextContent, waitForElement } from '@/lib/scraper/dom-utils.ts'
-import type { EncounterData } from '@/types.ts'
+
+interface EncounterData {
+  patientId: string
+  encounterId?: string
+  timestamp: string
+  complaint?: string
+  history?: string[]
+  allergies?: string[]
+  diagnosis?: {
+    code: string
+    name: string
+    type: 'Primary' | 'Secondary'
+  }[]
+}
 
 /** Helper: parse numeric value from input, return undefined if empty/NaN */
 const getNumericValue = (selector: string): number | undefined => {

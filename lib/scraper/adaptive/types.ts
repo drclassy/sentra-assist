@@ -9,7 +9,7 @@
  *
  * Core type definitions for the AI-powered form field mapping system.
  *
- * @module lib/das/types
+ * @module lib/scraper/adaptive/types
  */
 
 // ============================================================================

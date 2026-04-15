@@ -10,7 +10,7 @@ vi.mock('@/lib/filler/filler-core', () => ({
   fillFields: fillFieldsMock,
 }))
 
-vi.mock('@/lib/das', () => ({
+vi.mock('@/lib/scraper/adaptive', () => ({
   mapPayloadToFields: mapPayloadToFieldsMock,
 }))
 

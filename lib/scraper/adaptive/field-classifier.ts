@@ -10,7 +10,7 @@
  * Clinical field classification and safety validation utilities.
  * Maps field signatures to clinical categories for safe AI mapping.
  *
- * @module lib/das/field-classifier
+ * @module lib/scraper/adaptive/field-classifier
  */
 
 import type { ClinicalFieldCategory, FieldMappingHint, FieldSignature } from './types'

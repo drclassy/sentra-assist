@@ -10,7 +10,7 @@
  * Promotes successful mappings from learning store to Layer 1 cache.
  * Bridges learning feedback loop with fast cache lookup.
  *
- * @module lib/das/cache-promoter
+ * @module lib/scraper/adaptive/cache-promoter
  */
 
 import { scanPageFields } from './dom-scanner'

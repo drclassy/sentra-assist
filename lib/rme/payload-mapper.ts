@@ -1,6 +1,6 @@
 // Designed and constructed by Claudesy.
 
-import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/constants/tenaga-medis'
+import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/clinical/tenaga-medis'
 import { classifyChronicDisease } from '@/lib/iskandar-diagnosis-engine/chronic-disease-classifier'
 import type { TrajectoryAnalysis } from '@/lib/iskandar-diagnosis-engine/trajectory-analyzer'
 import stockDatabase from '@/public/data/stok_obat.json'

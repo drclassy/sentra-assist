@@ -23,7 +23,7 @@ import type { TrajectoryAnalysis } from '@/lib/iskandar-diagnosis-engine/traject
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store';
 import { buildRMETransferPayload } from '@/lib/rme/payload-mapper';
 import { bootstrapThemeDocument } from '@/lib/theme-store';
-import { playSound } from '@/lib/utils/sound';
+import { playSound } from '@/utils/sound';
 import type { MedicationRecommendation } from '@/types/api';
 import { createLogger } from '@/utils/logger';
 import { sendMessage } from '@/utils/messaging';

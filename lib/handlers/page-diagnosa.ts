@@ -22,7 +22,7 @@
  * 5. Prognosa (optional textarea)
  */
 
-import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/constants/tenaga-medis'
+import { DOKTER_NAMA, PERAWAT_NAMA } from '@/lib/clinical/tenaga-medis'
 import { type FieldMapping, type FillResult, fillFields } from '@/lib/filler/filler-core'
 import { createLogger } from '@/utils/logger'
 import type { DiagnosaFillPayload } from '@/utils/types'
@@ -1189,7 +1189,7 @@ export function initDiagnosaPage(): void {
   // Pre-warm DAS cache by scanning fields
   setTimeout(async () => {
     try {
-      const { scanPageFields } = await import('@/lib/das')
+      const { scanPageFields } = await import('@/lib/scraper/adaptive')
       const result = scanPageFields({ includeHidden: false })
       console.warn('[Diagnosa Handler] Pre-scan found', result.fields.length, 'fields')
     } catch (error) {

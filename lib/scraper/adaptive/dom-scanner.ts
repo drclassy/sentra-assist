@@ -10,7 +10,7 @@
  * Extracts form fields from the page and builds structured signatures
  * for AI-powered semantic mapping.
  *
- * @module lib/das/dom-scanner
+ * @module lib/scraper/adaptive/dom-scanner
  */
 
 import type {

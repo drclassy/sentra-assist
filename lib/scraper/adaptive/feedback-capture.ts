@@ -10,7 +10,7 @@
  * Captures user interactions to track fill success/failure.
  * Monitors field changes and reports outcomes to learning store.
  *
- * @module lib/das/feedback-capture
+ * @module lib/scraper/adaptive/feedback-capture
  */
 
 import { scanPageFields } from './dom-scanner'

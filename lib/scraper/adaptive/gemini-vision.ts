@@ -10,7 +10,7 @@
  * Uses Vertex AI Gemini for intelligent form field mapping.
  * Understands clinical context and Indonesian medical terminology.
  *
- * @module lib/das/gemini-vision
+ * @module lib/scraper/adaptive/gemini-vision
  */
 
 import type {

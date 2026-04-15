@@ -1,3 +1,11 @@
+/**
+ * VitalScreeningProfile interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface VitalScreeningProfile {
   cohort:
     | 'infant'
@@ -34,6 +42,14 @@ function pediatricHypotensionFloor(age: number): number {
   if (age <= 10) return 70 + Math.round(2 * age);
   return 90;
 }
+
+/**
+ * getVitalScreeningProfile
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
   const normalizedAge = clampAge(age);

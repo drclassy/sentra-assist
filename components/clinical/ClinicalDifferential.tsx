@@ -91,6 +91,14 @@ const ICD_EMERGENCY_HEAD_MAP: Record<string, string> = {
   '8': 'B',
 };
 
+/**
+ * normalizeIcdCode
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function normalizeIcdCode(value: string | undefined): string {
   const raw = String(value || '')
     .toUpperCase()
@@ -114,6 +122,14 @@ export function normalizeIcdCode(value: string | undefined): string {
   return compact;
 }
 
+/**
+ * isReadableDiagnosisName
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function isReadableDiagnosisName(value: string | undefined): boolean {
   const cleaned = (value || '').trim();
   if (!cleaned) return false;
@@ -129,6 +145,14 @@ function isCodeLikeDiagnosisName(value: string | undefined): boolean {
   if (/^DIAGNOSIS\s+[A-Z][0-9]{2}(?:\.[0-9A-Z]{1,2})?$/.test(cleaned)) return true;
   return /^[A-Z][0-9]{2}(?:\.[0-9A-Z]{1,2})?$/.test(cleaned);
 }
+
+/**
+ * isLikelyIcdCode
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function isLikelyIcdCode(value: string | undefined): boolean {
   const normalized = normalizeIcdCode(value);
@@ -154,6 +178,14 @@ function pregnancyStatusLabel(status: PregnancyStatus): string {
   return 'Confirmed: Not Pregnant';
 }
 
+/**
+ * buildConfirmedChronicSuggestion
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function buildConfirmedChronicSuggestion(diagnosis: {
   icd_x: string;
   nama: string;
@@ -171,6 +203,14 @@ export function buildConfirmedChronicSuggestion(diagnosis: {
     ],
   };
 }
+
+/**
+ * buildUiFallbackDiagnoses
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function buildUiFallbackDiagnoses(
   keluhanUtama: string,

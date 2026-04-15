@@ -35,6 +35,14 @@ const getSelectValue = (selector: string): string => {
   return el.value?.trim() || '';
 };
 
+/**
+ * AnamnesaScrapeResult interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface AnamnesaScrapeResult extends Partial<EncounterData> {
   /** Vital signs scraped from PeriksaFisik fields */
   vital_signs?: {

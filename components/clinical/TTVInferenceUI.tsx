@@ -42,6 +42,14 @@ import { AlertTriangle, ChevronDown, RefreshCw, ShieldAlert } from 'lucide-react
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 
+/**
+ * ScreeningAlert interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface ScreeningAlert {
   id: string;
   type: string;
@@ -61,6 +69,14 @@ export interface ScreeningAlert {
     map?: number;
   };
 }
+
+/**
+ * TTVInferenceData interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface TTVInferenceData {
   patient: {
@@ -314,6 +330,14 @@ const normalizeText = (value?: string): string => (value || '').trim().toLowerCa
 const HYBRID_AUTOTEXT_ENABLED = import.meta.env.VITE_ENABLE_HYBRID_AUTOTEXT !== 'false';
 const ttvLog = createLogger('TTVInferenceUI', 'content');
 
+/**
+ * getDoctorInitials
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export const getDoctorInitials = (name: string): string =>
   name
     .trim()
@@ -321,6 +345,14 @@ export const getDoctorInitials = (name: string): string =>
     .slice(0, 2)
     .map((part) => part.charAt(0).toUpperCase())
     .join('');
+
+/**
+ * formatLastSeenRelative
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export const formatLastSeenRelative = (iso?: string): string => {
   if (!iso) return 'Tidak ada data aktivitas';
@@ -337,6 +369,14 @@ export const formatLastSeenRelative = (iso?: string): string => {
 
   return `Aktif ${Math.max(1, Math.floor(diffMs / (24 * 60 * 60_000)))} hari lalu`;
 };
+
+/**
+ * toSafeAutoTextReason
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export const toSafeAutoTextReason = (error: unknown, fallback: string): string => {
   const message = error instanceof Error ? error.message : fallback;
@@ -417,6 +457,14 @@ const formatPayerLabel = (
 
 const humanize = (value: string): string => value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
 
+/**
+ * matchesPreferredPoli
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export const matchesPreferredPoli = (doctor: OnlineDoctor, keywords: string[]): boolean => {
   const poli = normalizeText(doctor.poli);
   if (!poli) {
@@ -425,6 +473,14 @@ export const matchesPreferredPoli = (doctor: OnlineDoctor, keywords: string[]): 
 
   return keywords.some((keyword) => poli.includes(keyword));
 };
+
+/**
+ * matchesPreferredFacility
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export const matchesPreferredFacility = (doctor: OnlineDoctor, facilityName?: string): boolean => {
   const locationHint = normalizeText(facilityName);
@@ -503,6 +559,14 @@ const buildForwardSummary = ({
 
   return lines.join('\n');
 };
+
+/**
+ * buildAlerts
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export const buildAlerts = (
   state: TTVStateShape,
@@ -921,6 +985,14 @@ const buildSenautoOutput = (draft: ComposedAnamnesaDraft, summary: string): stri
   return lines.join('\n');
 };
 
+/**
+ * buildCanonicalVitalOutput
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export const buildCanonicalVitalOutput = (
   canonical: CanonicalClinicalEngineOutput,
   fallback: string,
@@ -1068,6 +1140,14 @@ async function patientPseudonymToken(rm: string): Promise<string> {
     .join('');
   return `pid-${hex.slice(0, 24)}`;
 }
+
+/**
+ * TTVInferenceUI
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function TTVInferenceUI({
   patientName = 'Pasien belum terhubung',

@@ -13,6 +13,14 @@ const SOURCE_RANK: Record<FieldSource, number> = {
   fallback_local: 1,
 };
 
+/**
+ * FieldMeta interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface FieldMeta {
   value: string;
   source: FieldSource;
@@ -49,6 +57,14 @@ export interface OverrideAttemptLog {
   reason: string;
   timestamp: string;
 }
+
+/**
+ * buildBlockedOverrideLog
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function buildBlockedOverrideLog(
   field: string,

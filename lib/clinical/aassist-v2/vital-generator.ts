@@ -53,11 +53,27 @@ export const PRESET_RANGES = {
 // ─── Types ──────────────────────────────────────────────────────────────────
 export type AassistPreset = 'hipertensi' | 'hipotensi' | 'hiperglikemi';
 
+/**
+ * GenerateVitalsOptions interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface GenerateVitalsOptions {
   preset?: AassistPreset | null;
   seed?: number;
   constraints?: Partial<typeof NORMAL_RANGES>;
 }
+
+/**
+ * GeneratedVitals interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface GeneratedVitals {
   sbp: string;
@@ -69,12 +85,28 @@ export interface GeneratedVitals {
   glucose: string;
 }
 
+/**
+ * AutocompleteMetadata interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface AutocompleteMetadata {
   source: 'ASIST-autocomplete';
   seedUsed: number;
   generatedAt: string;
   preset: AassistPreset | null;
 }
+
+/**
+ * GenerateVitalsResult interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface GenerateVitalsResult {
   vitals: GeneratedVitals;

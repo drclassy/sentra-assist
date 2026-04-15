@@ -2,6 +2,14 @@ import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-
 import type { CanonicalPregnancyStatus, CanonicalTriageInput } from '@/lib/api/bridge-client';
 import { AutosenPreset, DisabilityType, ObesityConfirmation } from '@/lib/clinical/autosen-types';
 
+/**
+ * BuildCanonicalTriageInputArgs interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface BuildCanonicalTriageInputArgs {
   requestId: string;
   requestTime: string;
@@ -84,9 +92,25 @@ function composeStructuredSignsText(args: BuildCanonicalTriageInputArgs): string
   return parts.length > 0 ? parts.join(' | ') : undefined;
 }
 
+/**
+ * buildCanonicalRequestId
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function buildCanonicalRequestId(patientRM: string): string {
   return `assist-${patientRM || 'unknown'}-${Date.now()}`;
 }
+
+/**
+ * buildCanonicalTriageInput
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function buildCanonicalTriageInput(
   args: BuildCanonicalTriageInputArgs

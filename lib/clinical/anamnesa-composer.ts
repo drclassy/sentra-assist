@@ -4,6 +4,14 @@ import type {
   AnamnesisMissingField,
 } from '@/utils/types';
 
+/**
+ * ComposeAnamnesaInput interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface ComposeAnamnesaInput {
   symptomText: string;
   patientGender: 'L' | 'P';
@@ -25,6 +33,14 @@ export interface ComposeAnamnesaInput {
   obesityConfirmation?: 'confirmed' | 'not_confirmed' | '';
   autosenPresetLabel?: string;
 }
+
+/**
+ * ComposedAnamnesaDraft interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface ComposedAnamnesaDraft {
   chiefComplaint: string;
@@ -423,6 +439,14 @@ function getSymptomImpact(symptoms: string[]): string | null {
   return null;
 }
 
+/**
+ * composeAnamnesaDraft
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function composeAnamnesaDraft(input: ComposeAnamnesaInput): ComposedAnamnesaDraft {
   const normalizedSymptomText = normalizeSymptomTypos(
     normalizeDurationTypos(normalizeWhitespace(input.symptomText))
@@ -572,6 +596,14 @@ function createExtractionMissingFacts(
   return result;
 }
 
+/**
+ * buildAnamnesisShadowSuggestion
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function buildAnamnesisShadowSuggestion(missingFields: AnamnesisMissingField[]): string {
   if (missingFields.length === 0) return '';
 
@@ -583,6 +615,14 @@ export function buildAnamnesisShadowSuggestion(missingFields: AnamnesisMissingFi
     .map((field) => SHADOW_SUGGESTION_TEMPLATES[field])
     .join(' ');
 }
+
+/**
+ * composeAnamnesaDraftFromExtraction
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function composeAnamnesaDraftFromExtraction(
   extraction: AnamnesisExtractionResult,

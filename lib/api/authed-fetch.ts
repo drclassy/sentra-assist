@@ -21,6 +21,14 @@ export class AuthRequiredError extends Error {
   }
 }
 
+/**
+ * BridgeApiError class
+ * 
+ * @remarks
+ * TODO: Add class description and usage examples
+ * Auto-generated on 2026-04-15
+ */
+
 export class BridgeApiError extends Error {
   status: number;
 
@@ -31,6 +39,14 @@ export class BridgeApiError extends Error {
     this.status = status;
   }
 }
+
+/**
+ * BridgeResponseFormatError class
+ * 
+ * @remarks
+ * TODO: Add class description and usage examples
+ * Auto-generated on 2026-04-15
+ */
 
 export class BridgeResponseFormatError extends Error {
   status: number;

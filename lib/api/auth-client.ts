@@ -21,10 +21,26 @@ const log = createLogger('AuthClient', 'background');
 
 export type { AuthSession, AuthTokens, AuthUser };
 
+/**
+ * AuthCredentials interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface AuthCredentials {
   username: string;
   password: string;
 }
+
+/**
+ * AuthResponse interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface AuthResponse {
   success: boolean;
@@ -98,6 +114,14 @@ export async function getAuthConfig(): Promise<AuthConfig> {
   }
 }
 
+/**
+ * saveAuthConfig
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function saveAuthConfig(config: Partial<AuthConfig>): Promise<AuthConfig> {
   const current = await getAuthConfig();
   const updated = {
@@ -147,15 +171,39 @@ export async function getStoredSession(): Promise<AuthSession | null> {
   return session;
 }
 
+/**
+ * saveSession
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function saveSession(session: AuthSession): Promise<void> {
   await storeSession(session);
   log.debug('[AuthClient] Session saved for user:', session.user.username);
 }
 
+/**
+ * clearSession
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function clearSession(): Promise<void> {
   await clearAuthStore();
   log.debug('[AuthClient] Session cleared');
 }
+
+/**
+ * isAuthenticated
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function isAuthenticated(): Promise<boolean> {
   const session = await getStoredSession();
@@ -292,11 +340,27 @@ function parseErrorMessage(status: number, text: string): string {
   }
 }
 
+/**
+ * ApiBaseUrlProbeResult interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface ApiBaseUrlProbeResult {
   ok: boolean;
   status: number;
   message: string;
 }
+
+/**
+ * probeApiBaseUrl
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function probeApiBaseUrl(baseUrl: string): Promise<ApiBaseUrlProbeResult> {
   const sanitizedBaseUrl = baseUrl.trim().replace(/\/$/, '');

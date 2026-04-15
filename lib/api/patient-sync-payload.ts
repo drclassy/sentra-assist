@@ -39,6 +39,14 @@ export interface PatientSyncStructuredSigns {
   };
 }
 
+/**
+ * PatientSyncPayload interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface PatientSyncPayload {
   patient: {
     name: string;
@@ -116,6 +124,14 @@ function mergeStructuredSection<T extends Record<string, boolean | number | unde
   } as T);
 }
 
+/**
+ * mergeStructuredSigns
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function mergeStructuredSigns(
   base?: PatientSyncStructuredSigns,
   override?: PatientSyncStructuredSigns
@@ -137,6 +153,14 @@ export function mergeStructuredSigns(
 
   return Object.keys(structuredSigns).length > 0 ? structuredSigns : undefined;
 }
+
+/**
+ * applyAlertDerivedStructuredSigns
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function applyAlertDerivedStructuredSigns(
   base: PatientSyncStructuredSigns | undefined,
@@ -165,6 +189,14 @@ export function applyAlertDerivedStructuredSigns(
 
   return mergeStructuredSigns(base, alertDerived);
 }
+
+/**
+ * inferStructuredSignsFromPatientSyncInput
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function inferStructuredSignsFromPatientSyncInput(
   input: PatientSyncInferenceInput
@@ -305,6 +337,14 @@ export function inferStructuredSignsFromPatientSyncInput(
 
   return Object.keys(structuredSigns).length > 0 ? structuredSigns : undefined;
 }
+
+/**
+ * buildPatientSyncPayload
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function buildPatientSyncPayload(input: PatientSyncBuildInput): PatientSyncPayload {
   const inferredStructuredSigns = inferStructuredSignsFromPatientSyncInput(input);

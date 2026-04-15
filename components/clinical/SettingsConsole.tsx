@@ -84,6 +84,14 @@ function loadPersistedSettings(): {
   }
 }
 
+/**
+ * SettingsConsole
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function SettingsConsole(): JSX.Element {
   const buildInfo = getExtensionBuildInfo();
   const [settings, setSettings] = useState<SettingItem[]>(() => {

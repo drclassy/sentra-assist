@@ -127,6 +127,14 @@ type TabType = 'ttv' | 'emergency' | 'agent';
 type ViewState = 'main' | 'trajectory' | 'differential';
 type EngineId = 'vs' | 'emergency' | 'settings';
 
+/**
+ * TTVFormState interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface TTVFormState {
   sbp: string;
   dbp: string;

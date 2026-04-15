@@ -49,6 +49,14 @@ const insetClass =
 const labelClass =
   'mb-1 block text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]';
 
+/**
+ * ResepForm
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function ResepForm() {
   const [medications, setMedications] = useState<MedicationRow[]>([createEmptyMedication()]);
   const [alergi, setAlergi] = useState('');

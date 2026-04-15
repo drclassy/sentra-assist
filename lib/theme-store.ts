@@ -3,7 +3,23 @@ import { create } from 'zustand';
 /** Selaras dengan bentuk zustand/persist — data lama tetap terbaca */
 export const THEME_STORAGE_KEY = 'sentra-assist-theme' as const;
 
+/**
+ * ThemeMode type
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export type ThemeMode = 'light' | 'dark';
+
+/**
+ * readPersistedTheme
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function readPersistedTheme(): ThemeMode {
   if (typeof window === 'undefined') return 'dark';

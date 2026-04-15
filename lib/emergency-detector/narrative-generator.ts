@@ -19,6 +19,14 @@ export interface CorrectionSuggestion {
   wordIndex: number;
 }
 
+/**
+ * SymptomInput interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface SymptomInput {
   text: string;
   severity?: 'ringan' | 'sedang' | 'berat';

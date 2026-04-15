@@ -48,6 +48,14 @@ export interface BridgeEntry {
   hasResep: boolean;
 }
 
+/**
+ * BridgeEntryDetail interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface BridgeEntryDetail {
   id: string;
   status: string;
@@ -83,18 +91,50 @@ interface BridgePatchResponse {
 
 const STORAGE_KEY = 'sentra:bridge-config';
 
+/**
+ * BridgeConfig interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface BridgeConfig {
   enabled: boolean;
   pollIntervalMinutes: number;
 }
 
+/**
+ * BridgeAuthSource type
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export type BridgeAuthSource = 'none' | 'dashboard-session' | 'automation-token';
+/**
+ * BridgeRuntimeReadiness type
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export type BridgeRuntimeReadiness =
   | 'ready'
   | 'disabled'
   | 'auth_required'
   | 'server_unreachable'
   | 'server_error';
+
+/**
+ * BridgeRuntimeStatus interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface BridgeRuntimeStatus {
   readiness: BridgeRuntimeReadiness;
@@ -128,6 +168,14 @@ async function getBridgeAuthSource(): Promise<BridgeAuthSource> {
   return 'none';
 }
 
+/**
+ * getBridgeConfig
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function getBridgeConfig(): Promise<BridgeConfig> {
   try {
     const raw = await browser.storage.local.get(STORAGE_KEY);
@@ -145,6 +193,14 @@ export async function getBridgeConfig(): Promise<BridgeConfig> {
     return DEFAULT_CONFIG;
   }
 }
+
+/**
+ * saveBridgeConfig
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function saveBridgeConfig(config: Partial<BridgeConfig>): Promise<BridgeConfig> {
   const current = await getBridgeConfig();
@@ -186,11 +242,27 @@ export async function fetchPendingEntries(): Promise<BridgeEntry[]> {
   return res.items;
 }
 
+/**
+ * fetchEntryDetail
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function fetchEntryDetail(id: string): Promise<BridgeEntryDetail> {
   const res = await bridgeFetch<BridgeDetailResponse>(`/api/emr/bridge/${id}`);
   if (!res.ok) throw new Error(res.error || 'Failed to fetch entry detail');
   return res.entry;
 }
+
+/**
+ * claimEntry
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function claimEntry(id: string): Promise<void> {
   const res = await bridgeFetch<BridgePatchResponse>(`/api/emr/bridge/${id}`, {
@@ -200,6 +272,14 @@ export async function claimEntry(id: string): Promise<void> {
   if (!res.ok) throw new Error(res.error || 'Failed to claim entry');
 }
 
+/**
+ * reportProcessing
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function reportProcessing(id: string): Promise<void> {
   await bridgeFetch<BridgePatchResponse>(`/api/emr/bridge/${id}`, {
     method: 'PATCH',
@@ -207,12 +287,28 @@ export async function reportProcessing(id: string): Promise<void> {
   });
 }
 
+/**
+ * reportComplete
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function reportComplete(id: string, result: RMETransferResult): Promise<void> {
   await bridgeFetch<BridgePatchResponse>(`/api/emr/bridge/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ action: 'complete', result }),
   });
 }
+
+/**
+ * reportFailed
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function reportFailed(
   id: string,
@@ -266,6 +362,14 @@ function getBridgeVerificationMessage(authSource: BridgeAuthSource): string {
   }
   return BRIDGE_AUTH_REQUIRED_HINT;
 }
+
+/**
+ * getBridgeRuntimeStatus
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function getBridgeRuntimeStatus(): Promise<BridgeRuntimeStatus> {
   const config = await getBridgeConfig();
@@ -356,7 +460,23 @@ export async function getBridgeRuntimeStatus(): Promise<BridgeRuntimeStatus> {
   }
 }
 
+/**
+ * CanonicalPregnancyStatus type
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export type CanonicalPregnancyStatus = 'hamil' | 'tidak_hamil' | 'tidak_relevan' | 'tidak_diisi';
+
+/**
+ * CanonicalTriageInput interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface CanonicalTriageInput {
   request_id: string;
@@ -440,6 +560,14 @@ export interface CanonicalTriageInput {
     }>;
   };
 }
+
+/**
+ * CanonicalClinicalEngineOutput interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface CanonicalClinicalEngineOutput {
   request_id: string;
@@ -528,6 +656,14 @@ interface CanonicalEngineResponse {
   error?: string;
 }
 
+/**
+ * CanonicalDifferentialInput interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface CanonicalDifferentialInput {
   request_id: string;
   patient: {
@@ -559,6 +695,14 @@ export interface CanonicalDifferentialInput {
     deterioration_summary_text?: string;
   };
 }
+
+/**
+ * CanonicalDifferentialOutput interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface CanonicalDifferentialOutput {
   diagnosis_suggestions: Array<{
@@ -700,6 +844,14 @@ function isAnamnesisMissingField(value: unknown): value is AnamnesisMissingField
   );
 }
 
+/**
+ * isAnamnesisExtractionResult
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function isAnamnesisExtractionResult(value: unknown): value is AnamnesisExtractionResult {
   const candidate = asRecord(value);
   if (!candidate) return false;
@@ -750,6 +902,14 @@ export function isAnamnesisExtractionResult(value: unknown): value is AnamnesisE
   return true;
 }
 
+/**
+ * isCanonicalClinicalEngineOutput
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function isCanonicalClinicalEngineOutput(
   value: unknown
 ): value is CanonicalClinicalEngineOutput {
@@ -779,6 +939,14 @@ export function isCanonicalClinicalEngineOutput(
   return true;
 }
 
+/**
+ * isCanonicalDifferentialOutput
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export function isCanonicalDifferentialOutput(
   value: unknown
 ): value is CanonicalDifferentialOutput {
@@ -798,6 +966,14 @@ export function isCanonicalDifferentialOutput(
 
   return true;
 }
+
+/**
+ * ConsultPayload interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface ConsultPayload {
   patient: {
@@ -929,6 +1105,14 @@ export function filterDoctorsForDisplay(doctors: OnlineDoctor[]): OnlineDoctor[]
   });
 }
 
+/**
+ * getOnlineDoctors
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function getOnlineDoctors(): Promise<OnlineDoctor[]> {
   const authSource = await getBridgeAuthSource();
   if (authSource === 'none') {
@@ -942,6 +1126,14 @@ export async function getOnlineDoctors(): Promise<OnlineDoctor[]> {
 
   return filterDoctorsForDisplay(res.doctors);
 }
+
+/**
+ * sendConsultToDoctor
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function sendConsultToDoctor(
   payload: ConsultPayload
@@ -980,6 +1172,14 @@ export async function sendConsultToDoctor(
   };
 }
 
+/**
+ * evaluateCanonicalClinicalEngine
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function evaluateCanonicalClinicalEngine(
   payload: CanonicalTriageInput
 ): Promise<CanonicalClinicalEngineOutput> {
@@ -995,6 +1195,14 @@ export async function evaluateCanonicalClinicalEngine(
   }
   return res.data;
 }
+
+/**
+ * evaluateCanonicalDifferential
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function evaluateCanonicalDifferential(
   payload: CanonicalDifferentialInput
@@ -1014,6 +1222,14 @@ export async function evaluateCanonicalDifferential(
   }
   return res.data;
 }
+
+/**
+ * extractClinicalAnamnesis
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function extractClinicalAnamnesis(
   inputText: string
@@ -1078,6 +1294,14 @@ interface PatientSyncResponse {
   id?: string;
   error?: string;
 }
+
+/**
+ * PatientSyncResult interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface PatientSyncResult {
   ok: boolean;

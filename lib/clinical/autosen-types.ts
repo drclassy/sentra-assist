@@ -1,3 +1,11 @@
+/**
+ * AutosenPreset type
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export type AutosenPreset =
   | ''
   | 'hypertension'
@@ -6,6 +14,14 @@ export type AutosenPreset =
   | 'hypotension'
   | 'glucose_tolerance'
   | 'adl';
+
+/**
+ * DisabilityType type
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export type DisabilityType =
   | ''
@@ -19,5 +35,13 @@ export type DisabilityType =
   | 'Hiperaktivitas'
   | 'Belajar spesifik'
   | 'Spektrum Autis (ASD)';
+
+/**
+ * ObesityConfirmation type
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export type ObesityConfirmation = '' | 'confirmed' | 'not_confirmed';

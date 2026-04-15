@@ -14,6 +14,14 @@
 
 export type AvpuLevel = 'A' | 'V' | 'P' | 'U';
 
+/**
+ * AvpuResult interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface AvpuResult {
   avpu: AvpuLevel;
   reason: string[];
@@ -45,6 +53,14 @@ const THRESHOLD = {
 const COLOR_ALERT = '#4CAF50';
 const COLOR_ABNORMAL = '#FF6B00';
 
+/**
+ * VitalsForAvpu interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface VitalsForAvpu {
   sbp: number;
   spo2: number;
@@ -52,6 +68,14 @@ export interface VitalsForAvpu {
   hr: number;
   glucose: number;
 }
+
+/**
+ * determineAVPU
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function determineAVPU(v: VitalsForAvpu): AvpuResult {
   const reasons: string[] = [];

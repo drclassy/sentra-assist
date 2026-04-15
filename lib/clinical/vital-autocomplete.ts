@@ -6,6 +6,14 @@ import {
 } from '@/lib/clinical/vital-screening-thresholds';
 import { generateVitals, type AassistPreset } from '@/lib/clinical/aassist-v2/vital-generator';
 
+/**
+ * VitalAutofillValues interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface VitalAutofillValues {
   sbp: string;
   dbp: string;
@@ -15,6 +23,14 @@ export interface VitalAutofillValues {
   spo2: string;
   glucose: string;
 }
+
+/**
+ * VitalAutofillResult interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface VitalAutofillResult {
   vitals: VitalAutofillValues;
@@ -152,6 +168,14 @@ function applyPresetVitals(
       };
   }
 }
+
+/**
+ * buildVitalAutofill
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export function buildVitalAutofill(
   preset: AutosenPreset,

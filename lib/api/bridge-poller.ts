@@ -31,6 +31,14 @@ let listenerRegistered = false;
 let consecutiveNetworkErrors = 0;
 let backoffUntilMs = 0;
 
+/**
+ * BridgeTransferExecutor type
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export type BridgeTransferExecutor = (
   entryId: string,
   pelayananId: string,

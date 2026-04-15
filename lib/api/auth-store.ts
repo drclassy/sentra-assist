@@ -27,11 +27,27 @@ export interface AuthUser {
   poli?: string;
 }
 
+/**
+ * AuthTokens interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
+
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
 }
+
+/**
+ * AuthSession interface
+ * 
+ * @remarks
+ * TODO: Add type description and property documentation
+ * Auto-generated on 2026-04-15
+ */
 
 export interface AuthSession {
   user: AuthUser;
@@ -129,10 +145,26 @@ export async function isAuthenticated(): Promise<boolean> {
   return session.tokens.expiresAt > Date.now() + 60_000;
 }
 
+/**
+ * getAccessToken
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
+
 export async function getAccessToken(): Promise<string | null> {
   const session = await getSession();
   return session?.tokens?.accessToken ?? null;
 }
+
+/**
+ * getServerBaseUrl
+ * 
+ * @remarks
+ * TODO: Add detailed description, parameters, and examples
+ * Auto-generated on 2026-04-15
+ */
 
 export async function getServerBaseUrl(): Promise<string | null> {
   const session = await getSession();

@@ -3,17 +3,25 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 
 // Mock extension APIs before any imports that trigger webextension-polyfill
 const { mockSendMessage } = vi.hoisted(() => ({ mockSendMessage: vi.fn() }));
-vi.mock('wxt/browser', () => ({ browser: { tabs: { sendMessage: vi.fn() }, runtime: { id: 'test' } } }));
+vi.mock('wxt/browser', () => ({
+  browser: { tabs: { sendMessage: vi.fn() }, runtime: { id: 'test' } },
+}));
 vi.mock('@webext-core/messaging', () => ({
   defineExtensionMessaging: () => ({ sendMessage: mockSendMessage, onMessage: vi.fn() }),
 }));
 
 import { DiagnosisSuggestions } from './DiagnosisSuggestions';
 
-function makeSuggestion(overrides: Partial<{
-  icd_x: string; nama: string; confidence: number;
-  red_flags: string[]; rationale: string; rank: number;
-}> = {}) {
+function makeSuggestion(
+  overrides: Partial<{
+    icd_x: string;
+    nama: string;
+    confidence: number;
+    red_flags: string[];
+    rationale: string;
+    rank: number;
+  }> = {}
+) {
   return {
     icd_x: 'J06.9',
     nama: 'ISPA Tidak Spesifik',
@@ -60,7 +68,9 @@ describe('DiagnosisSuggestions', () => {
 
       render(<DiagnosisSuggestions {...MINIMAL_PROPS} />);
 
-      await act(async () => { clickRefresh(); });
+      await act(async () => {
+        clickRefresh();
+      });
 
       expect(screen.getByText(/Menganalisis keluhan/)).toBeInTheDocument();
     });
@@ -75,7 +85,9 @@ describe('DiagnosisSuggestions', () => {
 
       render(<DiagnosisSuggestions {...MINIMAL_PROPS} />);
 
-      await act(async () => { clickRefresh(); });
+      await act(async () => {
+        clickRefresh();
+      });
 
       await waitFor(() => {
         expect(screen.getByText('Server error')).toBeInTheDocument();
@@ -96,7 +108,9 @@ describe('DiagnosisSuggestions', () => {
       });
 
       render(<DiagnosisSuggestions {...MINIMAL_PROPS} />);
-      await act(async () => { clickRefresh(); });
+      await act(async () => {
+        clickRefresh();
+      });
 
       await waitFor(() => {
         expect(screen.getByText('J06.9')).toBeInTheDocument();
@@ -107,11 +121,13 @@ describe('DiagnosisSuggestions', () => {
     it('confidence label High for confidence >= 0.85', async () => {
       mockSendMessage.mockResolvedValue({
         success: true,
-        data: { diagnosis_suggestions: [makeSuggestion({ confidence: 0.90 })] },
+        data: { diagnosis_suggestions: [makeSuggestion({ confidence: 0.9 })] },
       });
 
       render(<DiagnosisSuggestions {...MINIMAL_PROPS} />);
-      await act(async () => { clickRefresh(); });
+      await act(async () => {
+        clickRefresh();
+      });
 
       await waitFor(() => {
         expect(screen.getByText('High')).toBeInTheDocument();
@@ -121,11 +137,13 @@ describe('DiagnosisSuggestions', () => {
     it('confidence label Medium for confidence >= 0.65 and < 0.85', async () => {
       mockSendMessage.mockResolvedValue({
         success: true,
-        data: { diagnosis_suggestions: [makeSuggestion({ confidence: 0.70 })] },
+        data: { diagnosis_suggestions: [makeSuggestion({ confidence: 0.7 })] },
       });
 
       render(<DiagnosisSuggestions {...MINIMAL_PROPS} />);
-      await act(async () => { clickRefresh(); });
+      await act(async () => {
+        clickRefresh();
+      });
 
       await waitFor(() => {
         expect(screen.getByText('Medium')).toBeInTheDocument();
@@ -135,11 +153,13 @@ describe('DiagnosisSuggestions', () => {
     it('confidence label Low for confidence < 0.65', async () => {
       mockSendMessage.mockResolvedValue({
         success: true,
-        data: { diagnosis_suggestions: [makeSuggestion({ confidence: 0.50 })] },
+        data: { diagnosis_suggestions: [makeSuggestion({ confidence: 0.5 })] },
       });
 
       render(<DiagnosisSuggestions {...MINIMAL_PROPS} />);
-      await act(async () => { clickRefresh(); });
+      await act(async () => {
+        clickRefresh();
+      });
 
       await waitFor(() => {
         expect(screen.getByText('Low')).toBeInTheDocument();
@@ -152,14 +172,14 @@ describe('DiagnosisSuggestions', () => {
       mockSendMessage.mockResolvedValue({
         success: true,
         data: {
-          diagnosis_suggestions: [
-            makeSuggestion({ red_flags: ['chest_pain_suspect_acs'] }),
-          ],
+          diagnosis_suggestions: [makeSuggestion({ red_flags: ['chest_pain_suspect_acs'] })],
         },
       });
 
       render(<DiagnosisSuggestions {...MINIMAL_PROPS} />);
-      await act(async () => { clickRefresh(); });
+      await act(async () => {
+        clickRefresh();
+      });
 
       await waitFor(() => {
         expect(screen.getByText(/Red Flags/)).toBeInTheDocument();
@@ -179,7 +199,9 @@ describe('DiagnosisSuggestions', () => {
       });
 
       render(<DiagnosisSuggestions {...MINIMAL_PROPS} maxSuggestions={3} />);
-      await act(async () => { clickRefresh(); });
+      await act(async () => {
+        clickRefresh();
+      });
 
       await waitFor(() => {
         expect(screen.getByText('#1')).toBeInTheDocument();
@@ -192,9 +214,7 @@ describe('DiagnosisSuggestions', () => {
 
   describe('isVisible', () => {
     it('renders nothing when isVisible is false', () => {
-      const { container } = render(
-        <DiagnosisSuggestions {...MINIMAL_PROPS} isVisible={false} />
-      );
+      const { container } = render(<DiagnosisSuggestions {...MINIMAL_PROPS} isVisible={false} />);
       expect(container.firstChild).toBeNull();
     });
   });
@@ -209,7 +229,9 @@ describe('DiagnosisSuggestions', () => {
         .mockResolvedValueOnce({ success: ['icd10'], failed: [] });
 
       render(<DiagnosisSuggestions {...MINIMAL_PROPS} />);
-      await act(async () => { clickRefresh(); });
+      await act(async () => {
+        clickRefresh();
+      });
 
       await waitFor(() => {
         expect(screen.getByText('J06.9')).toBeInTheDocument();
@@ -222,15 +244,15 @@ describe('DiagnosisSuggestions', () => {
 
       // Click first suggestion card (it's a button containing the ICD code)
       const cards = screen.getAllByRole('button', { name: /./ });
-      const suggestionCard = cards.find(btn => btn.textContent?.includes('J06.9'));
+      const suggestionCard = cards.find((btn) => btn.textContent?.includes('J06.9'));
       if (suggestionCard) {
-        await act(async () => { fireEvent.click(suggestionCard); });
+        await act(async () => {
+          fireEvent.click(suggestionCard);
+        });
       }
 
       await waitFor(() => {
-        const fillCall = mockSendMessage.mock.calls.find(
-          (call) => call[0] === 'fillDiagnosa'
-        );
+        const fillCall = mockSendMessage.mock.calls.find((call) => call[0] === 'fillDiagnosa');
         expect(fillCall).toBeDefined();
         expect(fillCall![1].jenis).toBe('SEKUNDER');
       });

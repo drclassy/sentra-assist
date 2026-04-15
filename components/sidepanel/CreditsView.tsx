@@ -1,8 +1,8 @@
-import { motion, type Variants } from 'framer-motion'
-import React from 'react'
+import { motion, type Variants } from 'framer-motion';
+import React from 'react';
 
 interface CreditsViewProps {
-  onBack: () => void
+  onBack: () => void;
 }
 
 export const CreditsView: React.FC<CreditsViewProps> = ({ onBack }) => {
@@ -15,7 +15,7 @@ export const CreditsView: React.FC<CreditsViewProps> = ({ onBack }) => {
         delayChildren: 0.2,
       },
     },
-  }
+  };
 
   const itemVariants: Variants = {
     hidden: { opacity: 0, y: 15, filter: 'blur(10px)' },
@@ -25,7 +25,7 @@ export const CreditsView: React.FC<CreditsViewProps> = ({ onBack }) => {
       filter: 'blur(0px)',
       transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const },
     },
-  }
+  };
 
   return (
     <div className="credits-view flex flex-col items-center justify-center min-h-screen bg-[#050505] text-[#F4EFE6] p-8 text-center relative overflow-hidden">
@@ -86,5 +86,5 @@ export const CreditsView: React.FC<CreditsViewProps> = ({ onBack }) => {
         transition={{ duration: 1.5, delay: 0.5 }}
       />
     </div>
-  )
-}
+  );
+};

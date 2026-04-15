@@ -55,9 +55,9 @@ Prioritas:
 
 Ditolak karena tabel RME memiliki variasi DOM yang tinggi dan sering tidak konsisten antar faskes.
 
-### 2. Full AI-based DOM parsing
+### 2. Full AI-based parsing per field (pre-DAS approach)
 
-Ditolak karena latensi tinggi dan biaya Vertex AI untuk setiap scraping operation.
+Ditolak karena latensi tinggi dan biaya Vertex AI untuk setiap DAS scan operation.
 
 ### 3. Hybrid regex-first approach
 

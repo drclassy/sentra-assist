@@ -1,37 +1,44 @@
 export interface VitalScreeningProfile {
-  cohort: 'infant' | 'toddler' | 'preschool' | 'school_age' | 'adolescent' | 'adult' | 'older_adult'
-  label: string
-  isPediatric: boolean
-  isOlderAdult: boolean
-  hypotensionSbpFloor: number
-  bradycardiaThreshold: number
-  tachycardiaThreshold: number
-  bradypneaThreshold: number
-  tachypneaThreshold: number
-  severeHypertensionSbp: number
-  severeHypertensionDbp: number
-  bpScreeningDisclaimer?: string
-  geriatricSingleFeverThreshold?: number
-  geriatricRepeatFeverThreshold?: number
-  geriatricTemperatureNote?: string
-  geriatricOrthostaticNote?: string
+  cohort:
+    | 'infant'
+    | 'toddler'
+    | 'preschool'
+    | 'school_age'
+    | 'adolescent'
+    | 'adult'
+    | 'older_adult';
+  label: string;
+  isPediatric: boolean;
+  isOlderAdult: boolean;
+  hypotensionSbpFloor: number;
+  bradycardiaThreshold: number;
+  tachycardiaThreshold: number;
+  bradypneaThreshold: number;
+  tachypneaThreshold: number;
+  severeHypertensionSbp: number;
+  severeHypertensionDbp: number;
+  bpScreeningDisclaimer?: string;
+  geriatricSingleFeverThreshold?: number;
+  geriatricRepeatFeverThreshold?: number;
+  geriatricTemperatureNote?: string;
+  geriatricOrthostaticNote?: string;
 }
 
 function clampAge(age: number): number {
-  if (!Number.isFinite(age) || age < 0) return 0
-  return age
+  if (!Number.isFinite(age) || age < 0) return 0;
+  return age;
 }
 
 function pediatricHypotensionFloor(age: number): number {
-  if (age < 1) return 70
-  if (age <= 10) return 70 + Math.round(2 * age)
-  return 90
+  if (age < 1) return 70;
+  if (age <= 10) return 70 + Math.round(2 * age);
+  return 90;
 }
 
 export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
-  const normalizedAge = clampAge(age)
+  const normalizedAge = clampAge(age);
   const pediatricDisclaimer =
-    'Skrining tekanan darah anak memakai ambang usia awal; interpretasi final tetap perlu tabel usia/jenis kelamin/tinggi badan.'
+    'Skrining tekanan darah anak memakai ambang usia awal; interpretasi final tetap perlu tabel usia/jenis kelamin/tinggi badan.';
 
   if (normalizedAge < 1) {
     return {
@@ -47,7 +54,7 @@ export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
       severeHypertensionSbp: 130,
       severeHypertensionDbp: 85,
       bpScreeningDisclaimer: pediatricDisclaimer,
-    }
+    };
   }
 
   if (normalizedAge <= 3) {
@@ -64,7 +71,7 @@ export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
       severeHypertensionSbp: 130,
       severeHypertensionDbp: 85,
       bpScreeningDisclaimer: pediatricDisclaimer,
-    }
+    };
   }
 
   if (normalizedAge <= 5) {
@@ -81,7 +88,7 @@ export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
       severeHypertensionSbp: 132,
       severeHypertensionDbp: 86,
       bpScreeningDisclaimer: pediatricDisclaimer,
-    }
+    };
   }
 
   if (normalizedAge <= 12) {
@@ -98,7 +105,7 @@ export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
       severeHypertensionSbp: 140,
       severeHypertensionDbp: 90,
       bpScreeningDisclaimer: pediatricDisclaimer,
-    }
+    };
   }
 
   if (normalizedAge < 18) {
@@ -116,7 +123,7 @@ export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
       severeHypertensionDbp: 100,
       bpScreeningDisclaimer:
         'Remaja memakai ambang skrining awal; korelasikan dengan guideline hipertensi remaja dan pengukuran ulang yang benar.',
-    }
+    };
   }
 
   if (normalizedAge < 65) {
@@ -132,7 +139,7 @@ export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
       tachypneaThreshold: 30,
       severeHypertensionSbp: 180,
       severeHypertensionDbp: 120,
-    }
+    };
   }
 
   return {
@@ -153,5 +160,5 @@ export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
       'Suhu basal usia tua dapat lebih rendah; tidak adanya demam tidak menyingkirkan infeksi.',
     geriatricOrthostaticNote:
       'Pada usia tua, pertimbangkan cek hipotensi ortostatik bila ada pusing, jatuh, sinkop, atau kelemahan saat berdiri.',
-  }
+  };
 }

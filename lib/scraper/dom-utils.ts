@@ -10,30 +10,30 @@
  * @param timeout Max wait time (ms)
  */
 export const waitForElement = (selector: string, timeout = 5000): Promise<Element | null> => {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     if (document.querySelector(selector)) {
-      return resolve(document.querySelector(selector))
+      return resolve(document.querySelector(selector));
     }
 
     const observer = new MutationObserver(() => {
       if (document.querySelector(selector)) {
-        observer.disconnect()
-        resolve(document.querySelector(selector))
+        observer.disconnect();
+        resolve(document.querySelector(selector));
       }
-    })
+    });
 
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-    })
+    });
 
     setTimeout(() => {
-      observer.disconnect()
-      console.warn(`[DOM] Timeout waiting for: ${selector}`)
-      resolve(null)
-    }, timeout)
-  })
-}
+      observer.disconnect();
+      console.warn(`[DOM] Timeout waiting for: ${selector}`);
+      resolve(null);
+    }, timeout);
+  });
+};
 
 /**
  * getInputValue
@@ -44,9 +44,9 @@ export const waitForElement = (selector: string, timeout = 5000): Promise<Elemen
  */
 
 export const getInputValue = (selector: string): string => {
-  const el = document.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement
-  return el ? el.value.trim() : ''
-}
+  const el = document.querySelector(selector) as HTMLInputElement | HTMLTextAreaElement;
+  return el ? el.value.trim() : '';
+};
 
 /**
  * getTextContent
@@ -57,6 +57,6 @@ export const getInputValue = (selector: string): string => {
  */
 
 export const getTextContent = (selector: string): string => {
-  const el = document.querySelector(selector)
-  return el ? el.textContent?.trim() || '' : ''
-}
+  const el = document.querySelector(selector);
+  return el ? el.textContent?.trim() || '' : '';
+};

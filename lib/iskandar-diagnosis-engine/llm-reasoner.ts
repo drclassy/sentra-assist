@@ -9,20 +9,20 @@
  * @module lib/iskandar-diagnosis-engine/llm-reasoner
  */
 
-import type { AIDiagnosisSuggestion } from '@/lib/api/deepseek-types'
-import type { MatchedCandidate } from './symptom-matcher'
+import type { AIDiagnosisSuggestion } from '@/lib/api/deepseek-types';
+import type { MatchedCandidate } from './symptom-matcher';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
 export interface ReasonerInput {
-  candidates: MatchedCandidate[]
-  keluhanUtama: string
-  keluhanTambahan?: string
-  usia?: number
-  jenisKelamin?: 'L' | 'P'
-  epiContext?: string
+  candidates: MatchedCandidate[];
+  keluhanUtama: string;
+  keluhanTambahan?: string;
+  usia?: number;
+  jenisKelamin?: 'L' | 'P';
+  epiContext?: string;
 }
 
 /**
@@ -34,11 +34,11 @@ export interface ReasonerInput {
  */
 
 export interface ReasonerOutput {
-  suggestions: AIDiagnosisSuggestion[]
-  source: 'ai' | 'local'
-  modelVersion: string
-  latencyMs: number
-  dataQualityWarnings: string[]
+  suggestions: AIDiagnosisSuggestion[];
+  source: 'ai' | 'local';
+  modelVersion: string;
+  latencyMs: number;
+  dataQualityWarnings: string[];
 }
 
 // =============================================================================
@@ -72,7 +72,7 @@ OUTPUT FORMAT (JSON KETAT):
       "recommended_actions": ["tindakan 1"]
     }
   ]
-}`
+}`;
 }
 
 function buildUserPrompt(input: ReasonerInput): string {
@@ -82,7 +82,7 @@ function buildUserPrompt(input: ReasonerInput): string {
       (c, i) =>
         `${i + 1}. [${c.icd10}] ${c.nama} (match: ${(c.matchScore * 100).toFixed(1)}%, gejala cocok: ${c.matchedSymptoms.join(', ')})`
     )
-    .join('\n')
+    .join('\n');
 
   return `PASIEN:
 - Keluhan utama: ${input.keluhanUtama}
@@ -93,7 +93,7 @@ ${input.jenisKelamin ? `- Jenis kelamin: ${input.jenisKelamin === 'L' ? 'Laki-la
 KANDIDAT DARI KB (pilih dan ranking dari daftar ini):
 ${candidateList}
 
-Berikan ranking ulang dengan reasoning klinis. Output JSON saja.`
+Berikan ranking ulang dengan reasoning klinis. Output JSON saja.`;
 }
 
 // =============================================================================
@@ -106,11 +106,11 @@ async function callLLM(
 ): Promise<{ success: boolean; data?: { suggestions: AIDiagnosisSuggestion[] }; error?: string }> {
   try {
     // Dynamic import to avoid circular deps and handle missing API key gracefully
-    const { inferDiagnosis } = await import('@/lib/api/deepseek-client')
-    const { isAPIConfigured } = await import('@/lib/api/deepseek-client')
+    const { inferDiagnosis } = await import('@/lib/api/deepseek-client');
+    const { isAPIConfigured } = await import('@/lib/api/deepseek-client');
 
     if (!(await isAPIConfigured())) {
-      return { success: false, error: 'API not configured' }
+      return { success: false, error: 'API not configured' };
     }
 
     // Use the existing inferDiagnosis with a synthetic context
@@ -124,22 +124,22 @@ async function callLLM(
       is_pregnant: false,
       allergies: [],
       chronic_diseases: [],
-    }
+    };
 
-    const result = await inferDiagnosis(context, [])
+    const result = await inferDiagnosis(context, []);
 
     if (result.suggestions.length > 0) {
       return {
         success: true,
         data: { suggestions: result.suggestions },
-      }
+      };
     }
 
-    return { success: false, error: 'No suggestions from LLM' }
+    return { success: false, error: 'No suggestions from LLM' };
   } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Unknown LLM error'
-    console.warn('[LLM Reasoner] LLM call failed, using fallback:', msg)
-    return { success: false, error: msg }
+    const msg = error instanceof Error ? error.message : 'Unknown LLM error';
+    console.warn('[LLM Reasoner] LLM call failed, using fallback:', msg);
+    return { success: false, error: msg };
   }
 }
 
@@ -158,20 +158,20 @@ function buildKBOnlySuggestions(candidates: MatchedCandidate[]): AIDiagnosisSugg
       : `Kesesuaian gejala: ${c.matchedSymptoms.slice(0, 3).join(', ')}. Match score: ${(c.matchScore * 100).toFixed(0)}%.`,
     red_flags: c.redFlags.slice(0, 3),
     recommended_actions: buildRecommendedActions(c),
-  }))
+  }));
 }
 
 function buildRecommendedActions(c: MatchedCandidate): string[] {
-  const actions: string[] = []
-  actions.push('Lakukan pemeriksaan fisik terarah dan monitoring TTV serial')
+  const actions: string[] = [];
+  actions.push('Lakukan pemeriksaan fisik terarah dan monitoring TTV serial');
 
   if (c.kriteria_rujukan) {
-    actions.push(`Pertimbangkan rujukan: ${c.kriteria_rujukan.substring(0, 120)}`)
+    actions.push(`Pertimbangkan rujukan: ${c.kriteria_rujukan.substring(0, 120)}`);
   }
   if (c.diagnosisBanding.length > 0) {
-    actions.push(`Diagnosis banding: ${c.diagnosisBanding.slice(0, 3).join(', ')}`)
+    actions.push(`Diagnosis banding: ${c.diagnosisBanding.slice(0, 3).join(', ')}`);
   }
-  return actions.slice(0, 3)
+  return actions.slice(0, 3);
 }
 
 // =============================================================================
@@ -183,8 +183,8 @@ function buildRecommendedActions(c: MatchedCandidate): string[] {
  * Falls back to KB-only if LLM unavailable.
  */
 export async function runLLMReasoning(input: ReasonerInput): Promise<ReasonerOutput> {
-  const startTime = Date.now()
-  const warnings: string[] = []
+  const startTime = Date.now();
+  const warnings: string[] = [];
 
   if (input.candidates.length === 0) {
     return {
@@ -193,21 +193,21 @@ export async function runLLMReasoning(input: ReasonerInput): Promise<ReasonerOut
       modelVersion: 'IDE-V1-KB',
       latencyMs: Date.now() - startTime,
       dataQualityWarnings: ['No candidates to reason about'],
-    }
+    };
   }
 
   // Try LLM first
-  const systemPrompt = buildSystemPrompt(input.epiContext || '')
-  const userPrompt = buildUserPrompt(input)
-  const llmResult = await callLLM(systemPrompt, userPrompt)
+  const systemPrompt = buildSystemPrompt(input.epiContext || '');
+  const userPrompt = buildUserPrompt(input);
+  const llmResult = await callLLM(systemPrompt, userPrompt);
 
   if (llmResult.success && llmResult.data) {
     // Merge LLM reasoning with KB data
     const enriched = llmResult.data.suggestions.map((s, i) => {
       // Find matching KB candidate to enrich
       const kbMatch = input.candidates.find(
-        c => c.icd10 === s.icd10_code || c.icd10.startsWith(s.icd10_code.split('.')[0])
-      )
+        (c) => c.icd10 === s.icd10_code || c.icd10.startsWith(s.icd10_code.split('.')[0])
+      );
       return {
         ...s,
         rank: i + 1,
@@ -216,8 +216,8 @@ export async function runLLMReasoning(input: ReasonerInput): Promise<ReasonerOut
         red_flags: s.red_flags || kbMatch?.redFlags?.slice(0, 3) || [],
         recommended_actions:
           s.recommended_actions || (kbMatch ? buildRecommendedActions(kbMatch) : []),
-      }
-    })
+      };
+    });
 
     return {
       suggestions: enriched.slice(0, 5),
@@ -225,12 +225,12 @@ export async function runLLMReasoning(input: ReasonerInput): Promise<ReasonerOut
       modelVersion: 'IDE-V1-LLM',
       latencyMs: Date.now() - startTime,
       dataQualityWarnings: warnings,
-    }
+    };
   }
 
   // Fallback: KB-only
   if (llmResult.error) {
-    warnings.push(`LLM unavailable: ${llmResult.error}. Using KB-only results.`)
+    warnings.push(`LLM unavailable: ${llmResult.error}. Using KB-only results.`);
   }
 
   return {
@@ -239,5 +239,5 @@ export async function runLLMReasoning(input: ReasonerInput): Promise<ReasonerOut
     modelVersion: 'IDE-V1-KB',
     latencyMs: Date.now() - startTime,
     dataQualityWarnings: warnings,
-  }
+  };
 }

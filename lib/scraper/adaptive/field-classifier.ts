@@ -13,7 +13,7 @@
  * @module lib/scraper/adaptive/field-classifier
  */
 
-import type { ClinicalFieldCategory, FieldMappingHint, FieldSignature } from './types'
+import type { ClinicalFieldCategory, FieldMappingHint, FieldSignature } from './types';
 
 // ============================================================================
 // CLINICAL FIELD PATTERNS
@@ -38,7 +38,7 @@ const VITAL_SIGN_PATTERNS = {
   temperature: [/suhu/i, /temp/i, /temperatur/i],
   oxygenSaturation: [/spo2/i, /saturasi/i, /oxygen/i, /o2/i],
   glucose: [/gula.*darah/i, /glucose/i, /gds/i, /gdp/i, /gd2pp/i, /blood.*sugar/i],
-}
+};
 
 /**
  * Pattern matchers for medication fields
@@ -50,12 +50,12 @@ const MEDICATION_PATTERNS = {
   frequency: [/frekuensi/i, /frequency/i, /aturan.*pakai/i, /signa/i],
   route: [/rute/i, /route/i, /cara.*pemberian/i],
   quantity: [/jumlah/i, /qty/i, /quantity/i, /kuantitas/i],
-}
+};
 
 /**
  * Pattern matchers for allergy fields
  */
-const ALLERGY_PATTERNS = [/alergi/i, /allergy/i, /allergi/i, /hipersensitif/i]
+const ALLERGY_PATTERNS = [/alergi/i, /allergy/i, /allergi/i, /hipersensitif/i];
 
 /**
  * Pattern matchers for patient identification
@@ -69,12 +69,12 @@ const PATIENT_ID_PATTERNS = [
   /nik/i,
   /nomor.*pasien/i,
   /patient.*id/i,
-]
+];
 
 /**
  * Pattern matchers for diagnosis fields
  */
-const DIAGNOSIS_PATTERNS = [/icd/i, /diagnos/i, /diagnosis/i, /penyakit/i, /disease/i]
+const DIAGNOSIS_PATTERNS = [/icd/i, /diagnos/i, /diagnosis/i, /penyakit/i, /disease/i];
 
 // ============================================================================
 // CLASSIFIER FUNCTIONS
@@ -84,7 +84,7 @@ const DIAGNOSIS_PATTERNS = [/icd/i, /diagnos/i, /diagnosis/i, /penyakit/i, /dise
  * Test if text matches any pattern in array
  */
 function matchesAny(text: string, patterns: RegExp[]): boolean {
-  return patterns.some(pattern => pattern.test(text))
+  return patterns.some((pattern) => pattern.test(text));
 }
 
 /**
@@ -98,9 +98,9 @@ function getSearchableText(signature: FieldSignature): string {
     signature.attributes.placeholder,
     signature.context.sectionHeader,
     ...signature.context.siblingLabels,
-  ].filter(Boolean)
+  ].filter(Boolean);
 
-  return parts.join(' ').toLowerCase()
+  return parts.join(' ').toLowerCase();
 }
 
 /**
@@ -110,7 +110,7 @@ function getSearchableText(signature: FieldSignature): string {
  * @returns FieldMappingHint with category, confidence, and reasoning
  */
 export function classifyClinicalField(signature: FieldSignature): FieldMappingHint {
-  const searchText = getSearchableText(signature)
+  const searchText = getSearchableText(signature);
 
   // Check Vital Signs (highest priority for safety)
   for (const [subType, patterns] of Object.entries(VITAL_SIGN_PATTERNS)) {
@@ -119,7 +119,7 @@ export function classifyClinicalField(signature: FieldSignature): FieldMappingHi
         category: 'vital_signs',
         confidence: 0.9,
         reasoning: `Matched vital sign pattern: ${subType}`,
-      }
+      };
     }
   }
 
@@ -130,7 +130,7 @@ export function classifyClinicalField(signature: FieldSignature): FieldMappingHi
         category: 'medication',
         confidence: 0.9,
         reasoning: `Matched medication pattern: ${subType}`,
-      }
+      };
     }
   }
 
@@ -140,7 +140,7 @@ export function classifyClinicalField(signature: FieldSignature): FieldMappingHi
       category: 'allergy',
       confidence: 0.85,
       reasoning: 'Matched allergy pattern',
-    }
+    };
   }
 
   // Check Patient ID fields
@@ -149,7 +149,7 @@ export function classifyClinicalField(signature: FieldSignature): FieldMappingHi
       category: 'patient_id',
       confidence: 0.9,
       reasoning: 'Matched patient identification pattern',
-    }
+    };
   }
 
   // Check Diagnosis fields
@@ -158,7 +158,7 @@ export function classifyClinicalField(signature: FieldSignature): FieldMappingHi
       category: 'diagnosis',
       confidence: 0.85,
       reasoning: 'Matched diagnosis pattern',
-    }
+    };
   }
 
   // Default to general
@@ -166,7 +166,7 @@ export function classifyClinicalField(signature: FieldSignature): FieldMappingHi
     category: 'general',
     confidence: 0.7,
     reasoning: 'No clinical pattern matched',
-  }
+  };
 }
 
 /**
@@ -181,9 +181,9 @@ export function requiresHumanConfirmation(category: ClinicalFieldCategory): bool
     'medication',
     'allergy',
     'patient_id',
-  ]
+  ];
 
-  return criticalCategories.includes(category)
+  return criticalCategories.includes(category);
 }
 
 /**
@@ -194,14 +194,14 @@ export function requiresHumanConfirmation(category: ClinicalFieldCategory): bool
  * @returns true if field must use static mapping only
  */
 export function requiresStaticMapping(signature: FieldSignature): boolean {
-  const classification = classifyClinicalField(signature)
+  const classification = classifyClinicalField(signature);
 
   // Critical fields with high confidence must use static mapping
   if (classification.confidence >= 0.9) {
-    return classification.category === 'vital_signs' || classification.category === 'medication'
+    return classification.category === 'vital_signs' || classification.category === 'medication';
   }
 
-  return false
+  return false;
 }
 
 // ============================================================================
@@ -236,7 +236,7 @@ export const EPUSKESMAS_FIELD_PATTERNS: Record<string, string[]> = {
   // Alergi
   'alergi.obat': ['MAlergiPasien[Obat][value]', 'text_alergiobat'],
   'alergi.makanan': ['MAlergiPasien[Makanan][value]', 'text_alergimakanan'],
-}
+};
 
 /**
  * Try to match a field to a known ePuskesmas pattern
@@ -245,18 +245,18 @@ export const EPUSKESMAS_FIELD_PATTERNS: Record<string, string[]> = {
  * @returns Payload key if matched, null otherwise
  */
 export function matchEpuskesmasField(signature: FieldSignature): string | null {
-  const fieldName = signature.attributes.name
-  const fieldId = signature.attributes.id
+  const fieldName = signature.attributes.name;
+  const fieldId = signature.attributes.id;
 
   for (const [payloadKey, patterns] of Object.entries(EPUSKESMAS_FIELD_PATTERNS)) {
     for (const pattern of patterns) {
       if (fieldName === pattern || fieldId === pattern) {
-        return payloadKey
+        return payloadKey;
       }
     }
   }
 
-  return null
+  return null;
 }
 
 /**
@@ -266,5 +266,5 @@ export function matchEpuskesmasField(signature: FieldSignature): string | null {
  * @returns Array of possible field name/id patterns
  */
 export function getSelectorsForPayloadKey(payloadKey: string): string[] {
-  return EPUSKESMAS_FIELD_PATTERNS[payloadKey] || []
+  return EPUSKESMAS_FIELD_PATTERNS[payloadKey] || [];
 }

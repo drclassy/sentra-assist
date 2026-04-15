@@ -30,7 +30,9 @@ export const SidePanelFooter: React.FC<SidePanelFooterProps> = ({
       </div>
       <div className="footer-text">
         {`WS:${workspaceCode} · ${sectionCode} · Shell:`}
-        <span className={loadingPatient ? 'footer-status--loading' : 'footer-status--ready'}>{shellState}</span>
+        <span className={loadingPatient ? 'footer-status--loading' : 'footer-status--ready'}>
+          {shellState}
+        </span>
       </div>
     </div>
   );

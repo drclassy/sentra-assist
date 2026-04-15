@@ -1,14 +1,14 @@
 // Designed and constructed by Claudesy.
-import { describe, expect, it, vi } from 'vitest'
-import type { DiagnosisRequestContext } from '@/types/api'
-import type { Encounter } from '~/utils/types'
-import { runGetSuggestionsFlow } from './get-suggestions-flow'
+import { describe, expect, it, vi } from 'vitest';
+import type { DiagnosisRequestContext } from '@/types/api';
+import type { Encounter } from '~/utils/types';
+import { runGetSuggestionsFlow } from './get-suggestions-flow';
 
 vi.mock('./engine', () => ({
   runDiagnosisEngine: vi.fn(async () => {
-    throw new Error('engine exploded')
+    throw new Error('engine exploded');
   }),
-}))
+}));
 
 const encounter: Encounter = {
   id: 'enc-flow-err',
@@ -32,17 +32,17 @@ const encounter: Encounter = {
     penyakit_kronis: [],
   },
   resep: [],
-}
+};
 
 const context: DiagnosisRequestContext = {
   keluhan_utama: 'Nyeri dada',
   patient_age: 42,
   patient_gender: 'M',
-}
+};
 
 describe('runGetSuggestionsFlow error handling', () => {
   it('returns success=false contract when engine throws', async () => {
-    const result = await runGetSuggestionsFlow(encounter, context)
+    const result = await runGetSuggestionsFlow(encounter, context);
 
     expect(result).toEqual({
       success: false,
@@ -50,6 +50,6 @@ describe('runGetSuggestionsFlow error handling', () => {
         code: 'ENGINE_ERROR',
         message: 'engine exploded',
       },
-    })
-  })
-})
+    });
+  });
+});

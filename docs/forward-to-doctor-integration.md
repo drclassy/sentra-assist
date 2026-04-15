@@ -88,9 +88,7 @@ Mengirim consult klinis dari perawat di Sentra Assist ke dokter tujuan.
     "glucose": "286"
   },
   "keluhan_utama": "Pusing sejak 2 hari",
-  "risk_factors": [
-    "CRITICAL • Krisis hipertensi perlu eksklusi emergensi"
-  ],
+  "risk_factors": ["CRITICAL • Krisis hipertensi perlu eksklusi emergensi"],
   "anthropometrics": {
     "tinggi": 0,
     "berat": 0,
@@ -98,19 +96,12 @@ Mengirim consult klinis dari perawat di Sentra Assist ke dokter tujuan.
     "hasil_imt": "",
     "lingkar_perut": 0
   },
-  "penyakit_kronis": [
-    "HT",
-    "DM"
-  ],
-  "alergi": [
-    "Debu"
-  ],
+  "penyakit_kronis": ["HT", "DM"],
+  "alergi": ["Debu"],
   "status_kehamilan": "tidak_diisi",
   "clinical_context": {
     "facility_name": "BALOWERTI",
-    "special_conditions": [
-      "Risiko tinggi anemia"
-    ],
+    "special_conditions": ["Risiko tinggi anemia"],
     "pregnancy_risk": "KSPR belum terisi"
   },
   "target_doctor_id": "doc_123",
@@ -139,7 +130,7 @@ Mengirim consult klinis dari perawat di Sentra Assist ke dokter tujuan.
   - `Riwayat Alergi`
   - `Penyakit Khusus`
   - `Risiko Kehamilan`
-  untuk dokter tujuan yang sedang dipilih, bila data extractor tersedia
+    untuk dokter tujuan yang sedang dipilih, bila data extractor tersedia
 - daftar dokter online diurutkan dengan prioritas:
   1. `online`
   2. `busy`

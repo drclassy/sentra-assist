@@ -8,20 +8,20 @@
 // Based on SENTRA-SPEC-001 v1.2.0 Section 3.3 & 11.2
 // Provides type-safe encounter persistence with 24h TTL
 
-import type { Encounter } from './types'
+import type { Encounter } from './types';
 
-const STORAGE_KEY = 'sentra:encounter'
-const TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+const STORAGE_KEY = 'sentra:encounter';
+const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 interface StorageWrapper {
-  encounter: Encounter | null
-  timestamp: number
+  encounter: Encounter | null;
+  timestamp: number;
 }
 
 // Validate encounter structure
 function isValidEncounter(data: unknown): data is Encounter {
-  if (typeof data !== 'object' || data === null) return false
-  const e = data as Partial<Encounter>
+  if (typeof data !== 'object' || data === null) return false;
+  const e = data as Partial<Encounter>;
   return !!(
     e.id &&
     e.patient_id &&
@@ -30,35 +30,35 @@ function isValidEncounter(data: unknown): data is Encounter {
     e.anamnesa &&
     e.diagnosa &&
     Array.isArray(e.resep)
-  )
+  );
 }
 
 // Get current encounter from storage
 export async function getEncounter(): Promise<Encounter | null> {
   try {
-    const result = await browser.storage.local.get(STORAGE_KEY)
-    const wrapper = result[STORAGE_KEY] as StorageWrapper | undefined
+    const result = await browser.storage.local.get(STORAGE_KEY);
+    const wrapper = result[STORAGE_KEY] as StorageWrapper | undefined;
 
-    if (!wrapper) return null
+    if (!wrapper) return null;
 
     // Check TTL
-    const age = Date.now() - wrapper.timestamp
+    const age = Date.now() - wrapper.timestamp;
     if (age > TTL_MS) {
-      await clearEncounter()
-      return null
+      await clearEncounter();
+      return null;
     }
 
     // Validate structure
     if (!isValidEncounter(wrapper.encounter)) {
-      console.warn('[Storage] Invalid encounter structure, clearing')
-      await clearEncounter()
-      return null
+      console.warn('[Storage] Invalid encounter structure, clearing');
+      await clearEncounter();
+      return null;
     }
 
-    return wrapper.encounter
+    return wrapper.encounter;
   } catch (error) {
-    console.error('[Storage] Failed to get encounter:', error)
-    return null
+    console.error('[Storage] Failed to get encounter:', error);
+    return null;
   }
 }
 
@@ -66,30 +66,30 @@ export async function getEncounter(): Promise<Encounter | null> {
 export async function saveEncounter(encounter: Encounter): Promise<boolean> {
   try {
     if (!isValidEncounter(encounter)) {
-      console.error('[Storage] Invalid encounter structure')
-      return false
+      console.error('[Storage] Invalid encounter structure');
+      return false;
     }
 
     const wrapper: StorageWrapper = {
       encounter,
       timestamp: Date.now(),
-    }
+    };
 
-    await browser.storage.local.set({ [STORAGE_KEY]: wrapper })
-    return true
+    await browser.storage.local.set({ [STORAGE_KEY]: wrapper });
+    return true;
   } catch (error) {
-    console.error('[Storage] Failed to save encounter:', error)
-    return false
+    console.error('[Storage] Failed to save encounter:', error);
+    return false;
   }
 }
 
 // Update partial encounter data
 export async function updateEncounter(partial: Partial<Encounter>): Promise<boolean> {
   try {
-    const current = await getEncounter()
+    const current = await getEncounter();
     if (!current) {
-      console.error('[Storage] No encounter to update')
-      return false
+      console.error('[Storage] No encounter to update');
+      return false;
     }
 
     // Deep merge
@@ -113,21 +113,21 @@ export async function updateEncounter(partial: Partial<Encounter>): Promise<bool
         ...(partial.diagnosa || {}),
       },
       resep: partial.resep || current.resep,
-    }
+    };
 
-    return await saveEncounter(updated)
+    return await saveEncounter(updated);
   } catch (error) {
-    console.error('[Storage] Failed to update encounter:', error)
-    return false
+    console.error('[Storage] Failed to update encounter:', error);
+    return false;
   }
 }
 
 // Clear encounter from storage
 export async function clearEncounter(): Promise<void> {
   try {
-    await browser.storage.local.remove(STORAGE_KEY)
+    await browser.storage.local.remove(STORAGE_KEY);
   } catch (error) {
-    console.error('[Storage] Failed to clear encounter:', error)
+    console.error('[Storage] Failed to clear encounter:', error);
   }
 }
 
@@ -160,5 +160,5 @@ export function createEmptyEncounter(pelayananId: string, patientId: string): En
       penyakit_kronis: [],
     },
     resep: [],
-  }
+  };
 }

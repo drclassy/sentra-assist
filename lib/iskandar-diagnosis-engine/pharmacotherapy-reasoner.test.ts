@@ -1,7 +1,7 @@
 // Designed and constructed by Claudesy.
-import { describe, expect, it } from 'vitest'
-import type { PrescriptionRequestContext } from '@/types/api'
-import { generatePharmacotherapyPlan } from './pharmacotherapy-reasoner'
+import { describe, expect, it } from 'vitest';
+import type { PrescriptionRequestContext } from '@/types/api';
+import { generatePharmacotherapyPlan } from './pharmacotherapy-reasoner';
 
 const inventory = [
   { nama_obat: 'Amlodipin tablet 5 mg', stok_tersedia: 3000, status: 'tersedia' },
@@ -13,7 +13,7 @@ const inventory = [
     status: 'tersedia',
   },
   { nama_obat: 'Simvastatin tablet 20 mg', stok_tersedia: 900, status: 'tersedia' },
-]
+];
 
 function baseContext(icd: string): PrescriptionRequestContext {
   return {
@@ -22,36 +22,38 @@ function baseContext(icd: string): PrescriptionRequestContext {
     alergi: [],
     penyakit_kronis: [],
     current_medications: [],
-  }
+  };
 }
 
 describe('pharmacotherapy reasoner', () => {
   it('builds non-empty hypertension regimen for I10', async () => {
-    const plan = await generatePharmacotherapyPlan(baseContext('I10'), inventory)
-    expect(plan.medications.length).toBeGreaterThan(0)
-    expect(plan.medications.some(med => med.nama_obat.toLowerCase().includes('amlodip'))).toBe(true)
-    expect(plan.confidence).toBeGreaterThan(40)
-    expect(plan.riskTier).toBe('urgent')
-    expect(plan.reviewWindow).toBe('24h')
-    expect(plan.drivers.some(line => line.includes('Syndrome: hypertension'))).toBe(true)
-    expect(plan.missingData).toContain('keluhan_utama_missing')
-  })
+    const plan = await generatePharmacotherapyPlan(baseContext('I10'), inventory);
+    expect(plan.medications.length).toBeGreaterThan(0);
+    expect(plan.medications.some((med) => med.nama_obat.toLowerCase().includes('amlodip'))).toBe(
+      true
+    );
+    expect(plan.confidence).toBeGreaterThan(40);
+    expect(plan.riskTier).toBe('urgent');
+    expect(plan.reviewWindow).toBe('24h');
+    expect(plan.drivers.some((line) => line.includes('Syndrome: hypertension'))).toBe(true);
+    expect(plan.missingData).toContain('keluhan_utama_missing');
+  });
 
   it('builds ACS regimen with escalation semantics', async () => {
-    const plan = await generatePharmacotherapyPlan(baseContext('I20.9'), inventory)
-    expect(plan.medications.length).toBeGreaterThan(0)
+    const plan = await generatePharmacotherapyPlan(baseContext('I20.9'), inventory);
+    expect(plan.medications.length).toBeGreaterThan(0);
     expect(
-      plan.alerts.some(alert => alert.severity === 'emergency' && alert.title.includes('ACS'))
-    ).toBe(true)
+      plan.alerts.some((alert) => alert.severity === 'emergency' && alert.title.includes('ACS'))
+    ).toBe(true);
     expect(
       plan.medications.some(
-        med =>
+        (med) =>
           med.nama_obat.toLowerCase().includes('isosorbid') ||
           med.nama_obat.toLowerCase().includes('nitro') ||
           med.nama_obat.toLowerCase().includes('aspirin')
       )
-    ).toBe(true)
-  })
+    ).toBe(true);
+  });
 
   it('blocks nitrate recommendation under severe hypotension safety rule', async () => {
     const plan = await generatePharmacotherapyPlan(
@@ -60,17 +62,17 @@ describe('pharmacotherapy reasoner', () => {
         vital_signs: { systolic: 80, diastolic: 50 },
       },
       inventory
-    )
+    );
 
     expect(
       plan.medications.some(
-        med =>
+        (med) =>
           med.nama_obat.toLowerCase().includes('isosorbid') ||
           med.nama_obat.toLowerCase().includes('nitro')
       )
-    ).toBe(false)
-    expect(plan.alerts.some(alert => alert.title.includes('Diblok Safety Filter'))).toBe(true)
-  })
+    ).toBe(false);
+    expect(plan.alerts.some((alert) => alert.title.includes('Diblok Safety Filter'))).toBe(true);
+  });
 
   it('adds explicit guardrail reason when high-priority cardiac code has no safe regimen', async () => {
     const constrainedInventory = [
@@ -79,7 +81,7 @@ describe('pharmacotherapy reasoner', () => {
         stok_tersedia: 100,
         status: 'tersedia',
       },
-    ]
+    ];
 
     const plan = await generatePharmacotherapyPlan(
       {
@@ -88,16 +90,16 @@ describe('pharmacotherapy reasoner', () => {
         vital_signs: { systolic: 80, diastolic: 50 },
       },
       constrainedInventory
-    )
+    );
 
-    expect(plan.medications.length).toBe(0)
+    expect(plan.medications.length).toBe(0);
     expect(
-      plan.alerts.some(alert =>
+      plan.alerts.some((alert) =>
         alert.title.includes('Regimen Kosong pada Sindrom Kardiak Prioritas Tinggi')
       )
-    ).toBe(true)
-    expect(plan.drivers.some(line => line.includes('High-priority guardrail aktif'))).toBe(true)
-  })
+    ).toBe(true);
+    expect(plan.drivers.some((line) => line.includes('High-priority guardrail aktif'))).toBe(true);
+  });
 
   it('blocks beta-blocker recommendation under severe bradycardia safety rule', async () => {
     const plan = await generatePharmacotherapyPlan(
@@ -106,15 +108,15 @@ describe('pharmacotherapy reasoner', () => {
         vital_signs: { heart_rate: 45, systolic: 170, diastolic: 100 },
       },
       inventory
-    )
+    );
 
-    expect(plan.medications.some(med => med.nama_obat.toLowerCase().includes('bisoprolol'))).toBe(
+    expect(plan.medications.some((med) => med.nama_obat.toLowerCase().includes('bisoprolol'))).toBe(
       false
-    )
-    expect(plan.alerts.some(alert => alert.message.toLowerCase().includes('beta-blocker'))).toBe(
+    );
+    expect(plan.alerts.some((alert) => alert.message.toLowerCase().includes('beta-blocker'))).toBe(
       true
-    )
-  })
+    );
+  });
 
   it('blocks ACE inhibitor or ARB recommendation in pregnancy context', async () => {
     const plan = await generatePharmacotherapyPlan(
@@ -125,17 +127,19 @@ describe('pharmacotherapy reasoner', () => {
         selected_diagnosis_name: 'Hipertensi pada kehamilan',
       },
       inventory
-    )
+    );
 
     expect(
-      plan.medications.some(med =>
-        ['lisinopril', 'captopril', 'valsartan', 'losartan', 'telmisartan'].some(keyword =>
+      plan.medications.some((med) =>
+        ['lisinopril', 'captopril', 'valsartan', 'losartan', 'telmisartan'].some((keyword) =>
           med.nama_obat.toLowerCase().includes(keyword)
         )
       )
-    ).toBe(false)
-    expect(plan.alerts.some(alert => alert.message.toLowerCase().includes('kehamilan'))).toBe(true)
-  })
+    ).toBe(false);
+    expect(plan.alerts.some((alert) => alert.message.toLowerCase().includes('kehamilan'))).toBe(
+      true
+    );
+  });
 
   it('uses explicit is_pregnant=false to override textual pregnancy hints', async () => {
     const plan = await generatePharmacotherapyPlan(
@@ -146,13 +150,13 @@ describe('pharmacotherapy reasoner', () => {
         selected_diagnosis_name: 'Hipertensi pada kehamilan',
       },
       inventory
-    )
+    );
 
-    expect(plan.medications.some(med => med.nama_obat.toLowerCase().includes('lisinopril'))).toBe(
+    expect(plan.medications.some((med) => med.nama_obat.toLowerCase().includes('lisinopril'))).toBe(
       true
-    )
+    );
     expect(
-      plan.alerts.some(alert => alert.message.toLowerCase().includes('ace inhibitor/arb'))
-    ).toBe(false)
-  })
-})
+      plan.alerts.some((alert) => alert.message.toLowerCase().includes('ace inhibitor/arb'))
+    ).toBe(false);
+  });
+});

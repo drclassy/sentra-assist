@@ -292,7 +292,10 @@ const createEmptyHistoryFlags = (): Record<string, boolean> =>
     {} as Record<string, boolean>
   );
 
-export const AVAILABILITY_LABELS: Record<NonNullable<OnlineDoctor['availability_status']>, string> = {
+export const AVAILABILITY_LABELS: Record<
+  NonNullable<OnlineDoctor['availability_status']>,
+  string
+> = {
   online: 'ONLINE',
   busy: 'BUSY',
   away: 'AWAY',
@@ -1927,7 +1930,7 @@ export function TTVInferenceUI({
               immediate_actions: canonicalOutput.recommendations.immediate_actions,
             }
           : undefined,
-        visit_history: (prefetchedVisits ?? []).slice(0, 5).map(v => ({
+        visit_history: (prefetchedVisits ?? []).slice(0, 5).map((v) => ({
           encounter_id: v.encounter_id,
           timestamp: v.timestamp,
           vitals: {

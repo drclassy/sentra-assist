@@ -11,7 +11,7 @@
  * @module lib/api/mocks
  */
 
-export * from './alerts-mock'
-export * from './ddi-mock'
-export * from './diagnosis-mock'
-export * from './prescription-mock'
+export * from './alerts-mock';
+export * from './ddi-mock';
+export * from './diagnosis-mock';
+export * from './prescription-mock';

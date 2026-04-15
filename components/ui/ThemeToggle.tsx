@@ -1,8 +1,8 @@
-import { useThemeStore } from '../../lib/theme-store'
+import { useThemeStore } from '../../lib/theme-store';
 
 const ThemeToggle = () => {
-  const { theme, toggleTheme } = useThemeStore()
-  const isLight = theme === 'light'
+  const { theme, toggleTheme } = useThemeStore();
+  const isLight = theme === 'light';
 
   return (
     <button
@@ -16,9 +16,7 @@ const ThemeToggle = () => {
         background: isLight
           ? 'radial-gradient(circle at 40% 35%, #2A2D33 0%, #191B1F 100%)'
           : 'radial-gradient(circle at 40% 35%, #1a1a1a 0%, #0A0A0C 100%)',
-        borderColor: isLight
-          ? 'rgba(122, 184, 164, 0.35)'
-          : 'rgba(255, 255, 255, 0.08)',
+        borderColor: isLight ? 'rgba(122, 184, 164, 0.35)' : 'rgba(255, 255, 255, 0.08)',
         boxShadow: isLight
           ? '0 0 6px rgba(122, 184, 164, 0.2), inset 0 1px 2px rgba(255,255,255,0.06)'
           : 'inset 0 1px 2px rgba(255,255,255,0.04), 0 2px 4px rgba(0,0,0,0.4)',
@@ -38,7 +36,7 @@ const ThemeToggle = () => {
         }}
       />
     </button>
-  )
-}
+  );
+};
 
-export default ThemeToggle
+export default ThemeToggle;

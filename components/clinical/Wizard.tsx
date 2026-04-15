@@ -30,7 +30,7 @@ export interface WizardStep {
 
 /**
  * WizardStepProps interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-02-04
@@ -46,7 +46,7 @@ export interface WizardStepProps {
 
 /**
  * WizardProps interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-02-04
@@ -159,7 +159,9 @@ export const Wizard: React.FC<WizardProps> = ({ steps, onComplete, onCancel, tit
         <div className="wizard-navigation-hints">
           {currentStepIndex > 0 && <span className="wizard-hint">← Back available</span>}
           {currentStepIndex < steps.length - 1 && (
-            <span className="wizard-hint">Next step: {humanizeUiText(steps[currentStepIndex + 1].title)} →</span>
+            <span className="wizard-hint">
+              Next step: {humanizeUiText(steps[currentStepIndex + 1].title)} →
+            </span>
           )}
         </div>
       </div>

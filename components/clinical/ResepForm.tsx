@@ -276,7 +276,11 @@ export function ResepForm() {
                     min={1}
                     value={medication.jumlah || ''}
                     onChange={(event) =>
-                      updateMedication(medication.id, 'jumlah', Number.parseInt(event.target.value, 10) || 0)
+                      updateMedication(
+                        medication.id,
+                        'jumlah',
+                        Number.parseInt(event.target.value, 10) || 0
+                      )
                     }
                     className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
                   />
@@ -310,7 +314,9 @@ export function ResepForm() {
                     id={`signa-${medication.id}`}
                     type="text"
                     value={medication.signa}
-                    onChange={(event) => updateMedication(medication.id, 'signa', event.target.value)}
+                    onChange={(event) =>
+                      updateMedication(medication.id, 'signa', event.target.value)
+                    }
                     placeholder="Contoh: 3x1"
                     className="neu-input w-full rounded-lg px-3 py-2 text-small bg-transparent"
                   />

@@ -156,12 +156,12 @@ function applyPresetVitals(
 export function buildVitalAutofill(
   preset: AutosenPreset,
   patientAge: number,
-  seed?: number,
+  seed?: number
 ): VitalAutofillResult {
   // For presets that map to the v2 random generator, use it for proper ranges
   const v2PresetMap: Partial<Record<AutosenPreset, AassistPreset>> = {
-    hypertension:  'hipertensi',
-    hypotension:   'hipotensi',
+    hypertension: 'hipertensi',
+    hypotension: 'hipotensi',
     hyperglycemia: 'hiperglikemi',
   };
 

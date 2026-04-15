@@ -21,25 +21,25 @@
  */
 export interface DiagnosisSuggestion {
   /** Rank in suggestion list */
-  rank: number
+  rank: number;
   /** ICD-10 code (e.g., "J06.9", "A09") */
-  icd_x: string
+  icd_x: string;
   /** Diagnosis name in Indonesian */
-  nama: string
+  nama: string;
   /** English diagnosis name */
-  diagnosis_name?: string
+  diagnosis_name?: string;
   /** Alias for ICD code compatibility */
-  icd10_code?: string
+  icd10_code?: string;
   /** Confidence score 0.0 - 1.0 */
-  confidence: number
+  confidence: number;
   /** Clinical rationale for this suggestion */
-  rationale: string
+  rationale: string;
   /** Alias for rationale */
-  reasoning?: string
+  reasoning?: string;
   /** Red flags associated with this diagnosis */
-  red_flags?: string[]
+  red_flags?: string[];
   /** Recommended actions */
-  recommended_actions?: string[]
+  recommended_actions?: string[];
 }
 
 // =============================================================================
@@ -51,19 +51,19 @@ export interface DiagnosisSuggestion {
  */
 export interface MedicationRecommendation {
   /** Drug name with strength (e.g., "Paracetamol 500mg") */
-  nama_obat: string
+  nama_obat: string;
   /** Dosage regimen (e.g., "3x1", "2x500mg") */
-  dosis: string
+  dosis: string;
   /** Administration instructions */
-  aturan_pakai: AturanPakaiText
+  aturan_pakai: AturanPakaiText;
   /** Treatment duration (e.g., "3 hari", "5 hari") */
-  durasi?: string
+  durasi?: string;
   /** Clinical rationale for this recommendation */
-  rationale: string
+  rationale: string;
   /** Safety assessment result */
-  safety_check: SafetyStatus
+  safety_check: SafetyStatus;
   /** Known contraindications for this patient */
-  contraindications?: string[]
+  contraindications?: string[];
 }
 
 export type AturanPakaiText =
@@ -71,9 +71,9 @@ export type AturanPakaiText =
   | 'Sesudah makan'
   | 'Pemakaian luar'
   | 'Jika diperlukan'
-  | 'Saat makan'
+  | 'Saat makan';
 
-export type SafetyStatus = 'safe' | 'caution' | 'contraindicated'
+export type SafetyStatus = 'safe' | 'caution' | 'contraindicated';
 
 // =============================================================================
 // ALERT TYPES
@@ -85,22 +85,22 @@ export type SafetyStatus = 'safe' | 'caution' | 'contraindicated'
  */
 export interface CDSSAlert {
   /** Unique alert ID */
-  id: string
+  id: string;
   /** Alert type */
-  type: CDSSAlertType
+  type: CDSSAlertType;
   /** Severity level */
-  severity: AlertSeverity
+  severity: AlertSeverity;
   /** Alert title */
-  title: string
+  title: string;
   /** Alert message */
-  message: string
+  message: string;
   /** Related ICD-10 codes */
-  icd_codes?: string[]
+  icd_codes?: string[];
   /** Recommended action */
-  action?: string
+  action?: string;
 }
 
-export type AlertSeverity = 'emergency' | 'high' | 'medium' | 'low' | 'info'
+export type AlertSeverity = 'emergency' | 'high' | 'medium' | 'low' | 'info';
 
 export type CDSSAlertType =
   | 'red_flag'
@@ -113,13 +113,13 @@ export type CDSSAlertType =
   | 'guideline'
   | 'chronic_disease'
   | 'vital_sign'
-  | 'sepsis_warning'
+  | 'sepsis_warning';
 
 /** @deprecated Use AlertSeverity instead */
-export type AlertLevel = 'critical' | 'warning' | 'info'
+export type AlertLevel = 'critical' | 'warning' | 'info';
 
 /** @deprecated Use CDSSAlertType instead */
-export type AlertType = CDSSAlertType
+export type AlertType = CDSSAlertType;
 
 // =============================================================================
 // DRUG INTERACTION TYPES
@@ -130,20 +130,20 @@ export type AlertType = CDSSAlertType
  */
 export interface DrugInteraction {
   /** First drug in the interaction pair */
-  drug_a: string
+  drug_a: string;
   /** Second drug in the interaction pair */
-  drug_b: string
+  drug_b: string;
   /** Interaction severity */
-  severity: DDISeverity
+  severity: DDISeverity;
   /** Clinical description of the interaction */
-  description: string
+  description: string;
   /** Recommended action */
-  recommendation?: string
+  recommendation?: string;
   /** Evidence source (e.g., "Lexicomp", "Micromedex") */
-  source?: string
+  source?: string;
 }
 
-export type DDISeverity = 'contraindicated' | 'major' | 'moderate' | 'minor'
+export type DDISeverity = 'contraindicated' | 'major' | 'moderate' | 'minor';
 
 // =============================================================================
 // PEDIATRIC DOSING TYPES
@@ -154,17 +154,17 @@ export type DDISeverity = 'contraindicated' | 'major' | 'moderate' | 'minor'
  */
 export interface PediatricDose {
   /** Drug name */
-  drug: string
+  drug: string;
   /** Calculated dose */
-  recommended_dose: string
+  recommended_dose: string;
   /** Maximum safe dose */
-  max_dose: string
+  max_dose: string;
   /** Available formulation (e.g., "Sirup 60mg/5mL") */
-  formulation?: string
+  formulation?: string;
   /** Calculation method used */
-  method: PediatricDosingMethod
+  method: PediatricDosingMethod;
   /** Safety warnings specific to pediatric use */
-  warnings?: string[]
+  warnings?: string[];
 }
 
 export type PediatricDosingMethod =
@@ -172,7 +172,7 @@ export type PediatricDosingMethod =
   | 'age_based'
   | 'bsa_based'
   | 'clarks_rule'
-  | 'youngs_rule'
+  | 'youngs_rule';
 
 // =============================================================================
 // API RESPONSE TYPES
@@ -183,58 +183,58 @@ export type PediatricDosingMethod =
  */
 export interface CDSSResponse {
   /** Suggested diagnoses with confidence scores */
-  diagnosis_suggestions: DiagnosisSuggestion[]
+  diagnosis_suggestions: DiagnosisSuggestion[];
   /** Recommended medications with safety checks */
-  medication_recommendations: MedicationRecommendation[]
+  medication_recommendations: MedicationRecommendation[];
   /** Clinical alerts (allergy, DDI, dosing, etc.) */
-  alerts: CDSSAlert[]
+  alerts: CDSSAlert[];
   /** Evidence-based clinical guidelines */
-  clinical_guidelines?: string[]
+  clinical_guidelines?: string[];
   /** Detected drug interactions */
-  drug_interactions?: DrugInteraction[]
+  drug_interactions?: DrugInteraction[];
   /** Explainability payload for pharmacotherapy reasoning */
-  pharmacotherapy_explainability?: PharmacotherapyExplainability
+  pharmacotherapy_explainability?: PharmacotherapyExplainability;
   /** Validation summary from diagnosis engine */
   validation_summary?: {
-    total_raw: number
-    total_validated: number
-    unverified_codes: string[]
-    warnings: string[]
-  }
+    total_raw: number;
+    total_validated: number;
+    unverified_codes: string[];
+    warnings: string[];
+  };
   /** Response metadata */
-  meta?: CDSSResponseMeta
+  meta?: CDSSResponseMeta;
 }
 
 export interface PharmacotherapyExplainability {
   /** Confidence score (0-100) of therapy proposal */
-  confidence: number
+  confidence: number;
   /** Clinical/rule drivers that shaped recommendation */
-  drivers: string[]
+  drivers: string[];
   /** Missing data that may reduce confidence */
-  missing_data: string[]
+  missing_data: string[];
   /** Risk tier inferred for follow-up intensity */
-  risk_tier: 'routine' | 'urgent' | 'emergency'
+  risk_tier: 'routine' | 'urgent' | 'emergency';
   /** Recommended review window based on risk */
-  review_window: '6h' | '24h' | '48h'
+  review_window: '6h' | '24h' | '48h';
   /** Trace of pipeline branch used */
   pathway:
     | 'knowledge-only'
     | 'knowledge+syndrome-intent'
     | 'syndrome-intent-only'
-    | 'legacy-fallback'
+    | 'legacy-fallback';
 }
 
 export interface CDSSResponseMeta {
   /** Request processing time in ms */
-  processing_time_ms: number
+  processing_time_ms: number;
   /** AI model version used */
-  model_version: string
+  model_version: string;
   /** Request timestamp */
-  timestamp: string
+  timestamp: string;
   /** Whether this is a mock response */
-  is_mock?: boolean
+  is_mock?: boolean;
   /** Whether inference executed locally on edge/browser runtime */
-  is_local?: boolean
+  is_local?: boolean;
 }
 
 // =============================================================================
@@ -246,19 +246,19 @@ export interface CDSSResponseMeta {
  */
 export interface DiagnosisRequestContext {
   /** Chief complaint / Keluhan utama */
-  keluhan_utama: string
+  keluhan_utama: string;
   /** Additional complaints / Keluhan tambahan */
-  keluhan_tambahan?: string
+  keluhan_tambahan?: string;
   /** Patient age in years */
-  patient_age: number
+  patient_age: number;
   /** Patient gender */
-  patient_gender: 'M' | 'F'
+  patient_gender: 'M' | 'F';
   /** Vital signs if available */
-  vital_signs?: VitalSigns
+  vital_signs?: VitalSigns;
   /** Known allergies */
-  allergies?: string[]
+  allergies?: string[];
   /** Known chronic diseases */
-  chronic_diseases?: string[]
+  chronic_diseases?: string[];
 }
 
 /**
@@ -266,25 +266,25 @@ export interface DiagnosisRequestContext {
  */
 export interface PrescriptionRequestContext {
   /** Selected ICD-10 diagnosis code */
-  icd_x: string
+  icd_x: string;
   /** Patient age in years */
-  patient_age: number
+  patient_age: number;
   /** Patient weight in kg */
-  patient_weight?: number
+  patient_weight?: number;
   /** Known drug allergies */
-  alergi: string[]
+  alergi: string[];
   /** Chronic disease conditions */
-  penyakit_kronis: string[]
+  penyakit_kronis: string[];
   /** Currently prescribed medications */
-  current_medications?: string[]
+  current_medications?: string[];
   /** Optional complaint context for reasoner */
-  keluhan_utama?: string
+  keluhan_utama?: string;
   /** Optional selected diagnosis label from UI */
-  selected_diagnosis_name?: string
+  selected_diagnosis_name?: string;
   /** Optional vitals context to improve safety filtering */
-  vital_signs?: VitalSigns
+  vital_signs?: VitalSigns;
   /** Explicit pregnancy status (preferred over text/ICD inference when provided) */
-  is_pregnant?: boolean
+  is_pregnant?: boolean;
 }
 
 /**
@@ -292,7 +292,7 @@ export interface PrescriptionRequestContext {
  */
 export interface DDICheckRequest {
   /** List of drug names to check */
-  drugs: string[]
+  drugs: string[];
 }
 
 /**
@@ -300,9 +300,9 @@ export interface DDICheckRequest {
  */
 export interface AllergyCheckRequest {
   /** Medications to prescribe */
-  medications: string[]
+  medications: string[];
   /** Known patient allergies */
-  allergies: string[]
+  allergies: string[];
 }
 
 /**
@@ -310,11 +310,11 @@ export interface AllergyCheckRequest {
  */
 export interface PediatricDoseRequest {
   /** Drug name */
-  drug: string
+  drug: string;
   /** Patient age in months */
-  patient_age_months: number
+  patient_age_months: number;
   /** Patient weight in kg */
-  patient_weight_kg: number
+  patient_weight_kg: number;
 }
 
 // =============================================================================
@@ -323,19 +323,19 @@ export interface PediatricDoseRequest {
 
 export interface VitalSigns {
   /** Systolic blood pressure (mmHg) */
-  systolic?: number
+  systolic?: number;
   /** Diastolic blood pressure (mmHg) */
-  diastolic?: number
+  diastolic?: number;
   /** Heart rate (bpm) */
-  heart_rate?: number
+  heart_rate?: number;
   /** Respiratory rate (breaths/min) */
-  respiratory_rate?: number
+  respiratory_rate?: number;
   /** Temperature (Celsius) */
-  temperature?: number
+  temperature?: number;
   /** Oxygen saturation (%) */
-  spo2?: number
+  spo2?: number;
   /** Glasgow Coma Scale (3-15) */
-  gcs?: number
+  gcs?: number;
 }
 
 // =============================================================================
@@ -344,22 +344,22 @@ export interface VitalSigns {
 
 export interface APIError {
   /** Error code */
-  code: string
+  code: string;
   /** Human-readable error message */
-  message: string
+  message: string;
   /** Additional error details */
-  details?: Record<string, unknown>
+  details?: Record<string, unknown>;
 }
 
 export interface APIResponse<T> {
   /** Whether the request succeeded */
-  success: boolean
+  success: boolean;
   /** Response data if successful */
-  data?: T
+  data?: T;
   /** Error information if failed */
-  error?: APIError
+  error?: APIError;
   /** Indicates fallback to local rules was used */
-  fallback?: boolean
+  fallback?: boolean;
 }
 
 // =============================================================================
@@ -373,7 +373,7 @@ export function isCDSSAlert(obj: unknown): obj is CDSSAlert {
     'severity' in obj &&
     'type' in obj &&
     'message' in obj
-  )
+  );
 }
 
 export function isDrugInteraction(obj: unknown): obj is DrugInteraction {
@@ -383,13 +383,13 @@ export function isDrugInteraction(obj: unknown): obj is DrugInteraction {
     'drug_a' in obj &&
     'drug_b' in obj &&
     'severity' in obj
-  )
+  );
 }
 
 export function isCriticalAlert(alert: CDSSAlert): boolean {
-  return alert.severity === 'emergency' || alert.severity === 'high'
+  return alert.severity === 'emergency' || alert.severity === 'high';
 }
 
 export function isContraindicated(interaction: DrugInteraction): boolean {
-  return interaction.severity === 'contraindicated'
+  return interaction.severity === 'contraindicated';
 }

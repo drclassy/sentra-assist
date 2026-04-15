@@ -16,9 +16,9 @@
  * 100% test coverage is REQUIRED.
  */
 
-import type { VitalSigns } from '@/types/api'
-import type { Encounter } from '@/utils/types'
-import type { AnonymizedClinicalContext } from '../api/deepseek-types'
+import type { VitalSigns } from '@/types/api';
+import type { Encounter } from '@/utils/types';
+import type { AnonymizedClinicalContext } from '../api/deepseek-types';
 
 // =============================================================================
 // PII PATTERNS
@@ -54,7 +54,7 @@ const PII_PATTERNS = {
 
   // Rekam Medis number (various formats)
   RM_NUMBER: /\b(?:RM|No\.?\s*RM)\s*:?\s*[A-Z0-9-]+\b/gi,
-}
+};
 
 /**
  * Placeholder text for redacted content
@@ -68,7 +68,7 @@ const REDACTION_PLACEHOLDERS = {
   BPJS: '[BPJS_DIHAPUS]',
   RM: '[RM_DIHAPUS]',
   GENERAL: '[REDACTED]',
-}
+};
 
 // =============================================================================
 // ANONYMIZATION FUNCTIONS
@@ -80,26 +80,26 @@ const REDACTION_PLACEHOLDERS = {
  */
 export function redactPII(text: string): string {
   if (!text || typeof text !== 'string') {
-    return ''
+    return '';
   }
 
-  let result = text
+  let result = text;
 
   // Apply each pattern
-  result = result.replace(PII_PATTERNS.NIK, REDACTION_PLACEHOLDERS.NIK)
-  result = result.replace(PII_PATTERNS.PHONE_62, REDACTION_PLACEHOLDERS.PHONE)
-  result = result.replace(PII_PATTERNS.PHONE_08, REDACTION_PLACEHOLDERS.PHONE)
-  result = result.replace(PII_PATTERNS.PHONE_GENERAL, REDACTION_PLACEHOLDERS.PHONE)
-  result = result.replace(PII_PATTERNS.EMAIL, REDACTION_PLACEHOLDERS.EMAIL)
-  result = result.replace(PII_PATTERNS.HONORIFIC_NAME, REDACTION_PLACEHOLDERS.NAME)
-  result = result.replace(PII_PATTERNS.ADDRESS_JL, REDACTION_PLACEHOLDERS.ADDRESS)
-  result = result.replace(PII_PATTERNS.ADDRESS_RT_RW, REDACTION_PLACEHOLDERS.ADDRESS)
-  result = result.replace(PII_PATTERNS.ADDRESS_KEL, REDACTION_PLACEHOLDERS.ADDRESS)
-  result = result.replace(PII_PATTERNS.ADDRESS_KEC, REDACTION_PLACEHOLDERS.ADDRESS)
-  result = result.replace(PII_PATTERNS.BPJS, REDACTION_PLACEHOLDERS.BPJS)
-  result = result.replace(PII_PATTERNS.RM_NUMBER, REDACTION_PLACEHOLDERS.RM)
+  result = result.replace(PII_PATTERNS.NIK, REDACTION_PLACEHOLDERS.NIK);
+  result = result.replace(PII_PATTERNS.PHONE_62, REDACTION_PLACEHOLDERS.PHONE);
+  result = result.replace(PII_PATTERNS.PHONE_08, REDACTION_PLACEHOLDERS.PHONE);
+  result = result.replace(PII_PATTERNS.PHONE_GENERAL, REDACTION_PLACEHOLDERS.PHONE);
+  result = result.replace(PII_PATTERNS.EMAIL, REDACTION_PLACEHOLDERS.EMAIL);
+  result = result.replace(PII_PATTERNS.HONORIFIC_NAME, REDACTION_PLACEHOLDERS.NAME);
+  result = result.replace(PII_PATTERNS.ADDRESS_JL, REDACTION_PLACEHOLDERS.ADDRESS);
+  result = result.replace(PII_PATTERNS.ADDRESS_RT_RW, REDACTION_PLACEHOLDERS.ADDRESS);
+  result = result.replace(PII_PATTERNS.ADDRESS_KEL, REDACTION_PLACEHOLDERS.ADDRESS);
+  result = result.replace(PII_PATTERNS.ADDRESS_KEC, REDACTION_PLACEHOLDERS.ADDRESS);
+  result = result.replace(PII_PATTERNS.BPJS, REDACTION_PLACEHOLDERS.BPJS);
+  result = result.replace(PII_PATTERNS.RM_NUMBER, REDACTION_PLACEHOLDERS.RM);
 
-  return result
+  return result;
 }
 
 /**
@@ -107,37 +107,37 @@ export function redactPII(text: string): string {
  */
 export function containsPII(text: string): boolean {
   if (!text || typeof text !== 'string') {
-    return false
+    return false;
   }
 
   for (const pattern of Object.values(PII_PATTERNS)) {
     if (pattern.test(text)) {
       // Reset regex lastIndex
-      pattern.lastIndex = 0
-      return true
+      pattern.lastIndex = 0;
+      return true;
     }
     // Reset regex lastIndex for next iteration
-    pattern.lastIndex = 0
+    pattern.lastIndex = 0;
   }
 
-  return false
+  return false;
 }
 
 /**
  * Calculate patient age from birth date
  */
 export function calculateAge(birthDate: string | Date): number {
-  const birth = typeof birthDate === 'string' ? new Date(birthDate) : birthDate
-  const today = new Date()
+  const birth = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
+  const today = new Date();
 
-  let age = today.getFullYear() - birth.getFullYear()
-  const monthDiff = today.getMonth() - birth.getMonth()
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
 
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--
+    age--;
   }
 
-  return Math.max(0, age)
+  return Math.max(0, age);
 }
 
 /**
@@ -146,20 +146,20 @@ export function calculateAge(birthDate: string | Date): number {
  */
 export function anonymize(encounter: Encounter): AnonymizedClinicalContext {
   // Extract and redact clinical text fields
-  const keluhan_utama = redactPII(encounter.anamnesa?.keluhan_utama || '')
-  const keluhan_tambahan = redactPII(encounter.anamnesa?.keluhan_tambahan || '')
+  const keluhan_utama = redactPII(encounter.anamnesa?.keluhan_utama || '');
+  const keluhan_tambahan = redactPII(encounter.anamnesa?.keluhan_tambahan || '');
 
   // Calculate age from timestamp or use default
   // Note: In production, we would have patient birth date
   // For now, we'll need age to be provided separately
-  const usia_tahun = 30 // Default age if not available
+  const usia_tahun = 30; // Default age if not available
 
   // Extract gender (default to unknown)
   // Note: This should come from patient data
-  const jenis_kelamin: 'L' | 'P' = 'L'
+  const jenis_kelamin: 'L' | 'P' = 'L';
 
   // Extract vital signs (these are clinical, not PII)
-  const vital_signs = extractVitalSigns(encounter)
+  const vital_signs = extractVitalSigns(encounter);
 
   // Extract duration
   const lama_sakit = encounter.anamnesa?.lama_sakit
@@ -168,17 +168,17 @@ export function anonymize(encounter: Encounter): AnonymizedClinicalContext {
         bulan: encounter.anamnesa.lama_sakit.bln || 0,
         tahun: encounter.anamnesa.lama_sakit.thn || 0,
       }
-    : undefined
+    : undefined;
 
   // Extract chronic diseases (clinical data, keep as-is but validate)
   const chronic_diseases =
-    encounter.diagnosa?.penyakit_kronis?.filter(Boolean)?.map(d => redactPII(d)) || []
+    encounter.diagnosa?.penyakit_kronis?.filter(Boolean)?.map((d) => redactPII(d)) || [];
 
   // Extract allergies (clinical data, keep as-is but validate)
-  const allergies = extractAllergies(encounter)
+  const allergies = extractAllergies(encounter);
 
   // Check pregnancy status based on diagnosis codes
-  const is_pregnant = checkPregnancyStatus(encounter)
+  const is_pregnant = checkPregnancyStatus(encounter);
 
   return {
     keluhan_utama,
@@ -190,7 +190,7 @@ export function anonymize(encounter: Encounter): AnonymizedClinicalContext {
     chronic_diseases: chronic_diseases.length > 0 ? chronic_diseases : undefined,
     allergies: allergies.length > 0 ? allergies : undefined,
     is_pregnant,
-  }
+  };
 }
 
 /**
@@ -199,28 +199,28 @@ export function anonymize(encounter: Encounter): AnonymizedClinicalContext {
 export function anonymizeWithDemographics(
   encounter: Encounter,
   demographics: {
-    birth_date?: string
-    age?: number
-    gender: 'L' | 'P'
+    birth_date?: string;
+    age?: number;
+    gender: 'L' | 'P';
   }
 ): AnonymizedClinicalContext {
-  const base = anonymize(encounter)
+  const base = anonymize(encounter);
 
   // Override with provided demographics
   if (demographics.age !== undefined) {
-    base.usia_tahun = demographics.age
+    base.usia_tahun = demographics.age;
   } else if (demographics.birth_date) {
-    base.usia_tahun = calculateAge(demographics.birth_date)
+    base.usia_tahun = calculateAge(demographics.birth_date);
   }
 
-  base.jenis_kelamin = demographics.gender
+  base.jenis_kelamin = demographics.gender;
 
   // Pregnancy only applicable to female patients
   if (demographics.gender === 'L') {
-    base.is_pregnant = false
+    base.is_pregnant = false;
   }
 
-  return base
+  return base;
 }
 
 // =============================================================================
@@ -233,48 +233,48 @@ export function anonymizeWithDemographics(
 function extractVitalSigns(_encounter: Encounter): VitalSigns | null {
   const encounter = _encounter as unknown as {
     vital_signs?: {
-      tekanan_darah_sistolik?: number
-      tekanan_darah_diastolik?: number
-      nadi?: number
-      respirasi?: number
-      suhu?: number
-      saturasi?: number
-      kesadaran?: string
-      gcs?: number
-      gula_darah?: number
-    }
+      tekanan_darah_sistolik?: number;
+      tekanan_darah_diastolik?: number;
+      nadi?: number;
+      respirasi?: number;
+      suhu?: number;
+      saturasi?: number;
+      kesadaran?: string;
+      gcs?: number;
+      gula_darah?: number;
+    };
     anamnesa?: {
       vital_signs?: {
-        tekanan_darah_sistolik?: number
-        tekanan_darah_diastolik?: number
-        nadi?: number
-        respirasi?: number
-        suhu?: number
-        saturasi?: number
-        kesadaran?: string
-        gcs?: number
-        gula_darah?: number
-      }
+        tekanan_darah_sistolik?: number;
+        tekanan_darah_diastolik?: number;
+        nadi?: number;
+        respirasi?: number;
+        suhu?: number;
+        saturasi?: number;
+        kesadaran?: string;
+        gcs?: number;
+        gula_darah?: number;
+      };
       periksa_fisik?: {
-        saturasi?: number
-        gcs_membuka_mata?: string
-        gcs_respon_verbal?: string
-        gcs_respon_motorik?: string
-      }
-    }
-  }
+        saturasi?: number;
+        gcs_membuka_mata?: string;
+        gcs_respon_verbal?: string;
+        gcs_respon_motorik?: string;
+      };
+    };
+  };
 
-  const vs = encounter.vital_signs ?? encounter.anamnesa?.vital_signs
-  const pf = encounter.anamnesa?.periksa_fisik
+  const vs = encounter.vital_signs ?? encounter.anamnesa?.vital_signs;
+  const pf = encounter.anamnesa?.periksa_fisik;
 
   const toNumber = (value: unknown): number | undefined => {
-    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
     if (typeof value === 'string') {
-      const parsed = Number(value)
-      if (Number.isFinite(parsed)) return parsed
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
     }
-    return undefined
-  }
+    return undefined;
+  };
 
   const gcsFromPF =
     toNumber(pf?.gcs_membuka_mata) &&
@@ -283,7 +283,7 @@ function extractVitalSigns(_encounter: Encounter): VitalSigns | null {
       ? (toNumber(pf?.gcs_membuka_mata) || 0) +
         (toNumber(pf?.gcs_respon_verbal) || 0) +
         (toNumber(pf?.gcs_respon_motorik) || 0)
-      : undefined
+      : undefined;
 
   const vitalSigns: VitalSigns = {
     systolic: toNumber(vs?.tekanan_darah_sistolik),
@@ -293,32 +293,32 @@ function extractVitalSigns(_encounter: Encounter): VitalSigns | null {
     temperature: toNumber(vs?.suhu),
     spo2: toNumber(vs?.saturasi) ?? toNumber(pf?.saturasi),
     gcs: toNumber(vs?.gcs) ?? gcsFromPF,
-  }
+  };
 
-  const hasAnyVital = Object.values(vitalSigns).some(value => value !== undefined)
-  return hasAnyVital ? vitalSigns : null
+  const hasAnyVital = Object.values(vitalSigns).some((value) => value !== undefined);
+  return hasAnyVital ? vitalSigns : null;
 }
 
 /**
  * Extract and merge allergies from encounter
  */
 function extractAllergies(encounter: Encounter): string[] {
-  const allergies: string[] = []
-  const alergi = encounter.anamnesa?.alergi
+  const allergies: string[] = [];
+  const alergi = encounter.anamnesa?.alergi;
 
   if (alergi) {
     if (Array.isArray(alergi.obat)) {
-      allergies.push(...alergi.obat.filter(Boolean).map(a => redactPII(a)))
+      allergies.push(...alergi.obat.filter(Boolean).map((a) => redactPII(a)));
     }
     if (Array.isArray(alergi.makanan)) {
-      allergies.push(...alergi.makanan.filter(Boolean).map(a => redactPII(a)))
+      allergies.push(...alergi.makanan.filter(Boolean).map((a) => redactPII(a)));
     }
     if (Array.isArray(alergi.lainnya)) {
-      allergies.push(...alergi.lainnya.filter(Boolean).map(a => redactPII(a)))
+      allergies.push(...alergi.lainnya.filter(Boolean).map((a) => redactPII(a)));
     }
   }
 
-  return [...new Set(allergies)] // Remove duplicates
+  return [...new Set(allergies)]; // Remove duplicates
 }
 
 /**
@@ -326,27 +326,27 @@ function extractAllergies(encounter: Encounter): string[] {
  */
 function checkPregnancyStatus(encounter: Encounter): boolean {
   if (typeof encounter.anamnesa?.is_pregnant === 'boolean') {
-    return encounter.anamnesa.is_pregnant
+    return encounter.anamnesa.is_pregnant;
   }
 
-  const diagnosisCode = encounter.diagnosa?.icd_x || ''
+  const diagnosisCode = encounter.diagnosa?.icd_x || '';
 
   // Pregnancy-related ICD-10 codes start with O
   if (diagnosisCode.startsWith('O')) {
-    return true
+    return true;
   }
 
   // Check if any chronic disease mentions pregnancy
-  const chronicDiseases = encounter.diagnosa?.penyakit_kronis || []
-  const pregnancyKeywords = ['hamil', 'kehamilan', 'pregnant', 'pregnancy']
+  const chronicDiseases = encounter.diagnosa?.penyakit_kronis || [];
+  const pregnancyKeywords = ['hamil', 'kehamilan', 'pregnant', 'pregnancy'];
 
   for (const disease of chronicDiseases) {
-    if (pregnancyKeywords.some(k => disease.toLowerCase().includes(k))) {
-      return true
+    if (pregnancyKeywords.some((k) => disease.toLowerCase().includes(k))) {
+      return true;
     }
   }
 
-  return false
+  return false;
 }
 
 // =============================================================================
@@ -358,20 +358,20 @@ function checkPregnancyStatus(encounter: Encounter): boolean {
  * Used for testing and audit
  */
 export function validateAnonymization(context: AnonymizedClinicalContext): {
-  valid: boolean
-  violations: string[]
+  valid: boolean;
+  violations: string[];
 } {
-  const violations: string[] = []
+  const violations: string[] = [];
 
   // Check text fields for remaining PII
   const textFields = [
     { name: 'keluhan_utama', value: context.keluhan_utama },
     { name: 'keluhan_tambahan', value: context.keluhan_tambahan },
-  ]
+  ];
 
   for (const field of textFields) {
     if (field.value && containsPII(field.value)) {
-      violations.push(`PII detected in ${field.name}`)
+      violations.push(`PII detected in ${field.name}`);
     }
   }
 
@@ -379,7 +379,7 @@ export function validateAnonymization(context: AnonymizedClinicalContext): {
   if (context.chronic_diseases) {
     for (const disease of context.chronic_diseases) {
       if (containsPII(disease)) {
-        violations.push(`PII detected in chronic_diseases: ${disease.substring(0, 20)}...`)
+        violations.push(`PII detected in chronic_diseases: ${disease.substring(0, 20)}...`);
       }
     }
   }
@@ -387,7 +387,7 @@ export function validateAnonymization(context: AnonymizedClinicalContext): {
   if (context.allergies) {
     for (const allergy of context.allergies) {
       if (containsPII(allergy)) {
-        violations.push(`PII detected in allergies: ${allergy.substring(0, 20)}...`)
+        violations.push(`PII detected in allergies: ${allergy.substring(0, 20)}...`);
       }
     }
   }
@@ -395,7 +395,7 @@ export function validateAnonymization(context: AnonymizedClinicalContext): {
   return {
     valid: violations.length === 0,
     violations,
-  }
+  };
 }
 
 /**
@@ -409,22 +409,22 @@ export function hashAnonymizedContext(context: AnonymizedClinicalContext): strin
     context.usia_tahun,
     context.jenis_kelamin,
     context.is_pregnant ? 'P' : 'N',
-  ]
+  ];
 
   // Simple hash function (for non-cryptographic use)
-  const str = parts.join('|')
-  let hash = 0
+  const str = parts.join('|');
+  let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash // Convert to 32-bit integer
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
   }
 
-  return Math.abs(hash).toString(16).padStart(8, '0')
+  return Math.abs(hash).toString(16).padStart(8, '0');
 }
 
 // =============================================================================
 // EXPORTS
 // =============================================================================
 
-export type { AnonymizedClinicalContext }
+export type { AnonymizedClinicalContext };

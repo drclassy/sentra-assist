@@ -4,16 +4,16 @@
  * Sentra Healthcare Artificial Intelligence
  */
 
-import { create } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 /**
  * Pieces Specific Configuration Interface
  */
 export interface PiecesSettings {
-  enableAutoSuggestions: boolean
-  enableContextualSaving: boolean
-  enableStatusBarIcon: boolean
+  enableAutoSuggestions: boolean;
+  enableContextualSaving: boolean;
+  enableStatusBarIcon: boolean;
 }
 
 /**
@@ -21,11 +21,11 @@ export interface PiecesSettings {
  */
 export interface SettingsState {
   // Pieces Integration Settings
-  pieces: PiecesSettings
+  pieces: PiecesSettings;
 
   // Actions
-  setPiecesSetting: (key: keyof PiecesSettings, value: boolean) => void
-  resetSettings: () => void
+  setPiecesSetting: (key: keyof PiecesSettings, value: boolean) => void;
+  resetSettings: () => void;
 }
 
 const DEFAULT_SETTINGS: Pick<SettingsState, 'pieces'> = {
@@ -34,7 +34,7 @@ const DEFAULT_SETTINGS: Pick<SettingsState, 'pieces'> = {
     enableContextualSaving: true,
     enableStatusBarIcon: true,
   },
-}
+};
 
 /**
  * Unified Settings Store
@@ -42,11 +42,11 @@ const DEFAULT_SETTINGS: Pick<SettingsState, 'pieces'> = {
  */
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    set => ({
+    (set) => ({
       ...DEFAULT_SETTINGS,
 
       setPiecesSetting: (key, value) =>
-        set(state => ({
+        set((state) => ({
           pieces: {
             ...state.pieces,
             [key]: value,
@@ -60,4 +60,4 @@ export const useSettingsStore = create<SettingsState>()(
       storage: createJSONStorage(() => localStorage), // Leveraging web-standard localStorage (WXT compatible)
     }
   )
-)
+);

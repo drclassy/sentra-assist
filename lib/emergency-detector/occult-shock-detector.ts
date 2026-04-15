@@ -16,29 +16,29 @@
  * Historical BP reading
  */
 export interface HistoricalBP {
-  visit_date: string
-  sbp: number
-  dbp: number
-  location?: 'clinic' | 'home' | 'igd'
+  visit_date: string;
+  sbp: number;
+  dbp: number;
+  location?: 'clinic' | 'home' | 'igd';
 }
 
 /**
  * Current vitals for shock assessment
  */
 export interface ShockAssessmentVitals {
-  current_sbp: number
-  current_dbp: number
-  glucose?: number
+  current_sbp: number;
+  current_dbp: number;
+  glucose?: number;
 }
 
 /**
  * Acute symptoms suggesting shock
  */
 export interface AcuteSymptoms {
-  dizziness: boolean
-  presyncope: boolean
-  syncope: boolean
-  weakness: boolean
+  dizziness: boolean;
+  presyncope: boolean;
+  syncope: boolean;
+  weakness: boolean;
 }
 
 /**
@@ -46,33 +46,33 @@ export interface AcuteSymptoms {
  */
 export interface OccultShockInput {
   // Current vitals
-  vitals: ShockAssessmentVitals
+  vitals: ShockAssessmentVitals;
 
   // Historical data
-  last_3_visits: HistoricalBP[]
+  last_3_visits: HistoricalBP[];
 
   // Symptoms
-  symptoms: AcuteSymptoms
+  symptoms: AcuteSymptoms;
 
   // Patient context
-  known_htn: boolean
+  known_htn: boolean;
 }
 
 /**
  * Risk levels
  */
-export type RiskLevel = 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW'
+export type RiskLevel = 'CRITICAL' | 'HIGH' | 'MODERATE' | 'LOW';
 
 /**
  * Occult shock result
  */
 export interface OccultShockResult {
-  risk_level: RiskLevel
-  triggers: string[]
-  recommendations: string[]
-  baseline_bp?: { sbp: number; dbp: number }
-  delta_sbp?: number
-  map: number
+  risk_level: RiskLevel;
+  triggers: string[];
+  recommendations: string[];
+  baseline_bp?: { sbp: number; dbp: number };
+  delta_sbp?: number;
+  map: number;
 }
 
 // ============================================================================
@@ -86,7 +86,7 @@ export const SHOCK_THRESHOLDS = {
   ABSOLUTE_HYPOTENSION_SBP: 90, // SBP <90 mmHg
   MAP_HYPOPERFUSION: 65, // MAP <65 mmHg
   RELATIVE_HYPOTENSION_DELTA: 40, // ΔSBP ≥40 mmHg from baseline
-} as const
+} as const;
 
 // ============================================================================
 // BASELINE CALCULATION
@@ -101,20 +101,20 @@ export const SHOCK_THRESHOLDS = {
  */
 export function calculateBaseline(history: HistoricalBP[]): { sbp: number; dbp: number } | null {
   if (history.length < 3) {
-    return null // Insufficient data
+    return null; // Insufficient data
   }
 
   // Extract and sort values
-  const sbpValues = history.map(v => v.sbp).sort((a, b) => a - b)
-  const dbpValues = history.map(v => v.dbp).sort((a, b) => a - b)
+  const sbpValues = history.map((v) => v.sbp).sort((a, b) => a - b);
+  const dbpValues = history.map((v) => v.dbp).sort((a, b) => a - b);
 
   // Calculate median
-  const medianIndex = Math.floor(sbpValues.length / 2)
+  const medianIndex = Math.floor(sbpValues.length / 2);
 
   return {
     sbp: sbpValues[medianIndex],
     dbp: dbpValues[medianIndex],
-  }
+  };
 }
 
 /**
@@ -126,13 +126,13 @@ export function calculateBaseline(history: HistoricalBP[]): { sbp: number; dbp: 
  */
 export function getRecentBaseline(history: HistoricalBP[]): { sbp: number; dbp: number } | null {
   // Filter for clinic readings only
-  const clinicReadings = history.filter(r => !r.location || r.location === 'clinic').slice(-3) // Last 3
+  const clinicReadings = history.filter((r) => !r.location || r.location === 'clinic').slice(-3); // Last 3
 
   if (clinicReadings.length < 3) {
-    return null // Insufficient data
+    return null; // Insufficient data
   }
 
-  return calculateBaseline(clinicReadings)
+  return calculateBaseline(clinicReadings);
 }
 
 // ============================================================================
@@ -153,7 +153,7 @@ export function getRecentBaseline(history: HistoricalBP[]): { sbp: number; dbp: 
  * @returns MAP (rounded to nearest integer)
  */
 export function calculateMAP(sbp: number, dbp: number): number {
-  return Math.round(dbp + (sbp - dbp) / 3)
+  return Math.round(dbp + (sbp - dbp) / 3);
 }
 
 // ============================================================================
@@ -176,8 +176,8 @@ export function calculateMAP(sbp: number, dbp: number): number {
  * @returns Occult shock assessment result
  */
 export function detectOccultShock(input: OccultShockInput): OccultShockResult {
-  const triggers: string[] = []
-  const recommendations: string[] = []
+  const triggers: string[] = [];
+  const recommendations: string[] = [];
 
   // Step 1: Check hypoglycemia FIRST (can mimic shock)
   if (input.vitals.glucose && input.vitals.glucose < 70) {
@@ -190,46 +190,46 @@ export function detectOccultShock(input: OccultShockInput): OccultShockResult {
         'Hypoglycemia can cause hypotension',
       ],
       map: calculateMAP(input.vitals.current_sbp, input.vitals.current_dbp),
-    }
+    };
   }
 
   // Step 2: Calculate baseline (if HTN history available)
-  let baseline_sbp: number | undefined
-  let baseline_dbp: number | undefined
-  let delta_sbp: number | undefined
+  let baseline_sbp: number | undefined;
+  let baseline_dbp: number | undefined;
+  let delta_sbp: number | undefined;
 
   if (input.known_htn && input.last_3_visits.length >= 3) {
-    const baseline = calculateBaseline(input.last_3_visits)
+    const baseline = calculateBaseline(input.last_3_visits);
     if (baseline) {
-      baseline_sbp = baseline.sbp
-      baseline_dbp = baseline.dbp
-      delta_sbp = baseline_sbp - input.vitals.current_sbp
+      baseline_sbp = baseline.sbp;
+      baseline_dbp = baseline.dbp;
+      delta_sbp = baseline_sbp - input.vitals.current_sbp;
     }
   }
 
   // Step 3: Calculate MAP
-  const map = calculateMAP(input.vitals.current_sbp, input.vitals.current_dbp)
+  const map = calculateMAP(input.vitals.current_sbp, input.vitals.current_dbp);
 
   // Step 4: Check danger triggers
-  let risk_level: RiskLevel = 'LOW'
+  let risk_level: RiskLevel = 'LOW';
 
   // Absolute hypotension
   if (input.vitals.current_sbp < SHOCK_THRESHOLDS.ABSOLUTE_HYPOTENSION_SBP) {
     triggers.push(
       `Absolute hypotension (SBP ${input.vitals.current_sbp} <${SHOCK_THRESHOLDS.ABSOLUTE_HYPOTENSION_SBP})`
-    )
-    risk_level = 'CRITICAL'
+    );
+    risk_level = 'CRITICAL';
   }
 
   if (map < SHOCK_THRESHOLDS.MAP_HYPOPERFUSION) {
-    triggers.push(`MAP ${map} <${SHOCK_THRESHOLDS.MAP_HYPOPERFUSION} (organ hypoperfusion risk)`)
-    risk_level = 'CRITICAL'
+    triggers.push(`MAP ${map} <${SHOCK_THRESHOLDS.MAP_HYPOPERFUSION} (organ hypoperfusion risk)`);
+    risk_level = 'CRITICAL';
   }
 
   // Relative hypotension (only if baseline available)
   if (delta_sbp !== undefined && delta_sbp >= SHOCK_THRESHOLDS.RELATIVE_HYPOTENSION_DELTA) {
-    triggers.push(`Relative hypotension (ΔSBP ${delta_sbp} from baseline ${baseline_sbp})`)
-    risk_level = risk_level === 'CRITICAL' ? 'CRITICAL' : 'HIGH'
+    triggers.push(`Relative hypotension (ΔSBP ${delta_sbp} from baseline ${baseline_sbp})`);
+    risk_level = risk_level === 'CRITICAL' ? 'CRITICAL' : 'HIGH';
   }
 
   // Step 5: Generate recommendations
@@ -253,16 +253,16 @@ export function detectOccultShock(input: OccultShockInput): OccultShockResult {
       '- Hold antihypertensive medications',
       '- Labs: CBC, lactate, BUN/Cr',
       '- Escalate to ICU/resus if unstable'
-    )
+    );
   } else if (triggers.length > 0) {
     recommendations.push(
       '⚠️ BP concerning but no acute symptoms',
       'Monitor closely',
       'Reassess if symptoms develop'
-    )
-    risk_level = 'MODERATE'
+    );
+    risk_level = 'MODERATE';
   } else {
-    recommendations.push('No occult shock detected', 'Routine monitoring')
+    recommendations.push('No occult shock detected', 'Routine monitoring');
   }
 
   return {
@@ -272,7 +272,7 @@ export function detectOccultShock(input: OccultShockInput): OccultShockResult {
     baseline_bp: baseline_sbp !== undefined ? { sbp: baseline_sbp, dbp: baseline_dbp! } : undefined,
     delta_sbp,
     map,
-  }
+  };
 }
 
 /**
@@ -282,7 +282,7 @@ export function detectOccultShock(input: OccultShockInput): OccultShockResult {
  * @returns True if any acute symptom present
  */
 function hasAcuteSymptoms(symptoms: AcuteSymptoms): boolean {
-  return symptoms.dizziness || symptoms.presyncope || symptoms.syncope || symptoms.weakness
+  return symptoms.dizziness || symptoms.presyncope || symptoms.syncope || symptoms.weakness;
 }
 
 // ============================================================================
@@ -293,11 +293,11 @@ function hasAcuteSymptoms(symptoms: AcuteSymptoms): boolean {
  * Perfusion assessment checklist
  */
 export interface PerfusionAssessment {
-  mental_status: 'alert' | 'confused' | 'lethargic' | 'unresponsive'
-  skin_temp: 'warm' | 'cool' | 'cold'
-  skin_moisture: 'dry' | 'clammy'
-  capillary_refill_sec: number
-  urine_output_ml_kg_hr?: number
+  mental_status: 'alert' | 'confused' | 'lethargic' | 'unresponsive';
+  skin_temp: 'warm' | 'cool' | 'cold';
+  skin_moisture: 'dry' | 'clammy';
+  capillary_refill_sec: number;
+  urine_output_ml_kg_hr?: number;
 }
 
 /**
@@ -307,46 +307,46 @@ export interface PerfusionAssessment {
  * @returns Perfusion status
  */
 export function assessPerfusion(assessment: PerfusionAssessment): {
-  status: 'adequate' | 'concerning' | 'poor'
-  findings: string[]
+  status: 'adequate' | 'concerning' | 'poor';
+  findings: string[];
 } {
-  const findings: string[] = []
-  let status: 'adequate' | 'concerning' | 'poor' = 'adequate'
+  const findings: string[] = [];
+  let status: 'adequate' | 'concerning' | 'poor' = 'adequate';
 
   // Mental status
   if (assessment.mental_status !== 'alert') {
-    findings.push(`Altered mental status: ${assessment.mental_status}`)
-    status = 'poor'
+    findings.push(`Altered mental status: ${assessment.mental_status}`);
+    status = 'poor';
   }
 
   // Skin
   if (assessment.skin_temp === 'cold' || assessment.skin_temp === 'cool') {
-    findings.push(`Cool/cold skin (peripheral vasoconstriction)`)
-    status = status === 'poor' ? 'poor' : 'concerning'
+    findings.push(`Cool/cold skin (peripheral vasoconstriction)`);
+    status = status === 'poor' ? 'poor' : 'concerning';
   }
 
   if (assessment.skin_moisture === 'clammy') {
-    findings.push('Clammy skin (sympathetic activation)')
-    status = status === 'poor' ? 'poor' : 'concerning'
+    findings.push('Clammy skin (sympathetic activation)');
+    status = status === 'poor' ? 'poor' : 'concerning';
   }
 
   // Capillary refill
   if (assessment.capillary_refill_sec > 2) {
-    findings.push(`Prolonged CRT: ${assessment.capillary_refill_sec} sec (>2 sec)`)
-    status = 'poor'
+    findings.push(`Prolonged CRT: ${assessment.capillary_refill_sec} sec (>2 sec)`);
+    status = 'poor';
   }
 
   // Urine output
   if (assessment.urine_output_ml_kg_hr !== undefined && assessment.urine_output_ml_kg_hr < 0.5) {
-    findings.push(`Low urine output: ${assessment.urine_output_ml_kg_hr} mL/kg/hr (<0.5)`)
-    status = 'poor'
+    findings.push(`Low urine output: ${assessment.urine_output_ml_kg_hr} mL/kg/hr (<0.5)`);
+    status = 'poor';
   }
 
   if (findings.length === 0) {
-    findings.push('All perfusion parameters adequate')
+    findings.push('All perfusion parameters adequate');
   }
 
-  return { status, findings }
+  return { status, findings };
 }
 
 // ============================================================================
@@ -357,9 +357,9 @@ export function assessPerfusion(assessment: PerfusionAssessment): {
  * Clinical decision priority
  */
 export interface ClinicalDecision {
-  gate: 'GATE_3_GLUCOSE' | 'GATE_4_OCCULT_SHOCK' | 'GATE_2_HTN' | 'STANDARD_WORKFLOW'
-  priority: 'CRITICAL' | 'HIGH' | 'ROUTINE'
-  action: string
+  gate: 'GATE_3_GLUCOSE' | 'GATE_4_OCCULT_SHOCK' | 'GATE_2_HTN' | 'STANDARD_WORKFLOW';
+  priority: 'CRITICAL' | 'HIGH' | 'ROUTINE';
+  action: string;
 }
 
 /**
@@ -376,12 +376,12 @@ export interface ClinicalDecision {
  * @returns Clinical decision with priority
  */
 export function integratedTTVWorkflow(patient: {
-  glucose?: number
-  bp: { sbp: number; dbp: number }
-  known_htn: boolean
-  has_acute_symptoms: boolean
-  has_crisis_signs?: boolean
-  bp_history?: HistoricalBP[]
+  glucose?: number;
+  bp: { sbp: number; dbp: number };
+  known_htn: boolean;
+  has_acute_symptoms: boolean;
+  has_crisis_signs?: boolean;
+  bp_history?: HistoricalBP[];
 }): ClinicalDecision {
   // Priority 1: Hypoglycemia (can mimic everything)
   if (patient.glucose && patient.glucose < 70) {
@@ -389,7 +389,7 @@ export function integratedTTVWorkflow(patient: {
       gate: 'GATE_3_GLUCOSE',
       priority: 'CRITICAL',
       action: 'TREAT_HYPOGLYCEMIA',
-    }
+    };
   }
 
   // Priority 2: Occult Shock (if HTN + symptoms)
@@ -408,14 +408,14 @@ export function integratedTTVWorkflow(patient: {
         weakness: patient.has_acute_symptoms,
       },
       known_htn: patient.known_htn,
-    })
+    });
 
     if (shockRisk.risk_level === 'CRITICAL' || shockRisk.risk_level === 'HIGH') {
       return {
         gate: 'GATE_4_OCCULT_SHOCK',
         priority: 'HIGH',
         action: 'INVESTIGATE_SHOCK',
-      }
+      };
     }
   }
 
@@ -425,7 +425,7 @@ export function integratedTTVWorkflow(patient: {
       gate: 'GATE_2_HTN',
       priority: 'HIGH',
       action: 'TRIAGE_HTN_CRISIS',
-    }
+    };
   }
 
   // Priority 4: Hyperglycemia Crisis
@@ -434,7 +434,7 @@ export function integratedTTVWorkflow(patient: {
       gate: 'GATE_3_GLUCOSE',
       priority: 'HIGH',
       action: 'TRIAGE_DKA_HHS',
-    }
+    };
   }
 
   // Priority 5: Standard classification
@@ -442,7 +442,7 @@ export function integratedTTVWorkflow(patient: {
     gate: 'STANDARD_WORKFLOW',
     priority: 'ROUTINE',
     action: 'CLASSIFY_AND_MANAGE',
-  }
+  };
 }
 
 // ============================================================================
@@ -457,4 +457,4 @@ export default {
   detectOccultShock,
   assessPerfusion,
   integratedTTVWorkflow,
-}
+};

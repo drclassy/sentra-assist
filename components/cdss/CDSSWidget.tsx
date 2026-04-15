@@ -259,7 +259,7 @@ export function CDSSWidget({ onDiagnosisSelect, className = '' }: CDSSWidgetProp
           {/* Result metadata */}
           <div className="neu-card p-3 flex items-center justify-between">
             <div className="flex items-center gap-3 text-caption text-muted">
-            <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1">
                 <Database className="w-3.5 h-3.5" />
                 {result.model_version?.includes('sentra-inference-v3')
                   ? 'Sentra Inference v3'

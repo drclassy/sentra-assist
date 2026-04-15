@@ -106,9 +106,7 @@ export function DiagnosisCard({
         <div className="flex-1 min-w-0">
           {/* ICD Code + Copy button */}
           <div className="flex items-center gap-2 mb-1">
-            <code className="text-subtitle font-mono text-pulse-500">
-              {suggestion.icd10_code}
-            </code>
+            <code className="text-subtitle font-mono text-pulse-500">{suggestion.icd10_code}</code>
             <button
               onClick={handleCopyCode}
               className="p-1 hover:bg-carbon-800 rounded transition-colors"
@@ -126,9 +124,7 @@ export function DiagnosisCard({
           </div>
 
           {/* Diagnosis name */}
-          <p className="text-small text-platinum leading-snug">
-            {suggestion.diagnosis_name}
-          </p>
+          <p className="text-small text-platinum leading-snug">{suggestion.diagnosis_name}</p>
 
           {/* Confidence meter */}
           <div className="mt-2">
@@ -173,9 +169,7 @@ export function DiagnosisCard({
       {expanded && (
         <div className="mt-3 pt-3 border-t border-carbon-700">
           <p className="text-caption text-muted mb-1">Alasan Klinis:</p>
-          <p className="text-small text-platinum/80 leading-relaxed">
-            {suggestion.reasoning}
-          </p>
+          <p className="text-small text-platinum/80 leading-relaxed">{suggestion.reasoning}</p>
 
           {/* Red flags from AI */}
           {suggestion.red_flags && suggestion.red_flags.length > 0 && (

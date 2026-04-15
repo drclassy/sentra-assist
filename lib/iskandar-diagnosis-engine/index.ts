@@ -23,43 +23,43 @@
 // ENGINE EXPORTS (Main Entry Point)
 // =============================================================================
 
-export type { CDSSAlert, CDSSEngineConfig, CDSSEngineResult, CDSSEngineStatus } from './engine'
+export type { CDSSAlert, CDSSEngineConfig, CDSSEngineResult, CDSSEngineStatus } from './engine';
 export {
   DEFAULT_ENGINE_CONFIG,
   getCDSSEngineStatus,
   initCDSSEngine,
   runDiagnosisEngine,
-} from './engine'
+} from './engine';
 
 // =============================================================================
 // Iskandar Diagnosis Engine V1 MODULE EXPORTS
 // =============================================================================
 
-export type { EpiWeightResult } from './epidemiology-weights'
+export type { EpiWeightResult } from './epidemiology-weights';
 export {
   applyEpidemiologyWeights,
   getEpidemiologyMeta,
   getEpidemiologyWeight,
   getLocalEpidemiologyContext,
-} from './epidemiology-weights'
-export type { ReasonerInput, ReasonerOutput } from './llm-reasoner'
-export { runLLMReasoning } from './llm-reasoner'
-export type { MatchedCandidate, MatcherInput } from './symptom-matcher'
-export { clearMatcherCache, getKBDiseaseCount, matchSymptoms } from './symptom-matcher'
-export type { TrafficLightInput, TrafficLightLevel, TrafficLightOutput } from './traffic-light'
-export { classifyTrafficLight } from './traffic-light'
+} from './epidemiology-weights';
+export type { ReasonerInput, ReasonerOutput } from './llm-reasoner';
+export { runLLMReasoning } from './llm-reasoner';
+export type { MatchedCandidate, MatcherInput } from './symptom-matcher';
+export { clearMatcherCache, getKBDiseaseCount, matchSymptoms } from './symptom-matcher';
+export type { TrafficLightInput, TrafficLightLevel, TrafficLightOutput } from './traffic-light';
+export { classifyTrafficLight } from './traffic-light';
 
 // =============================================================================
 // ANONYMIZER EXPORTS
 // =============================================================================
 
-export { anonymize, containsPII, redactPII, validateAnonymization } from './anonymizer'
+export { anonymize, containsPII, redactPII, validateAnonymization } from './anonymizer';
 
 // =============================================================================
 // RED FLAG EXPORTS
 // =============================================================================
 
-export type { RedFlag, RedFlagContext } from './red-flags'
+export type { RedFlag, RedFlagContext } from './red-flags';
 export {
   checkACS,
   checkAnaphylaxis,
@@ -69,26 +69,26 @@ export {
   checkStroke,
   runRedFlagChecks,
   runRedFlagChecksFromContext,
-} from './red-flags'
+} from './red-flags';
 
 // =============================================================================
 // VALIDATION EXPORTS
 // =============================================================================
 
-export { runValidationPipeline } from './validation'
+export { runValidationPipeline } from './validation';
 
 export type {
   ValidatedSuggestion,
   ValidationContext,
   ValidationFlag,
   ValidationResult,
-} from './validation/types'
+} from './validation/types';
 
 // =============================================================================
 // AUDIT EXPORTS
 // =============================================================================
 
-export type { AuditAction, AuditEntry } from './audit-logger'
+export type { AuditAction, AuditEntry } from './audit-logger';
 export {
   auditLogger,
   logDiagnosisRequest,
@@ -97,7 +97,7 @@ export {
   logRedFlagShown,
   logSuggestionDisplayed,
   logSuggestionSelected,
-} from './audit-logger'
+} from './audit-logger';
 
 // =============================================================================
 // CHRONIC DISEASE CLASSIFIER EXPORTS
@@ -107,7 +107,7 @@ export type {
   BadgeConfig,
   ChronicDiseaseClassification,
   ChronicDiseaseSeverity,
-} from './chronic-disease-classifier'
+} from './chronic-disease-classifier';
 export {
   ChronicDiseaseType,
   classifyChronicDisease,
@@ -116,7 +116,7 @@ export {
   getDiseaseFullName,
   getSupportedDiseaseTypes,
   isChronicDisease,
-} from './chronic-disease-classifier'
+} from './chronic-disease-classifier';
 
 // =============================================================================
 // DDI (DRUG-DRUG INTERACTION) CHECKER EXPORTS
@@ -129,4 +129,4 @@ export {
   getSeverityLabel,
   hasBlockingInteractions,
   loadDDIDatabase,
-} from './ddi-checker'
+} from './ddi-checker';

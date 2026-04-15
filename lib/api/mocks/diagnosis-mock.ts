@@ -11,7 +11,7 @@
  * @module lib/api/mocks/diagnosis-mock
  */
 
-import type { CDSSResponse, DiagnosisSuggestion } from '@/types/api'
+import type { CDSSResponse, DiagnosisSuggestion } from '@/types/api';
 
 // =============================================================================
 // DIAGNOSIS SUGGESTIONS BY SYMPTOM PATTERN
@@ -45,7 +45,7 @@ export const ISPA_DIAGNOSIS: DiagnosisSuggestion[] = [
     confidence: 0.58,
     rationale: 'Nyeri tenggorok sebagai gejala dominan',
   },
-]
+];
 
 /**
  * Gastroenteritis pattern
@@ -67,7 +67,7 @@ export const GE_DIAGNOSIS: DiagnosisSuggestion[] = [
     confidence: 0.65,
     rationale: 'Tidak ada tanda infeksi spesifik',
   },
-]
+];
 
 /**
  * Hypertension pattern
@@ -90,7 +90,7 @@ export const HYPERTENSION_DIAGNOSIS: DiagnosisSuggestion[] = [
     confidence: 0.45,
     rationale: 'Gejala sekunder dari hipertensi',
   },
-]
+];
 
 /**
  * Diabetes pattern
@@ -112,7 +112,7 @@ export const DIABETES_DIAGNOSIS: DiagnosisSuggestion[] = [
     confidence: 0.78,
     rationale: 'GDS tinggi memerlukan kontrol gula darah',
   },
-]
+];
 
 /**
  * Skin infection pattern
@@ -141,7 +141,7 @@ export const SKIN_DIAGNOSIS: DiagnosisSuggestion[] = [
     confidence: 0.55,
     rationale: 'Bentol-bentol merah yang gatal',
   },
-]
+];
 
 // =============================================================================
 // MOCK RESPONSE BUILDER
@@ -151,14 +151,14 @@ export const SKIN_DIAGNOSIS: DiagnosisSuggestion[] = [
  * Get diagnosis suggestions based on chief complaint keywords
  */
 export function getMockDiagnosisBySymptom(keluhan: string): DiagnosisSuggestion[] {
-  const keluhanLower = keluhan.toLowerCase()
+  const keluhanLower = keluhan.toLowerCase();
 
   if (
     keluhanLower.includes('demam') ||
     keluhanLower.includes('batuk') ||
     keluhanLower.includes('pilek')
   ) {
-    return ISPA_DIAGNOSIS
+    return ISPA_DIAGNOSIS;
   }
 
   if (
@@ -166,7 +166,7 @@ export function getMockDiagnosisBySymptom(keluhan: string): DiagnosisSuggestion[
     keluhanLower.includes('mual') ||
     keluhanLower.includes('muntah')
   ) {
-    return GE_DIAGNOSIS
+    return GE_DIAGNOSIS;
   }
 
   if (
@@ -174,7 +174,7 @@ export function getMockDiagnosisBySymptom(keluhan: string): DiagnosisSuggestion[
     keluhanLower.includes('tensi') ||
     keluhanLower.includes('tekanan darah')
   ) {
-    return HYPERTENSION_DIAGNOSIS
+    return HYPERTENSION_DIAGNOSIS;
   }
 
   if (
@@ -182,7 +182,7 @@ export function getMockDiagnosisBySymptom(keluhan: string): DiagnosisSuggestion[
     keluhanLower.includes('diabetes') ||
     keluhanLower.includes('gula')
   ) {
-    return DIABETES_DIAGNOSIS
+    return DIABETES_DIAGNOSIS;
   }
 
   if (
@@ -190,18 +190,18 @@ export function getMockDiagnosisBySymptom(keluhan: string): DiagnosisSuggestion[
     keluhanLower.includes('bentol') ||
     keluhanLower.includes('kulit')
   ) {
-    return SKIN_DIAGNOSIS
+    return SKIN_DIAGNOSIS;
   }
 
   // Default: return ISPA as most common Puskesmas case
-  return ISPA_DIAGNOSIS
+  return ISPA_DIAGNOSIS;
 }
 
 /**
  * Build full mock CDSS response for diagnosis
  */
 export function buildMockDiagnosisResponse(keluhan: string): CDSSResponse {
-  const suggestions = getMockDiagnosisBySymptom(keluhan)
+  const suggestions = getMockDiagnosisBySymptom(keluhan);
 
   return {
     diagnosis_suggestions: suggestions,
@@ -218,5 +218,5 @@ export function buildMockDiagnosisResponse(keluhan: string): CDSSResponse {
       timestamp: new Date().toISOString(),
       is_mock: true,
     },
-  }
+  };
 }

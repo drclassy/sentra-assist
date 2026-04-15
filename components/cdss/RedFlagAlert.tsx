@@ -37,13 +37,16 @@ interface RedFlagAlertProps {
 // CONSTANTS
 // =============================================================================
 
-const SEVERITY_CONFIG: Record<string, {
-  bgClass: string;
-  borderClass: string;
-  textClass: string;
-  icon: typeof Ambulance | typeof AlertTriangle;
-  pulseClass: string;
-}> = {
+const SEVERITY_CONFIG: Record<
+  string,
+  {
+    bgClass: string;
+    borderClass: string;
+    textClass: string;
+    icon: typeof Ambulance | typeof AlertTriangle;
+    pulseClass: string;
+  }
+> = {
   emergency: {
     bgClass: 'bg-critical/15',
     borderClass: 'border-critical/50',
@@ -141,7 +144,9 @@ export function RedFlagAlert({
               <span
                 className={`text-tiny font-semibold uppercase tracking-wider ${config.textClass}`}
               >
-                {flag.severity === 'emergency' ? '⚠️ DARURAT' : humanizeUiText(flag.severity).toUpperCase()}
+                {flag.severity === 'emergency'
+                  ? '⚠️ DARURAT'
+                  : humanizeUiText(flag.severity).toUpperCase()}
               </span>
               {acknowledged && (
                 <span className="text-tiny text-muted bg-carbon-800 px-1.5 py-0.5 rounded">
@@ -151,9 +156,7 @@ export function RedFlagAlert({
             </div>
 
             {/* Condition name */}
-            <h3 className={`text-subtitle font-semibold ${config.textClass}`}>
-              {flag.condition}
-            </h3>
+            <h3 className={`text-subtitle font-semibold ${config.textClass}`}>{flag.condition}</h3>
 
             {/* Brief rationale from criteria */}
             <p className="text-small text-platinum/80 mt-1 leading-snug">
@@ -188,9 +191,7 @@ export function RedFlagAlert({
           {/* Recommended action */}
           <div className="mt-3 p-3 bg-carbon-900/50 rounded-lg">
             <p className="text-caption text-muted mb-1">Tindakan yang Disarankan:</p>
-            <p className={`text-small font-medium ${config.textClass}`}>
-              {flag.action}
-            </p>
+            <p className={`text-small font-medium ${config.textClass}`}>{flag.action}</p>
           </div>
 
           {/* Related ICD codes */}

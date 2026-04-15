@@ -20,17 +20,17 @@
 function maskWord(word: string): string {
   if (word.length <= 3) {
     // Very short word: show first 2 chars
-    return word.slice(0, 2) + '*'.repeat(Math.max(0, word.length - 2))
+    return word.slice(0, 2) + '*'.repeat(Math.max(0, word.length - 2));
   } else if (word.length <= 6) {
     // Short-medium word: show first 2 chars, mask rest
-    const visible = word.slice(0, 2)
-    const masked = '*'.repeat(word.length - 2)
-    return visible + masked
+    const visible = word.slice(0, 2);
+    const masked = '*'.repeat(word.length - 2);
+    return visible + masked;
   } else {
     // Long word: show first 3 chars, mask rest
-    const visible = word.slice(0, 3)
-    const masked = '*'.repeat(word.length - 3)
-    return visible + masked
+    const visible = word.slice(0, 3);
+    const masked = '*'.repeat(word.length - 3);
+    return visible + masked;
   }
 }
 
@@ -46,8 +46,8 @@ function maskWord(word: string): string {
  * @returns Masked name
  */
 export function maskPatientName(fullName: string): string {
-  const words = fullName.trim().split(/\s+/)
-  return words.map(maskWord).join(' ')
+  const words = fullName.trim().split(/\s+/);
+  return words.map(maskWord).join(' ');
 }
 
 /**
@@ -57,8 +57,8 @@ export function maskPatientName(fullName: string): string {
  * @returns Initials (e.g., "Ahmad Suryadi" → "AS")
  */
 export function getInitials(fullName: string): string {
-  const words = fullName.trim().split(/\s+/)
-  return words.map(w => w[0].toUpperCase()).join('')
+  const words = fullName.trim().split(/\s+/);
+  return words.map((w) => w[0].toUpperCase()).join('');
 }
 
 /**
@@ -71,19 +71,19 @@ export function getInitials(fullName: string): string {
 export function formatPatientName(
   fullName: string,
   options: {
-    masked?: boolean
-    initialsOnly?: boolean
+    masked?: boolean;
+    initialsOnly?: boolean;
   } = {}
 ): string {
   if (options.initialsOnly) {
-    return getInitials(fullName)
+    return getInitials(fullName);
   }
 
   if (options.masked) {
-    return maskPatientName(fullName)
+    return maskPatientName(fullName);
   }
 
-  return fullName
+  return fullName;
 }
 
 // ============================================================================

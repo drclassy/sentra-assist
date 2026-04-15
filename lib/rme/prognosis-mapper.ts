@@ -16,7 +16,7 @@
  * - Dubia Ad Malam - Uncertain, tending toward poor
  */
 
-import type { TrajectoryAnalysis } from '@/lib/iskandar-diagnosis-engine/trajectory-analyzer'
+import type { TrajectoryAnalysis } from '@/lib/iskandar-diagnosis-engine/trajectory-analyzer';
 
 /**
  * PrognosisValue type
@@ -31,7 +31,7 @@ export type PrognosisValue =
   | 'Bonam (Baik)'
   | 'Malam (Buruk/Jelek)'
   | 'Dubia Ad Sanam/Bonam (Tidak tentu/Ragu-ragu, Cenderung Sembuh/Baik)'
-  | 'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)'
+  | 'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)';
 
 /**
  * Map trajectory analysis to prognosis value
@@ -48,16 +48,16 @@ export function mapTrajectoryToPrognosis(trajectory: TrajectoryAnalysis): Progno
     overallTrend,
     mortality_proxy,
     acute_attack_risk_24h,
-  } = trajectory
+  } = trajectory;
 
   // CRITICAL STATE → Dubia Ad Malam (Uncertain, tending toward poor)
   if (global_deterioration.state === 'critical' || overallRisk === 'critical') {
-    return 'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)'
+    return 'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)';
   }
 
   // EMERGENCY URGENCY → Dubia Ad Malam
   if (mortality_proxy.clinical_urgency_tier === 'immediate') {
-    return 'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)'
+    return 'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)';
   }
 
   // HIGH RISK + DETERIORATING → Malam (Poor/Bad)
@@ -65,7 +65,7 @@ export function mapTrajectoryToPrognosis(trajectory: TrajectoryAnalysis): Progno
     (overallRisk === 'high' && global_deterioration.state === 'deteriorating') ||
     (overallRisk === 'high' && overallTrend === 'declining')
   ) {
-    return 'Malam (Buruk/Jelek)'
+    return 'Malam (Buruk/Jelek)';
   }
 
   // HIGH ACUTE ATTACK RISK → Dubia Ad Malam
@@ -75,10 +75,10 @@ export function mapTrajectoryToPrognosis(trajectory: TrajectoryAnalysis): Progno
     acute_attack_risk_24h.sepsis_like_deterioration_risk,
     acute_attack_risk_24h.shock_decompensation_risk,
     acute_attack_risk_24h.stroke_acs_suspicion_risk,
-  ].filter(risk => risk >= 60).length
+  ].filter((risk) => risk >= 60).length;
 
   if (highAcuteRiskCount >= 2) {
-    return 'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)'
+    return 'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)';
   }
 
   // DETERIORATING + MODERATE RISK → Dubia Ad Sanam/Bonam
@@ -86,7 +86,7 @@ export function mapTrajectoryToPrognosis(trajectory: TrajectoryAnalysis): Progno
     (global_deterioration.state === 'deteriorating' && overallRisk === 'moderate') ||
     (overallTrend === 'declining' && overallRisk === 'moderate')
   ) {
-    return 'Dubia Ad Sanam/Bonam (Tidak tentu/Ragu-ragu, Cenderung Sembuh/Baik)'
+    return 'Dubia Ad Sanam/Bonam (Tidak tentu/Ragu-ragu, Cenderung Sembuh/Baik)';
   }
 
   // IMPROVING + LOW RISK + STABLE → Sanam (Recovered/Recovering)
@@ -96,12 +96,12 @@ export function mapTrajectoryToPrognosis(trajectory: TrajectoryAnalysis): Progno
     global_deterioration.state === 'improving' &&
     highAcuteRiskCount === 0
   ) {
-    return 'Sanam (Sembuh)'
+    return 'Sanam (Sembuh)';
   }
 
   // IMPROVING + LOW/MODERATE RISK → Bonam (Good)
   if (overallTrend === 'improving' && (overallRisk === 'low' || overallRisk === 'moderate')) {
-    return 'Bonam (Baik)'
+    return 'Bonam (Baik)';
   }
 
   // STABLE + LOW RISK → Bonam (Good)
@@ -109,17 +109,17 @@ export function mapTrajectoryToPrognosis(trajectory: TrajectoryAnalysis): Progno
     (overallTrend === 'stable' && overallRisk === 'low') ||
     (global_deterioration.state === 'stable' && overallRisk === 'low')
   ) {
-    return 'Bonam (Baik)'
+    return 'Bonam (Baik)';
   }
 
   // STABLE + MODERATE RISK → Bonam (Good) with caution
   if (overallTrend === 'stable' && overallRisk === 'moderate') {
-    return 'Bonam (Baik)'
+    return 'Bonam (Baik)';
   }
 
   // DEFAULT → Bonam (Good)
   // Conservative default for ambiguous cases
-  return 'Bonam (Baik)'
+  return 'Bonam (Baik)';
 }
 
 /**
@@ -127,39 +127,39 @@ export function mapTrajectoryToPrognosis(trajectory: TrajectoryAnalysis): Progno
  * Provides clinical rationale for the prognosis decision
  */
 export function getPrognosisExplanation(trajectory: TrajectoryAnalysis): string {
-  const prognosis = mapTrajectoryToPrognosis(trajectory)
-  const { global_deterioration, overallRisk, overallTrend } = trajectory
+  const prognosis = mapTrajectoryToPrognosis(trajectory);
+  const { global_deterioration, overallRisk, overallTrend } = trajectory;
 
-  const parts: string[] = []
+  const parts: string[] = [];
 
   // Trend component
   if (overallTrend === 'improving') {
-    parts.push('Trend klinis membaik')
+    parts.push('Trend klinis membaik');
   } else if (overallTrend === 'declining') {
-    parts.push('Trend klinis memburuk')
+    parts.push('Trend klinis memburuk');
   } else {
-    parts.push('Trend klinis stabil')
+    parts.push('Trend klinis stabil');
   }
 
   // Risk component
   if (overallRisk === 'critical' || overallRisk === 'high') {
-    parts.push('risiko tinggi')
+    parts.push('risiko tinggi');
   } else if (overallRisk === 'moderate') {
-    parts.push('risiko sedang')
+    parts.push('risiko sedang');
   } else {
-    parts.push('risiko rendah')
+    parts.push('risiko rendah');
   }
 
   // State component
   if (global_deterioration.state === 'critical') {
-    parts.push('kondisi kritis')
+    parts.push('kondisi kritis');
   } else if (global_deterioration.state === 'deteriorating') {
-    parts.push('perburukan klinis')
+    parts.push('perburukan klinis');
   } else if (global_deterioration.state === 'improving') {
-    parts.push('perbaikan klinis')
+    parts.push('perbaikan klinis');
   }
 
-  return `${prognosis}: ${parts.join(', ')}.`
+  return `${prognosis}: ${parts.join(', ')}.`;
 }
 
 /**
@@ -170,5 +170,5 @@ export function requiresEscalation(prognosis: PrognosisValue): boolean {
   return (
     prognosis === 'Dubia Ad Malam (Tidak Tentu/Ragu-ragu, Cenderung Memburuk)' ||
     prognosis === 'Malam (Buruk/Jelek)'
-  )
+  );
 }

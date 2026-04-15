@@ -1,26 +1,26 @@
 // Designed and constructed by Claudesy.
 
-import { getAuthConfig, probeApiBaseUrl, saveAuthConfig } from '@/lib/api/auth-client'
+import { getAuthConfig, probeApiBaseUrl, saveAuthConfig } from '@/lib/api/auth-client';
 import {
   getBridgeConfig,
   getBridgeRuntimeStatus,
   saveBridgeConfig,
   type BridgeRuntimeReadiness,
-} from '@/lib/api/bridge-client'
-import { Bell, Database, Moon, RotateCcw, Save, Settings, Shield, Wifi } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
-import { browser } from 'wxt/browser'
+} from '@/lib/api/bridge-client';
+import { Bell, Database, Moon, RotateCcw, Save, Settings, Shield, Wifi } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { browser } from 'wxt/browser';
 
 interface SettingItem {
-  id: string
-  label: string
-  description: string
-  enabled: boolean
+  id: string;
+  label: string;
+  description: string;
+  enabled: boolean;
 }
 
-const STORAGE_KEY = 'sentra-assist:settings'
-const DEFAULT_WORKSPACE_URL = 'https://kotakediri.epuskesmas.id'
-const DEFAULT_API_BASE_URL = 'https://crew.puskesmasbalowerti.com'
+const STORAGE_KEY = 'sentra-assist:settings';
+const DEFAULT_WORKSPACE_URL = 'https://kotakediri.epuskesmas.id';
+const DEFAULT_API_BASE_URL = 'https://crew.puskesmasbalowerti.com';
 
 const DEFAULT_SETTINGS: SettingItem[] = [
   {
@@ -54,167 +54,169 @@ const DEFAULT_SETTINGS: SettingItem[] = [
     description: 'Send anonymous usage data',
     enabled: false,
   },
-]
+];
 
 function getExtensionBuildInfo(): { version: string; buildLabel: string } {
   try {
-    const manifest = browser.runtime.getManifest()
+    const manifest = browser.runtime.getManifest();
     return {
       version: manifest.version,
       buildLabel: manifest.version_name?.trim() || 'Manifest build',
-    }
+    };
   } catch {
     return {
       version: 'unknown',
       buildLabel: 'Manifest unavailable',
-    }
+    };
   }
 }
 
 function loadPersistedSettings(): {
-  toggles: Record<string, boolean>
-  workspaceUrl: string
+  toggles: Record<string, boolean>;
+  workspaceUrl: string;
 } | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    return JSON.parse(raw) as { toggles: Record<string, boolean>; workspaceUrl: string }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as { toggles: Record<string, boolean>; workspaceUrl: string };
   } catch {
-    return null
+    return null;
   }
 }
 
 export function SettingsConsole(): JSX.Element {
-  const buildInfo = getExtensionBuildInfo()
+  const buildInfo = getExtensionBuildInfo();
   const [settings, setSettings] = useState<SettingItem[]>(() => {
-    const persisted = loadPersistedSettings()
-    if (!persisted) return DEFAULT_SETTINGS
+    const persisted = loadPersistedSettings();
+    if (!persisted) return DEFAULT_SETTINGS;
     return DEFAULT_SETTINGS.map((s) => ({
       ...s,
       enabled: persisted.toggles[s.id] ?? s.enabled,
-    }))
-  })
+    }));
+  });
 
   const [workspaceUrl, setWorkspaceUrl] = useState<string>(() => {
-    return loadPersistedSettings()?.workspaceUrl ?? DEFAULT_WORKSPACE_URL
-  })
-  const [authBaseUrl, setAuthBaseUrl] = useState(DEFAULT_API_BASE_URL)
-  const [automationToken, setAutomationToken] = useState('')
+    return loadPersistedSettings()?.workspaceUrl ?? DEFAULT_WORKSPACE_URL;
+  });
+  const [authBaseUrl, setAuthBaseUrl] = useState(DEFAULT_API_BASE_URL);
+  const [automationToken, setAutomationToken] = useState('');
 
-  const [saved, setSaved] = useState(false)
-  const [bridgeRuntimeStatus, setBridgeRuntimeStatus] = useState<BridgeRuntimeReadiness | 'unknown'>(
-    'unknown'
-  )
-  const [bridgeRuntimeMessage, setBridgeRuntimeMessage] = useState('Verifikasi server belum dijalankan.')
+  const [saved, setSaved] = useState(false);
+  const [bridgeRuntimeStatus, setBridgeRuntimeStatus] = useState<
+    BridgeRuntimeReadiness | 'unknown'
+  >('unknown');
+  const [bridgeRuntimeMessage, setBridgeRuntimeMessage] = useState(
+    'Verifikasi server belum dijalankan.'
+  );
   const [apiProbeStatus, setApiProbeStatus] = useState<{
-    tone: 'neutral' | 'success' | 'error'
-    text: string
+    tone: 'neutral' | 'success' | 'error';
+    text: string;
   }>({
     tone: 'neutral',
     text: 'Belum dites',
-  })
-  const [isApiProbeLoading, setIsApiProbeLoading] = useState(false)
+  });
+  const [isApiProbeLoading, setIsApiProbeLoading] = useState(false);
 
   // Expose workspaceUrl for other modules via localStorage
   useEffect(() => {
-    localStorage.setItem('sentra-assist:workspaceUrl', workspaceUrl)
-  }, [workspaceUrl])
+    localStorage.setItem('sentra-assist:workspaceUrl', workspaceUrl);
+  }, [workspaceUrl]);
 
   useEffect(() => {
     const syncBridgeRuntimeState = async (): Promise<void> => {
       try {
-        const config = await getBridgeConfig()
+        const config = await getBridgeConfig();
         setSettings((prev) =>
           prev.map((item) => (item.id === 'bridge' ? { ...item, enabled: config.enabled } : item))
-        )
-        const runtimeStatus = await getBridgeRuntimeStatus()
-        setBridgeRuntimeStatus(runtimeStatus.readiness)
-        setBridgeRuntimeMessage(runtimeStatus.message)
+        );
+        const runtimeStatus = await getBridgeRuntimeStatus();
+        setBridgeRuntimeStatus(runtimeStatus.readiness);
+        setBridgeRuntimeMessage(runtimeStatus.message);
       } catch {
-        setBridgeRuntimeStatus('server_error')
-        setBridgeRuntimeMessage('Verifikasi bridge gagal dijalankan.')
+        setBridgeRuntimeStatus('server_error');
+        setBridgeRuntimeMessage('Verifikasi bridge gagal dijalankan.');
       }
-    }
+    };
 
-    void syncBridgeRuntimeState()
-  }, [])
+    void syncBridgeRuntimeState();
+  }, []);
 
   useEffect(() => {
     const syncAuthConfig = async (): Promise<void> => {
       try {
-        const authConfig = await getAuthConfig()
-        setAuthBaseUrl(authConfig.baseUrl || DEFAULT_API_BASE_URL)
-        setAutomationToken(authConfig.automationToken || '')
+        const authConfig = await getAuthConfig();
+        setAuthBaseUrl(authConfig.baseUrl || DEFAULT_API_BASE_URL);
+        setAutomationToken(authConfig.automationToken || '');
       } catch {
-        setAuthBaseUrl(DEFAULT_API_BASE_URL)
-        setAutomationToken('')
+        setAuthBaseUrl(DEFAULT_API_BASE_URL);
+        setAutomationToken('');
       }
-    }
-    void syncAuthConfig()
-  }, [])
+    };
+    void syncAuthConfig();
+  }, []);
 
   const toggleSetting = (id: string) => {
-    setSettings((prev) => prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)))
-  }
+    setSettings((prev) => prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
+  };
 
   const handleSave = async () => {
     const payload = {
       toggles: Object.fromEntries(settings.map((s) => [s.id, s.enabled])),
       workspaceUrl,
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 
-    const bridgeEnabled = settings.find((item) => item.id === 'bridge')?.enabled ?? true
+    const bridgeEnabled = settings.find((item) => item.id === 'bridge')?.enabled ?? true;
     try {
       await saveAuthConfig({
         baseUrl: authBaseUrl.trim() || DEFAULT_API_BASE_URL,
         automationToken,
-      })
-      await saveBridgeConfig({ enabled: bridgeEnabled })
-      const runtimeStatus = await getBridgeRuntimeStatus()
-      setBridgeRuntimeStatus(runtimeStatus.readiness)
-      setBridgeRuntimeMessage(runtimeStatus.message)
+      });
+      await saveBridgeConfig({ enabled: bridgeEnabled });
+      const runtimeStatus = await getBridgeRuntimeStatus();
+      setBridgeRuntimeStatus(runtimeStatus.readiness);
+      setBridgeRuntimeMessage(runtimeStatus.message);
     } catch {
-      setBridgeRuntimeStatus('server_error')
-      setBridgeRuntimeMessage('Bridge gagal disimpan atau diverifikasi.')
+      setBridgeRuntimeStatus('server_error');
+      setBridgeRuntimeMessage('Bridge gagal disimpan atau diverifikasi.');
     }
 
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
 
   const handleReset = async () => {
-    setSettings(DEFAULT_SETTINGS)
-    setWorkspaceUrl(DEFAULT_WORKSPACE_URL)
-    setAuthBaseUrl(DEFAULT_API_BASE_URL)
-    setAutomationToken('')
-    localStorage.removeItem(STORAGE_KEY)
+    setSettings(DEFAULT_SETTINGS);
+    setWorkspaceUrl(DEFAULT_WORKSPACE_URL);
+    setAuthBaseUrl(DEFAULT_API_BASE_URL);
+    setAutomationToken('');
+    localStorage.removeItem(STORAGE_KEY);
     try {
-      await saveAuthConfig({ baseUrl: DEFAULT_API_BASE_URL, automationToken: '' })
-      const bridgeEnabled = DEFAULT_SETTINGS.find((item) => item.id === 'bridge')?.enabled ?? true
-      await saveBridgeConfig({ enabled: bridgeEnabled })
-      const runtimeStatus = await getBridgeRuntimeStatus()
-      setBridgeRuntimeStatus(runtimeStatus.readiness)
-      setBridgeRuntimeMessage(runtimeStatus.message)
+      await saveAuthConfig({ baseUrl: DEFAULT_API_BASE_URL, automationToken: '' });
+      const bridgeEnabled = DEFAULT_SETTINGS.find((item) => item.id === 'bridge')?.enabled ?? true;
+      await saveBridgeConfig({ enabled: bridgeEnabled });
+      const runtimeStatus = await getBridgeRuntimeStatus();
+      setBridgeRuntimeStatus(runtimeStatus.readiness);
+      setBridgeRuntimeMessage(runtimeStatus.message);
     } catch {
-      setBridgeRuntimeStatus('server_error')
-      setBridgeRuntimeMessage('Reset bridge gagal diverifikasi.')
+      setBridgeRuntimeStatus('server_error');
+      setBridgeRuntimeMessage('Reset bridge gagal diverifikasi.');
     }
-    setApiProbeStatus({ tone: 'neutral', text: 'Belum dites' })
-  }
+    setApiProbeStatus({ tone: 'neutral', text: 'Belum dites' });
+  };
 
   const handleTestApiBaseUrl = async () => {
-    setIsApiProbeLoading(true)
+    setIsApiProbeLoading(true);
     try {
-      const result = await probeApiBaseUrl(authBaseUrl)
+      const result = await probeApiBaseUrl(authBaseUrl);
       setApiProbeStatus({
         tone: result.ok ? 'success' : 'error',
         text: result.message,
-      })
+      });
     } finally {
-      setIsApiProbeLoading(false)
+      setIsApiProbeLoading(false);
     }
-  }
+  };
 
   const bridgeRuntimeStatusLabel: Record<typeof bridgeRuntimeStatus, string> = {
     unknown: 'Runtime: loading',
@@ -223,7 +225,7 @@ export function SettingsConsole(): JSX.Element {
     auth_required: 'Runtime: auth required',
     server_unreachable: 'Runtime: server unreachable',
     server_error: 'Runtime: server error',
-  }
+  };
 
   const settingIcons: Record<string, React.ReactNode> = {
     'auto-fill': <Database className="w-3.5 h-3.5" />,
@@ -232,7 +234,7 @@ export function SettingsConsole(): JSX.Element {
     sounds: <Bell className="w-3.5 h-3.5" />,
     'dark-mode': <Moon className="w-3.5 h-3.5" />,
     telemetry: <Shield className="w-3.5 h-3.5" />,
-  }
+  };
 
   return (
     <div className="flex flex-col gap-4 p-4 fade-in">
@@ -335,13 +337,17 @@ export function SettingsConsole(): JSX.Element {
                 <div className="text-[var(--text-muted)]">{settingIcons[setting.id]}</div>
                 <div>
                   <span className="text-xs text-[var(--text-main)] block">{setting.label}</span>
-                  <span className="text-[10px] text-[var(--text-muted)]">{setting.description}</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">
+                    {setting.description}
+                  </span>
                   {setting.id === 'bridge' ? (
                     <>
                       <span className="text-[10px] text-[#6B9B8A]">
                         {bridgeRuntimeStatusLabel[bridgeRuntimeStatus]}
                       </span>
-                      <span className="block text-[10px] text-[var(--text-muted)]">{bridgeRuntimeMessage}</span>
+                      <span className="block text-[10px] text-[var(--text-muted)]">
+                        {bridgeRuntimeMessage}
+                      </span>
                     </>
                   ) : null}
                 </div>
@@ -400,5 +406,5 @@ export function SettingsConsole(): JSX.Element {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,21 +1,21 @@
 // Designed and constructed by Claudesy.
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { DiagnosisRequestContext } from '@/types/api'
-import type { Encounter } from '~/utils/types'
-import { runGetSuggestionsFlow } from './get-suggestions-flow'
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DiagnosisRequestContext } from '@/types/api';
+import type { Encounter } from '~/utils/types';
+import { runGetSuggestionsFlow } from './get-suggestions-flow';
 
-const runDiagnosisEngineMock = vi.fn()
-const getICD10DetailsMock = vi.fn()
-const searchForDiagnosisSuggestionsMock = vi.fn()
+const runDiagnosisEngineMock = vi.fn();
+const getICD10DetailsMock = vi.fn();
+const searchForDiagnosisSuggestionsMock = vi.fn();
 
 vi.mock('./engine', () => ({
   runDiagnosisEngine: (...args: unknown[]) => runDiagnosisEngineMock(...args),
-}))
+}));
 
 vi.mock('@/lib/rag', () => ({
   getICD10Details: (...args: unknown[]) => getICD10DetailsMock(...args),
   searchForDiagnosisSuggestions: (...args: unknown[]) => searchForDiagnosisSuggestionsMock(...args),
-}))
+}));
 
 const encounter: Encounter = {
   id: 'enc-pharm-1',
@@ -39,21 +39,21 @@ const encounter: Encounter = {
     penyakit_kronis: [],
   },
   resep: [],
-}
+};
 
 const context: DiagnosisRequestContext = {
   keluhan_utama: 'Sakit kepala',
   patient_age: 40,
   patient_gender: 'M',
-}
+};
 
 describe('runGetSuggestionsFlow pharmacology enrichment', () => {
   beforeEach(() => {
-    runDiagnosisEngineMock.mockReset()
-    getICD10DetailsMock.mockReset()
-    searchForDiagnosisSuggestionsMock.mockReset()
-    searchForDiagnosisSuggestionsMock.mockResolvedValue([])
-  })
+    runDiagnosisEngineMock.mockReset();
+    getICD10DetailsMock.mockReset();
+    searchForDiagnosisSuggestionsMock.mockReset();
+    searchForDiagnosisSuggestionsMock.mockResolvedValue([]);
+  });
 
   it('maps ICD therapy into medication recommendations', async () => {
     runDiagnosisEngineMock.mockResolvedValue({
@@ -79,7 +79,7 @@ describe('runGetSuggestionsFlow pharmacology enrichment', () => {
         unverified_codes: [],
         warnings: [],
       },
-    })
+    });
 
     getICD10DetailsMock.mockResolvedValue([
       {
@@ -94,16 +94,16 @@ describe('runGetSuggestionsFlow pharmacology enrichment', () => {
         is_leaf: true,
         terapi: [{ obat: 'Amlodipine 5mg', dosis: '5mg', frek: '1x1' }],
       },
-    ])
+    ]);
 
-    const result = await runGetSuggestionsFlow(encounter, context)
+    const result = await runGetSuggestionsFlow(encounter, context);
 
-    expect(result.success).toBe(true)
-    expect(result.data?.medication_recommendations).toHaveLength(1)
-    expect(result.data?.medication_recommendations[0]?.nama_obat).toBe('Amlodipine 5mg')
-    expect(result.data?.medication_recommendations[0]?.dosis).toBe('1x1')
-    expect(result.data?.medication_recommendations[0]?.safety_check).toBe('safe')
-  })
+    expect(result.success).toBe(true);
+    expect(result.data?.medication_recommendations).toHaveLength(1);
+    expect(result.data?.medication_recommendations[0]?.nama_obat).toBe('Amlodipine 5mg');
+    expect(result.data?.medication_recommendations[0]?.dosis).toBe('1x1');
+    expect(result.data?.medication_recommendations[0]?.safety_check).toBe('safe');
+  });
 
   it('fails safe to empty medication recommendations when ICD lookup fails', async () => {
     runDiagnosisEngineMock.mockResolvedValue({
@@ -129,15 +129,15 @@ describe('runGetSuggestionsFlow pharmacology enrichment', () => {
         unverified_codes: [],
         warnings: [],
       },
-    })
+    });
 
-    getICD10DetailsMock.mockRejectedValue(new Error('db unavailable'))
+    getICD10DetailsMock.mockRejectedValue(new Error('db unavailable'));
 
-    const result = await runGetSuggestionsFlow(encounter, context)
+    const result = await runGetSuggestionsFlow(encounter, context);
 
-    expect(result.success).toBe(true)
-    expect(result.data?.medication_recommendations).toEqual([])
-  })
+    expect(result.success).toBe(true);
+    expect(result.data?.medication_recommendations).toEqual([]);
+  });
 
   it('uses complaint-based DB fallback when primary ICD has no therapy', async () => {
     runDiagnosisEngineMock.mockResolvedValue({
@@ -163,7 +163,7 @@ describe('runGetSuggestionsFlow pharmacology enrichment', () => {
         unverified_codes: [],
         warnings: [],
       },
-    })
+    });
 
     getICD10DetailsMock.mockResolvedValue([
       {
@@ -178,7 +178,7 @@ describe('runGetSuggestionsFlow pharmacology enrichment', () => {
         is_leaf: true,
         terapi: [],
       },
-    ])
+    ]);
 
     searchForDiagnosisSuggestionsMock.mockResolvedValue([
       {
@@ -197,13 +197,13 @@ describe('runGetSuggestionsFlow pharmacology enrichment', () => {
         relevance_score: 0.68,
         match_type: 'keyword',
       },
-    ])
+    ]);
 
-    const result = await runGetSuggestionsFlow(encounter, context)
+    const result = await runGetSuggestionsFlow(encounter, context);
 
-    expect(result.success).toBe(true)
-    expect(result.data?.medication_recommendations).toHaveLength(1)
-    expect(result.data?.medication_recommendations[0]?.nama_obat).toBe('Paracetamol 500mg')
-    expect(result.data?.medication_recommendations[0]?.dosis).toBe('3x1')
-  })
-})
+    expect(result.success).toBe(true);
+    expect(result.data?.medication_recommendations).toHaveLength(1);
+    expect(result.data?.medication_recommendations[0]?.nama_obat).toBe('Paracetamol 500mg');
+    expect(result.data?.medication_recommendations[0]?.dosis).toBe('3x1');
+  });
+});

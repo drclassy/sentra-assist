@@ -17,7 +17,7 @@ export type DrugCategory =
   | 'antihistamine'
   | 'cardiovascular'
   | 'respiratory'
-  | 'analgesic'
+  | 'analgesic';
 /**
  * AgeGroup type
  *
@@ -26,7 +26,7 @@ export type DrugCategory =
  * Auto-generated on 2026-03-12
  */
 
-export type AgeGroup = 'neonate' | 'infant' | 'child' | 'adolescent' | 'adult' | 'elderly'
+export type AgeGroup = 'neonate' | 'infant' | 'child' | 'adolescent' | 'adult' | 'elderly';
 /**
  * RouteOfAdmin type
  *
@@ -35,7 +35,7 @@ export type AgeGroup = 'neonate' | 'infant' | 'child' | 'adolescent' | 'adult' |
  * Auto-generated on 2026-03-12
  */
 
-export type RouteOfAdmin = 'oral' | 'iv' | 'im' | 'topical' | 'rectal'
+export type RouteOfAdmin = 'oral' | 'iv' | 'im' | 'topical' | 'rectal';
 
 /**
  * DosageRule interface
@@ -46,16 +46,16 @@ export type RouteOfAdmin = 'oral' | 'iv' | 'im' | 'topical' | 'rectal'
  */
 
 export interface DosageRule {
-  ageGroup: AgeGroup
-  dosePerKg: number // mg/kg
-  minDose?: number // mg
-  maxDose?: number // mg (per dose)
-  maxDailyDose?: number // mg (total per day)
-  frequency: string // e.g., "q6h", "q8h", "q12h", "daily"
-  route: RouteOfAdmin
-  renalAdjustment?: string
-  hepaticAdjustment?: string
-  contraindications?: string[]
+  ageGroup: AgeGroup;
+  dosePerKg: number; // mg/kg
+  minDose?: number; // mg
+  maxDose?: number; // mg (per dose)
+  maxDailyDose?: number; // mg (total per day)
+  frequency: string; // e.g., "q6h", "q8h", "q12h", "daily"
+  route: RouteOfAdmin;
+  renalAdjustment?: string;
+  hepaticAdjustment?: string;
+  contraindications?: string[];
 }
 
 /**
@@ -67,14 +67,14 @@ export interface DosageRule {
  */
 
 export interface Drug {
-  id: string
-  name: string
-  genericName: string
-  category: DrugCategory
-  indication: string
-  rules: DosageRule[]
-  warnings: string[]
-  notes?: string
+  id: string;
+  name: string;
+  genericName: string;
+  category: DrugCategory;
+  indication: string;
+  rules: DosageRule[];
+  warnings: string[];
+  notes?: string;
 }
 
 export const DOSAGE_DATABASE: Drug[] = [
@@ -343,7 +343,7 @@ export const DOSAGE_DATABASE: Drug[] = [
     warnings: ['Monitor HR and tremor', 'Reduce dose if tachycardia occurs'],
     notes: 'Inhaled form preferred. Oral form shown for reference.',
   },
-]
+];
 
 /**
  * Calculate dosage based on weight and drug rules
@@ -353,60 +353,60 @@ export function calculateDosage(
   weightKg: number,
   ageGroup: AgeGroup
 ): {
-  dose: number
-  unit: string
-  frequency: string
-  route: string
-  warnings: string[]
-  isOverMax: boolean
-  isUnderMin: boolean
-  dailyTotal: number
+  dose: number;
+  unit: string;
+  frequency: string;
+  route: string;
+  warnings: string[];
+  isOverMax: boolean;
+  isUnderMin: boolean;
+  dailyTotal: number;
 } | null {
-  const drug = DOSAGE_DATABASE.find(d => d.id === drugId)
-  if (!drug) return null
+  const drug = DOSAGE_DATABASE.find((d) => d.id === drugId);
+  if (!drug) return null;
 
-  const rule = drug.rules.find(r => r.ageGroup === ageGroup)
-  if (!rule) return null
+  const rule = drug.rules.find((r) => r.ageGroup === ageGroup);
+  if (!rule) return null;
 
-  let calculatedDose = rule.dosePerKg * weightKg
+  let calculatedDose = rule.dosePerKg * weightKg;
 
   // Apply min/max constraints
-  let isOverMax = false
-  let isUnderMin = false
+  let isOverMax = false;
+  let isUnderMin = false;
 
   if (rule.minDose && calculatedDose < rule.minDose) {
-    calculatedDose = rule.minDose
-    isUnderMin = true
+    calculatedDose = rule.minDose;
+    isUnderMin = true;
   }
 
   if (rule.maxDose && calculatedDose > rule.maxDose) {
-    calculatedDose = rule.maxDose
-    isOverMax = true
+    calculatedDose = rule.maxDose;
+    isOverMax = true;
   }
 
   // Calculate daily total
-  const freqMatch = rule.frequency.match(/q(\d+)h/)
-  const dosesPerDay = freqMatch ? 24 / Number.parseInt(freqMatch[1]) : 1
-  const dailyTotal = calculatedDose * dosesPerDay
+  const freqMatch = rule.frequency.match(/q(\d+)h/);
+  const dosesPerDay = freqMatch ? 24 / Number.parseInt(freqMatch[1]) : 1;
+  const dailyTotal = calculatedDose * dosesPerDay;
 
   // Warnings
-  const warnings = [...drug.warnings]
+  const warnings = [...drug.warnings];
   if (rule.contraindications) {
-    warnings.push(...rule.contraindications.map(c => `KONTRAINDIKASI: ${c}`))
+    warnings.push(...rule.contraindications.map((c) => `KONTRAINDIKASI: ${c}`));
   }
   if (rule.renalAdjustment) {
-    warnings.push(`⚠️ ${rule.renalAdjustment}`)
+    warnings.push(`⚠️ ${rule.renalAdjustment}`);
   }
   if (rule.hepaticAdjustment) {
-    warnings.push(`⚠️ ${rule.hepaticAdjustment}`)
+    warnings.push(`⚠️ ${rule.hepaticAdjustment}`);
   }
   if (isOverMax) {
-    warnings.push('⚠️ PERINGATAN: Dosis melebihi maksimum, dibatasi ke dosis max')
+    warnings.push('⚠️ PERINGATAN: Dosis melebihi maksimum, dibatasi ke dosis max');
   }
   if (rule.maxDailyDose && dailyTotal > rule.maxDailyDose) {
     warnings.push(
       `⚠️ BAHAYA: Total harian (${dailyTotal.toFixed(0)} mg) melebihi batas (${rule.maxDailyDose} mg)`
-    )
+    );
   }
 
   return {
@@ -418,17 +418,17 @@ export function calculateDosage(
     isOverMax,
     isUnderMin,
     dailyTotal: Math.round(dailyTotal * 10) / 10,
-  }
+  };
 }
 
 /**
  * Get age group from age in years
  */
 export function getAgeGroup(ageYears: number): AgeGroup {
-  if (ageYears < 0.08) return 'neonate' // <1 month
-  if (ageYears < 2) return 'infant'
-  if (ageYears < 12) return 'child'
-  if (ageYears < 18) return 'adolescent'
-  if (ageYears < 65) return 'adult'
-  return 'elderly'
+  if (ageYears < 0.08) return 'neonate'; // <1 month
+  if (ageYears < 2) return 'infant';
+  if (ageYears < 12) return 'child';
+  if (ageYears < 18) return 'adolescent';
+  if (ageYears < 65) return 'adult';
+  return 'elderly';
 }

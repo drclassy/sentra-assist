@@ -17,55 +17,55 @@
  * Source: WHO, AHA
  */
 export interface VitalRanges {
-  pulse: { min: number; max: number }
-  rr: { min: number; max: number }
-  temp: { min: number; max: number }
+  pulse: { min: number; max: number };
+  rr: { min: number; max: number };
+  temp: { min: number; max: number };
 }
 
 /**
  * Measured or inferred vital signs
  */
 export interface VitalSigns {
-  pulse?: number
-  rr?: number
-  temp?: number
-  sbp?: number
-  dbp?: number
+  pulse?: number;
+  rr?: number;
+  temp?: number;
+  sbp?: number;
+  dbp?: number;
 }
 
 /**
  * Metadata about how vital was obtained
  */
 export interface VitalMetadata {
-  source: 'measured' | 'inferred'
-  confidence?: 'high' | 'medium' | 'low'
-  reasoning?: string
+  source: 'measured' | 'inferred';
+  confidence?: 'high' | 'medium' | 'low';
+  reasoning?: string;
 }
 
 /**
  * Complete vital signs with metadata
  */
 export interface VitalsWithMetadata {
-  values: VitalSigns
+  values: VitalSigns;
   metadata: {
-    pulse?: VitalMetadata
-    rr?: VitalMetadata
-    temp?: VitalMetadata
-  }
+    pulse?: VitalMetadata;
+    rr?: VitalMetadata;
+    temp?: VitalMetadata;
+  };
 }
 
 /**
  * Symptom pattern for inference
  */
 export interface SymptomPattern {
-  id: string
-  keywords: string[]
+  id: string;
+  keywords: string[];
   vitals: {
-    pulse?: { min: number; max: number }
-    rr?: { min: number; max: number }
-    temp?: { min: number; max: number }
-  }
-  reasoning: string
+    pulse?: { min: number; max: number };
+    rr?: { min: number; max: number };
+    temp?: { min: number; max: number };
+  };
+  reasoning: string;
 }
 
 // ============================================================================
@@ -79,7 +79,7 @@ export const NORMAL_RANGES: VitalRanges = {
   pulse: { min: 60, max: 100 },
   rr: { min: 12, max: 20 },
   temp: { min: 36.5, max: 37.2 },
-}
+};
 
 /**
  * Symptom patterns for vital signs inference
@@ -166,7 +166,7 @@ export const SYMPTOM_PATTERNS: SymptomPattern[] = [
     },
     reasoning: 'Anxiety → aktivasi simpatis → ↑HR, hyperventilasi',
   },
-]
+];
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -182,8 +182,8 @@ export const SYMPTOM_PATTERNS: SymptomPattern[] = [
  * @returns Random value within range
  */
 export function getRandomNormal(min: number, max: number, decimals: number = 0): number {
-  const value = Math.random() * (max - min) + min
-  return Number(value.toFixed(decimals))
+  const value = Math.random() * (max - min) + min;
+  return Number(value.toFixed(decimals));
 }
 
 /**
@@ -194,21 +194,21 @@ export function getRandomNormal(min: number, max: number, decimals: number = 0):
  * @returns Array of matched keywords
  */
 export function parseComplaint(complaint: string): string[] {
-  if (!complaint) return []
+  if (!complaint) return [];
 
-  const normalized = complaint.toLowerCase().trim()
-  const matches: string[] = []
+  const normalized = complaint.toLowerCase().trim();
+  const matches: string[] = [];
 
   // Check each pattern's keywords
   for (const pattern of SYMPTOM_PATTERNS) {
     for (const keyword of pattern.keywords) {
       if (normalized.includes(keyword.toLowerCase())) {
-        matches.push(keyword)
+        matches.push(keyword);
       }
     }
   }
 
-  return [...new Set(matches)] // Remove duplicates
+  return [...new Set(matches)]; // Remove duplicates
 }
 
 /**
@@ -219,29 +219,29 @@ export function parseComplaint(complaint: string): string[] {
  * @returns Array of matching patterns, sorted by relevance
  */
 export function findMatchingPatterns(complaint: string): SymptomPattern[] {
-  if (!complaint) return []
+  if (!complaint) return [];
 
-  const normalized = complaint.toLowerCase().trim()
-  const patternMatches: Array<{ pattern: SymptomPattern; matchCount: number }> = []
+  const normalized = complaint.toLowerCase().trim();
+  const patternMatches: Array<{ pattern: SymptomPattern; matchCount: number }> = [];
 
   for (const pattern of SYMPTOM_PATTERNS) {
-    let matchCount = 0
+    let matchCount = 0;
 
     for (const keyword of pattern.keywords) {
       if (normalized.includes(keyword.toLowerCase())) {
-        matchCount++
+        matchCount++;
       }
     }
 
     if (matchCount > 0) {
-      patternMatches.push({ pattern, matchCount })
+      patternMatches.push({ pattern, matchCount });
     }
   }
 
   // Sort by match count (descending)
-  patternMatches.sort((a, b) => b.matchCount - a.matchCount)
+  patternMatches.sort((a, b) => b.matchCount - a.matchCount);
 
-  return patternMatches.map(pm => pm.pattern)
+  return patternMatches.map((pm) => pm.pattern);
 }
 
 // ============================================================================
@@ -266,22 +266,22 @@ export function inferVitals(complaint: string, measured: VitalSigns = {}): Vital
   const result: VitalsWithMetadata = {
     values: { ...measured },
     metadata: {},
-  }
+  };
 
   // Mark measured vitals
   if (measured.pulse !== undefined) {
-    result.metadata.pulse = { source: 'measured' }
+    result.metadata.pulse = { source: 'measured' };
   }
   if (measured.rr !== undefined) {
-    result.metadata.rr = { source: 'measured' }
+    result.metadata.rr = { source: 'measured' };
   }
   if (measured.temp !== undefined) {
-    result.metadata.temp = { source: 'measured' }
+    result.metadata.temp = { source: 'measured' };
   }
 
   // Find matching patterns
-  const patterns = findMatchingPatterns(complaint)
-  const primaryPattern = patterns[0] // Highest match count
+  const patterns = findMatchingPatterns(complaint);
+  const primaryPattern = patterns[0]; // Highest match count
 
   // Infer missing vitals
 
@@ -291,38 +291,41 @@ export function inferVitals(complaint: string, measured: VitalSigns = {}): Vital
       result.values.pulse = getRandomNormal(
         primaryPattern.vitals.pulse.min,
         primaryPattern.vitals.pulse.max
-      )
+      );
       result.metadata.pulse = {
         source: 'inferred',
         confidence: 'medium',
         reasoning: primaryPattern.reasoning,
-      }
+      };
     } else {
-      result.values.pulse = getRandomNormal(NORMAL_RANGES.pulse.min, NORMAL_RANGES.pulse.max)
+      result.values.pulse = getRandomNormal(NORMAL_RANGES.pulse.min, NORMAL_RANGES.pulse.max);
       result.metadata.pulse = {
         source: 'inferred',
         confidence: 'low',
         reasoning: 'No specific pattern matched - using normal range',
-      }
+      };
     }
   }
 
   // RESPIRATORY RATE
   if (result.values.rr === undefined) {
     if (primaryPattern?.vitals.rr) {
-      result.values.rr = getRandomNormal(primaryPattern.vitals.rr.min, primaryPattern.vitals.rr.max)
+      result.values.rr = getRandomNormal(
+        primaryPattern.vitals.rr.min,
+        primaryPattern.vitals.rr.max
+      );
       result.metadata.rr = {
         source: 'inferred',
         confidence: 'medium',
         reasoning: primaryPattern.reasoning,
-      }
+      };
     } else {
-      result.values.rr = getRandomNormal(NORMAL_RANGES.rr.min, NORMAL_RANGES.rr.max)
+      result.values.rr = getRandomNormal(NORMAL_RANGES.rr.min, NORMAL_RANGES.rr.max);
       result.metadata.rr = {
         source: 'inferred',
         confidence: 'low',
         reasoning: 'No specific pattern matched - using normal range',
-      }
+      };
     }
   }
 
@@ -333,23 +336,23 @@ export function inferVitals(complaint: string, measured: VitalSigns = {}): Vital
         primaryPattern.vitals.temp.min,
         primaryPattern.vitals.temp.max,
         1 // 1 decimal place for temperature
-      )
+      );
       result.metadata.temp = {
         source: 'inferred',
         confidence: 'medium',
         reasoning: primaryPattern.reasoning,
-      }
+      };
     } else {
-      result.values.temp = getRandomNormal(NORMAL_RANGES.temp.min, NORMAL_RANGES.temp.max, 1)
+      result.values.temp = getRandomNormal(NORMAL_RANGES.temp.min, NORMAL_RANGES.temp.max, 1);
       result.metadata.temp = {
         source: 'inferred',
         confidence: 'low',
         reasoning: 'No specific pattern matched - using normal range',
-      }
+      };
     }
   }
 
-  return result
+  return result;
 }
 
 /**
@@ -359,9 +362,9 @@ export function inferVitals(complaint: string, measured: VitalSigns = {}): Vital
  * @returns Object indicating which vitals are abnormal
  */
 export function checkVitalRanges(vitals: VitalSigns): {
-  pulse: 'low' | 'normal' | 'high' | null
-  rr: 'low' | 'normal' | 'high' | null
-  temp: 'low' | 'normal' | 'high' | null
+  pulse: 'low' | 'normal' | 'high' | null;
+  rr: 'low' | 'normal' | 'high' | null;
+  temp: 'low' | 'normal' | 'high' | null;
 } {
   return {
     pulse:
@@ -390,7 +393,7 @@ export function checkVitalRanges(vitals: VitalSigns): {
           : vitals.temp > NORMAL_RANGES.temp.max
             ? 'high'
             : 'normal',
-  }
+  };
 }
 
 // ============================================================================
@@ -405,4 +408,4 @@ export default {
   findMatchingPatterns,
   inferVitals,
   checkVitalRanges,
-}
+};

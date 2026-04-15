@@ -11,7 +11,7 @@
  * @module lib/api/mocks/prescription-mock
  */
 
-import type { CDSSAlert, CDSSResponse, MedicationRecommendation } from '@/types/api'
+import type { CDSSAlert, CDSSResponse, MedicationRecommendation } from '@/types/api';
 
 // =============================================================================
 // MEDICATION RECOMMENDATIONS BY DIAGNOSIS
@@ -54,7 +54,7 @@ export const ISPA_MEDICATIONS: MedicationRecommendation[] = [
     rationale: 'Suplementasi untuk daya tahan tubuh',
     safety_check: 'safe',
   },
-]
+];
 
 /**
  * Gastroenteritis Treatment (A09)
@@ -92,7 +92,7 @@ export const GE_MEDICATIONS: MedicationRecommendation[] = [
     rationale: 'Adsorben untuk diare non-infeksi',
     safety_check: 'safe',
   },
-]
+];
 
 /**
  * Hypertension Treatment (I10)
@@ -115,7 +115,7 @@ export const HYPERTENSION_MEDICATIONS: MedicationRecommendation[] = [
     safety_check: 'caution',
     contraindications: ['Batuk kering (efek samping umum)', 'Kontraindikasi pada kehamilan'],
   },
-]
+];
 
 /**
  * Suspected Angina / ACS Initial FKTP Bridge Therapy (I20/I21/I22/I24)
@@ -148,7 +148,7 @@ export const ACS_INITIAL_MEDICATIONS: MedicationRecommendation[] = [
       'Kecurigaan infark ventrikel kanan',
     ],
   },
-]
+];
 
 /**
  * Diabetes Treatment (E11.9)
@@ -171,7 +171,7 @@ export const DIABETES_MEDICATIONS: MedicationRecommendation[] = [
     safety_check: 'caution',
     contraindications: ['Risiko hipoglikemia - makan teratur'],
   },
-]
+];
 
 /**
  * Skin Infection Treatment (L30.9)
@@ -201,7 +201,7 @@ export const SKIN_MEDICATIONS: MedicationRecommendation[] = [
     rationale: 'Antifungal topikal untuk suspek tinea',
     safety_check: 'safe',
   },
-]
+];
 
 // =============================================================================
 // MOCK RESPONSE BUILDER
@@ -211,16 +211,16 @@ export const SKIN_MEDICATIONS: MedicationRecommendation[] = [
  * Get medication recommendations based on ICD-10 code
  */
 export function getMockMedicationsByDiagnosis(icd_x: string): MedicationRecommendation[] {
-  const code = icd_x.toUpperCase()
+  const code = icd_x.toUpperCase();
 
   // ISPA codes
   if (code.startsWith('J0') || code.startsWith('J1')) {
-    return ISPA_MEDICATIONS
+    return ISPA_MEDICATIONS;
   }
 
   // GI codes
   if (code.startsWith('A09') || code.startsWith('K5')) {
-    return GE_MEDICATIONS
+    return GE_MEDICATIONS;
   }
 
   // Hypertension
@@ -232,7 +232,7 @@ export function getMockMedicationsByDiagnosis(icd_x: string): MedicationRecommen
     code.startsWith('I15') ||
     code.startsWith('I16')
   ) {
-    return HYPERTENSION_MEDICATIONS
+    return HYPERTENSION_MEDICATIONS;
   }
 
   // Suspected angina / acute coronary syndrome family
@@ -242,7 +242,7 @@ export function getMockMedicationsByDiagnosis(icd_x: string): MedicationRecommen
     code.startsWith('I22') ||
     code.startsWith('I24')
   ) {
-    return ACS_INITIAL_MEDICATIONS
+    return ACS_INITIAL_MEDICATIONS;
   }
 
   // Diabetes
@@ -252,24 +252,24 @@ export function getMockMedicationsByDiagnosis(icd_x: string): MedicationRecommen
     code.startsWith('E13') ||
     code.startsWith('E14')
   ) {
-    return DIABETES_MEDICATIONS
+    return DIABETES_MEDICATIONS;
   }
 
   // Skin
   if (code.startsWith('L') || code.startsWith('B35')) {
-    return SKIN_MEDICATIONS
+    return SKIN_MEDICATIONS;
   }
 
   // Unknown diagnosis code: do not force generic medication package.
   // Returning empty array is safer than an unrelated fallback regimen.
-  return []
+  return [];
 }
 
 /**
  * Generate unique alert ID
  */
 function generateAlertId(): string {
-  return `alert-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+  return `alert-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
 /**
@@ -279,22 +279,22 @@ export function generateAllergyAlerts(
   medications: MedicationRecommendation[],
   allergies: string[]
 ): CDSSAlert[] {
-  const alerts: CDSSAlert[] = []
+  const alerts: CDSSAlert[] = [];
 
   // Common allergy patterns
   const allergyPatterns: Record<string, string[]> = {
     penisilin: ['amoxicillin', 'ampicillin', 'penicillin'],
     sulfa: ['sulfamethoxazole', 'cotrimoxazole', 'bactrim'],
     nsaid: ['ibuprofen', 'aspirin', 'meloxicam', 'piroxicam'],
-  }
+  };
 
-  allergies.forEach(allergy => {
-    const allergyLower = allergy.toLowerCase()
-    const relatedDrugs = allergyPatterns[allergyLower] || []
+  allergies.forEach((allergy) => {
+    const allergyLower = allergy.toLowerCase();
+    const relatedDrugs = allergyPatterns[allergyLower] || [];
 
-    medications.forEach(med => {
-      const medLower = med.nama_obat.toLowerCase()
-      if (relatedDrugs.some(drug => medLower.includes(drug))) {
+    medications.forEach((med) => {
+      const medLower = med.nama_obat.toLowerCase();
+      if (relatedDrugs.some((drug) => medLower.includes(drug))) {
         alerts.push({
           id: generateAlertId(),
           type: 'allergy',
@@ -302,12 +302,12 @@ export function generateAllergyAlerts(
           title: 'Alergi Obat Terdeteksi',
           message: `ALERGI: ${med.nama_obat} mengandung komponen yang berkaitan dengan alergi ${allergy}`,
           action: 'Ganti obat dengan alternatif yang aman',
-        })
+        });
       }
-    })
-  })
+    });
+  });
 
-  return alerts
+  return alerts;
 }
 
 /**
@@ -318,14 +318,14 @@ export function buildMockPrescriptionResponse(
   allergies: string[] = [],
   chronicDiseases: string[] = []
 ): CDSSResponse {
-  const medications = getMockMedicationsByDiagnosis(icd_x)
-  const alerts = generateAllergyAlerts(medications, allergies)
-  const normalizedCode = icd_x.toUpperCase().trim()
+  const medications = getMockMedicationsByDiagnosis(icd_x);
+  const alerts = generateAllergyAlerts(medications, allergies);
+  const normalizedCode = icd_x.toUpperCase().trim();
   const isAcsLikeCode =
     normalizedCode.startsWith('I20') ||
     normalizedCode.startsWith('I21') ||
     normalizedCode.startsWith('I22') ||
-    normalizedCode.startsWith('I24')
+    normalizedCode.startsWith('I24');
 
   if (isAcsLikeCode) {
     alerts.push({
@@ -337,7 +337,7 @@ export function buildMockPrescriptionResponse(
         'Terapi farmakologi di FKTP bersifat stabilisasi awal. Evaluasi EKG 12 sadapan dan rujukan emergensi tetap prioritas.',
       action:
         'Lakukan monitoring serial TTV, pertimbangkan serial EKG, dan eskalasi rujukan segera bila nyeri menetap atau ada instabilitas.',
-    })
+    });
   }
 
   if (medications.length === 0) {
@@ -351,7 +351,7 @@ export function buildMockPrescriptionResponse(
           'Diagnosis kardiak akut/suspek ACS tidak diberikan paket farmakoterapi otomatis untuk mencegah rekomendasi yang tidak aman.',
         action:
           'Lakukan EKG 12 sadapan, monitoring serial TTV, dan rujuk emergensi bila nyeri dada menetap atau kondisi hemodinamik tidak stabil.',
-      })
+      });
     } else {
       alerts.push({
         id: generateAlertId(),
@@ -362,7 +362,7 @@ export function buildMockPrescriptionResponse(
           'Belum ada paket terapi farmakologi terstruktur untuk kode ICD ini pada knowledge database aktif.',
         action:
           'Gunakan keputusan klinis dokter + formularium FKTP lokal, atau pilih diagnosis dengan paket terapi yang tersedia.',
-      })
+      });
     }
   }
 
@@ -374,7 +374,7 @@ export function buildMockPrescriptionResponse(
       severity: 'info',
       title: 'Perhatian Hipertensi',
       message: 'Pasien memiliki riwayat Hipertensi - hindari dekongestan sistemik',
-    })
+    });
   }
 
   if (chronicDiseases.includes('Diabetes') && icd_x.startsWith('J')) {
@@ -384,7 +384,7 @@ export function buildMockPrescriptionResponse(
       severity: 'medium',
       title: 'Perhatian Diabetes',
       message: 'Pasien DM - hindari sirup dengan kandungan gula tinggi',
-    })
+    });
   }
 
   return {
@@ -402,5 +402,5 @@ export function buildMockPrescriptionResponse(
       timestamp: new Date().toISOString(),
       is_mock: true,
     },
-  }
+  };
 }

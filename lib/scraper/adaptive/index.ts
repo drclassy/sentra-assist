@@ -38,7 +38,7 @@
 // ============================================================================
 
 // Phase 3 type re-export from cache-promoter
-export type { PromotionResult, SystemHealthReport } from './cache-promoter'
+export type { PromotionResult, SystemHealthReport } from './cache-promoter';
 export type {
   CacheStats,
   ClinicalFieldCategory,
@@ -68,7 +68,7 @@ export type {
   ScanOptions,
   ScanResult,
   ValidationResult,
-} from './types'
+} from './types';
 
 // ============================================================================
 // DOM SCANNER EXPORTS
@@ -84,7 +84,7 @@ export {
   isInteractiveField,
   scanPageFields,
   serializeForLogging,
-} from './dom-scanner'
+} from './dom-scanner';
 
 // ============================================================================
 // FIELD CLASSIFIER EXPORTS
@@ -97,7 +97,7 @@ export {
   matchEpuskesmasField,
   requiresHumanConfirmation,
   requiresStaticMapping,
-} from './field-classifier'
+} from './field-classifier';
 
 // ============================================================================
 // PHASE 2: SEMANTIC MAPPER EXPORTS
@@ -109,13 +109,13 @@ export {
   previewMapping,
   quickMap,
   reportFillResult,
-} from './semantic-mapper'
+} from './semantic-mapper';
 
 // ============================================================================
 // PHASE 2: GEMINI VISION EXPORTS
 // ============================================================================
 
-export { mapFieldsHeuristic, mapFieldsWithGemini } from './gemini-vision'
+export { mapFieldsHeuristic, mapFieldsWithGemini } from './gemini-vision';
 
 // ============================================================================
 // PHASE 2: MAPPING CACHE EXPORTS
@@ -129,7 +129,7 @@ export {
   restoreMappingsFromCache,
   setCachedMapping,
   updateCacheResult,
-} from './mapping-cache'
+} from './mapping-cache';
 
 // ============================================================================
 // PHASE 2: SAFETY VALIDATOR EXPORTS
@@ -143,7 +143,7 @@ export {
   generateValidationSummary,
   isCriticalField,
   validateMappings,
-} from './safety-validator'
+} from './safety-validator';
 
 // ============================================================================
 // PHASE 3: LEARNING STORE EXPORTS
@@ -161,7 +161,7 @@ export {
   getPromotionCandidates,
   initLearningStore,
   recordLearning,
-} from './learning-store'
+} from './learning-store';
 
 // ============================================================================
 // PHASE 3: FEEDBACK CAPTURE EXPORTS
@@ -177,7 +177,7 @@ export {
   setPageContext,
   trackBatchFill,
   trackFilledField,
-} from './feedback-capture'
+} from './feedback-capture';
 
 // ============================================================================
 // PHASE 3: CACHE PROMOTER EXPORTS
@@ -190,15 +190,15 @@ export {
   runMaintenance,
   startScheduledMaintenance,
   stopScheduledMaintenance,
-} from './cache-promoter'
+} from './cache-promoter';
 
 // ============================================================================
 // CONVENIENCE FUNCTIONS
 // ============================================================================
 
-import { scanPageFields, serializeForLogging } from './dom-scanner'
-import { classifyClinicalField, matchEpuskesmasField } from './field-classifier'
-import type { ClinicalFieldCategory, FieldSignature, ScanOptions } from './types'
+import { scanPageFields, serializeForLogging } from './dom-scanner';
+import { classifyClinicalField, matchEpuskesmasField } from './field-classifier';
+import type { ClinicalFieldCategory, FieldSignature, ScanOptions } from './types';
 
 /**
  * Scan page and return simplified field list for debugging
@@ -207,8 +207,8 @@ import type { ClinicalFieldCategory, FieldSignature, ScanOptions } from './types
  * @returns Array of simplified field objects
  */
 export function scanAndSimplify(options?: ScanOptions): object[] {
-  const result = scanPageFields(options)
-  return result.fields.map(serializeForLogging)
+  const result = scanPageFields(options);
+  return result.fields.map(serializeForLogging);
 }
 
 /**
@@ -220,7 +220,7 @@ export function scanAndSimplify(options?: ScanOptions): object[] {
 export function scanAndClassify(
   options?: ScanOptions
 ): Record<ClinicalFieldCategory, FieldSignature[]> {
-  const result = scanPageFields(options)
+  const result = scanPageFields(options);
 
   const grouped: Record<ClinicalFieldCategory, FieldSignature[]> = {
     vital_signs: [],
@@ -229,14 +229,14 @@ export function scanAndClassify(
     patient_id: [],
     diagnosis: [],
     general: [],
-  }
+  };
 
   for (const field of result.fields) {
-    const hint = classifyClinicalField(field)
-    grouped[hint.category].push(field)
+    const hint = classifyClinicalField(field);
+    grouped[hint.category].push(field);
   }
 
-  return grouped
+  return grouped;
 }
 
 /**
@@ -246,17 +246,17 @@ export function scanAndClassify(
  * @returns Map of payload key → field signature
  */
 export function scanAndMatchEpuskesmas(options?: ScanOptions): Map<string, FieldSignature> {
-  const result = scanPageFields(options)
-  const matched = new Map<string, FieldSignature>()
+  const result = scanPageFields(options);
+  const matched = new Map<string, FieldSignature>();
 
   for (const field of result.fields) {
-    const payloadKey = matchEpuskesmasField(field)
+    const payloadKey = matchEpuskesmasField(field);
     if (payloadKey) {
-      matched.set(payloadKey, field)
+      matched.set(payloadKey, field);
     }
   }
 
-  return matched
+  return matched;
 }
 
 /**
@@ -266,29 +266,29 @@ export function scanAndMatchEpuskesmas(options?: ScanOptions): Map<string, Field
  * @returns Scan statistics
  */
 export function getScanStats(options?: ScanOptions): {
-  totalFields: number
-  byType: Record<string, number>
-  byCategory: Record<string, number>
-  matchedToEpuskesmas: number
-  scanDuration: number
+  totalFields: number;
+  byType: Record<string, number>;
+  byCategory: Record<string, number>;
+  matchedToEpuskesmas: number;
+  scanDuration: number;
 } {
-  const result = scanPageFields(options)
+  const result = scanPageFields(options);
 
-  const byType: Record<string, number> = {}
-  const byCategory: Record<string, number> = {}
-  let matchedCount = 0
+  const byType: Record<string, number> = {};
+  const byCategory: Record<string, number> = {};
+  let matchedCount = 0;
 
   for (const field of result.fields) {
     // Count by type
-    byType[field.fieldType] = (byType[field.fieldType] || 0) + 1
+    byType[field.fieldType] = (byType[field.fieldType] || 0) + 1;
 
     // Count by category
-    const hint = classifyClinicalField(field)
-    byCategory[hint.category] = (byCategory[hint.category] || 0) + 1
+    const hint = classifyClinicalField(field);
+    byCategory[hint.category] = (byCategory[hint.category] || 0) + 1;
 
     // Count ePuskesmas matches
     if (matchEpuskesmasField(field)) {
-      matchedCount++
+      matchedCount++;
     }
   }
 
@@ -298,5 +298,5 @@ export function getScanStats(options?: ScanOptions): {
     byCategory,
     matchedToEpuskesmas: matchedCount,
     scanDuration: result.scanDuration,
-  }
+  };
 }

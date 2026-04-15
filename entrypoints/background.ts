@@ -729,14 +729,10 @@ export default defineBackground(() => {
 
     if (newValue?.tokens?.accessToken) {
       bgLog.debug('Auth session detected — starting bridge poller');
-      startBridgePoller().catch((err) =>
-        bgLog.error('Bridge poller restart failed:', err)
-      );
+      startBridgePoller().catch((err) => bgLog.error('Bridge poller restart failed:', err));
     } else {
       bgLog.debug('Auth session cleared — stopping bridge poller');
-      stopBridgePoller().catch((err) =>
-        bgLog.error('Bridge poller stop failed:', err)
-      );
+      stopBridgePoller().catch((err) => bgLog.error('Bridge poller stop failed:', err));
     }
   });
 
@@ -744,9 +740,7 @@ export default defineBackground(() => {
   browser.runtime.onMessage.addListener((message) => {
     if (message?.type === 'AUTH_STATE_CHANGED') {
       bgLog.debug('AUTH_STATE_CHANGED received — restarting bridge poller');
-      startBridgePoller().catch((err) =>
-        bgLog.error('Bridge poller restart failed:', err)
-      );
+      startBridgePoller().catch((err) => bgLog.error('Bridge poller restart failed:', err));
     }
   });
 

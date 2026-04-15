@@ -4,91 +4,91 @@
  * Sentra Healthcare Artificial Intelligence
  */
 
-import { getInputValue, getTextContent, waitForElement } from '@/lib/scraper/dom-utils.ts'
+import { getInputValue, getTextContent, waitForElement } from '@/lib/scraper/dom-utils.ts';
 
 interface EncounterData {
-  patientId: string
-  encounterId?: string
-  timestamp: string
-  complaint?: string
-  history?: string[]
-  allergies?: string[]
+  patientId: string;
+  encounterId?: string;
+  timestamp: string;
+  complaint?: string;
+  history?: string[];
+  allergies?: string[];
   diagnosis?: {
-    code: string
-    name: string
-    type: 'Primary' | 'Secondary'
-  }[]
+    code: string;
+    name: string;
+    type: 'Primary' | 'Secondary';
+  }[];
 }
 
 /** Helper: parse numeric value from input, return undefined if empty/NaN */
 const getNumericValue = (selector: string): number | undefined => {
-  const raw = getInputValue(selector)
-  if (!raw) return undefined
-  const num = Number.parseFloat(raw)
-  return Number.isNaN(num) ? undefined : num
-}
+  const raw = getInputValue(selector);
+  if (!raw) return undefined;
+  const num = Number.parseFloat(raw);
+  return Number.isNaN(num) ? undefined : num;
+};
 
 /** Helper: read select element's selected value */
 const getSelectValue = (selector: string): string => {
-  const el = document.querySelector(selector) as HTMLSelectElement | null
-  if (!el) return ''
-  return el.value?.trim() || ''
-}
+  const el = document.querySelector(selector) as HTMLSelectElement | null;
+  if (!el) return '';
+  return el.value?.trim() || '';
+};
 
 export interface AnamnesaScrapeResult extends Partial<EncounterData> {
   /** Vital signs scraped from PeriksaFisik fields */
   vital_signs?: {
-    tekanan_darah_sistolik?: number
-    tekanan_darah_diastolik?: number
-    nadi?: number
-    respirasi?: number
-    suhu?: number
-    gula_darah?: number
-  }
+    tekanan_darah_sistolik?: number;
+    tekanan_darah_diastolik?: number;
+    nadi?: number;
+    respirasi?: number;
+    suhu?: number;
+    gula_darah?: number;
+  };
   /** Patient demographics scraped from page header / hidden fields */
   patient_demographics?: {
-    nama?: string
-    umur?: number
-    jenis_kelamin?: 'L' | 'P'
-    no_rm?: string
-    no_bpjs?: string
-  }
+    nama?: string;
+    umur?: number;
+    jenis_kelamin?: 'L' | 'P';
+    no_rm?: string;
+    no_bpjs?: string;
+  };
   /** Anamnesa data in Encounter format (keluhan_utama, keluhan_tambahan, etc.) */
   anamnesa?: {
-    keluhan_utama: string
-    keluhan_tambahan: string
-    lama_sakit?: { thn: number; bln: number; hr: number }
-    riwayat_penyakit?: string
+    keluhan_utama: string;
+    keluhan_tambahan: string;
+    lama_sakit?: { thn: number; bln: number; hr: number };
+    riwayat_penyakit?: string;
     alergi?: {
-      obat: string[]
-      makanan: string[]
-      udara: string[]
-      lainnya: string[]
-    }
-  }
+      obat: string[];
+      makanan: string[];
+      udara: string[];
+      lainnya: string[];
+    };
+  };
 }
 
 export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
-  console.warn('[Scraper] Analyzing Anamnesa Page...')
+  console.warn('[Scraper] Analyzing Anamnesa Page...');
 
-  await waitForElement('#form-anamnesa-container')
+  await waitForElement('#form-anamnesa-container');
 
   // ── Legacy fields (backward compat) ──
-  const patientId = getTextContent('.patient-info .id-label')
-  const keluhanUtama = getInputValue('textarea[name="keluhan_utama"]')
-  const keluhanTambahan = getInputValue('textarea[name="keluhan_tambahan"]')
+  const patientId = getTextContent('.patient-info .id-label');
+  const keluhanUtama = getInputValue('textarea[name="keluhan_utama"]');
+  const keluhanTambahan = getInputValue('textarea[name="keluhan_tambahan"]');
 
   // ── Vital Signs from PeriksaFisik section ──
-  const sbp = getNumericValue('input#sistole, input[name="PeriksaFisik[sistole]"]')
-  const dbp = getNumericValue('input#diastole, input[name="PeriksaFisik[diastole]"]')
-  const hr = getNumericValue('input#detak-nadi, input[name="PeriksaFisik[detak_nadi]"]')
-  const rr = getNumericValue('input#nafas, input[name="PeriksaFisik[nafas]"]')
-  const temp = getNumericValue('input#suhu, input[name="PeriksaFisik[suhu]"]')
+  const sbp = getNumericValue('input#sistole, input[name="PeriksaFisik[sistole]"]');
+  const dbp = getNumericValue('input#diastole, input[name="PeriksaFisik[diastole]"]');
+  const hr = getNumericValue('input#detak-nadi, input[name="PeriksaFisik[detak_nadi]"]');
+  const rr = getNumericValue('input#nafas, input[name="PeriksaFisik[nafas]"]');
+  const temp = getNumericValue('input#suhu, input[name="PeriksaFisik[suhu]"]');
   const glucose = getNumericValue(
     'input#gula-darah, input[name="PeriksaFisik[gula_darah]"], input[name="gula_darah"]'
-  )
+  );
 
-  const hasVitals = sbp !== undefined || dbp !== undefined || hr !== undefined
+  const hasVitals = sbp !== undefined || dbp !== undefined || hr !== undefined;
   const vital_signs = hasVitals
     ? {
         tekanan_darah_sistolik: sbp,
@@ -98,7 +98,7 @@ export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
         suhu: temp,
         gula_darah: glucose,
       }
-    : undefined
+    : undefined;
 
   // ── Patient Demographics ──
   // ePuskesmas typically shows patient info in header area
@@ -109,11 +109,11 @@ export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
     'input[name="nama_pasien"]',
     'span.nama-pasien',
     '#nama-pasien',
-  ]
-  let nama = ''
+  ];
+  let nama = '';
   for (const sel of namaSelectors) {
-    nama = getTextContent(sel) || getInputValue(sel)
-    if (nama) break
+    nama = getTextContent(sel) || getInputValue(sel);
+    if (nama) break;
   }
 
   // Age: try hidden input or text display
@@ -123,15 +123,15 @@ export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
     '.patient-info .umur',
     '.patient-info .age',
     'span.umur-pasien',
-  ]
-  let umur: number | undefined
+  ];
+  let umur: number | undefined;
   for (const sel of umurSelectors) {
-    const raw = getInputValue(sel) || getTextContent(sel)
+    const raw = getInputValue(sel) || getTextContent(sel);
     if (raw) {
-      const parsed = Number.parseInt(raw, 10)
+      const parsed = Number.parseInt(raw, 10);
       if (!Number.isNaN(parsed) && parsed > 0 && parsed < 200) {
-        umur = parsed
-        break
+        umur = parsed;
+        break;
       }
     }
   }
@@ -143,17 +143,17 @@ export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
     '.patient-info .jk',
     '.patient-info .gender',
     'span.jk-pasien',
-  ]
-  let jk: 'L' | 'P' | undefined
+  ];
+  let jk: 'L' | 'P' | undefined;
   for (const sel of genderSelectors) {
-    const raw = (getSelectValue(sel) || getInputValue(sel) || getTextContent(sel)).toUpperCase()
+    const raw = (getSelectValue(sel) || getInputValue(sel) || getTextContent(sel)).toUpperCase();
     if (raw === 'L' || raw === 'LAKI-LAKI' || raw === 'LAKI' || raw === 'M' || raw === 'MALE') {
-      jk = 'L'
-      break
+      jk = 'L';
+      break;
     }
     if (raw === 'P' || raw === 'PEREMPUAN' || raw === 'F' || raw === 'FEMALE' || raw === 'WANITA') {
-      jk = 'P'
-      break
+      jk = 'P';
+      break;
     }
   }
 
@@ -162,11 +162,11 @@ export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
     getInputValue('input[name="no_rm"]') ||
     getInputValue('input[name="nomor_rm"]') ||
     getTextContent('.patient-info .no-rm') ||
-    patientId
+    patientId;
   const noBpjs =
     getInputValue('input[name="no_bpjs"]') ||
     getInputValue('input[name="nomor_bpjs"]') ||
-    getTextContent('.patient-info .no-bpjs')
+    getTextContent('.patient-info .no-bpjs');
 
   const patient_demographics =
     nama || umur || jk
@@ -177,18 +177,18 @@ export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
           no_rm: noRm || undefined,
           no_bpjs: noBpjs || undefined,
         }
-      : undefined
+      : undefined;
 
   // ── Anamnesa structured data ──
   const lamaThn = getNumericValue(
     'input[name="Anamnesa[lama_sakit_thn]"], input[name="lama_sakit_thn"]'
-  )
+  );
   const lamaBln = getNumericValue(
     'input[name="Anamnesa[lama_sakit_bln]"], input[name="lama_sakit_bln"]'
-  )
+  );
   const lamaHr = getNumericValue(
     'input[name="Anamnesa[lama_sakit_hr]"], input[name="lama_sakit_hr"]'
-  )
+  );
 
   const data: AnamnesaScrapeResult = {
     // Legacy fields
@@ -213,13 +213,13 @@ export const scrapeAnamnesa = async (): Promise<AnamnesaScrapeResult> => {
       },
       riwayat_penyakit: getInputValue('textarea[name="riwayat_penyakit"]') || undefined,
     },
-  }
+  };
 
   console.warn('[Scraper] Anamnesa scraped:', {
     hasVitals: !!vital_signs,
     hasDemographics: !!patient_demographics,
     hasKeluhan: !!keluhanUtama,
-  })
+  });
 
-  return data
-}
+  return data;
+};

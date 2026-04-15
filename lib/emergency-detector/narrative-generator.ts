@@ -13,17 +13,17 @@
 // ============================================================================
 
 export interface CorrectionSuggestion {
-  original: string
-  suggestion: string
-  editDistance: number
-  wordIndex: number
+  original: string;
+  suggestion: string;
+  editDistance: number;
+  wordIndex: number;
 }
 
 export interface SymptomInput {
-  text: string
-  severity?: 'ringan' | 'sedang' | 'berat'
-  onset?: 'mendadak' | 'bertahap'
-  pattern?: 'terus-menerus' | 'hilang-timbul'
+  text: string;
+  severity?: 'ringan' | 'sedang' | 'berat';
+  onset?: 'mendadak' | 'bertahap';
+  pattern?: 'terus-menerus' | 'hilang-timbul';
 }
 
 /**
@@ -35,10 +35,10 @@ export interface SymptomInput {
  */
 
 export interface NarrativeOptions {
-  includeAssociatedSymptoms?: boolean
-  includeDuration?: boolean
-  formalTone?: boolean
-  context?: string
+  includeAssociatedSymptoms?: boolean;
+  includeDuration?: boolean;
+  formalTone?: boolean;
+  context?: string;
 }
 
 /**
@@ -50,10 +50,10 @@ export interface NarrativeOptions {
  */
 
 export interface GeneratedNarrative {
-  keluhan_utama: string
-  lama_sakit: string
-  is_akut: boolean
-  confidence: number
+  keluhan_utama: string;
+  lama_sakit: string;
+  is_akut: boolean;
+  confidence: number;
 }
 
 // ============================================================================
@@ -183,7 +183,7 @@ const TYPO_CORRECTIONS: Record<string, string> = {
   tidr: 'tidur',
   insomnia: 'sulit tidur',
   'susah tidur': 'sulit tidur',
-}
+};
 
 /**
  * Correct typos in symptom text
@@ -198,45 +198,167 @@ const TYPO_CORRECTIONS: Record<string, string> = {
  */
 const CLINICAL_ALLOWLIST = new Set([
   // Common Indonesian words that could false-match medical terms
-  'susah', 'susu', 'sudah', 'segar', 'sehat', 'sabar', 'sabun',
-  'basah', 'besar', 'berat', 'benar', 'bukan', 'bulan', 'buruk',
-  'dasar', 'dalam', 'datang', 'dekat', 'dapat', 'duduk',
-  'keras', 'kecil', 'keluar', 'kulit', 'kurang',
-  'malas', 'makan', 'malam', 'masuk', 'mulai', 'minum',
-  'pakai', 'panas', 'pergi', 'putih', 'pecah',
-  'tidak', 'teman', 'turun', 'tebal', 'tipis',
+  'susah',
+  'susu',
+  'sudah',
+  'segar',
+  'sehat',
+  'sabar',
+  'sabun',
+  'basah',
+  'besar',
+  'berat',
+  'benar',
+  'bukan',
+  'bulan',
+  'buruk',
+  'dasar',
+  'dalam',
+  'datang',
+  'dekat',
+  'dapat',
+  'duduk',
+  'keras',
+  'kecil',
+  'keluar',
+  'kulit',
+  'kurang',
+  'malas',
+  'makan',
+  'malam',
+  'masuk',
+  'mulai',
+  'minum',
+  'pakai',
+  'panas',
+  'pergi',
+  'putih',
+  'pecah',
+  'tidak',
+  'teman',
+  'turun',
+  'tebal',
+  'tipis',
 
   // Valid clinical descriptors
-  'berlendir', 'berair', 'berdarah', 'berbusa', 'berdahak', 'bernanah',
-  'kering', 'basah', 'encer', 'kental', 'pekat',
-  'tajam', 'tumpul', 'pegal', 'ngilu', 'perih', 'pedih',
-  'merah', 'putih', 'kuning', 'hijau', 'hitam', 'coklat',
-  'bengkak', 'memar', 'lebam', 'ruam', 'bisul', 'luka',
+  'berlendir',
+  'berair',
+  'berdarah',
+  'berbusa',
+  'berdahak',
+  'bernanah',
+  'kering',
+  'basah',
+  'encer',
+  'kental',
+  'pekat',
+  'tajam',
+  'tumpul',
+  'pegal',
+  'ngilu',
+  'perih',
+  'pedih',
+  'merah',
+  'putih',
+  'kuning',
+  'hijau',
+  'hitam',
+  'coklat',
+  'bengkak',
+  'memar',
+  'lebam',
+  'ruam',
+  'bisul',
+  'luka',
 
   // Valid symptoms & body parts
-  'sesak', 'batuk', 'pilek', 'demam', 'mual', 'muntah', 'diare',
-  'nyeri', 'pusing', 'lemas', 'gatal', 'kejang', 'pingsan',
-  'kepala', 'perut', 'dada', 'kaki', 'tangan', 'punggung',
-  'tenggorokan', 'telinga', 'mata', 'hidung', 'mulut', 'lidah',
-  'lutut', 'bahu', 'leher', 'pinggang', 'panggul', 'siku',
+  'sesak',
+  'batuk',
+  'pilek',
+  'demam',
+  'mual',
+  'muntah',
+  'diare',
+  'nyeri',
+  'pusing',
+  'lemas',
+  'gatal',
+  'kejang',
+  'pingsan',
+  'kepala',
+  'perut',
+  'dada',
+  'kaki',
+  'tangan',
+  'punggung',
+  'tenggorokan',
+  'telinga',
+  'mata',
+  'hidung',
+  'mulut',
+  'lidah',
+  'lutut',
+  'bahu',
+  'leher',
+  'pinggang',
+  'panggul',
+  'siku',
 
   // Valid medical conditions
-  'hipertensi', 'diabetes', 'asma', 'anemia', 'vertigo',
-  'maag', 'tifus', 'malaria', 'tuberkulosis', 'pneumonia',
-  'alergi', 'migrain', 'stroke', 'infeksi', 'radang',
+  'hipertensi',
+  'diabetes',
+  'asma',
+  'anemia',
+  'vertigo',
+  'maag',
+  'tifus',
+  'malaria',
+  'tuberkulosis',
+  'pneumonia',
+  'alergi',
+  'migrain',
+  'stroke',
+  'infeksi',
+  'radang',
 
   // Temporal/qualifier words
-  'sejak', 'sudah', 'selama', 'sering', 'kadang', 'terus',
-  'mendadak', 'bertahap', 'kronik', 'akut', 'ringan', 'sedang', 'berat',
-  'hilang', 'timbul', 'menetap', 'membaik', 'memburuk',
+  'sejak',
+  'sudah',
+  'selama',
+  'sering',
+  'kadang',
+  'terus',
+  'mendadak',
+  'bertahap',
+  'kronik',
+  'akut',
+  'ringan',
+  'sedang',
+  'berat',
+  'hilang',
+  'timbul',
+  'menetap',
+  'membaik',
+  'memburuk',
 
   // Common verbs in clinical context
-  'mengeluh', 'merasakan', 'mengalami', 'merasa', 'menderita',
-  'menelan', 'bernapas', 'buang', 'kencing', 'tidur', 'bangun',
+  'mengeluh',
+  'merasakan',
+  'mengalami',
+  'merasa',
+  'menderita',
+  'menelan',
+  'bernapas',
+  'buang',
+  'kencing',
+  'tidur',
+  'bangun',
 
   // Medical abbreviations (never correct these)
-  'bab', 'bak', 'hpht',
-])
+  'bab',
+  'bak',
+  'hpht',
+]);
 
 /**
  * Suggest corrections for symptom text (NEVER auto-replace)
@@ -246,22 +368,28 @@ const CLINICAL_ALLOWLIST = new Set([
  * @returns Array of correction suggestions (user must confirm each)
  */
 export function suggestCorrections(text: string): CorrectionSuggestion[] {
-  if (!text.trim()) return []
+  if (!text.trim()) return [];
 
-  const words = text.split(/(\s+)/)
-  const suggestions: CorrectionSuggestion[] = []
-  let wordIndex = 0
+  const words = text.split(/(\s+)/);
+  const suggestions: CorrectionSuggestion[] = [];
+  let wordIndex = 0;
 
   for (const segment of words) {
-    if (/^\s+$/.test(segment) || !segment) continue
+    if (/^\s+$/.test(segment) || !segment) continue;
 
-    const lower = segment.toLowerCase()
+    const lower = segment.toLowerCase();
 
     // SAFETY: skip words < 4 chars (abbreviations, short words)
-    if (lower.length < 4) { wordIndex++; continue }
+    if (lower.length < 4) {
+      wordIndex++;
+      continue;
+    }
 
     // SAFETY: if word is in clinical allowlist, NEVER suggest correction
-    if (CLINICAL_ALLOWLIST.has(lower)) { wordIndex++; continue }
+    if (CLINICAL_ALLOWLIST.has(lower)) {
+      wordIndex++;
+      continue;
+    }
 
     // 1. Direct dictionary match
     if (TYPO_CORRECTIONS[lower]) {
@@ -270,9 +398,9 @@ export function suggestCorrections(text: string): CorrectionSuggestion[] {
         suggestion: TYPO_CORRECTIONS[lower],
         editDistance: 0,
         wordIndex,
-      })
-      wordIndex++
-      continue
+      });
+      wordIndex++;
+      continue;
     }
 
     // 2. Levenshtein distance 1 ONLY — safe threshold
@@ -281,17 +409,17 @@ export function suggestCorrections(text: string): CorrectionSuggestion[] {
       ...CHRONIC_SYMPTOMS,
       ...Object.values(TYPO_CORRECTIONS),
       ...Array.from(CLINICAL_ALLOWLIST),
-    ]
+    ];
 
-    let bestMatch: string | null = null
-    let bestDistance = 2 // only accept distance 1
+    let bestMatch: string | null = null;
+    let bestDistance = 2; // only accept distance 1
 
     for (const target of allTargets) {
-      if (target.includes(' ')) continue // skip multi-word entries
-      const dist = levenshteinDistance(lower, target)
+      if (target.includes(' ')) continue; // skip multi-word entries
+      const dist = levenshteinDistance(lower, target);
       if (dist === 1 && dist < bestDistance) {
-        bestDistance = dist
-        bestMatch = target
+        bestDistance = dist;
+        bestMatch = target;
       }
     }
 
@@ -301,13 +429,13 @@ export function suggestCorrections(text: string): CorrectionSuggestion[] {
         suggestion: bestMatch,
         editDistance: 1,
         wordIndex,
-      })
+      });
     }
 
-    wordIndex++
+    wordIndex++;
   }
 
-  return suggestions
+  return suggestions;
 }
 
 /**
@@ -315,23 +443,24 @@ export function suggestCorrections(text: string): CorrectionSuggestion[] {
  * Only called AFTER user confirms each suggestion
  */
 export function applyCorrection(text: string, original: string, replacement: string): string {
-  const regex = new RegExp(`\\b${original}\\b`, 'gi')
-  return text.replace(regex, replacement)
+  const regex = new RegExp(`\\b${original}\\b`, 'gi');
+  return text.replace(regex, replacement);
 }
 
 /** @deprecated Use suggestCorrections() instead — auto-replace is unsafe for clinical text */
 export function correctTypos(text: string): string {
-  if (!text.trim()) return text
-  const suggestions = suggestCorrections(text)
-  let result = text
+  if (!text.trim()) return text;
+  const suggestions = suggestCorrections(text);
+  let result = text;
   for (const s of suggestions) {
-    if (s.editDistance === 0) { // only apply exact dictionary matches
-      result = applyCorrection(result, s.original, s.suggestion)
+    if (s.editDistance === 0) {
+      // only apply exact dictionary matches
+      result = applyCorrection(result, s.original, s.suggestion);
     }
   }
   // Capitalize first letter
-  result = result.replace(/(^\s*\w|[.!?]\s*\w)/g, c => c.toUpperCase())
-  return result
+  result = result.replace(/(^\s*\w|[.!?]\s*\w)/g, (c) => c.toUpperCase());
+  return result;
 }
 
 /**
@@ -343,67 +472,71 @@ export function correctTypos(text: string): string {
  * @returns Corrected word or original if no match
  */
 function findSimilarWord(word: string, maxDistance = 2): string {
-  const lowerWord = word.toLowerCase()
+  const lowerWord = word.toLowerCase();
 
   // Check direct typo corrections
   if (TYPO_CORRECTIONS[lowerWord]) {
-    return TYPO_CORRECTIONS[lowerWord]
+    return TYPO_CORRECTIONS[lowerWord];
   }
 
   // Check if word is in common symptoms (no correction needed)
-  const allKnownWords = [...ACUTE_SYMPTOMS, ...CHRONIC_SYMPTOMS, ...Object.values(TYPO_CORRECTIONS)]
+  const allKnownWords = [
+    ...ACUTE_SYMPTOMS,
+    ...CHRONIC_SYMPTOMS,
+    ...Object.values(TYPO_CORRECTIONS),
+  ];
 
   if (allKnownWords.includes(lowerWord)) {
-    return word // Word is correct
+    return word; // Word is correct
   }
 
   // Simple Levenshtein distance check for short words
-  let bestMatch = word
-  let bestDistance = maxDistance + 1
+  let bestMatch = word;
+  let bestDistance = maxDistance + 1;
 
   for (const knownWord of allKnownWords) {
-    const distance = levenshteinDistance(lowerWord, knownWord)
+    const distance = levenshteinDistance(lowerWord, knownWord);
     if (distance <= maxDistance && distance < bestDistance) {
-      bestDistance = distance
-      bestMatch = knownWord
+      bestDistance = distance;
+      bestMatch = knownWord;
     }
   }
 
-  return bestMatch
+  return bestMatch;
 }
 
 /**
  * Calculate Levenshtein distance between two strings
  */
 function levenshteinDistance(a: string, b: string): number {
-  if (a.length === 0) return b.length
-  if (b.length === 0) return a.length
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
 
-  const matrix: number[][] = []
+  const matrix: number[][] = [];
 
   for (let i = 0; i <= b.length; i++) {
-    matrix[i] = [i]
+    matrix[i] = [i];
   }
 
   for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j
+    matrix[0][j] = j;
   }
 
   for (let i = 1; i <= b.length; i++) {
     for (let j = 1; j <= a.length; j++) {
       if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1]
+        matrix[i][j] = matrix[i - 1][j - 1];
       } else {
         matrix[i][j] = Math.min(
           matrix[i - 1][j - 1] + 1, // substitution
           matrix[i][j - 1] + 1, // insertion
           matrix[i - 1][j] + 1 // deletion
-        )
+        );
       }
     }
   }
 
-  return matrix[b.length][a.length]
+  return matrix[b.length][a.length];
 }
 
 // ============================================================================
@@ -429,7 +562,7 @@ const ACUTE_SYMPTOMS = [
   'nyeri perut akut',
   'sakit kepala mendadak',
   'lemas mendadak',
-]
+];
 
 /**
  * Chronic symptoms (typically ≥1 month)
@@ -445,7 +578,7 @@ const CHRONIC_SYMPTOMS = [
   'batuk kronik',
   'sesak napas kronik',
   'kelelahan kronik',
-]
+];
 
 // ============================================================================
 // DURATION LOGIC
@@ -458,27 +591,27 @@ const CHRONIC_SYMPTOMS = [
  * @returns True if acute
  */
 export function isAcuteSymptom(symptomText: string): boolean {
-  const lowerText = symptomText.toLowerCase()
+  const lowerText = symptomText.toLowerCase();
 
   // Check for explicit chronic indicators
   if (lowerText.includes('kronik') || lowerText.includes('chronic')) {
-    return false
+    return false;
   }
 
   // Check for explicit acute indicators
   if (lowerText.includes('akut') || lowerText.includes('mendadak')) {
-    return true
+    return true;
   }
 
   // Check against known symptom lists
-  const hasAcuteSymptom = ACUTE_SYMPTOMS.some(s => lowerText.includes(s))
-  const hasChronicSymptom = CHRONIC_SYMPTOMS.some(s => lowerText.includes(s))
+  const hasAcuteSymptom = ACUTE_SYMPTOMS.some((s) => lowerText.includes(s));
+  const hasChronicSymptom = CHRONIC_SYMPTOMS.some((s) => lowerText.includes(s));
 
-  if (hasChronicSymptom) return false
-  if (hasAcuteSymptom) return true
+  if (hasChronicSymptom) return false;
+  if (hasAcuteSymptom) return true;
 
   // Default: assume acute for safety
-  return true
+  return true;
 }
 
 /**
@@ -493,17 +626,17 @@ export function isAcuteSymptom(symptomText: string): boolean {
 export function generateDuration(isAkut: boolean): string {
   if (isAkut) {
     // Acute: 3-7 days
-    const days = Math.floor(Math.random() * 5) + 3 // 3-7
-    return `${days} hari`
+    const days = Math.floor(Math.random() * 5) + 3; // 3-7
+    return `${days} hari`;
   } else {
     // Chronic: 1-3 years
-    const years = Math.floor(Math.random() * 3) + 1 // 1-3
-    const months = Math.floor(Math.random() * 12) // 0-11
+    const years = Math.floor(Math.random() * 3) + 1; // 1-3
+    const months = Math.floor(Math.random() * 12); // 0-11
 
     if (months === 0) {
-      return `${years} tahun`
+      return `${years} tahun`;
     } else {
-      return `${years} tahun ${months} bulan`
+      return `${years} tahun ${months} bulan`;
     }
   }
 }
@@ -521,17 +654,17 @@ export function generateDuration(isAkut: boolean): string {
  */
 function parseSymptoms(text: string): string[] {
   // First, correct any typos
-  const correctedText = correctTypos(text)
+  const correctedText = correctTypos(text);
 
   // Split by common separators
-  const separators = /[,;.\n]/g
+  const separators = /[,;.\n]/g;
   const symptoms = correctedText
     .split(separators)
-    .map(s => s.trim())
-    .filter(s => s.length > 0)
-    .map(s => findSimilarWord(s)) // Additional fuzzy correction per symptom
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .map((s) => findSimilarWord(s)); // Additional fuzzy correction per symptom
 
-  return symptoms
+  return symptoms;
 }
 
 /**
@@ -541,7 +674,7 @@ function parseSymptoms(text: string): string[] {
  * @returns Symptom with severity
  */
 function addSeverityModifier(symptom: string): string {
-  const lowerSymptom = symptom.toLowerCase()
+  const lowerSymptom = symptom.toLowerCase();
 
   // Already has modifier
   if (
@@ -550,23 +683,23 @@ function addSeverityModifier(symptom: string): string {
     lowerSymptom.includes('berat') ||
     lowerSymptom.includes('hebat')
   ) {
-    return symptom
+    return symptom;
   }
 
   // Add contextual modifiers
   if (lowerSymptom.includes('demam')) {
-    return Math.random() > 0.5 ? `${symptom} tinggi` : symptom
+    return Math.random() > 0.5 ? `${symptom} tinggi` : symptom;
   }
 
   if (lowerSymptom.includes('batuk')) {
-    return Math.random() > 0.5 ? `${symptom} berdahak` : `${symptom} kering`
+    return Math.random() > 0.5 ? `${symptom} berdahak` : `${symptom} kering`;
   }
 
   if (lowerSymptom.includes('nyeri')) {
-    return Math.random() > 0.5 ? `${symptom} hebat` : symptom
+    return Math.random() > 0.5 ? `${symptom} hebat` : symptom;
   }
 
-  return symptom
+  return symptom;
 }
 
 /**
@@ -587,11 +720,11 @@ export function generateNarrative(
       lama_sakit: '',
       is_akut: true,
       confidence: 0,
-    }
+    };
   }
 
   // Parse symptoms
-  const symptoms = parseSymptoms(symptomText)
+  const symptoms = parseSymptoms(symptomText);
 
   if (symptoms.length === 0) {
     return {
@@ -599,14 +732,14 @@ export function generateNarrative(
       lama_sakit: '',
       is_akut: true,
       confidence: 0,
-    }
+    };
   }
 
   // Determine if acute or chronic
-  const isAkut = isAcuteSymptom(symptomText)
+  const isAkut = isAcuteSymptom(symptomText);
 
   // Generate duration
-  const duration = generateDuration(isAkut)
+  const duration = generateDuration(isAkut);
 
   // Generate pattern and quality
   const patterns = [
@@ -614,8 +747,8 @@ export function generateNarrative(
     'hilang-timbul',
     'memberat saat malam hari',
     'memberat saat aktivitas',
-  ]
-  const pattern = patterns[Math.floor(Math.random() * patterns.length)]
+  ];
+  const pattern = patterns[Math.floor(Math.random() * patterns.length)];
 
   const qualities = isAkut
     ? [
@@ -628,8 +761,8 @@ export function generateNarrative(
         'Pasien masih dapat beraktivitas.',
         'Keluhan mempengaruhi kualitas hidup.',
         'Riwayat pengobatan sebelumnya tidak membaik.',
-      ]
-  const quality = qualities[Math.floor(Math.random() * qualities.length)]
+      ];
+  const quality = qualities[Math.floor(Math.random() * qualities.length)];
 
   const contexts = isAkut
     ? [
@@ -641,38 +774,38 @@ export function generateNarrative(
         'Pasien memiliki riwayat keluhan serupa.',
         'Riwayat pengobatan rutin.',
         'Kontrol terakhir lebih dari 1 bulan yang lalu.',
-      ]
-  const context = contexts[Math.floor(Math.random() * contexts.length)]
+      ];
+  const context = contexts[Math.floor(Math.random() * contexts.length)];
 
   // Build narrative - minimum 3 lines/sentences
-  let narrative = 'Pasien datang dengan keluhan '
+  let narrative = 'Pasien datang dengan keluhan ';
 
   if (symptoms.length === 1) {
-    const symptom = addSeverityModifier(symptoms[0])
-    narrative += `${symptom} sejak ${duration} yang lalu. Keluhan dirasakan ${pattern}. ${quality} ${context}`
+    const symptom = addSeverityModifier(symptoms[0]);
+    narrative += `${symptom} sejak ${duration} yang lalu. Keluhan dirasakan ${pattern}. ${quality} ${context}`;
   } else if (symptoms.length === 2) {
-    const s1 = addSeverityModifier(symptoms[0])
-    const s2 = addSeverityModifier(symptoms[1])
-    narrative += `${s1} sejak ${duration} yang lalu, disertai ${s2}. Keluhan utama dirasakan ${pattern}. ${quality} ${context}`
+    const s1 = addSeverityModifier(symptoms[0]);
+    const s2 = addSeverityModifier(symptoms[1]);
+    narrative += `${s1} sejak ${duration} yang lalu, disertai ${s2}. Keluhan utama dirasakan ${pattern}. ${quality} ${context}`;
   } else {
-    const primary = addSeverityModifier(symptoms[0])
-    const secondary = symptoms.slice(1, -1).map(addSeverityModifier)
-    const last = addSeverityModifier(symptoms[symptoms.length - 1])
+    const primary = addSeverityModifier(symptoms[0]);
+    const secondary = symptoms.slice(1, -1).map(addSeverityModifier);
+    const last = addSeverityModifier(symptoms[symptoms.length - 1]);
 
-    narrative += `${primary} sejak ${duration} yang lalu, disertai ${secondary.join(', ')}`
+    narrative += `${primary} sejak ${duration} yang lalu, disertai ${secondary.join(', ')}`;
 
     if (secondary.length > 0) {
-      narrative += `, dan ${last}`
+      narrative += `, dan ${last}`;
     } else {
-      narrative += ` dan ${last}`
+      narrative += ` dan ${last}`;
     }
 
-    narrative += `. Keluhan ${pattern}. ${quality} ${context}`
+    narrative += `. Keluhan ${pattern}. ${quality} ${context}`;
   }
 
   // Inject additional context if provided (Auto-Recall)
   if (_options.context) {
-    narrative += `\n\n[Clinical Context Recall]:\n${_options.context}`
+    narrative += `\n\n[Clinical Context Recall]:\n${_options.context}`;
   }
 
   return {
@@ -680,7 +813,7 @@ export function generateNarrative(
     lama_sakit: duration,
     is_akut: isAkut,
     confidence: symptoms.length >= 2 ? 0.92 : 0.75,
-  }
+  };
 }
 
 // ============================================================================
@@ -801,7 +934,7 @@ export const COMMON_SYMPTOMS = [
   'lelah',
   'lesu',
   'tidak enak badan',
-]
+];
 
 /**
  * Get symptom suggestions based on input with smart ranking
@@ -811,37 +944,37 @@ export const COMMON_SYMPTOMS = [
  * @returns Matching suggestions sorted by relevance
  */
 export function getSuggestions(input: string, maxResults = 5): string[] {
-  if (!input.trim() || input.trim().length < 2) return []
+  if (!input.trim() || input.trim().length < 2) return [];
 
-  const lowerInput = input.toLowerCase().trim()
+  const lowerInput = input.toLowerCase().trim();
 
   // Score each matching symptom
-  const scoredMatches = COMMON_SYMPTOMS.map(symptom => {
-    const lowerSymptom = symptom.toLowerCase()
+  const scoredMatches = COMMON_SYMPTOMS.map((symptom) => {
+    const lowerSymptom = symptom.toLowerCase();
 
     // Exact match
-    if (lowerSymptom === lowerInput) return { symptom, score: 100 }
+    if (lowerSymptom === lowerInput) return { symptom, score: 100 };
 
     // Starts with input (highest priority)
-    if (lowerSymptom.startsWith(lowerInput)) return { symptom, score: 90 }
+    if (lowerSymptom.startsWith(lowerInput)) return { symptom, score: 90 };
 
     // Contains input at word boundary
     if (lowerSymptom.match(new RegExp(`\\b${lowerInput}`, 'i'))) {
-      return { symptom, score: 80 }
+      return { symptom, score: 80 };
     }
 
     // Contains input anywhere
-    if (lowerSymptom.includes(lowerInput)) return { symptom, score: 70 }
+    if (lowerSymptom.includes(lowerInput)) return { symptom, score: 70 };
 
     // Fuzzy match (typo tolerance)
-    const distance = levenshteinDistance(lowerInput, lowerSymptom.substring(0, lowerInput.length))
-    if (distance <= 2) return { symptom, score: 60 - distance * 10 }
+    const distance = levenshteinDistance(lowerInput, lowerSymptom.substring(0, lowerInput.length));
+    if (distance <= 2) return { symptom, score: 60 - distance * 10 };
 
-    return null
-  }).filter((match): match is { symptom: string; score: number } => match !== null)
+    return null;
+  }).filter((match): match is { symptom: string; score: number } => match !== null);
 
   // Sort by score descending
-  scoredMatches.sort((a, b) => b.score - a.score)
+  scoredMatches.sort((a, b) => b.score - a.score);
 
-  return scoredMatches.slice(0, maxResults).map(m => m.symptom)
+  return scoredMatches.slice(0, maxResults).map((m) => m.symptom);
 }

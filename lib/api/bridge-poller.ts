@@ -5,8 +5,8 @@
  * Integrates with RMETransferOrchestrator to execute auto-fill.
  */
 
-import { createLogger } from '~/utils/logger'
-import type { RMETransferResult } from '~/utils/types'
+import { createLogger } from '~/utils/logger';
+import type { RMETransferResult } from '~/utils/types';
 import {
   type BridgeEntry,
   claimEntry,
@@ -17,74 +17,76 @@ import {
   reportComplete,
   reportFailed,
   reportProcessing,
-} from './bridge-client'
-import { AuthRequiredError, BridgeApiError } from './authed-fetch'
+} from './bridge-client';
+import { AuthRequiredError, BridgeApiError } from './authed-fetch';
 
-const log = createLogger('BridgePoller', 'background')
+const log = createLogger('BridgePoller', 'background');
 
-const ALARM_NAME = 'sentra-bridge-poll'
-const POLL_STALE_MS = 60_000 // 60s — if poll flag is stuck longer, force reset
-const MAX_BACKOFF_MS = 5 * 60_000 // 5 minutes max backoff
-let isPolling = false
-let pollStartedAt = 0
-let listenerRegistered = false
-let consecutiveNetworkErrors = 0
-let backoffUntilMs = 0
+const ALARM_NAME = 'sentra-bridge-poll';
+const POLL_STALE_MS = 60_000; // 60s — if poll flag is stuck longer, force reset
+const MAX_BACKOFF_MS = 5 * 60_000; // 5 minutes max backoff
+let isPolling = false;
+let pollStartedAt = 0;
+let listenerRegistered = false;
+let consecutiveNetworkErrors = 0;
+let backoffUntilMs = 0;
 
 export type BridgeTransferExecutor = (
   entryId: string,
   pelayananId: string,
   payload: import('~/utils/types').RMETransferPayload
-) => Promise<RMETransferResult>
+) => Promise<RMETransferResult>;
 
-let registeredExecutor: BridgeTransferExecutor | null = null
+let registeredExecutor: BridgeTransferExecutor | null = null;
 
 /**
  * Register the transfer executor function.
  * Called from background.ts to wire up the RMETransferOrchestrator.
  */
 export function registerBridgeExecutor(executor: BridgeTransferExecutor): void {
-  registeredExecutor = executor
-  log.debug('[BridgePoller] Transfer executor registered')
+  registeredExecutor = executor;
+  log.debug('[BridgePoller] Transfer executor registered');
 }
 
 /**
  * Start bridge polling using Chrome Alarms API.
  */
 export async function startBridgePoller(): Promise<void> {
-  const ready = await isBridgeReady()
+  const ready = await isBridgeReady();
   if (!ready) {
-    log.debug('[BridgePoller] Bridge not ready (disabled or not authenticated), skipping alarm setup')
-    return
+    log.debug(
+      '[BridgePoller] Bridge not ready (disabled or not authenticated), skipping alarm setup'
+    );
+    return;
   }
 
-  const config = await getBridgeConfig()
+  const config = await getBridgeConfig();
 
-  const periodInMinutes = Math.max(0.5, config.pollIntervalMinutes || 0.5)
+  const periodInMinutes = Math.max(0.5, config.pollIntervalMinutes || 0.5);
 
   await browser.alarms.create(ALARM_NAME, {
     delayInMinutes: 0.1,
     periodInMinutes,
-  })
+  });
 
   if (!listenerRegistered) {
-    browser.alarms.onAlarm.addListener(alarm => {
+    browser.alarms.onAlarm.addListener((alarm) => {
       if (alarm.name === ALARM_NAME) {
-        pollOnce().catch(err => log.error('[BridgePoller] Poll error:', err))
+        pollOnce().catch((err) => log.error('[BridgePoller] Poll error:', err));
       }
-    })
-    listenerRegistered = true
+    });
+    listenerRegistered = true;
   }
 
-  log.debug(`[BridgePoller] Started — polling every ${periodInMinutes} minutes`)
+  log.debug(`[BridgePoller] Started — polling every ${periodInMinutes} minutes`);
 }
 
 /**
  * Stop bridge polling.
  */
 export async function stopBridgePoller(): Promise<void> {
-  await browser.alarms.clear(ALARM_NAME)
-  log.debug('[BridgePoller] Stopped')
+  await browser.alarms.clear(ALARM_NAME);
+  log.debug('[BridgePoller] Stopped');
 }
 
 /**
@@ -94,102 +96,105 @@ async function pollOnce(): Promise<void> {
   // Guard: if poll flag stuck (MV3 Service Worker suspend/resume), force reset after 60s
   if (isPolling) {
     if (Date.now() - pollStartedAt < POLL_STALE_MS) {
-      log.debug('[BridgePoller] Poll already in progress, skipping')
-      return
+      log.debug('[BridgePoller] Poll already in progress, skipping');
+      return;
     }
-    log.warn('[BridgePoller] Stale poll flag detected, force resetting')
+    log.warn('[BridgePoller] Stale poll flag detected, force resetting');
   }
-  isPolling = true
-  pollStartedAt = Date.now()
+  isPolling = true;
+  pollStartedAt = Date.now();
 
-  const ready = await isBridgeReady()
+  const ready = await isBridgeReady();
   if (!ready) {
-    isPolling = false
-    return
+    isPolling = false;
+    return;
   }
   // Backoff: skip if we're in a cooldown window from repeated network errors
   if (backoffUntilMs > Date.now()) {
-    const remaining = Math.ceil((backoffUntilMs - Date.now()) / 1000)
-    log.debug(`[BridgePoller] Backoff active — skipping poll (${remaining}s remaining)`)
-    isPolling = false
-    return
+    const remaining = Math.ceil((backoffUntilMs - Date.now()) / 1000);
+    log.debug(`[BridgePoller] Backoff active — skipping poll (${remaining}s remaining)`);
+    isPolling = false;
+    return;
   }
 
   try {
-    const pending = await fetchPendingEntries()
-    consecutiveNetworkErrors = 0 // reset on success
-    if (pending.length === 0) return
+    const pending = await fetchPendingEntries();
+    consecutiveNetworkErrors = 0; // reset on success
+    if (pending.length === 0) return;
 
-    log.debug(`[BridgePoller] Found ${pending.length} pending entries`)
+    log.debug(`[BridgePoller] Found ${pending.length} pending entries`);
 
     // Process one at a time to avoid overwhelming ePuskesmas
-    const entry = pending[0]
-    await processEntry(entry)
+    const entry = pending[0];
+    await processEntry(entry);
   } catch (error) {
     const isAuthError =
       error instanceof AuthRequiredError ||
-      (error instanceof BridgeApiError && (error.status === 401 || error.status === 403))
+      (error instanceof BridgeApiError && (error.status === 401 || error.status === 403));
 
     if (isAuthError) {
       log.error(
         '[BridgePoller] Auth error detected — stopping poller. Cek: Settings → Bridge Automation Token harus sama dengan CREW_ACCESS_AUTOMATION_TOKEN di Railway.'
-      )
-      await stopBridgePoller()
+      );
+      await stopBridgePoller();
     } else {
       // Network / server error — apply exponential backoff
-      consecutiveNetworkErrors++
-      const config = await getBridgeConfig().catch(() => ({ pollIntervalMinutes: 0.5 }))
-      const baseMs = (config.pollIntervalMinutes || 0.5) * 60_000
-      const backoffMs = Math.min(baseMs * Math.pow(2, consecutiveNetworkErrors - 1), MAX_BACKOFF_MS)
-      backoffUntilMs = Date.now() + backoffMs
+      consecutiveNetworkErrors++;
+      const config = await getBridgeConfig().catch(() => ({ pollIntervalMinutes: 0.5 }));
+      const baseMs = (config.pollIntervalMinutes || 0.5) * 60_000;
+      const backoffMs = Math.min(
+        baseMs * Math.pow(2, consecutiveNetworkErrors - 1),
+        MAX_BACKOFF_MS
+      );
+      backoffUntilMs = Date.now() + backoffMs;
       log.warn(
         `[BridgePoller] Poll failed (attempt ${consecutiveNetworkErrors}) — backoff ${Math.round(backoffMs / 1000)}s:`,
         error
-      )
+      );
     }
   } finally {
-    isPolling = false
+    isPolling = false;
   }
 }
 
 async function processEntry(entry: BridgeEntry): Promise<void> {
   if (!registeredExecutor) {
-    log.error('[BridgePoller] No transfer executor registered')
-    return
+    log.error('[BridgePoller] No transfer executor registered');
+    return;
   }
 
   try {
     // Step 1: Claim the entry
-    await claimEntry(entry.id)
+    await claimEntry(entry.id);
     log.debug(
       `[BridgePoller] Claimed entry ${entry.id} (${entry.patientName || entry.pelayananId})`
-    )
+    );
 
     // Step 2: Fetch full payload
-    const detail = await fetchEntryDetail(entry.id)
+    const detail = await fetchEntryDetail(entry.id);
 
     // Step 3: Report processing
-    await reportProcessing(entry.id)
+    await reportProcessing(entry.id);
 
     // Step 4: Execute transfer via registered executor
-    const result = await registeredExecutor(entry.id, entry.pelayananId, detail.payload)
+    const result = await registeredExecutor(entry.id, entry.pelayananId, detail.payload);
 
     // Step 5: Report result
     if (result.state === 'success' || result.state === 'partial') {
-      await reportComplete(entry.id, result)
-      log.debug(`[BridgePoller] Entry ${entry.id} completed: ${result.state}`)
+      await reportComplete(entry.id, result);
+      log.debug(`[BridgePoller] Entry ${entry.id} completed: ${result.state}`);
     } else {
-      const errorMsg = result.reasonCodes.join(', ') || 'Transfer failed'
-      await reportFailed(entry.id, errorMsg, result)
-      log.warn(`[BridgePoller] Entry ${entry.id} failed: ${errorMsg}`)
+      const errorMsg = result.reasonCodes.join(', ') || 'Transfer failed';
+      await reportFailed(entry.id, errorMsg, result);
+      log.warn(`[BridgePoller] Entry ${entry.id} failed: ${errorMsg}`);
     }
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error)
-    log.error(`[BridgePoller] Entry ${entry.id} error:`, errorMsg)
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    log.error(`[BridgePoller] Entry ${entry.id} error:`, errorMsg);
     try {
-      await reportFailed(entry.id, errorMsg)
+      await reportFailed(entry.id, errorMsg);
     } catch {
-      log.error(`[BridgePoller] Failed to report failure for ${entry.id}`)
+      log.error(`[BridgePoller] Failed to report failure for ${entry.id}`);
     }
   }
 }
@@ -198,24 +203,25 @@ async function processEntry(entry: BridgeEntry): Promise<void> {
  * Manually trigger a single poll (for testing / UI button).
  */
 export async function triggerManualPoll(): Promise<{
-  found: number
-  processed: boolean
-  error?: string
+  found: number;
+  processed: boolean;
+  error?: string;
 }> {
-  const ready = await isBridgeReady()
-  if (!ready) return { found: 0, processed: false, error: 'Bridge not ready (disabled or not logged in)' }
+  const ready = await isBridgeReady();
+  if (!ready)
+    return { found: 0, processed: false, error: 'Bridge not ready (disabled or not logged in)' };
 
   try {
-    const pending = await fetchPendingEntries()
-    if (pending.length === 0) return { found: 0, processed: false }
+    const pending = await fetchPendingEntries();
+    if (pending.length === 0) return { found: 0, processed: false };
 
-    await processEntry(pending[0])
-    return { found: pending.length, processed: true }
+    await processEntry(pending[0]);
+    return { found: pending.length, processed: true };
   } catch (error) {
     return {
       found: 0,
       processed: false,
       error: error instanceof Error ? error.message : String(error),
-    }
+    };
   }
 }

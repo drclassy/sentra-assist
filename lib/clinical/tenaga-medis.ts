@@ -4,5 +4,5 @@
  * Chief directive: these names are always used, never dynamic.
  */
 
-export const DOKTER_NAMA = 'dr. Ferdi Iskandar, S.H., M.Kn., C.LM., CMDC'
-export const PERAWAT_NAMA = 'JOSEP ARIANTO, A.Md'
+export const DOKTER_NAMA = 'dr. Ferdi Iskandar, S.H., M.Kn., C.LM., CMDC';
+export const PERAWAT_NAMA = 'JOSEP ARIANTO, A.Md';

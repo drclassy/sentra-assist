@@ -23,7 +23,7 @@ export interface Hypoglycemia1515TimerProps {
 
 /**
  * TreatmentCycle interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-02-04
@@ -672,4 +672,3 @@ export const hypoglycemia1515Styles = `
   color: var(--text-secondary);
 }
 `;
-

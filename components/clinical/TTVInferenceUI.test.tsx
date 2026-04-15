@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { buildAlerts } from './TTVInferenceUI';
 
-const makeState = (overrides: Partial<Parameters<typeof buildAlerts>[0]> = {}): Parameters<typeof buildAlerts>[0] => ({
+const makeState = (
+  overrides: Partial<Parameters<typeof buildAlerts>[0]> = {}
+): Parameters<typeof buildAlerts>[0] => ({
   sbp: '',
   dbp: '',
   hr: '',

@@ -294,11 +294,11 @@ service:sentra-assist AND event:"RME_TRANSFER_*" AND level:(warn OR error)
 
 ```ts
 test('settings bridge toggle controls runtime', async ({ page }) => {
-  await page.goto('chrome-extension://<id>/sidepanel.html')
-  await page.getByText('Pengaturan').click()
-  await page.getByText('Dashboard Sync').click()
+  await page.goto('chrome-extension://<id>/sidepanel.html');
+  await page.getByText('Pengaturan').click();
+  await page.getByText('Dashboard Sync').click();
   // assert runtime status badge/log endpoint
-})
+});
 ```
 
 ## Monitoring dan Rollback Criteria

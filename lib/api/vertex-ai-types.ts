@@ -12,7 +12,7 @@
  * @version 1.0.0
  */
 
-import type { AIDiagnosisSuggestion, AnonymizedClinicalContext } from './deepseek-types'
+import type { AIDiagnosisSuggestion, AnonymizedClinicalContext } from './deepseek-types';
 
 // =============================================================================
 // API CONFIGURATION
@@ -23,37 +23,37 @@ import type { AIDiagnosisSuggestion, AnonymizedClinicalContext } from './deepsee
  */
 export interface VertexAIConfig {
   /** Google Cloud Project ID */
-  projectId: string
+  projectId: string;
 
   /** Region for Vertex AI (e.g., 'us-central1') */
-  location: string
+  location: string;
 
   /** API Key (optional fallback) */
-  apiKey?: string
+  apiKey?: string;
 
   /** Base URL for REST API */
-  baseUrl?: string
+  baseUrl?: string;
 
   /** Model identifier (e.g., 'gemini-1.5-flash') */
-  model: string
+  model: string;
 
   /** Maximum tokens for response */
-  maxTokens: number
+  maxTokens: number;
 
   /** Temperature (0.0-1.0) - lower = more deterministic */
-  temperature: number
+  temperature: number;
 
   /** Enable Google Search Grounding */
-  enableSearchGrounding: boolean
+  enableSearchGrounding: boolean;
 
   /** Request timeout in milliseconds */
-  timeout: number
+  timeout: number;
 
   /** Number of retry attempts */
-  retryAttempts: number
+  retryAttempts: number;
 
   /** Delay between retries in milliseconds */
-  retryDelay: number
+  retryDelay: number;
 }
 
 /**
@@ -69,7 +69,7 @@ export const DEFAULT_VERTEX_AI_CONFIG: VertexAIConfig = {
   timeout: 60000,
   retryAttempts: 2,
   retryDelay: 2000,
-}
+};
 
 // =============================================================================
 // INFERENCE TYPES
@@ -80,53 +80,53 @@ export const DEFAULT_VERTEX_AI_CONFIG: VertexAIConfig = {
  */
 export interface VertexAIInferenceResult {
   /** Parsed suggestions */
-  suggestions: AIDiagnosisSuggestion[]
+  suggestions: AIDiagnosisSuggestion[];
 
   /** Raw response text */
-  raw_response: string
+  raw_response: string;
 
   /** Grounding metadata (if any) */
   grounding_metadata?: {
     searchEntryPoint?: {
-      htmlContent?: string
-    }
+      htmlContent?: string;
+    };
     groundingChunks?: Array<{
       web?: {
-        uri?: string
-        title?: string
-      }
-    }>
+        uri?: string;
+        title?: string;
+      };
+    }>;
     groundingSupports?: Array<{
       segment?: {
-        startIndex?: number
-        endIndex?: number
-        text?: string
-      }
-      groundingChunkIndices?: number[]
-      confidenceScores?: number[]
-    }>
-    webSearchQueries?: string[]
-  }
+        startIndex?: number;
+        endIndex?: number;
+        text?: string;
+      };
+      groundingChunkIndices?: number[];
+      confidenceScores?: number[];
+    }>;
+    webSearchQueries?: string[];
+  };
 
   /** Token usage */
   token_usage: {
-    input: number
-    output: number
-    total: number
-  }
+    input: number;
+    output: number;
+    total: number;
+  };
 
   /** Processing time in milliseconds */
-  latency_ms: number
+  latency_ms: number;
 
   /** Model version used */
-  model_version: string
+  model_version: string;
 
   /** Whether fallback was used */
-  used_fallback: boolean
+  used_fallback: boolean;
 
   /** Data quality notes */
-  data_quality_note?: string
+  data_quality_note?: string;
 }
 
 // Re-export shared clinical types
-export type { AIDiagnosisSuggestion, AnonymizedClinicalContext }
+export type { AIDiagnosisSuggestion, AnonymizedClinicalContext };

@@ -42,8 +42,7 @@ export default defineConfig({
       scopes: ['https://www.googleapis.com/auth/cloud-platform'],
     },
     content_security_policy: {
-      extension_pages:
-        "script-src 'self'; object-src 'self'; font-src 'self' data:;",
+      extension_pages: "script-src 'self'; object-src 'self'; font-src 'self' data:;",
     },
     web_accessible_resources: [
       {

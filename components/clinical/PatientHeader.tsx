@@ -26,7 +26,7 @@ export interface MedicalHistoryItem {
 
 /**
  * ProfileStatus type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-03-12
@@ -36,7 +36,7 @@ export type ProfileStatus = 'loading' | 'loaded' | 'error' | 'idle';
 
 /**
  * PatientHeaderProps interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-03-12
@@ -106,7 +106,16 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
       <div className="flex items-center gap-1.5">
         {/* Patient Name - primary tab */}
         <div className="neu-tab flex-1 py-2 px-2 rounded-lg relative">
-          <span className="text-body text-platinum font-medium" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', fontSize: '13px' }}>
+          <span
+            className="text-body text-platinum font-medium"
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: 'block',
+              fontSize: '13px',
+            }}
+          >
             {displayName}
           </span>
         </div>
@@ -132,7 +141,9 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
             className="neu-tab py-2 px-2 rounded-lg"
             title={`${disease.icdCode}: ${disease.fullName}`}
           >
-            <span className="text-body font-medium" style={{ color: '#EF4444' }}>{disease.shortLabel}</span>
+            <span className="text-body font-medium" style={{ color: '#EF4444' }}>
+              {disease.shortLabel}
+            </span>
           </div>
         ))}
       </div>

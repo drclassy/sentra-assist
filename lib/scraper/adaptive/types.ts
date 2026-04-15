@@ -28,7 +28,7 @@ export type FieldType =
   | 'checkbox'
   | 'date'
   | 'time'
-  | 'hidden'
+  | 'hidden';
 
 // ============================================================================
 // FIELD ATTRIBUTES
@@ -39,23 +39,23 @@ export type FieldType =
  */
 export interface FieldAttributes {
   /** Field name attribute */
-  name: string | null
+  name: string | null;
   /** Field id attribute */
-  id: string | null
+  id: string | null;
   /** Placeholder text */
-  placeholder: string | null
+  placeholder: string | null;
   /** ARIA label for accessibility */
-  ariaLabel: string | null
+  ariaLabel: string | null;
   /** CSS class names */
-  className: string
+  className: string;
   /** Whether field is required */
-  required: boolean
+  required: boolean;
   /** Whether field is disabled */
-  disabled: boolean
+  disabled: boolean;
   /** Whether field is readonly */
-  readonly: boolean
+  readonly: boolean;
   /** Current field value */
-  value: string
+  value: string;
 }
 
 // ============================================================================
@@ -67,13 +67,13 @@ export interface FieldAttributes {
  */
 export interface FieldContext {
   /** Parent form ID if exists */
-  formId: string | null
+  formId: string | null;
   /** Nearest section header text */
-  sectionHeader: string | null
+  sectionHeader: string | null;
   /** Labels found near this field */
-  siblingLabels: string[]
+  siblingLabels: string[];
   /** Parent element class names (for grouping) */
-  parentClasses: string[]
+  parentClasses: string[];
 }
 
 // ============================================================================
@@ -85,15 +85,15 @@ export interface FieldContext {
  */
 export interface FieldPosition {
   /** X coordinate from viewport */
-  x: number
+  x: number;
   /** Y coordinate from viewport */
-  y: number
+  y: number;
   /** Field width in pixels */
-  width: number
+  width: number;
   /** Field height in pixels */
-  height: number
+  height: number;
   /** Whether field is visible in viewport */
-  isVisible: boolean
+  isVisible: boolean;
 }
 
 // ============================================================================
@@ -108,21 +108,21 @@ export interface FieldPosition {
  */
 export interface FieldSignature {
   /** Unique identifier for this field (generated) */
-  id: string
+  id: string;
   /** Tag name of the element (input, select, textarea) */
-  tagName: string
+  tagName: string;
   /** Computed unique CSS selector for this field */
-  selector: string
+  selector: string;
   /** Classified field type */
-  fieldType: FieldType
+  fieldType: FieldType;
   /** Extracted HTML attributes */
-  attributes: FieldAttributes
+  attributes: FieldAttributes;
   /** Associated label text (from <label> or aria-label) */
-  label: string | null
+  label: string | null;
   /** Contextual information */
-  context: FieldContext
+  context: FieldContext;
   /** Visual position data */
-  position: FieldPosition
+  position: FieldPosition;
 }
 
 // ============================================================================
@@ -134,17 +134,17 @@ export interface FieldSignature {
  */
 export interface ScanResult {
   /** Array of detected field signatures */
-  fields: FieldSignature[]
+  fields: FieldSignature[];
   /** URL of the scanned page */
-  pageUrl: string
+  pageUrl: string;
   /** Title of the scanned page */
-  pageTitle: string
+  pageTitle: string;
   /** Timestamp when scan was performed */
-  timestamp: number
+  timestamp: number;
   /** Number of forms found on page */
-  formCount: number
+  formCount: number;
   /** Duration of scan in milliseconds */
-  scanDuration: number
+  scanDuration: number;
 }
 
 // ============================================================================
@@ -156,15 +156,15 @@ export interface ScanResult {
  */
 export interface ScanOptions {
   /** Include hidden fields in results (default: false) */
-  includeHidden?: boolean
+  includeHidden?: boolean;
   /** Include disabled fields in results (default: true) */
-  includeDisabled?: boolean
+  includeDisabled?: boolean;
   /** Maximum DOM traversal depth (default: 10) */
-  maxDepth?: number
+  maxDepth?: number;
   /** Specific form selector to scan (default: all forms) */
-  formSelector?: string
+  formSelector?: string;
   /** Include fields outside of forms (default: true) */
-  includeOrphanFields?: boolean
+  includeOrphanFields?: boolean;
 }
 
 // ============================================================================
@@ -181,18 +181,18 @@ export type ClinicalFieldCategory =
   | 'allergy' // Allergy information
   | 'patient_id' // RM number, BPJS
   | 'diagnosis' // ICD codes
-  | 'general' // Non-critical fields
+  | 'general'; // Non-critical fields
 
 /**
  * Mapping hints for AI semantic mapper
  */
 export interface FieldMappingHint {
   /** Suggested clinical category */
-  category: ClinicalFieldCategory
+  category: ClinicalFieldCategory;
   /** Confidence level for this hint (0-1) */
-  confidence: number
+  confidence: number;
   /** Reasoning for the classification */
-  reasoning: string
+  reasoning: string;
 }
 
 // ============================================================================
@@ -202,20 +202,20 @@ export interface FieldMappingHint {
 /**
  * Page types supported by DAS
  */
-export type PageType = 'anamnesa' | 'resep' | 'soap' | 'diagnosa' | 'unknown'
+export type PageType = 'anamnesa' | 'resep' | 'soap' | 'diagnosa' | 'unknown';
 
 /**
  * Context for AI mapping decisions
  */
 export interface MappingContext {
   /** Type of medical form */
-  pageType: PageType
+  pageType: PageType;
   /** Patient age (affects clinical context) */
-  patientAge?: number
+  patientAge?: number;
   /** Active medical conditions/tags */
-  medicalContext?: string[]
+  medicalContext?: string[];
   /** Page URL for cache key */
-  pageUrl?: string
+  pageUrl?: string;
 }
 
 /**
@@ -223,11 +223,11 @@ export interface MappingContext {
  */
 export interface MappingRequest {
   /** Data to fill into form */
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>;
   /** Detected form fields */
-  fields: FieldSignature[]
+  fields: FieldSignature[];
   /** Clinical context */
-  context: MappingContext
+  context: MappingContext;
 }
 
 /**
@@ -235,15 +235,15 @@ export interface MappingRequest {
  */
 export interface FieldMapping {
   /** Key from payload data */
-  payloadKey: string
+  payloadKey: string;
   /** Target form field */
-  targetField: FieldSignature
+  targetField: FieldSignature;
   /** AI confidence score (0.0 - 1.0) */
-  confidence: number
+  confidence: number;
   /** AI reasoning for this mapping */
-  reasoning: string
+  reasoning: string;
   /** Fill action to take */
-  action: MappingAction
+  action: MappingAction;
 }
 
 /**
@@ -252,22 +252,22 @@ export interface FieldMapping {
 export type MappingAction =
   | 'AUTO_FILL' // >= 0.95 confidence
   | 'CAUTIOUS_FILL' // 0.80 - 0.95 confidence (fill + flag)
-  | 'HUMAN_REQUIRED' // < 0.80 confidence (show dialog)
+  | 'HUMAN_REQUIRED'; // < 0.80 confidence (show dialog)
 
 /**
  * Complete mapping result from semantic mapper
  */
 export interface MappingResult {
   /** Successful field mappings */
-  mappings: FieldMapping[]
+  mappings: FieldMapping[];
   /** Payload keys without field match */
-  unmapped: string[]
+  unmapped: string[];
   /** Safety warnings */
-  warnings: string[]
+  warnings: string[];
   /** Whether result came from cache */
-  fromCache: boolean
+  fromCache: boolean;
   /** Total processing time in ms */
-  latencyMs: number
+  latencyMs: number;
 }
 
 /**
@@ -275,13 +275,13 @@ export interface MappingResult {
  */
 export interface MapperOptions {
   /** Force AI mapping even if cached (default: false) */
-  bypassCache?: boolean
+  bypassCache?: boolean;
   /** Minimum confidence threshold (default: 0.80) */
-  minConfidence?: number
+  minConfidence?: number;
   /** Include unmapped fields in result (default: true) */
-  includeUnmapped?: boolean
+  includeUnmapped?: boolean;
   /** Page type override */
-  pageType?: PageType
+  pageType?: PageType;
 }
 
 // ============================================================================
@@ -293,23 +293,23 @@ export interface MapperOptions {
  */
 export interface MappingCacheEntry {
   /** Hash of page + form structure */
-  pageHash: string
+  pageHash: string;
   /** Page type for this entry */
-  pageType: PageType
+  pageType: PageType;
   /** Cached field mappings */
   mappings: Array<{
-    payloadKey: string
-    fieldSelector: string
-    confidence: number
-  }>
+    payloadKey: string;
+    fieldSelector: string;
+    confidence: number;
+  }>;
   /** When entry was created */
-  timestamp: number
+  timestamp: number;
   /** Success rate from feedback (0-1) */
-  successRate: number
+  successRate: number;
   /** Number of times cache was hit */
-  hitCount: number
+  hitCount: number;
   /** When entry expires */
-  expiresAt: number
+  expiresAt: number;
 }
 
 /**
@@ -317,17 +317,17 @@ export interface MappingCacheEntry {
  */
 export interface CacheStats {
   /** Total entries in cache */
-  totalEntries: number
+  totalEntries: number;
   /** Number of cache hits */
-  hits: number
+  hits: number;
   /** Number of cache misses */
-  misses: number
+  misses: number;
   /** Hit rate percentage */
-  hitRate: number
+  hitRate: number;
   /** Oldest entry timestamp */
-  oldestEntry: number
+  oldestEntry: number;
   /** Storage used in bytes */
-  storageUsed: number
+  storageUsed: number;
 }
 
 // ============================================================================
@@ -339,15 +339,15 @@ export interface CacheStats {
  */
 export interface ValidationResult {
   /** Whether all mappings passed validation */
-  isValid: boolean
+  isValid: boolean;
   /** Mappings that passed */
-  approved: FieldMapping[]
+  approved: FieldMapping[];
   /** Mappings requiring human review */
-  needsReview: FieldMapping[]
+  needsReview: FieldMapping[];
   /** Mappings blocked by safety rules */
-  blocked: FieldMapping[]
+  blocked: FieldMapping[];
   /** Validation warnings */
-  warnings: string[]
+  warnings: string[];
 }
 
 /**
@@ -360,7 +360,7 @@ export const CONFIDENCE_THRESHOLDS = {
   CAUTIOUS_FILL: 0.8,
   /** Require human confirmation */
   HUMAN_REQUIRED: 0,
-} as const
+} as const;
 
 // ============================================================================
 // PHASE 3: LEARNING FEEDBACK LOOP TYPES
@@ -374,34 +374,34 @@ export type FillOutcome =
   | 'auto_corrected' // User manually corrected the fill
   | 'failed' // Fill failed (element not found, etc.)
   | 'rejected' // User rejected the mapping
-  | 'timeout' // No interaction within threshold
+  | 'timeout'; // No interaction within threshold
 
 /**
  * Single learning entry for feedback tracking
  */
 export interface LearningEntry {
   /** Unique ID for this entry */
-  id: string
+  id: string;
   /** Page type where mapping occurred */
-  pageType: PageType
+  pageType: PageType;
   /** Page URL hash for grouping */
-  pageHash: string
+  pageHash: string;
   /** Payload key that was mapped */
-  payloadKey: string
+  payloadKey: string;
   /** Target field selector */
-  fieldSelector: string
+  fieldSelector: string;
   /** Original AI confidence */
-  confidence: number
+  confidence: number;
   /** Fill outcome */
-  outcome: FillOutcome
+  outcome: FillOutcome;
   /** Time from fill to user interaction (ms) */
-  interactionTime: number | null
+  interactionTime: number | null;
   /** User's corrected value (if auto_corrected) */
-  correctedValue: string | null
+  correctedValue: string | null;
   /** Timestamp of the fill attempt */
-  timestamp: number
+  timestamp: number;
   /** Session ID for grouping related fills */
-  sessionId: string
+  sessionId: string;
 }
 
 /**
@@ -409,25 +409,25 @@ export interface LearningEntry {
  */
 export interface MappingStats {
   /** Payload key */
-  payloadKey: string
+  payloadKey: string;
   /** Field selector */
-  fieldSelector: string
+  fieldSelector: string;
   /** Total attempts */
-  totalAttempts: number
+  totalAttempts: number;
   /** Successful fills */
-  successCount: number
+  successCount: number;
   /** Auto-corrected fills */
-  correctedCount: number
+  correctedCount: number;
   /** Failed fills */
-  failedCount: number
+  failedCount: number;
   /** Calculated success rate */
-  successRate: number
+  successRate: number;
   /** Average confidence */
-  avgConfidence: number
+  avgConfidence: number;
   /** First recorded attempt */
-  firstSeen: number
+  firstSeen: number;
   /** Last recorded attempt */
-  lastSeen: number
+  lastSeen: number;
 }
 
 /**
@@ -435,13 +435,13 @@ export interface MappingStats {
  */
 export interface PromotionCriteria {
   /** Minimum confidence score */
-  minConfidence: number
+  minConfidence: number;
   /** Minimum success rate */
-  minSuccessRate: number
+  minSuccessRate: number;
   /** Minimum number of attempts */
-  minAttempts: number
+  minAttempts: number;
   /** Minimum time since first success (stability check) */
-  minStabilityPeriod: number
+  minStabilityPeriod: number;
 }
 
 /**
@@ -452,22 +452,22 @@ export const DEFAULT_PROMOTION_CRITERIA: PromotionCriteria = {
   minSuccessRate: 0.95,
   minAttempts: 5,
   minStabilityPeriod: 24 * 60 * 60 * 1000, // 24 hours
-}
+};
 
 /**
  * Learning store configuration
  */
 export interface LearningStoreConfig {
   /** IndexedDB database name */
-  dbName: string
+  dbName: string;
   /** Database version */
-  dbVersion: number
+  dbVersion: number;
   /** Maximum entries to retain */
-  maxEntries: number
+  maxEntries: number;
   /** Entry retention period (ms) */
-  retentionPeriod: number
+  retentionPeriod: number;
   /** Promotion criteria */
-  promotionCriteria: PromotionCriteria
+  promotionCriteria: PromotionCriteria;
 }
 
 /**
@@ -479,26 +479,26 @@ export const DEFAULT_LEARNING_CONFIG: LearningStoreConfig = {
   maxEntries: 10000,
   retentionPeriod: 90 * 24 * 60 * 60 * 1000, // 90 days
   promotionCriteria: DEFAULT_PROMOTION_CRITERIA,
-}
+};
 
 /**
  * Learning analytics summary
  */
 export interface LearningAnalytics {
   /** Total learning entries */
-  totalEntries: number
+  totalEntries: number;
   /** Entries by outcome */
-  byOutcome: Record<FillOutcome, number>
+  byOutcome: Record<FillOutcome, number>;
   /** Entries by page type */
-  byPageType: Record<PageType, number>
+  byPageType: Record<PageType, number>;
   /** Overall success rate */
-  overallSuccessRate: number
+  overallSuccessRate: number;
   /** Mappings eligible for promotion */
-  promotionCandidates: number
+  promotionCandidates: number;
   /** Database size estimate (bytes) */
-  estimatedSize: number
+  estimatedSize: number;
   /** Oldest entry timestamp */
-  oldestEntry: number
+  oldestEntry: number;
   /** Newest entry timestamp */
-  newestEntry: number
+  newestEntry: number;
 }

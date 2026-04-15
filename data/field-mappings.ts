@@ -10,8 +10,8 @@
  * Based on PRD Section 6: Target Pages & Field Mappings
  */
 
-import type { AutocompleteOptions } from '@/lib/filler/filler-core'
-import type { AturanPakai, PageFieldMap } from '@/utils/types'
+import type { AutocompleteOptions } from '@/lib/filler/filler-core';
+import type { AturanPakai, PageFieldMap } from '@/utils/types';
 
 // =============================================================================
 // ATURAN PAKAI OPTIONS (PRD Section 6)
@@ -22,7 +22,7 @@ export const ATURAN_PAKAI_OPTIONS: Record<AturanPakai, string> = {
   '3': 'Pemakaian Luar',
   '4': 'Jika Diperlukan',
   '5': 'Saat Makan',
-}
+};
 
 // =============================================================================
 // RESEP PAGE STATIC FIELDS (6 readonly + 3 AJAX + 3 fillable)
@@ -93,19 +93,19 @@ export const RESEP_FIELDS: PageFieldMap = {
     type: 'select',
     required: false,
   },
-}
+};
 
 // =============================================================================
 // PER-ROW MEDICATION FIELD GENERATORS (7 fields x N rows)
 // =============================================================================
 export interface ResepRowSelectors {
-  obat_racikan: string
-  obat_jumlah_permintaan: string
-  obat_nama: string
-  obat_jumlah: string
-  obat_signa: string
-  aturan_pakai: string
-  obat_keterangan: string
+  obat_racikan: string;
+  obat_jumlah_permintaan: string;
+  obat_nama: string;
+  obat_jumlah: string;
+  obat_signa: string;
+  aturan_pakai: string;
+  obat_keterangan: string;
 }
 
 /**
@@ -114,8 +114,8 @@ export interface ResepRowSelectors {
  * @param n Zero-based row index
  */
 export function getResepRowSelectors(n: number): ResepRowSelectors {
-  const n1 = n + 1
-  const firstRowOnly = (selectors: string[]): string[] => (n === 0 ? selectors : [])
+  const n1 = n + 1;
+  const firstRowOnly = (selectors: string[]): string[] => (n === 0 ? selectors : []);
   return {
     obat_racikan: [
       `select[name="obat_racikan[${n}]"]`,
@@ -224,7 +224,7 @@ export function getResepRowSelectors(n: number): ResepRowSelectors {
       `.medication-row:nth-child(${n + 1}) input[name*="keterangan"]`,
       `.medication-row:nth-child(${n + 1}) textarea[name*="keterangan"]`,
     ].join(', '),
-  }
+  };
 }
 
 // =============================================================================
@@ -261,7 +261,7 @@ export const AUTOCOMPLETE_OPTIONS: Record<string, AutocompleteOptions> = {
     retries: 2,
     typeDelay: 40,
   },
-}
+};
 
 // =============================================================================
 // ADD ROW BUTTON SELECTORS
@@ -275,4 +275,4 @@ export const ADD_ROW_BUTTON_SELECTORS = [
   '[onclick*="tambahObat"]',
   '[onclick*="addRow"]',
   '[onclick*="addObat"]',
-]
+];

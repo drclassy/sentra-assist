@@ -729,4 +729,3 @@ export const occultShockDetectorStyles = `
   margin: 4px 0;
 }
 `;
-

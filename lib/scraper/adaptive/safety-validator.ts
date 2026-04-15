@@ -13,7 +13,12 @@
  * @module lib/scraper/adaptive/safety-validator
  */
 
-import type { ClinicalFieldCategory, FieldMapping, FieldSignature, ValidationResult } from './types'
+import type {
+  ClinicalFieldCategory,
+  FieldMapping,
+  FieldSignature,
+  ValidationResult,
+} from './types';
 
 // ============================================================================
 // CLINICAL FIELD PATTERNS
@@ -70,7 +75,7 @@ const CRITICAL_FIELD_PATTERNS: Record<ClinicalFieldCategory, RegExp[]> = {
   ],
   diagnosis: [/icd/i, /diagnos/i, /penyakit/i, /disease/i, /kondisi/i, /condition/i],
   general: [], // Catch-all, no specific patterns
-}
+};
 
 /**
  * Confidence thresholds by field category
@@ -83,7 +88,7 @@ const CATEGORY_THRESHOLDS: Record<ClinicalFieldCategory, number> = {
   patient_id: 0.99, // Almost always require exact match
   diagnosis: 0.85, // Moderate for diagnosis
   general: 0.8, // Standard threshold
-}
+};
 
 // ============================================================================
 // FIELD CLASSIFICATION
@@ -107,20 +112,20 @@ export function classifyClinicalCategory(field: FieldSignature): ClinicalFieldCa
   ]
     .filter(Boolean)
     .join(' ')
-    .toLowerCase()
+    .toLowerCase();
 
   // Check each category
   for (const [category, patterns] of Object.entries(CRITICAL_FIELD_PATTERNS)) {
-    if (category === 'general') continue
+    if (category === 'general') continue;
 
     for (const pattern of patterns) {
       if (pattern.test(searchText)) {
-        return category as ClinicalFieldCategory
+        return category as ClinicalFieldCategory;
       }
     }
   }
 
-  return 'general'
+  return 'general';
 }
 
 /**
@@ -130,8 +135,8 @@ export function classifyClinicalCategory(field: FieldSignature): ClinicalFieldCa
  * @returns True if field is critical
  */
 export function isCriticalField(field: FieldSignature): boolean {
-  const category = classifyClinicalCategory(field)
-  return category !== 'general' && category !== 'diagnosis'
+  const category = classifyClinicalCategory(field);
+  return category !== 'general' && category !== 'diagnosis';
 }
 
 // ============================================================================
@@ -145,39 +150,39 @@ export function isCriticalField(field: FieldSignature): boolean {
  * @returns Validation result with approved/blocked mappings
  */
 export function validateMappings(mappings: FieldMapping[]): ValidationResult {
-  const approved: FieldMapping[] = []
-  const needsReview: FieldMapping[] = []
-  const blocked: FieldMapping[] = []
-  const warnings: string[] = []
+  const approved: FieldMapping[] = [];
+  const needsReview: FieldMapping[] = [];
+  const blocked: FieldMapping[] = [];
+  const warnings: string[] = [];
 
   for (const mapping of mappings) {
-    const category = classifyClinicalCategory(mapping.targetField)
-    const threshold = CATEGORY_THRESHOLDS[category]
+    const category = classifyClinicalCategory(mapping.targetField);
+    const threshold = CATEGORY_THRESHOLDS[category];
 
     // Check confidence against category threshold
     if (mapping.confidence >= threshold) {
       // High confidence - approve
       if (mapping.confidence >= 0.95) {
-        approved.push(mapping)
+        approved.push(mapping);
       } else {
         // Moderate confidence - needs review
-        needsReview.push(mapping)
+        needsReview.push(mapping);
         warnings.push(
           `Field "${mapping.payloadKey}" mapped with ${Math.round(mapping.confidence * 100)}% confidence - review recommended`
-        )
+        );
       }
     } else {
       // Below threshold - block or require review based on criticality
       if (isCriticalField(mapping.targetField)) {
-        blocked.push(mapping)
+        blocked.push(mapping);
         warnings.push(
           `BLOCKED: Critical field "${mapping.payloadKey}" (${category}) has low confidence (${Math.round(mapping.confidence * 100)}%)`
-        )
+        );
       } else {
-        needsReview.push(mapping)
+        needsReview.push(mapping);
         warnings.push(
           `Field "${mapping.payloadKey}" has low confidence (${Math.round(mapping.confidence * 100)}%) - human confirmation required`
-        )
+        );
       }
     }
   }
@@ -188,7 +193,7 @@ export function validateMappings(mappings: FieldMapping[]): ValidationResult {
     needsReview,
     blocked,
     warnings,
-  }
+  };
 }
 
 /**
@@ -199,28 +204,28 @@ export function validateMappings(mappings: FieldMapping[]): ValidationResult {
  * @returns Mappings with updated actions
  */
 export function enforceConfidenceThresholds(mappings: FieldMapping[]): FieldMapping[] {
-  return mappings.map(mapping => {
-    const category = classifyClinicalCategory(mapping.targetField)
-    const threshold = CATEGORY_THRESHOLDS[category]
+  return mappings.map((mapping) => {
+    const category = classifyClinicalCategory(mapping.targetField);
+    const threshold = CATEGORY_THRESHOLDS[category];
 
     // Determine action based on confidence and category
-    let action = mapping.action
+    let action = mapping.action;
 
     if (mapping.confidence >= 0.95 && mapping.confidence >= threshold) {
-      action = 'AUTO_FILL'
+      action = 'AUTO_FILL';
     } else if (mapping.confidence >= threshold) {
-      action = 'CAUTIOUS_FILL'
+      action = 'CAUTIOUS_FILL';
     } else {
-      action = 'HUMAN_REQUIRED'
+      action = 'HUMAN_REQUIRED';
     }
 
     // Critical fields always require at least CAUTIOUS_FILL
     if (isCriticalField(mapping.targetField) && action === 'AUTO_FILL') {
-      action = 'CAUTIOUS_FILL'
+      action = 'CAUTIOUS_FILL';
     }
 
-    return { ...mapping, action }
-  })
+    return { ...mapping, action };
+  });
 }
 
 /**
@@ -230,7 +235,7 @@ export function enforceConfidenceThresholds(mappings: FieldMapping[]): FieldMapp
  * @returns Only mappings safe for auto-fill
  */
 export function filterAutoFillable(mappings: FieldMapping[]): FieldMapping[] {
-  return mappings.filter(m => m.action === 'AUTO_FILL')
+  return mappings.filter((m) => m.action === 'AUTO_FILL');
 }
 
 /**
@@ -240,7 +245,7 @@ export function filterAutoFillable(mappings: FieldMapping[]): FieldMapping[] {
  * @returns Mappings requiring confirmation
  */
 export function filterNeedsConfirmation(mappings: FieldMapping[]): FieldMapping[] {
-  return mappings.filter(m => m.action === 'CAUTIOUS_FILL' || m.action === 'HUMAN_REQUIRED')
+  return mappings.filter((m) => m.action === 'CAUTIOUS_FILL' || m.action === 'HUMAN_REQUIRED');
 }
 
 // ============================================================================
@@ -267,24 +272,24 @@ export function logSafetyDecision(
     category: classifyClinicalCategory(mapping.targetField),
     decision,
     reason,
-  }
+  };
 
   // Log to console (can be extended to send to analytics)
-  console.warn('[DAS:Safety] Decision:', logEntry)
+  console.warn('[DAS:Safety] Decision:', logEntry);
 
   // Store in session for debugging (optional)
   try {
-    const sessionKey = 'das:safety:log'
-    const existing = sessionStorage.getItem(sessionKey)
-    const logs = existing ? JSON.parse(existing) : []
-    logs.push(logEntry)
+    const sessionKey = 'das:safety:log';
+    const existing = sessionStorage.getItem(sessionKey);
+    const logs = existing ? JSON.parse(existing) : [];
+    logs.push(logEntry);
 
     // Keep only last 100 entries
     if (logs.length > 100) {
-      logs.shift()
+      logs.shift();
     }
 
-    sessionStorage.setItem(sessionKey, JSON.stringify(logs))
+    sessionStorage.setItem(sessionKey, JSON.stringify(logs));
   } catch {
     // Ignore storage errors
   }
@@ -301,16 +306,16 @@ export function logSafetyDecision(
  * @returns Summary string
  */
 export function generateValidationSummary(result: ValidationResult): string {
-  const parts: string[] = []
+  const parts: string[] = [];
 
-  parts.push(`Validation: ${result.isValid ? 'PASSED' : 'FAILED'}`)
-  parts.push(`Approved: ${result.approved.length}`)
-  parts.push(`Needs Review: ${result.needsReview.length}`)
-  parts.push(`Blocked: ${result.blocked.length}`)
+  parts.push(`Validation: ${result.isValid ? 'PASSED' : 'FAILED'}`);
+  parts.push(`Approved: ${result.approved.length}`);
+  parts.push(`Needs Review: ${result.needsReview.length}`);
+  parts.push(`Blocked: ${result.blocked.length}`);
 
   if (result.warnings.length > 0) {
-    parts.push(`Warnings: ${result.warnings.length}`)
+    parts.push(`Warnings: ${result.warnings.length}`);
   }
 
-  return parts.join(' | ')
+  return parts.join(' | ');
 }

@@ -10,30 +10,30 @@
  * @module lib/iskandar-diagnosis-engine/epidemiology-weights
  */
 
-import type { MatchedCandidate } from './symptom-matcher'
+import type { MatchedCandidate } from './symptom-matcher';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
 export interface EpiWeightEntry {
-  weight: number
-  cases_per_month: number
-  prevalence_pct: number
-  total_annual: number
-  nama: string
-  male_pct: number
-  female_pct: number
+  weight: number;
+  cases_per_month: number;
+  prevalence_pct: number;
+  total_annual: number;
+  nama: string;
+  male_pct: number;
+  female_pct: number;
 }
 
 interface EpiWeightRegistry {
   meta: {
-    source: string
-    period: string
-    totalCases: number
-    totalIcd10: number
-  }
-  weights: Record<string, EpiWeightEntry>
+    source: string;
+    period: string;
+    totalCases: number;
+    totalIcd10: number;
+  };
+  weights: Record<string, EpiWeightEntry>;
 }
 
 /**
@@ -45,9 +45,9 @@ interface EpiWeightRegistry {
  */
 
 export interface EpiWeightResult {
-  weight: number
-  genderAdjusted: number
-  localPrevalence: number
+  weight: number;
+  genderAdjusted: number;
+  localPrevalence: number;
 }
 
 /**
@@ -59,32 +59,32 @@ export interface EpiWeightResult {
  */
 
 export interface EpiMeta {
-  source: string
-  period: string
-  totalCases: number
-  totalIcd10: number
+  source: string;
+  period: string;
+  totalCases: number;
+  totalIcd10: number;
 }
 
 // =============================================================================
 // SINGLETON CACHE
 // =============================================================================
 
-let cachedRegistry: EpiWeightRegistry | null = null
+let cachedRegistry: EpiWeightRegistry | null = null;
 
 async function loadRegistry(): Promise<EpiWeightRegistry> {
-  if (cachedRegistry) return cachedRegistry
+  if (cachedRegistry) return cachedRegistry;
 
-  const response = await fetch('/data/epidemiology_weights_v2.json')
+  const response = await fetch('/data/epidemiology_weights_v2.json');
   if (!response.ok) {
-    console.warn('[Epi] Failed to load epidemiology weights, using neutral weights')
+    console.warn('[Epi] Failed to load epidemiology weights, using neutral weights');
     cachedRegistry = {
       meta: { source: 'fallback', period: 'N/A', totalCases: 0, totalIcd10: 0 },
       weights: {},
-    }
-    return cachedRegistry
+    };
+    return cachedRegistry;
   }
-  cachedRegistry = await response.json()
-  return cachedRegistry!
+  cachedRegistry = await response.json();
+  return cachedRegistry!;
 }
 
 // =============================================================================
@@ -99,24 +99,24 @@ export async function getEpidemiologyWeight(
   icd10: string,
   patientGender?: 'L' | 'P'
 ): Promise<EpiWeightResult> {
-  const registry = await loadRegistry()
-  const entry = registry.weights[icd10] || registry.weights[icd10.split('.')[0]] || null
+  const registry = await loadRegistry();
+  const entry = registry.weights[icd10] || registry.weights[icd10.split('.')[0]] || null;
 
   if (!entry) {
-    return { weight: 1.0, genderAdjusted: 1.0, localPrevalence: 0 }
+    return { weight: 1.0, genderAdjusted: 1.0, localPrevalence: 0 };
   }
 
-  let genderAdjusted = entry.weight
+  let genderAdjusted = entry.weight;
 
   // Gender adjustment: +0.05 if patient gender matches dominant gender (>60%)
   // Only for diseases with ≥20 cases/month (statistically significant)
   if (patientGender && entry.cases_per_month >= 20) {
-    const dominantFemale = entry.female_pct > 60
-    const dominantMale = entry.male_pct > 60
+    const dominantFemale = entry.female_pct > 60;
+    const dominantMale = entry.male_pct > 60;
     if (patientGender === 'P' && dominantFemale) {
-      genderAdjusted = Math.min(entry.weight + 0.05, 1.35)
+      genderAdjusted = Math.min(entry.weight + 0.05, 1.35);
     } else if (patientGender === 'L' && dominantMale) {
-      genderAdjusted = Math.min(entry.weight + 0.05, 1.35)
+      genderAdjusted = Math.min(entry.weight + 0.05, 1.35);
     }
   }
 
@@ -124,7 +124,7 @@ export async function getEpidemiologyWeight(
     weight: entry.weight,
     genderAdjusted: Math.round(genderAdjusted * 1000) / 1000,
     localPrevalence: entry.prevalence_pct,
-  }
+  };
 }
 
 /**
@@ -136,53 +136,53 @@ export async function applyEpidemiologyWeights(
   patientGender?: 'L' | 'P'
 ): Promise<MatchedCandidate[]> {
   const weighted = await Promise.all(
-    candidates.map(async c => {
-      const epi = await getEpidemiologyWeight(c.icd10, patientGender)
+    candidates.map(async (c) => {
+      const epi = await getEpidemiologyWeight(c.icd10, patientGender);
       return {
         ...c,
         matchScore: Math.min(1, c.rawMatchScore * epi.genderAdjusted),
         epidemiologyWeight: epi.genderAdjusted,
         localPrevalence: epi.localPrevalence,
-      }
+      };
     })
-  )
+  );
 
   // Re-sort after weighting
-  weighted.sort((a, b) => b.matchScore - a.matchScore)
-  return weighted
+  weighted.sort((a, b) => b.matchScore - a.matchScore);
+  return weighted;
 }
 
 /**
  * Get formatted local epidemiology context for LLM prompt injection.
  */
 export async function getLocalEpidemiologyContext(topN = 15): Promise<string> {
-  const registry = await loadRegistry()
+  const registry = await loadRegistry();
   const entries = Object.entries(registry.weights)
     .filter(([, v]) => v.total_annual > 50)
     .sort((a, b) => b[1].total_annual - a[1].total_annual)
-    .slice(0, topN)
+    .slice(0, topN);
 
-  if (entries.length === 0) return ''
+  if (entries.length === 0) return '';
 
   const lines = entries.map(
     ([code, v]) =>
       `- ${code} ${v.nama}: ${v.prevalence_pct.toFixed(1)}% (${v.total_annual} kasus/tahun, M:${v.male_pct}% F:${v.female_pct}%)`
-  )
+  );
 
-  return `EPIDEMIOLOGI LOKAL (Puskesmas Balowerti, Kediri — data 14 bulan):\n${lines.join('\n')}`
+  return `EPIDEMIOLOGI LOKAL (Puskesmas Balowerti, Kediri — data 14 bulan):\n${lines.join('\n')}`;
 }
 
 /**
  * Get epidemiology metadata for audit trail.
  */
 export async function getEpidemiologyMeta(): Promise<EpiMeta> {
-  const registry = await loadRegistry()
-  return { ...registry.meta }
+  const registry = await loadRegistry();
+  return { ...registry.meta };
 }
 
 /**
  * Clear cached data (for testing)
  */
 export function clearEpiCache(): void {
-  cachedRegistry = null
+  cachedRegistry = null;
 }

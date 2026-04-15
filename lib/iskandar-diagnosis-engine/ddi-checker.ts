@@ -11,45 +11,45 @@
  * @module lib/iskandar-diagnosis-engine/ddi-checker
  */
 
-import type { DDISeverity, DrugInteraction } from '@/types/api'
+import type { DDISeverity, DrugInteraction } from '@/types/api';
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
 interface DDIDatabase {
-  version: string
-  source: string
+  version: string;
+  source: string;
   stats: {
-    drugs: number
-    interactions: number
+    drugs: number;
+    interactions: number;
     byLevel: {
-      major: number
-      moderate: number
-    }
-  }
-  severityCodes: Record<string, number>
-  drugs: Record<string, number> // normalized name -> index
-  drugNames: string[] // index -> normalized name
-  interactions: [number, number, number][] // [drugA_idx, drugB_idx, severity_code]
+      major: number;
+      moderate: number;
+    };
+  };
+  severityCodes: Record<string, number>;
+  drugs: Record<string, number>; // normalized name -> index
+  drugNames: string[]; // index -> normalized name
+  interactions: [number, number, number][]; // [drugA_idx, drugB_idx, severity_code]
 }
 
 interface DDICheckResult {
-  interactions: DrugInteraction[]
-  hasBlocking: boolean // Has contraindicated or major
+  interactions: DrugInteraction[];
+  hasBlocking: boolean; // Has contraindicated or major
   stats: {
-    major: number
-    moderate: number
-    total: number
-  }
+    major: number;
+    moderate: number;
+    total: number;
+  };
 }
 
 // =============================================================================
 // DATABASE LOADER
 // =============================================================================
 
-let ddiDatabase: DDIDatabase | null = null
-let interactionIndex: Map<string, Map<string, number>> | null = null // drugA -> (drugB -> severity)
+let ddiDatabase: DDIDatabase | null = null;
+let interactionIndex: Map<string, Map<string, number>> | null = null; // drugA -> (drugB -> severity)
 
 /**
  * Normalize drug name for matching
@@ -58,35 +58,35 @@ let interactionIndex: Map<string, Map<string, number>> | null = null // drugA ->
  * - Remove non-alphanumeric characters
  */
 function normalizeDrugName(name: string): string {
-  if (!name) return ''
+  if (!name) return '';
   return name
     .toLowerCase()
     .trim()
     .replace(/\s*\([^)]*\)\s*/g, '') // Remove (topical), etc.
-    .replace(/[^a-z0-9]/g, '') // Keep only alphanumeric
+    .replace(/[^a-z0-9]/g, ''); // Keep only alphanumeric
 }
 
 /**
  * Build efficient lookup index from database
  */
 function buildInteractionIndex(db: DDIDatabase): Map<string, Map<string, number>> {
-  const index = new Map<string, Map<string, number>>()
+  const index = new Map<string, Map<string, number>>();
 
   for (const [idxA, idxB, severity] of db.interactions) {
-    const drugA = db.drugNames[idxA]
-    const drugB = db.drugNames[idxB]
+    const drugA = db.drugNames[idxA];
+    const drugB = db.drugNames[idxB];
 
-    if (!drugA || !drugB) continue
+    if (!drugA || !drugB) continue;
 
     // Add both directions for symmetric lookup
-    if (!index.has(drugA)) index.set(drugA, new Map())
-    if (!index.has(drugB)) index.set(drugB, new Map())
+    if (!index.has(drugA)) index.set(drugA, new Map());
+    if (!index.has(drugB)) index.set(drugB, new Map());
 
-    index.get(drugA)!.set(drugB, severity)
-    index.get(drugB)!.set(drugA, severity)
+    index.get(drugA)!.set(drugB, severity);
+    index.get(drugB)!.set(drugA, severity);
   }
 
-  return index
+  return index;
 }
 
 /**
@@ -95,24 +95,24 @@ function buildInteractionIndex(db: DDIDatabase): Map<string, Map<string, number>
  */
 export async function loadDDIDatabase(): Promise<boolean> {
   if (ddiDatabase && interactionIndex) {
-    return true // Already loaded
+    return true; // Already loaded
   }
 
   try {
     // Dynamic import of JSON database
-    const dbModule = await import('@/data/ddi-clinical.json')
-    ddiDatabase = dbModule.default as unknown as DDIDatabase
+    const dbModule = await import('@/data/ddi-clinical.json');
+    ddiDatabase = dbModule.default as unknown as DDIDatabase;
 
     // Build efficient lookup index
-    interactionIndex = buildInteractionIndex(ddiDatabase)
+    interactionIndex = buildInteractionIndex(ddiDatabase);
 
     console.warn(
       `[DDI] Database loaded: ${ddiDatabase.stats.drugs} drugs, ${ddiDatabase.stats.interactions} interactions`
-    )
-    return true
+    );
+    return true;
   } catch (error) {
-    console.error('[DDI] Failed to load database:', error)
-    return false
+    console.error('[DDI] Failed to load database:', error);
+    return false;
   }
 }
 
@@ -120,13 +120,13 @@ export async function loadDDIDatabase(): Promise<boolean> {
  * Get database status
  */
 export function getDDIStatus(): {
-  loaded: boolean
-  drugs: number
-  interactions: number
-  version: string
+  loaded: boolean;
+  drugs: number;
+  interactions: number;
+  version: string;
 } {
   if (!ddiDatabase) {
-    return { loaded: false, drugs: 0, interactions: 0, version: 'not loaded' }
+    return { loaded: false, drugs: 0, interactions: 0, version: 'not loaded' };
   }
 
   return {
@@ -134,7 +134,7 @@ export function getDDIStatus(): {
     drugs: ddiDatabase.stats.drugs,
     interactions: ddiDatabase.stats.interactions,
     version: ddiDatabase.version,
-  }
+  };
 }
 
 // =============================================================================
@@ -144,7 +144,7 @@ export function getDDIStatus(): {
 const SEVERITY_CODE_TO_NAME: Record<number, DDISeverity> = {
   2: 'moderate',
   3: 'major',
-}
+};
 
 // Generic descriptions for interactions (DDInter doesn't provide specific descriptions)
 const SEVERITY_DESCRIPTIONS: Record<DDISeverity, string> = {
@@ -153,14 +153,14 @@ const SEVERITY_DESCRIPTIONS: Record<DDISeverity, string> = {
     'Interaksi signifikan yang dapat menyebabkan efek samping serius. Monitor ketat diperlukan.',
   moderate: 'Interaksi yang memerlukan perhatian. Pertimbangkan penyesuaian dosis atau monitoring.',
   minor: 'Interaksi ringan. Umumnya tidak memerlukan perubahan terapi.',
-}
+};
 
 const SEVERITY_RECOMMENDATIONS: Record<DDISeverity, string> = {
   contraindicated: 'Hindari kombinasi ini. Konsultasikan dengan dokter spesialis.',
   major: 'Evaluasi kebutuhan terapi. Monitor efek samping dan pertimbangkan alternatif.',
   moderate: 'Monitor pasien untuk efek samping. Sesuaikan dosis jika diperlukan.',
   minor: 'Lanjutkan terapi dengan monitoring standar.',
-}
+};
 
 // =============================================================================
 // DRUG NAME ALIASES (Common Indonesian brand/generic mappings)
@@ -211,28 +211,28 @@ const DRUG_ALIASES: Record<string, string[]> = {
   prednisone: ['deltasone'],
   prednisolone: ['prelone'],
   dexamethasone: ['decadron'],
-}
+};
 
 /**
  * Find best matching drug name in database
  */
 function findDrugMatch(drugName: string): string | null {
-  if (!interactionIndex) return null
+  if (!interactionIndex) return null;
 
-  const normalized = normalizeDrugName(drugName)
-  if (!normalized) return null
+  const normalized = normalizeDrugName(drugName);
+  if (!normalized) return null;
 
   // Direct match
   if (interactionIndex.has(normalized)) {
-    return normalized
+    return normalized;
   }
 
   // Check aliases
   for (const [canonical, aliases] of Object.entries(DRUG_ALIASES)) {
-    const canonicalNorm = normalizeDrugName(canonical)
-    if (normalized === canonicalNorm || aliases.some(a => normalizeDrugName(a) === normalized)) {
+    const canonicalNorm = normalizeDrugName(canonical);
+    if (normalized === canonicalNorm || aliases.some((a) => normalizeDrugName(a) === normalized)) {
       if (interactionIndex.has(canonicalNorm)) {
-        return canonicalNorm
+        return canonicalNorm;
       }
     }
   }
@@ -240,11 +240,11 @@ function findDrugMatch(drugName: string): string | null {
   // Partial match (drug name contains or is contained)
   for (const dbDrug of interactionIndex.keys()) {
     if (dbDrug.includes(normalized) || normalized.includes(dbDrug)) {
-      return dbDrug
+      return dbDrug;
     }
   }
 
-  return null
+  return null;
 }
 
 // =============================================================================
@@ -259,45 +259,45 @@ function findDrugMatch(drugName: string): string | null {
  */
 export async function checkDrugInteractions(drugs: string[]): Promise<DDICheckResult> {
   // Ensure database is loaded
-  await loadDDIDatabase()
+  await loadDDIDatabase();
 
   const result: DDICheckResult = {
     interactions: [],
     hasBlocking: false,
     stats: { major: 0, moderate: 0, total: 0 },
-  }
+  };
 
   if (!interactionIndex || drugs.length < 2) {
-    return result
+    return result;
   }
 
   // Normalize and find matches for all drugs
-  const matchedDrugs: { original: string; matched: string }[] = []
+  const matchedDrugs: { original: string; matched: string }[] = [];
   for (const drug of drugs) {
-    const matched = findDrugMatch(drug)
+    const matched = findDrugMatch(drug);
     if (matched) {
-      matchedDrugs.push({ original: drug, matched })
+      matchedDrugs.push({ original: drug, matched });
     }
   }
 
   // Check all pairs
-  const checkedPairs = new Set<string>()
+  const checkedPairs = new Set<string>();
 
   for (let i = 0; i < matchedDrugs.length; i++) {
     for (let j = i + 1; j < matchedDrugs.length; j++) {
-      const drugA = matchedDrugs[i]
-      const drugB = matchedDrugs[j]
+      const drugA = matchedDrugs[i];
+      const drugB = matchedDrugs[j];
 
       // Avoid duplicate checks
-      const pairKey = [drugA.matched, drugB.matched].sort().join('|')
-      if (checkedPairs.has(pairKey)) continue
-      checkedPairs.add(pairKey)
+      const pairKey = [drugA.matched, drugB.matched].sort().join('|');
+      if (checkedPairs.has(pairKey)) continue;
+      checkedPairs.add(pairKey);
 
       // Look up interaction
-      const severityCode = interactionIndex.get(drugA.matched)?.get(drugB.matched)
+      const severityCode = interactionIndex.get(drugA.matched)?.get(drugB.matched);
 
       if (severityCode !== undefined) {
-        const severity = SEVERITY_CODE_TO_NAME[severityCode] || 'moderate'
+        const severity = SEVERITY_CODE_TO_NAME[severityCode] || 'moderate';
 
         const interaction: DrugInteraction = {
           drug_a: drugA.original,
@@ -306,18 +306,18 @@ export async function checkDrugInteractions(drugs: string[]): Promise<DDICheckRe
           description: SEVERITY_DESCRIPTIONS[severity],
           recommendation: SEVERITY_RECOMMENDATIONS[severity],
           source: 'DDInter 2.0',
-        }
+        };
 
-        result.interactions.push(interaction)
+        result.interactions.push(interaction);
 
         // Update stats
         if (severity === 'major' || severity === 'contraindicated') {
-          result.stats.major++
-          result.hasBlocking = true
+          result.stats.major++;
+          result.hasBlocking = true;
         } else if (severity === 'moderate') {
-          result.stats.moderate++
+          result.stats.moderate++;
         }
-        result.stats.total++
+        result.stats.total++;
       }
     }
   }
@@ -328,11 +328,11 @@ export async function checkDrugInteractions(drugs: string[]): Promise<DDICheckRe
     major: 1,
     moderate: 2,
     minor: 3,
-  }
+  };
 
-  result.interactions.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity])
+  result.interactions.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
-  return result
+  return result;
 }
 
 /**
@@ -340,8 +340,8 @@ export async function checkDrugInteractions(drugs: string[]): Promise<DDICheckRe
  * More efficient than full check when you just need yes/no
  */
 export async function hasBlockingInteractions(drugs: string[]): Promise<boolean> {
-  const result = await checkDrugInteractions(drugs)
-  return result.hasBlocking
+  const result = await checkDrugInteractions(drugs);
+  return result.hasBlocking;
 }
 
 /**
@@ -353,8 +353,8 @@ export function getSeverityLabel(severity: DDISeverity): string {
     major: 'MAYOR',
     moderate: 'MODERAT',
     minor: 'MINOR',
-  }
-  return labels[severity] || severity.toUpperCase()
+  };
+  return labels[severity] || severity.toUpperCase();
 }
 
 /**
@@ -366,6 +366,6 @@ export function getSeverityColor(severity: DDISeverity): string {
     major: '#EA580C', // orange-600
     moderate: '#CA8A04', // yellow-600
     minor: '#16A34A', // green-600
-  }
-  return colors[severity] || '#6B7280' // gray-500
+  };
+  return colors[severity] || '#6B7280'; // gray-500
 }

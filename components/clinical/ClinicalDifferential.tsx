@@ -563,19 +563,19 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
             if (!isLikelyIcdCode(normalizedCode)) continue;
 
             canonicalSuggestions.push({
-                rank: item.rank,
-                icd_x: normalizedCode,
-                nama: resolveDiagnosisDisplayName(
-                  normalizedCode,
-                  item.nama || item.diagnosis_name || normalizedCode
-                ),
-                diagnosis_name: item.diagnosis_name,
-                icd10_code: item.icd10_code,
-                confidence: item.confidence,
-                rationale: item.rationale || item.reasoning || 'Differential canonical aktif',
-                reasoning: item.reasoning,
-                red_flags: item.red_flags || [],
-                recommended_actions: item.recommended_actions || [],
+              rank: item.rank,
+              icd_x: normalizedCode,
+              nama: resolveDiagnosisDisplayName(
+                normalizedCode,
+                item.nama || item.diagnosis_name || normalizedCode
+              ),
+              diagnosis_name: item.diagnosis_name,
+              icd10_code: item.icd10_code,
+              confidence: item.confidence,
+              rationale: item.rationale || item.reasoning || 'Differential canonical aktif',
+              reasoning: item.reasoning,
+              red_flags: item.red_flags || [],
+              recommended_actions: item.recommended_actions || [],
             });
           }
 
@@ -1545,14 +1545,16 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
           ) : null}
           {canonicalOutput?.recommendations.immediate_actions?.length ? (
             <div className="flex flex-wrap gap-1 mt-2">
-              {canonicalOutput.recommendations.immediate_actions.slice(0, 2).map((action, index) => (
-                <span
-                  key={`${action}-${index}`}
-                  className="px-2 py-0.5 rounded border border-blue-600/25 bg-blue-600/10 text-[10px] text-blue-200"
-                >
-                  {action}
-                </span>
-              ))}
+              {canonicalOutput.recommendations.immediate_actions
+                .slice(0, 2)
+                .map((action, index) => (
+                  <span
+                    key={`${action}-${index}`}
+                    className="px-2 py-0.5 rounded border border-blue-600/25 bg-blue-600/10 text-[10px] text-blue-200"
+                  >
+                    {action}
+                  </span>
+                ))}
             </div>
           ) : (
             <div className="text-[10px] text-muted mt-2">
@@ -1560,7 +1562,8 @@ export const ClinicalDifferential: React.FC<ClinicalDifferentialProps> = ({
             </div>
           )}
           <div className="text-[10px] text-muted mt-2">
-            Source aktif: {canonicalOutput ? 'dashboard canonical engine' : 'trajectory lokal transisi'}.
+            Source aktif:{' '}
+            {canonicalOutput ? 'dashboard canonical engine' : 'trajectory lokal transisi'}.
           </div>
         </div>
       )}

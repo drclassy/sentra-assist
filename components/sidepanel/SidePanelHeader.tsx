@@ -1,50 +1,50 @@
 // Ghost Protocols — Iskandar Diagnosis Engine V1
 // Ported 1:1 from console-boot-demo.html reference design
 
-import React, { useCallback, useEffect, useRef } from 'react'
-import ThemeToggle from '../ui/ThemeToggle'
+import React, { useCallback, useEffect, useRef } from 'react';
+import ThemeToggle from '../ui/ThemeToggle';
 
 interface EngineButton {
-  id: string
-  label: string
+  id: string;
+  label: string;
 }
 
-type ShellStatus = 'standby' | 'syncing' | 'ready' | 'insufficient'
+type ShellStatus = 'standby' | 'syncing' | 'ready' | 'insufficient';
 
 /** Matches `id` on tabpanels in main.tsx (`sidepanel-tabpanel-*`). */
 const ENGINE_TAB_PANEL_ID: Record<string, string> = {
   vs: 'sidepanel-tabpanel-ttv',
   emergency: 'sidepanel-tabpanel-emergency',
   settings: 'sidepanel-tabpanel-agent',
-}
+};
 
 const ENGINE_TAB_TRIGGER_ID: Record<string, string> = {
   vs: 'sidepanel-tab-ttv',
   emergency: 'sidepanel-tab-emergency',
   settings: 'sidepanel-tab-agent',
-}
+};
 
-const ENGINE_TAB_ORDER = ['vs', 'emergency', 'settings'] as const
+const ENGINE_TAB_ORDER = ['vs', 'emergency', 'settings'] as const;
 
 interface SidePanelHeaderProps {
-  activeEngine: string
-  onEngineChange: (engineId: string) => void
-  patientName?: string
-  patientAge?: number
-  chronicHistorySummary?: string
-  onRefreshPatient?: () => void | Promise<void>
-  isLoadingPatient?: boolean
-  demographicStatus?: ShellStatus
-  historyStatus?: ShellStatus
-  doctorOnlineCount?: number
-  onInitialisasi?: () => void
+  activeEngine: string;
+  onEngineChange: (engineId: string) => void;
+  patientName?: string;
+  patientAge?: number;
+  chronicHistorySummary?: string;
+  onRefreshPatient?: () => void | Promise<void>;
+  isLoadingPatient?: boolean;
+  demographicStatus?: ShellStatus;
+  historyStatus?: ShellStatus;
+  doctorOnlineCount?: number;
+  onInitialisasi?: () => void;
 }
 
 const engineButtons: EngineButton[] = [
   { id: 'vs', label: 'VS Inference' },
   { id: 'emergency', label: 'Emergency' },
   { id: 'settings', label: 'Pengaturan' },
-]
+];
 
 export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
   activeEngine,
@@ -58,57 +58,57 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
   doctorOnlineCount = 0,
   onInitialisasi,
 }) => {
-  const isReady = demographicStatus === 'ready'
-  const doctorOnline = doctorOnlineCount > 0
-  const normalizedPatientName = patientName.trim()
-  const patientNameValue = normalizedPatientName || '---'
+  const isReady = demographicStatus === 'ready';
+  const doctorOnline = doctorOnlineCount > 0;
+  const normalizedPatientName = patientName.trim();
+  const patientNameValue = normalizedPatientName || '---';
   const patientNameDisplay = /^memuat/i.test(patientNameValue)
     ? 'NAMA .... Memuat'
-    : `NAMA .... ${patientNameValue}`
-  const patientAgeDisplay = patientAge > 0 ? `USIA .... ${patientAge} tahun` : 'USIA .... --'
+    : `NAMA .... ${patientNameValue}`;
+  const patientAgeDisplay = patientAge > 0 ? `USIA .... ${patientAge} tahun` : 'USIA .... --';
   const patientHistoryDisplay = chronicHistorySummary
     ? `RIWAYAT .... ${chronicHistorySummary}`
-    : 'RIWAYAT .... Menunggu Input'
+    : 'RIWAYAT .... Menunggu Input';
 
-  const skipFocusSyncRef = useRef(true)
+  const skipFocusSyncRef = useRef(true);
 
   const handleEngineTabKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLButtonElement>, engineId: string) => {
-      const order = ENGINE_TAB_ORDER
-      const i = order.indexOf(engineId as (typeof order)[number])
-      if (i < 0) return
+      const order = ENGINE_TAB_ORDER;
+      const i = order.indexOf(engineId as (typeof order)[number]);
+      if (i < 0) return;
 
       if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        e.preventDefault()
+        e.preventDefault();
         const next =
-          e.key === 'ArrowRight' ? (i + 1) % order.length : (i - 1 + order.length) % order.length
-        onEngineChange(order[next])
-        return
+          e.key === 'ArrowRight' ? (i + 1) % order.length : (i - 1 + order.length) % order.length;
+        onEngineChange(order[next]);
+        return;
       }
 
       if (e.key === 'Home') {
-        e.preventDefault()
-        onEngineChange(order[0])
-        return
+        e.preventDefault();
+        onEngineChange(order[0]);
+        return;
       }
 
       if (e.key === 'End') {
-        e.preventDefault()
-        onEngineChange(order[order.length - 1])
+        e.preventDefault();
+        onEngineChange(order[order.length - 1]);
       }
     },
     [onEngineChange]
-  )
+  );
 
   useEffect(() => {
     if (skipFocusSyncRef.current) {
-      skipFocusSyncRef.current = false
-      return
+      skipFocusSyncRef.current = false;
+      return;
     }
-    const id = ENGINE_TAB_TRIGGER_ID[activeEngine]
-    if (!id) return
-    document.getElementById(id)?.focus({ preventScroll: true })
-  }, [activeEngine])
+    const id = ENGINE_TAB_TRIGGER_ID[activeEngine];
+    if (!id) return;
+    document.getElementById(id)?.focus({ preventScroll: true });
+  }, [activeEngine]);
 
   return (
     <div className="card-header">
@@ -126,9 +126,9 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
       {/* Engine tabs — paired with tabpanels in main.tsx (sidepanel-tabpanel-*) */}
       <div className="engine-row engine-tablist" role="tablist" aria-label="Modul engine klinis">
         {engineButtons.map((engine) => {
-          const selected = activeEngine === engine.id
-          const panelId = ENGINE_TAB_PANEL_ID[engine.id]
-          const triggerId = ENGINE_TAB_TRIGGER_ID[engine.id]
+          const selected = activeEngine === engine.id;
+          const panelId = ENGINE_TAB_PANEL_ID[engine.id];
+          const triggerId = ENGINE_TAB_TRIGGER_ID[engine.id];
           return (
             <button
               key={engine.id}
@@ -144,7 +144,7 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
             >
               {engine.label}
             </button>
-          )
+          );
         })}
       </div>
 
@@ -199,7 +199,7 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export { SidePanelHeader as default }
+export { SidePanelHeader as default };

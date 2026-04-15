@@ -69,13 +69,11 @@ export function CDSSDisclaimer({ compact = false, className = '' }: CDSSDisclaim
         </div>
 
         <div className="flex-1">
-          <h4 className="text-small font-semibold text-platinum mb-1">
-            Catatan Penting
-          </h4>
+          <h4 className="text-small font-semibold text-platinum mb-1">Catatan Penting</h4>
 
           <p className="text-caption text-muted leading-relaxed">
-            Saran diagnosis ini dihasilkan oleh sistem AI Clinical Decision Support
-            dan bersifat <strong className="text-platinum">hanya sebagai pendukung</strong> keputusan klinis.
+            Saran diagnosis ini dihasilkan oleh sistem AI Clinical Decision Support dan bersifat{' '}
+            <strong className="text-platinum">hanya sebagai pendukung</strong> keputusan klinis.
           </p>
 
           <p className="text-caption text-muted leading-relaxed mt-2">
@@ -87,12 +85,8 @@ export function CDSSDisclaimer({ compact = false, className = '' }: CDSSDisclaim
 
       {/* Governance badge */}
       <div className="mt-3 pt-3 border-t border-carbon-700 flex items-center justify-between">
-        <span className="text-tiny text-muted">
-          Sentra CDSS v1.0 • DeepSeek-R1-0528
-        </span>
-        <span className="text-tiny text-muted">
-          Puskesmas Indonesia
-        </span>
+        <span className="text-tiny text-muted">Sentra CDSS v1.0 • DeepSeek-R1-0528</span>
+        <span className="text-tiny text-muted">Puskesmas Indonesia</span>
       </div>
     </div>
   );

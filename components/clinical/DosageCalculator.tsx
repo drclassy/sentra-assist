@@ -16,7 +16,7 @@ import {
 
 /**
  * DosageCalculatorProps interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-03-12
@@ -42,9 +42,7 @@ export const DosageCalculator: React.FC<DosageCalculatorProps> = ({
 
   // Filter drugs that have rules for this age group
   const availableDrugs = useMemo(() => {
-    return DOSAGE_DATABASE.filter((drug) =>
-      drug.rules.some((rule) => rule.ageGroup === ageGroup)
-    );
+    return DOSAGE_DATABASE.filter((drug) => drug.rules.some((rule) => rule.ageGroup === ageGroup));
   }, [ageGroup]);
 
   const selectedDrug = availableDrugs.find((d) => d.id === selectedDrugId);
@@ -68,8 +66,8 @@ export const DosageCalculator: React.FC<DosageCalculatorProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-small text-muted">
-            Kategori: <span className="text-platinum font-semibold">{ageGroupLabel[ageGroup]}</span> |
-            Umur: <span className="text-platinum font-semibold">{patientAge} tahun</span>
+            Kategori: <span className="text-platinum font-semibold">{ageGroupLabel[ageGroup]}</span>{' '}
+            | Umur: <span className="text-platinum font-semibold">{patientAge} tahun</span>
           </p>
         </div>
         {onClose && (
@@ -99,10 +97,14 @@ export const DosageCalculator: React.FC<DosageCalculatorProps> = ({
           <span className="ttv-unit">kg</span>
         </div>
         {weightKg > 0 && weightKg < 2 && (
-          <p className="text-tiny text-caution mt-1">⚠️ Berat badan sangat rendah - verifikasi ulang</p>
+          <p className="text-tiny text-caution mt-1">
+            ⚠️ Berat badan sangat rendah - verifikasi ulang
+          </p>
         )}
         {weightKg > 150 && (
-          <p className="text-tiny text-caution mt-1">⚠️ Berat badan sangat tinggi - verifikasi ulang</p>
+          <p className="text-tiny text-caution mt-1">
+            ⚠️ Berat badan sangat tinggi - verifikasi ulang
+          </p>
         )}
       </div>
 
@@ -166,7 +168,9 @@ export const DosageCalculator: React.FC<DosageCalculatorProps> = ({
             <div className="flex items-center gap-4 mt-3">
               <div>
                 <span className="ttv-label text-tertiary">RUTE:</span>
-                <span className="text-small text-platinum ml-2 uppercase">{dosageResult.route}</span>
+                <span className="text-small text-platinum ml-2 uppercase">
+                  {dosageResult.route}
+                </span>
               </div>
               <div>
                 <span className="ttv-label text-tertiary">TOTAL HARIAN:</span>
@@ -224,10 +228,10 @@ export const DosageCalculator: React.FC<DosageCalculatorProps> = ({
           {/* Disclaimer */}
           <div className="neu-card-inset p-3 border-t-2" style={{ borderTopColor: '#F59E0B' }}>
             <div className="text-tiny text-muted leading-relaxed">
-              <span className="font-bold text-caution">DISCLAIMER:</span> Kalkulasi ini hanya untuk referensi klinis.
-              Selalu verifikasi dosis dengan pedoman terkini (IDAI, PAPDI, PIONAS, BNF) dan pertimbangkan kondisi
-              komorbid, fungsi ginjal/hepar, dan interaksi obat. Dokter bertanggung jawab penuh atas keputusan
-              terapi.
+              <span className="font-bold text-caution">DISCLAIMER:</span> Kalkulasi ini hanya untuk
+              referensi klinis. Selalu verifikasi dosis dengan pedoman terkini (IDAI, PAPDI, PIONAS,
+              BNF) dan pertimbangkan kondisi komorbid, fungsi ginjal/hepar, dan interaksi obat.
+              Dokter bertanggung jawab penuh atas keputusan terapi.
             </div>
           </div>
         </div>

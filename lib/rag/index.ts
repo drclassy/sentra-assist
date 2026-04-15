@@ -31,7 +31,7 @@ export type {
   RAGSearchOptions,
   RAGSearchResult,
   TerapiEntry,
-} from './types'
+} from './types';
 
 export {
   DEFAULT_SEARCH_OPTIONS,
@@ -40,19 +40,19 @@ export {
   isValidICD10Code,
   PUSKESMAS_COMMON_CODES,
   SYMPTOM_KEYWORDS,
-} from './types'
+} from './types';
 
 // =============================================================================
 // DATABASE EXPORTS
 // =============================================================================
 
-export { icd10DB, initICD10Database, isICD10DatabaseReady } from './icd10-db'
+export { icd10DB, initICD10Database, isICD10DatabaseReady } from './icd10-db';
 
 // =============================================================================
 // LOADER EXPORTS
 // =============================================================================
 
-export { ensureICD10DataLoaded, ICD10Loader, loadICD10Data, needsDataLoad } from './icd10-loader'
+export { ensureICD10DataLoaded, ICD10Loader, loadICD10Data, needsDataLoad } from './icd10-loader';
 
 // =============================================================================
 // SEARCH EXPORTS
@@ -65,4 +65,4 @@ export {
   searchForDiagnosisSuggestions,
   searchICD10,
   verifyICD10Codes,
-} from './icd10-search'
+} from './icd10-search';

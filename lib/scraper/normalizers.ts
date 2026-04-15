@@ -1,10 +1,10 @@
 // Designed and constructed by Claudesy.
 /**
- * Normalization helpers for DOM scraping output.
+ * Normalization helpers for DAS (Data Ascension System) extraction output.
  */
 
 export const cleanText = (value: string | null | undefined): string =>
-  (value || '').replace(/\s+/g, ' ').trim()
+  (value || '').replace(/\s+/g, ' ').trim();
 
 /**
  * toInt
@@ -15,11 +15,11 @@ export const cleanText = (value: string | null | undefined): string =>
  */
 
 export const toInt = (value: string | null | undefined): number => {
-  if (!value) return 0
-  const normalized = value.replace(',', '.').replace(/[^\d.-]/g, '')
-  const parsed = Number.parseInt(normalized, 10)
-  return Number.isFinite(parsed) ? parsed : 0
-}
+  if (!value) return 0;
+  const normalized = value.replace(',', '.').replace(/[^\d.-]/g, '');
+  const parsed = Number.parseInt(normalized, 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 /**
  * toFloat
@@ -30,8 +30,8 @@ export const toInt = (value: string | null | undefined): number => {
  */
 
 export const toFloat = (value: string | null | undefined): number => {
-  if (!value) return 0
-  const normalized = value.replace(',', '.').replace(/[^\d.-]/g, '')
-  const parsed = Number.parseFloat(normalized)
-  return Number.isFinite(parsed) ? parsed : 0
-}
+  if (!value) return 0;
+  const normalized = value.replace(',', '.').replace(/[^\d.-]/g, '');
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+};

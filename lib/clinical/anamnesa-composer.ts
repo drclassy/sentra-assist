@@ -2,44 +2,44 @@ import type {
   AnamnesaFillPayload,
   AnamnesisExtractionResult,
   AnamnesisMissingField,
-} from '@/utils/types'
+} from '@/utils/types';
 
 export interface ComposeAnamnesaInput {
-  symptomText: string
-  patientGender: 'L' | 'P'
-  chronicDiseases?: string[]
-  allergies?: string[]
-  pregnancyStatus?: boolean | null
-  specialConditions?: string[]
-  pregnancyRisk?: string
+  symptomText: string;
+  patientGender: 'L' | 'P';
+  chronicDiseases?: string[];
+  allergies?: string[];
+  pregnancyStatus?: boolean | null;
+  specialConditions?: string[];
+  pregnancyRisk?: string;
   vitals?: {
-    sbp?: number
-    dbp?: number
-    hr?: number
-    rr?: number
-    temp?: number
-    spo2?: number
-    glucose?: number
-  }
-  disabilityType?: string
-  obesityConfirmation?: 'confirmed' | 'not_confirmed' | ''
-  autosenPresetLabel?: string
+    sbp?: number;
+    dbp?: number;
+    hr?: number;
+    rr?: number;
+    temp?: number;
+    spo2?: number;
+    glucose?: number;
+  };
+  disabilityType?: string;
+  obesityConfirmation?: 'confirmed' | 'not_confirmed' | '';
+  autosenPresetLabel?: string;
 }
 
 export interface ComposedAnamnesaDraft {
-  chiefComplaint: string
-  presentIllness: string
-  payload: AnamnesaFillPayload
+  chiefComplaint: string;
+  presentIllness: string;
+  payload: AnamnesaFillPayload;
   metadata: {
-    symptomPhrases: string[]
-    durationLabel: string
-    missingFacts: string[]
-  }
+    symptomPhrases: string[];
+    durationLabel: string;
+    missingFacts: string[];
+  };
 }
 
 interface DurationParseResult {
-  label: string
-  lamaSakit: AnamnesaFillPayload['lama_sakit']
+  label: string;
+  lamaSakit: AnamnesaFillPayload['lama_sakit'];
 }
 
 const SHADOW_SUGGESTION_TEMPLATES: Record<AnamnesisMissingField, string> = {
@@ -50,11 +50,11 @@ const SHADOW_SUGGESTION_TEMPLATES: Record<AnamnesisMissingField, string> = {
   keparahan: 'Skala keluhan saat ini (1-10): ...',
   faktor_pemicu: 'Keluhan memberat saat aktivitas: ...',
   faktor_peredam: 'Keluhan berkurang setelah: ...',
-}
+};
 
 const DURATION_PATTERNS: Array<{
-  regex: RegExp
-  toResult: (match: RegExpMatchArray) => DurationParseResult
+  regex: RegExp;
+  toResult: (match: RegExpMatchArray) => DurationParseResult;
 }> = [
   {
     regex: /\b(\d+)\s*(hari|hr)\b/i,
@@ -84,12 +84,12 @@ const DURATION_PATTERNS: Array<{
       lamaSakit: { thn: Number.parseInt(match[1], 10) || 0, bln: 0, hr: 0 },
     }),
   },
-]
+];
 
 const RELATIVE_DURATION_PATTERNS: Array<{
-  regex: RegExp
-  label: string
-  lamaSakit: AnamnesaFillPayload['lama_sakit']
+  regex: RegExp;
+  label: string;
+  lamaSakit: AnamnesaFillPayload['lama_sakit'];
 }> = [
   { regex: /\bsejak kemarin\b/i, label: 'sejak kemarin', lamaSakit: { thn: 0, bln: 0, hr: 1 } },
   {
@@ -98,17 +98,17 @@ const RELATIVE_DURATION_PATTERNS: Array<{
     lamaSakit: { thn: 0, bln: 0, hr: 0 },
   },
   { regex: /\bmendadak\b/i, label: 'onset mendadak', lamaSakit: { thn: 0, bln: 0, hr: 0 } },
-]
+];
 
 const LEAD_IN_PATTERNS = [
   /\bpasien (mengeluh|datang dengan|mengalami)\b/gi,
   /\bkeluhan( utama)?\b/gi,
   /\bdisertai\b/gi,
   /\bsejak\b/gi,
-]
+];
 
 function normalizeWhitespace(value: string): string {
-  return value.replace(/\s+/g, ' ').trim()
+  return value.replace(/\s+/g, ' ').trim();
 }
 
 function normalizeDurationTypos(value: string): string {
@@ -116,7 +116,7 @@ function normalizeDurationTypos(value: string): string {
     .replace(/\b(\d+)\s*haru\b/gi, '$1 hari')
     .replace(/\b(\d+)\s*hri\b/gi, '$1 hari')
     .replace(/\b(\d+)\s*mingu\b/gi, '$1 minggu')
-    .replace(/\b(\d+)\s*buln\b/gi, '$1 bulan')
+    .replace(/\b(\d+)\s*buln\b/gi, '$1 bulan');
 }
 
 function normalizeSymptomTypos(value: string): string {
@@ -124,106 +124,108 @@ function normalizeSymptomTypos(value: string): string {
     .replace(/\bnnyeri\b/gi, 'nyeri')
     .replace(/\bnyerii\b/gi, 'nyeri')
     .replace(/\bpusingg\b/gi, 'pusing')
-    .replace(/\bsakitt\b/gi, 'sakit')
+    .replace(/\bsakitt\b/gi, 'sakit');
 }
 
 function parseDuration(text: string): DurationParseResult {
-  const normalized = normalizeWhitespace(text.toLowerCase())
+  const normalized = normalizeWhitespace(text.toLowerCase());
 
   for (const pattern of DURATION_PATTERNS) {
-    const match = normalized.match(pattern.regex)
-    if (match) return pattern.toResult(match)
+    const match = normalized.match(pattern.regex);
+    if (match) return pattern.toResult(match);
   }
 
   for (const pattern of RELATIVE_DURATION_PATTERNS) {
     if (pattern.regex.test(normalized)) {
-      return { label: pattern.label, lamaSakit: pattern.lamaSakit }
+      return { label: pattern.label, lamaSakit: pattern.lamaSakit };
     }
   }
 
-  return { label: '', lamaSakit: { thn: 0, bln: 0, hr: 0 } }
+  return { label: '', lamaSakit: { thn: 0, bln: 0, hr: 0 } };
 }
 
 function stripDurationPhrase(value: string): string {
-  let cleaned = value
+  let cleaned = value;
 
   for (const pattern of DURATION_PATTERNS) {
-    cleaned = cleaned.replace(pattern.regex, ' ')
+    cleaned = cleaned.replace(pattern.regex, ' ');
   }
 
   for (const pattern of RELATIVE_DURATION_PATTERNS) {
-    cleaned = cleaned.replace(pattern.regex, ' ')
+    cleaned = cleaned.replace(pattern.regex, ' ');
   }
 
-  return normalizeWhitespace(cleaned)
+  return normalizeWhitespace(cleaned);
 }
 
 function cleanSymptomPhrase(value: string): string {
-  let cleaned = normalizeWhitespace(value.toLowerCase())
+  let cleaned = normalizeWhitespace(value.toLowerCase());
 
   for (const pattern of LEAD_IN_PATTERNS) {
-    cleaned = cleaned.replace(pattern, ' ')
+    cleaned = cleaned.replace(pattern, ' ');
   }
 
-  cleaned = stripDurationPhrase(cleaned)
-  cleaned = cleaned.replace(/^[,.\-:;]+|[,.\-:;]+$/g, '')
+  cleaned = stripDurationPhrase(cleaned);
+  cleaned = cleaned.replace(/^[,.\-:;]+|[,.\-:;]+$/g, '');
 
-  return normalizeWhitespace(cleaned)
+  return normalizeWhitespace(cleaned);
 }
 
 function splitSymptomPhrases(text: string): string[] {
   const normalized = normalizeWhitespace(text)
     .replace(/\n+/g, ', ')
     .replace(/[;|/]+/g, ', ')
-    .replace(/\s+(disertai|dibarengi|dengan keluhan|keluhan lain berupa|keluhan penyerta berupa)\s+/gi, ', ')
+    .replace(
+      /\s+(disertai|dibarengi|dengan keluhan|keluhan lain berupa|keluhan penyerta berupa)\s+/gi,
+      ', '
+    )
     .replace(/\s+serta\s+/gi, ', ')
-    .replace(/\s+dan\s+/gi, ', ')
+    .replace(/\s+dan\s+/gi, ', ');
 
   const rawParts = normalized
     .split(',')
     .map((part) => cleanSymptomPhrase(part))
-    .filter(Boolean)
+    .filter(Boolean);
 
-  const uniqueParts: string[] = []
+  const uniqueParts: string[] = [];
   for (const part of rawParts) {
-    if (!uniqueParts.includes(part)) uniqueParts.push(part)
-    if (uniqueParts.length >= 4) break
+    if (!uniqueParts.includes(part)) uniqueParts.push(part);
+    if (uniqueParts.length >= 4) break;
   }
 
-  if (uniqueParts.length > 0) return uniqueParts
+  if (uniqueParts.length > 0) return uniqueParts;
 
-  const fallback = cleanSymptomPhrase(text)
-  return fallback ? [fallback] : []
+  const fallback = cleanSymptomPhrase(text);
+  return fallback ? [fallback] : [];
 }
 
 function sanitizeClinicalFragment(value: string): string {
-  return normalizeWhitespace(value)
-    .replace(/^[,.\-:;]+|[,.\-:;]+$/g, '')
+  return normalizeWhitespace(value).replace(/^[,.\-:;]+|[,.\-:;]+$/g, '');
 }
 
 function toSentenceCase(value: string): string {
-  if (!value) return value
-  return value.charAt(0).toUpperCase() + value.slice(1)
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function joinClinicalList(items: string[]): string {
-  if (items.length === 0) return ''
-  if (items.length === 1) return items[0]
-  if (items.length === 2) return `${items[0]} dan ${items[1]}`
-  return `${items.slice(0, -1).join(', ')}, dan ${items[items.length - 1]}`
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} dan ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, dan ${items[items.length - 1]}`;
 }
 
 function uniqueClinicalItems(items: Array<string | null | undefined>): string[] {
-  const unique: string[] = []
+  const unique: string[] = [];
   for (const item of items) {
-    const normalized = sanitizeClinicalFragment(item || '')
-    if (!normalized) continue
+    const normalized = sanitizeClinicalFragment(item || '');
+    if (!normalized) continue;
     const duplicate = unique.some(
       (existing) => existing.toLowerCase() === normalized.toLowerCase()
-    )
-    if (!duplicate) unique.push(normalized)
+    );
+    if (!duplicate) unique.push(normalized);
   }
-  return unique
+  return unique;
 }
 
 function buildAssociatedSymptoms(
@@ -231,52 +233,55 @@ function buildAssociatedSymptoms(
   fallbackSymptoms: string[],
   extractedSymptoms?: string[]
 ): string[] {
-  const source = extractedSymptoms && extractedSymptoms.length > 0 ? extractedSymptoms : fallbackSymptoms.slice(1)
+  const source =
+    extractedSymptoms && extractedSymptoms.length > 0
+      ? extractedSymptoms
+      : fallbackSymptoms.slice(1);
   return uniqueClinicalItems(source).filter(
     (item) => item.toLowerCase() !== primaryComplaint.toLowerCase()
-  )
+  );
 }
 
 function buildOpeningLine(primaryComplaint: string, chronologySummary: string): string {
-  const complaint = primaryComplaint.toLowerCase() || 'keluhan belum terdefinisi'
+  const complaint = primaryComplaint.toLowerCase() || 'keluhan belum terdefinisi';
   if (chronologySummary) {
-    return `Pasien datang dengan keluhan utama ${complaint} ${chronologySummary.toLowerCase()}.`
+    return `Pasien datang dengan keluhan utama ${complaint} ${chronologySummary.toLowerCase()}.`;
   }
-  return `Pasien datang dengan keluhan utama ${complaint} tanpa keterangan durasi yang jelas.`
+  return `Pasien datang dengan keluhan utama ${complaint} tanpa keterangan durasi yang jelas.`;
 }
 
 function buildSymptomDetailsLine(
   details: Array<string | null | undefined>,
   prefix = 'Keluhan dirasakan'
 ): string | null {
-  const cleaned = uniqueClinicalItems(details)
-  if (cleaned.length === 0) return null
-  return `${prefix} ${cleaned.join(', ')}.`
+  const cleaned = uniqueClinicalItems(details);
+  if (cleaned.length === 0) return null;
+  return `${prefix} ${cleaned.join(', ')}.`;
 }
 
 function buildAssociatedSymptomsLine(associatedSymptoms: string[]): string | null {
-  if (associatedSymptoms.length === 0) return null
-  return `Keluhan disertai ${joinClinicalList(associatedSymptoms).toLowerCase()}.`
+  if (associatedSymptoms.length === 0) return null;
+  return `Keluhan disertai ${joinClinicalList(associatedSymptoms).toLowerCase()}.`;
 }
 
 function buildPertinentNegativeLine(pertinentNegatives?: string[]): string | null {
-  const cleaned = uniqueClinicalItems(pertinentNegatives || [])
-  if (cleaned.length === 0) return null
-  return `Saat anamnesis awal, pasien menyangkal ${joinClinicalList(cleaned).toLowerCase()}.`
+  const cleaned = uniqueClinicalItems(pertinentNegatives || []);
+  if (cleaned.length === 0) return null;
+  return `Saat anamnesis awal, pasien menyangkal ${joinClinicalList(cleaned).toLowerCase()}.`;
 }
 
 function buildFunctionalImpactLine(
   explicitImpact: string | null | undefined,
   fallbackSymptoms: string[]
 ): string | null {
-  const cleaned = sanitizeClinicalFragment(explicitImpact || '')
+  const cleaned = sanitizeClinicalFragment(explicitImpact || '');
   if (cleaned) {
-    return `Keluhan ini berdampak pada ${cleaned.toLowerCase()}.`
+    return `Keluhan ini berdampak pada ${cleaned.toLowerCase()}.`;
   }
 
-  const inferredImpact = getSymptomImpact(fallbackSymptoms)
-  if (!inferredImpact) return null
-  return `Kondisi ini dirasakan ${inferredImpact}.`
+  const inferredImpact = getSymptomImpact(fallbackSymptoms);
+  if (!inferredImpact) return null;
+  return `Kondisi ini dirasakan ${inferredImpact}.`;
 }
 
 function buildChronologySummary(
@@ -284,41 +289,41 @@ function buildChronologySummary(
   explicitChronology?: string | null,
   explicitOnset?: string | null
 ): string {
-  const chronology = sanitizeClinicalFragment(explicitChronology || '')
-  if (chronology) return chronology
+  const chronology = sanitizeClinicalFragment(explicitChronology || '');
+  if (chronology) return chronology;
 
-  const onset = sanitizeClinicalFragment(explicitOnset || '')
+  const onset = sanitizeClinicalFragment(explicitOnset || '');
   if (onset) {
-    return onset.toLowerCase().startsWith('sejak') ? onset : `sejak ${onset}`
+    return onset.toLowerCase().startsWith('sejak') ? onset : `sejak ${onset}`;
   }
 
   if (durationLabel) {
-    return durationLabel.startsWith('sejak') ? durationLabel : `sejak ${durationLabel}`
+    return durationLabel.startsWith('sejak') ? durationLabel : `sejak ${durationLabel}`;
   }
 
-  return ''
+  return '';
 }
 
 function formatVitalNumber(value: number | undefined, digits = 0): string {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return ''
-  return digits > 0 ? value.toFixed(digits) : `${Math.round(value)}`
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return '';
+  return digits > 0 ? value.toFixed(digits) : `${Math.round(value)}`;
 }
 
 function buildVitalSignNarrative(vitals: ComposeAnamnesaInput['vitals']): {
-  line: string | null
-  payload: AnamnesaFillPayload['vital_signs'] | undefined
+  line: string | null;
+  payload: AnamnesaFillPayload['vital_signs'] | undefined;
 } {
   if (!vitals) {
-    return { line: null, payload: undefined }
+    return { line: null, payload: undefined };
   }
 
-  const tdSistolik = formatVitalNumber(vitals.sbp)
-  const tdDiastolik = formatVitalNumber(vitals.dbp)
-  const nadi = formatVitalNumber(vitals.hr)
-  const rr = formatVitalNumber(vitals.rr)
-  const suhu = formatVitalNumber(vitals.temp, 1)
-  const spo2 = formatVitalNumber(vitals.spo2)
-  const glucose = formatVitalNumber(vitals.glucose)
+  const tdSistolik = formatVitalNumber(vitals.sbp);
+  const tdDiastolik = formatVitalNumber(vitals.dbp);
+  const nadi = formatVitalNumber(vitals.hr);
+  const rr = formatVitalNumber(vitals.rr);
+  const suhu = formatVitalNumber(vitals.temp, 1);
+  const spo2 = formatVitalNumber(vitals.spo2);
+  const glucose = formatVitalNumber(vitals.glucose);
 
   const fragments = [
     tdSistolik && tdDiastolik ? `TD ${tdSistolik}/${tdDiastolik} mmHg` : '',
@@ -327,7 +332,7 @@ function buildVitalSignNarrative(vitals: ComposeAnamnesaInput['vitals']): {
     suhu ? `suhu ${suhu} C` : '',
     spo2 ? `SpO2 ${spo2}%` : '',
     glucose ? `gula darah ${glucose} mg/dL` : '',
-  ].filter(Boolean)
+  ].filter(Boolean);
 
   const payload =
     tdSistolik || tdDiastolik || nadi || rr || suhu || glucose
@@ -340,19 +345,19 @@ function buildVitalSignNarrative(vitals: ComposeAnamnesaInput['vitals']): {
           ...(glucose ? { gula_darah: Number(glucose) } : {}),
           kesadaran: 'COMPOS MENTIS' as const,
         }
-      : undefined
+      : undefined;
 
   return {
     line: fragments.length > 0 ? `Tanda vital saat input: ${fragments.join(', ')}.` : null,
     payload,
-  }
+  };
 }
 
 function buildChiefComplaint(symptoms: string[], durationLabel: string): string {
-  const symptomsLabel = joinClinicalList(symptoms) || 'keluhan belum terdefinisi'
+  const symptomsLabel = joinClinicalList(symptoms) || 'keluhan belum terdefinisi';
   if (durationLabel)
-    return `${toSentenceCase(symptomsLabel)} ${durationLabel.startsWith('sejak') ? durationLabel : `sejak ${durationLabel}`}`
-  return toSentenceCase(symptomsLabel)
+    return `${toSentenceCase(symptomsLabel)} ${durationLabel.startsWith('sejak') ? durationLabel : `sejak ${durationLabel}`}`;
+  return toSentenceCase(symptomsLabel);
 }
 
 function normalizeAllergies(allergies: string[]): AnamnesaFillPayload['alergi'] {
@@ -361,129 +366,146 @@ function normalizeAllergies(allergies: string[]): AnamnesaFillPayload['alergi'] 
     makanan: [],
     udara: [],
     lainnya: [],
-  }
+  };
 
   for (const allergy of allergies) {
-    const normalized = allergy.toLowerCase().trim()
-    if (!normalized) continue
+    const normalized = allergy.toLowerCase().trim();
+    if (!normalized) continue;
 
     if (normalized.includes('obat')) {
-      result.obat.push('Alergi obat dilaporkan')
-      continue
+      result.obat.push('Alergi obat dilaporkan');
+      continue;
     }
 
     if (normalized.includes('makanan')) {
-      result.makanan.push('Alergi makanan dilaporkan')
-      continue
+      result.makanan.push('Alergi makanan dilaporkan');
+      continue;
     }
 
     if (normalized.includes('debu')) {
-      result.udara.push('Alergi debu dilaporkan')
-      continue
+      result.udara.push('Alergi debu dilaporkan');
+      continue;
     }
 
-    result.lainnya.push(toSentenceCase(normalized))
+    result.lainnya.push(toSentenceCase(normalized));
   }
 
-  return result
+  return result;
 }
 
 function getSymptomImpact(symptoms: string[]): string | null {
-  const text = symptoms.join(' ').toLowerCase()
-  if (text.includes('pusing') || text.includes('lemas') || text.includes('sakit kepala') || text.includes('migrain')) {
-    return 'yang berpotensi mengganggu kenyamanan dan aktivitas harian'
+  const text = symptoms.join(' ').toLowerCase();
+  if (
+    text.includes('pusing') ||
+    text.includes('lemas') ||
+    text.includes('sakit kepala') ||
+    text.includes('migrain')
+  ) {
+    return 'yang berpotensi mengganggu kenyamanan dan aktivitas harian';
   }
   if (text.includes('sesak') || text.includes('nyeri dada') || text.includes('berdebar')) {
-    return 'yang membatasi mobilitas fisik dan memerlukan observasi'
+    return 'yang membatasi mobilitas fisik dan memerlukan observasi';
   }
-  if (text.includes('mual') || text.includes('muntah') || text.includes('diare') || text.includes('mencret')) {
-    return 'yang berdampak pada penurunan asupan nutrisi/cairan atau aktivitas harian'
+  if (
+    text.includes('mual') ||
+    text.includes('muntah') ||
+    text.includes('diare') ||
+    text.includes('mencret')
+  ) {
+    return 'yang berdampak pada penurunan asupan nutrisi/cairan atau aktivitas harian';
   }
   if (text.includes('nyeri') || text.includes('sakit') || text.includes('ngilu')) {
-    return 'yang menimbulkan rasa tidak nyaman dan dapat menghambat aktivitas rutin'
+    return 'yang menimbulkan rasa tidak nyaman dan dapat menghambat aktivitas rutin';
   }
   if (text.includes('demam') || text.includes('panas')) {
-    return 'yang menyebabkan penurunan kondisi tubuh secara umum'
+    return 'yang menyebabkan penurunan kondisi tubuh secara umum';
   }
-  return null
+  return null;
 }
 
 export function composeAnamnesaDraft(input: ComposeAnamnesaInput): ComposedAnamnesaDraft {
   const normalizedSymptomText = normalizeSymptomTypos(
     normalizeDurationTypos(normalizeWhitespace(input.symptomText))
-  )
-  const symptoms = splitSymptomPhrases(normalizedSymptomText)
-  const duration = parseDuration(normalizedSymptomText)
-  const primaryComplaint = toSentenceCase(symptoms[0] || 'keluhan belum terdefinisi')
-  const chronologySummary = buildChronologySummary(duration.label)
-  const associatedSymptoms = buildAssociatedSymptoms(primaryComplaint, symptoms)
-  const chiefComplaint = buildChiefComplaint(symptoms, duration.label)
-  const chronicDiseases = (input.chronicDiseases || []).filter(Boolean)
-  const allergies = (input.allergies || []).filter(Boolean)
-  const specialConditions = (input.specialConditions || []).filter(Boolean)
-  const missingFacts: string[] = []
-  const vitalSignContext = buildVitalSignNarrative(input.vitals)
+  );
+  const symptoms = splitSymptomPhrases(normalizedSymptomText);
+  const duration = parseDuration(normalizedSymptomText);
+  const primaryComplaint = toSentenceCase(symptoms[0] || 'keluhan belum terdefinisi');
+  const chronologySummary = buildChronologySummary(duration.label);
+  const associatedSymptoms = buildAssociatedSymptoms(primaryComplaint, symptoms);
+  const chiefComplaint = buildChiefComplaint(symptoms, duration.label);
+  const chronicDiseases = (input.chronicDiseases || []).filter(Boolean);
+  const allergies = (input.allergies || []).filter(Boolean);
+  const specialConditions = (input.specialConditions || []).filter(Boolean);
+  const missingFacts: string[] = [];
+  const vitalSignContext = buildVitalSignNarrative(input.vitals);
   const disabilityLine = input.disabilityType
     ? `Konteks disabilitas yang dicatat pada form: ${input.disabilityType}.`
-    : null
+    : null;
   const obesityLine =
     input.obesityConfirmation === 'confirmed'
       ? 'Status obesitas pada form: terkonfirmasi.'
       : input.obesityConfirmation === 'not_confirmed'
         ? 'Status obesitas pada form: tidak terkonfirmasi.'
-        : null
-  if (!duration.label) missingFacts.push('durasi belum disebutkan')
+        : null;
+  if (!duration.label) missingFacts.push('durasi belum disebutkan');
   const triggerHintPresent = /\b(memicu|memberat|membaik|berkurang|setelah|saat)\b/i.test(
     normalizedSymptomText
-  )
+  );
   if (!triggerHintPresent) {
-    missingFacts.push('faktor pencetus/peringan belum disebutkan')
+    missingFacts.push('faktor pencetus/peringan belum disebutkan');
   }
 
-  const sentences: string[] = []
+  const sentences: string[] = [];
 
-  sentences.push(buildOpeningLine(primaryComplaint, chronologySummary))
+  sentences.push(buildOpeningLine(primaryComplaint, chronologySummary));
 
-  const associatedSymptomsLine = buildAssociatedSymptomsLine(associatedSymptoms)
+  const associatedSymptomsLine = buildAssociatedSymptomsLine(associatedSymptoms);
   if (associatedSymptomsLine) {
-    sentences.push(associatedSymptomsLine)
+    sentences.push(associatedSymptomsLine);
   }
 
-  const impactLine = buildFunctionalImpactLine(null, symptoms)
+  const impactLine = buildFunctionalImpactLine(null, symptoms);
   if (impactLine) {
-    sentences.push(impactLine)
+    sentences.push(impactLine);
   }
 
-  const medicalHistory: string[] = []
-  if (chronicDiseases.length > 0) medicalHistory.push(`penyakit kronis (${joinClinicalList(chronicDiseases)})`)
-  if (specialConditions.length > 0) medicalHistory.push(`kondisi khusus (${joinClinicalList(specialConditions)})`)
+  const medicalHistory: string[] = [];
+  if (chronicDiseases.length > 0)
+    medicalHistory.push(`penyakit kronis (${joinClinicalList(chronicDiseases)})`);
+  if (specialConditions.length > 0)
+    medicalHistory.push(`kondisi khusus (${joinClinicalList(specialConditions)})`);
   if (medicalHistory.length > 0) {
-    sentences.push(`Riwayat medis pasien mencatat adanya ${medicalHistory.join(' serta ')}.`)
+    sentences.push(`Riwayat medis pasien mencatat adanya ${medicalHistory.join(' serta ')}.`);
   }
 
   if (allergies.length > 0) {
-    sentences.push(`Terdapat riwayat alergi terhadap ${joinClinicalList(allergies)}.`)
+    sentences.push(`Terdapat riwayat alergi terhadap ${joinClinicalList(allergies)}.`);
   }
 
   if (input.patientGender === 'P') {
     if (typeof input.pregnancyStatus === 'boolean') {
-      sentences.push(`Pasien saat ini berstatus ${input.pregnancyStatus ? 'hamil' : 'tidak hamil'}.`)
+      sentences.push(
+        `Pasien saat ini berstatus ${input.pregnancyStatus ? 'hamil' : 'tidak hamil'}.`
+      );
     }
     if (input.pregnancyRisk) {
-      sentences.push(`Risiko kehamilan: ${input.pregnancyRisk}.`)
+      sentences.push(`Risiko kehamilan: ${input.pregnancyRisk}.`);
     }
   }
 
   if (vitalSignContext.line) {
     // Replace "Tanda vital saat input:" with more natural phrasing
-    const vitalClean = vitalSignContext.line.replace(/^Tanda vital saat input:\s*/i, 'Pemeriksaan tanda vital menunjukkan ')
-    sentences.push(vitalClean + (vitalClean.endsWith('.') ? '' : '.'))
+    const vitalClean = vitalSignContext.line.replace(
+      /^Tanda vital saat input:\s*/i,
+      'Pemeriksaan tanda vital menunjukkan '
+    );
+    sentences.push(vitalClean + (vitalClean.endsWith('.') ? '' : '.'));
   }
 
-  if (disabilityLine) sentences.push(disabilityLine)
-  if (obesityLine) sentences.push(obesityLine)
+  if (disabilityLine) sentences.push(disabilityLine);
+  if (obesityLine) sentences.push(obesityLine);
 
-  const presentIllness = sentences.filter(Boolean).join(' ')
+  const presentIllness = sentences.filter(Boolean).join(' ');
   const riwayatPenyakit =
     chronicDiseases.length > 0 || specialConditions.length > 0
       ? {
@@ -504,7 +526,7 @@ export function composeAnamnesaDraft(input: ComposeAnamnesaInput): ComposedAnamn
           sekarang: presentIllness,
           dahulu: '',
           keluarga: '',
-        }
+        };
 
   return {
     chiefComplaint,
@@ -525,7 +547,7 @@ export function composeAnamnesaDraft(input: ComposeAnamnesaInput): ComposedAnamn
       durationLabel: duration.label,
       missingFacts,
     },
-  }
+  };
 }
 
 function createExtractionMissingFacts(
@@ -540,26 +562,26 @@ function createExtractionMissingFacts(
     keparahan: 'skala keparahan belum disebutkan',
     faktor_pemicu: 'faktor pemicu belum disebutkan',
     faktor_peredam: 'faktor peredam belum disebutkan',
-  }
+  };
 
-  const result = extraction.data_belum_lengkap.map((key) => labels[key])
+  const result = extraction.data_belum_lengkap.map((key) => labels[key]);
   if (!durationLabel && !result.includes(labels.onset)) {
-    result.push(labels.onset)
+    result.push(labels.onset);
   }
 
-  return result
+  return result;
 }
 
 export function buildAnamnesisShadowSuggestion(missingFields: AnamnesisMissingField[]): string {
-  if (missingFields.length === 0) return ''
+  if (missingFields.length === 0) return '';
 
   const uniqueMissing = missingFields.filter(
     (field, index) => missingFields.indexOf(field) === index
-  )
+  );
   return uniqueMissing
     .slice(0, 2)
     .map((field) => SHADOW_SUGGESTION_TEMPLATES[field])
-    .join(' ')
+    .join(' ');
 }
 
 export function composeAnamnesaDraftFromExtraction(
@@ -568,42 +590,42 @@ export function composeAnamnesaDraftFromExtraction(
 ): ComposedAnamnesaDraft {
   const normalizedSymptomText = normalizeSymptomTypos(
     normalizeDurationTypos(normalizeWhitespace(input.symptomText))
-  )
-  const symptoms = splitSymptomPhrases(normalizedSymptomText)
-  const duration = parseDuration(normalizedSymptomText)
+  );
+  const symptoms = splitSymptomPhrases(normalizedSymptomText);
+  const duration = parseDuration(normalizedSymptomText);
   const primaryComplaint = toSentenceCase(
     sanitizeClinicalFragment(extraction.keluhan_utama) || symptoms[0] || 'Keluhan belum terdefinisi'
-  )
+  );
   const chronologySummary = buildChronologySummary(
     duration.label,
     extraction.chronology_summary,
     extraction.onset
-  )
+  );
   const associatedSymptoms = buildAssociatedSymptoms(
     primaryComplaint,
     symptoms,
     extraction.associated_symptoms
-  )
-  const chronicDiseases = (input.chronicDiseases || []).filter(Boolean)
-  const allergies = (input.allergies || []).filter(Boolean)
-  const specialConditions = (input.specialConditions || []).filter(Boolean)
-  const vitalSignContext = buildVitalSignNarrative(input.vitals)
+  );
+  const chronicDiseases = (input.chronicDiseases || []).filter(Boolean);
+  const allergies = (input.allergies || []).filter(Boolean);
+  const specialConditions = (input.specialConditions || []).filter(Boolean);
+  const vitalSignContext = buildVitalSignNarrative(input.vitals);
   const disabilityLine = input.disabilityType
     ? `Konteks disabilitas yang dicatat pada form: ${input.disabilityType}.`
-    : null
+    : null;
   const obesityLine =
     input.obesityConfirmation === 'confirmed'
       ? 'Status obesitas pada form: terkonfirmasi.'
       : input.obesityConfirmation === 'not_confirmed'
         ? 'Status obesitas pada form: tidak terkonfirmasi.'
-        : null
-  const sentences: string[] = []
+        : null;
+  const sentences: string[] = [];
 
-  sentences.push(buildOpeningLine(primaryComplaint, chronologySummary))
+  sentences.push(buildOpeningLine(primaryComplaint, chronologySummary));
 
-  const associatedSymptomsLine = buildAssociatedSymptomsLine(associatedSymptoms)
+  const associatedSymptomsLine = buildAssociatedSymptomsLine(associatedSymptoms);
   if (associatedSymptomsLine) {
-    sentences.push(associatedSymptomsLine)
+    sentences.push(associatedSymptomsLine);
   }
 
   const detailLine = buildSymptomDetailsLine([
@@ -612,58 +634,67 @@ export function composeAnamnesaDraftFromExtraction(
     typeof extraction.keparahan === 'number'
       ? `dengan intensitas sekitar ${Math.round(extraction.keparahan)}/10`
       : null,
-  ])
+  ]);
   if (detailLine) {
-    sentences.push(detailLine)
+    sentences.push(detailLine);
   }
 
-  const impactLine = buildFunctionalImpactLine(extraction.functional_impact, symptoms)
+  const impactLine = buildFunctionalImpactLine(extraction.functional_impact, symptoms);
   if (impactLine) {
-    sentences.push(impactLine)
+    sentences.push(impactLine);
   }
 
   if (extraction.faktor_pemicu.length > 0 || extraction.faktor_peredam.length > 0) {
-    const factors = []
-    if (extraction.faktor_pemicu.length > 0) factors.push(`diperberat oleh ${joinClinicalList(extraction.faktor_pemicu)}`)
-    if (extraction.faktor_peredam.length > 0) factors.push(`dapat diringankan dengan ${joinClinicalList(extraction.faktor_peredam)}`)
-    sentences.push(`Keluhan cenderung ${factors.join(' dan ')}.`)
+    const factors = [];
+    if (extraction.faktor_pemicu.length > 0)
+      factors.push(`diperberat oleh ${joinClinicalList(extraction.faktor_pemicu)}`);
+    if (extraction.faktor_peredam.length > 0)
+      factors.push(`dapat diringankan dengan ${joinClinicalList(extraction.faktor_peredam)}`);
+    sentences.push(`Keluhan cenderung ${factors.join(' dan ')}.`);
   }
 
-  const pertinentNegativeLine = buildPertinentNegativeLine(extraction.pertinent_negatives)
+  const pertinentNegativeLine = buildPertinentNegativeLine(extraction.pertinent_negatives);
   if (pertinentNegativeLine) {
-    sentences.push(pertinentNegativeLine)
+    sentences.push(pertinentNegativeLine);
   }
 
-  const medicalHistory: string[] = []
-  if (chronicDiseases.length > 0) medicalHistory.push(`penyakit kronis (${joinClinicalList(chronicDiseases)})`)
-  if (specialConditions.length > 0) medicalHistory.push(`kondisi khusus (${joinClinicalList(specialConditions)})`)
+  const medicalHistory: string[] = [];
+  if (chronicDiseases.length > 0)
+    medicalHistory.push(`penyakit kronis (${joinClinicalList(chronicDiseases)})`);
+  if (specialConditions.length > 0)
+    medicalHistory.push(`kondisi khusus (${joinClinicalList(specialConditions)})`);
   if (medicalHistory.length > 0) {
-    sentences.push(`Riwayat medis mencatat adanya ${medicalHistory.join(' serta ')}.`)
+    sentences.push(`Riwayat medis mencatat adanya ${medicalHistory.join(' serta ')}.`);
   }
 
   if (allergies.length > 0) {
-    sentences.push(`Pasien memiliki riwayat alergi terhadap ${joinClinicalList(allergies)}.`)
+    sentences.push(`Pasien memiliki riwayat alergi terhadap ${joinClinicalList(allergies)}.`);
   }
 
   if (input.patientGender === 'P') {
     if (typeof input.pregnancyStatus === 'boolean') {
-      sentences.push(`Pasien saat ini berstatus ${input.pregnancyStatus ? 'hamil' : 'tidak hamil'}.`)
+      sentences.push(
+        `Pasien saat ini berstatus ${input.pregnancyStatus ? 'hamil' : 'tidak hamil'}.`
+      );
     }
     if (input.pregnancyRisk) {
-      sentences.push(`Risiko kehamilan terpantau: ${input.pregnancyRisk}.`)
+      sentences.push(`Risiko kehamilan terpantau: ${input.pregnancyRisk}.`);
     }
   }
 
   if (vitalSignContext.line) {
-    const vitalClean = vitalSignContext.line.replace(/^Tanda vital saat input:\s*/i, 'Pemeriksaan tanda vital menunjukkan ')
-    sentences.push(vitalClean + (vitalClean.endsWith('.') ? '' : '.'))
+    const vitalClean = vitalSignContext.line.replace(
+      /^Tanda vital saat input:\s*/i,
+      'Pemeriksaan tanda vital menunjukkan '
+    );
+    sentences.push(vitalClean + (vitalClean.endsWith('.') ? '' : '.'));
   }
 
-  if (disabilityLine) sentences.push(disabilityLine)
-  if (obesityLine) sentences.push(obesityLine)
+  if (disabilityLine) sentences.push(disabilityLine);
+  if (obesityLine) sentences.push(obesityLine);
 
-  const presentIllness = sentences.filter(Boolean).join(' ')
-  const extractionMissingFacts = createExtractionMissingFacts(extraction, duration.label)
+  const presentIllness = sentences.filter(Boolean).join(' ');
+  const extractionMissingFacts = createExtractionMissingFacts(extraction, duration.label);
 
   const riwayatPenyakit =
     chronicDiseases.length > 0 || specialConditions.length > 0
@@ -685,7 +716,7 @@ export function composeAnamnesaDraftFromExtraction(
           sekarang: presentIllness,
           dahulu: '',
           keluarga: '',
-        }
+        };
 
   return {
     chiefComplaint: primaryComplaint,
@@ -706,5 +737,5 @@ export function composeAnamnesaDraftFromExtraction(
       durationLabel: duration.label,
       missingFacts: extractionMissingFacts,
     },
-  }
+  };
 }

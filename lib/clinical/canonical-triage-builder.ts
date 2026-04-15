@@ -1,13 +1,6 @@
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store';
-import type {
-  CanonicalPregnancyStatus,
-  CanonicalTriageInput,
-} from '@/lib/api/bridge-client';
-import {
-  AutosenPreset,
-  DisabilityType,
-  ObesityConfirmation,
-} from '@/lib/clinical/autosen-types';
+import type { CanonicalPregnancyStatus, CanonicalTriageInput } from '@/lib/api/bridge-client';
+import { AutosenPreset, DisabilityType, ObesityConfirmation } from '@/lib/clinical/autosen-types';
 
 export interface BuildCanonicalTriageInputArgs {
   requestId: string;
@@ -81,20 +74,23 @@ function mapPregnancyStatus(
 }
 
 function composeStructuredSignsText(args: BuildCanonicalTriageInputArgs): string | undefined {
-  const parts: string[] = []
-  if (args.keluhanUtama) parts.push(`KU: ${args.keluhanUtama}`)
-  if (args.symptomTextRaw && args.symptomTextRaw !== args.keluhanUtama) parts.push(args.symptomTextRaw)
-  if (args.vitals.avpu && args.vitals.avpu !== 'A') parts.push(`AVPU: ${args.vitals.avpu}`)
-  if (args.vitals.pain_score !== undefined) parts.push(`Nyeri: ${args.vitals.pain_score}/10`)
-  if (args.vitals.supplemental_o2) parts.push('O2 Suplemen: Ya')
-  return parts.length > 0 ? parts.join(' | ') : undefined
+  const parts: string[] = [];
+  if (args.keluhanUtama) parts.push(`KU: ${args.keluhanUtama}`);
+  if (args.symptomTextRaw && args.symptomTextRaw !== args.keluhanUtama)
+    parts.push(args.symptomTextRaw);
+  if (args.vitals.avpu && args.vitals.avpu !== 'A') parts.push(`AVPU: ${args.vitals.avpu}`);
+  if (args.vitals.pain_score !== undefined) parts.push(`Nyeri: ${args.vitals.pain_score}/10`);
+  if (args.vitals.supplemental_o2) parts.push('O2 Suplemen: Ya');
+  return parts.length > 0 ? parts.join(' | ') : undefined;
 }
 
 export function buildCanonicalRequestId(patientRM: string): string {
   return `assist-${patientRM || 'unknown'}-${Date.now()}`;
 }
 
-export function buildCanonicalTriageInput(args: BuildCanonicalTriageInputArgs): CanonicalTriageInput {
+export function buildCanonicalTriageInput(
+  args: BuildCanonicalTriageInputArgs
+): CanonicalTriageInput {
   const chronicDiseases = clampHistoryText(args.chronicHistorySummary);
   const pregnancyStatus = mapPregnancyStatus(args.patientGender, args.pregnancyStatus);
 
@@ -133,7 +129,9 @@ export function buildCanonicalTriageInput(args: BuildCanonicalTriageInputArgs): 
           }
         : {}),
       ...(args.vitals.avpu !== undefined ? { avpu: args.vitals.avpu } : {}),
-      ...(args.vitals.supplemental_o2 !== undefined ? { supplemental_o2: args.vitals.supplemental_o2 } : {}),
+      ...(args.vitals.supplemental_o2 !== undefined
+        ? { supplemental_o2: args.vitals.supplemental_o2 }
+        : {}),
       ...(args.vitals.pain_score !== undefined ? { pain_score: args.vitals.pain_score } : {}),
       has_copd: args.hasCopd ?? false,
     },
@@ -144,8 +142,8 @@ export function buildCanonicalTriageInput(args: BuildCanonicalTriageInputArgs): 
       autosen_preset: args.autosenPreset,
     },
     ...(() => {
-      const text = args.structuredSignsText ?? composeStructuredSignsText(args)
-      return text ? { bedside_signs: { structured_signs_text: text } } : {}
+      const text = args.structuredSignsText ?? composeStructuredSignsText(args);
+      return text ? { bedside_signs: { structured_signs_text: text } } : {};
     })(),
     context: {
       chronic_diseases: chronicDiseases,

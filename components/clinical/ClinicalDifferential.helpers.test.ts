@@ -2,7 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 
 // Mock extension APIs before any imports that trigger webextension-polyfill
 const { mockSendMessage } = vi.hoisted(() => ({ mockSendMessage: vi.fn() }));
-vi.mock('wxt/browser', () => ({ browser: { tabs: { sendMessage: vi.fn() }, runtime: { id: 'test' } } }));
+vi.mock('wxt/browser', () => ({
+  browser: { tabs: { sendMessage: vi.fn() }, runtime: { id: 'test' } },
+}));
 vi.mock('@webext-core/messaging', () => ({
   defineExtensionMessaging: () => ({ sendMessage: mockSendMessage, onMessage: vi.fn() }),
 }));

@@ -13,10 +13,10 @@
  * @module lib/scraper/adaptive/feedback-capture
  */
 
-import { scanPageFields } from './dom-scanner'
-import { recordLearning } from './learning-store'
-import { computePageHash } from './mapping-cache'
-import type { FieldMapping, FillOutcome, LearningEntry, PageType } from './types'
+import { scanPageFields } from './dom-scanner';
+import { recordLearning } from './learning-store';
+import { computePageHash } from './mapping-cache';
+import type { FieldMapping, FillOutcome, LearningEntry, PageType } from './types';
 
 // ============================================================================
 // CONFIGURATION
@@ -29,26 +29,26 @@ const FEEDBACK_CONFIG = {
   changeDebounce: 500,
   /** Maximum tracked fields per session */
   maxTrackedFields: 100,
-}
+};
 
 // ============================================================================
 // TRACKING STATE
 // ============================================================================
 
 interface TrackedField {
-  mapping: FieldMapping
-  element: HTMLElement | null
-  originalValue: string
-  filledValue: string
-  fillTime: number
-  interactionDetected: boolean
-  timeoutId: ReturnType<typeof setTimeout> | null
-  changeListener: ((e: Event) => void) | null
+  mapping: FieldMapping;
+  element: HTMLElement | null;
+  originalValue: string;
+  filledValue: string;
+  fillTime: number;
+  interactionDetected: boolean;
+  timeoutId: ReturnType<typeof setTimeout> | null;
+  changeListener: ((e: Event) => void) | null;
 }
 
-const trackedFields = new Map<string, TrackedField>()
-let currentPageHash: string | null = null
-let currentPageType: PageType = 'unknown'
+const trackedFields = new Map<string, TrackedField>();
+let currentPageHash: string | null = null;
+let currentPageType: PageType = 'unknown';
 
 // ============================================================================
 // FIELD TRACKING
@@ -63,19 +63,19 @@ let currentPageType: PageType = 'unknown'
 export function trackFilledField(mapping: FieldMapping, filledValue: string): void {
   // Limit tracked fields
   if (trackedFields.size >= FEEDBACK_CONFIG.maxTrackedFields) {
-    console.warn('[DAS:Feedback] Max tracked fields reached')
-    return
+    console.warn('[DAS:Feedback] Max tracked fields reached');
+    return;
   }
 
-  const trackingKey = `${mapping.payloadKey}:${mapping.targetField.selector}`
+  const trackingKey = `${mapping.payloadKey}:${mapping.targetField.selector}`;
 
   // Find the DOM element
-  const element = document.querySelector(mapping.targetField.selector) as HTMLElement | null
+  const element = document.querySelector(mapping.targetField.selector) as HTMLElement | null;
 
   // Get original value before fill
   const originalValue = element
     ? (element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement).value || ''
-    : ''
+    : '';
 
   const tracked: TrackedField = {
     mapping,
@@ -86,54 +86,54 @@ export function trackFilledField(mapping: FieldMapping, filledValue: string): vo
     interactionDetected: false,
     timeoutId: null,
     changeListener: null,
-  }
+  };
 
   // Set up change listener
   if (element) {
-    tracked.changeListener = createChangeListener(trackingKey, tracked)
-    element.addEventListener('change', tracked.changeListener)
-    element.addEventListener('input', tracked.changeListener)
-    element.addEventListener('blur', tracked.changeListener)
+    tracked.changeListener = createChangeListener(trackingKey, tracked);
+    element.addEventListener('change', tracked.changeListener);
+    element.addEventListener('input', tracked.changeListener);
+    element.addEventListener('blur', tracked.changeListener);
   }
 
   // Set up timeout for success
   tracked.timeoutId = setTimeout(() => {
     if (!tracked.interactionDetected) {
       // No changes detected - mark as success
-      reportOutcome(trackingKey, 'success')
+      reportOutcome(trackingKey, 'success');
     }
-  }, FEEDBACK_CONFIG.interactionTimeout)
+  }, FEEDBACK_CONFIG.interactionTimeout);
 
-  trackedFields.set(trackingKey, tracked)
+  trackedFields.set(trackingKey, tracked);
 
-  console.warn(`[DAS:Feedback] Tracking field: ${mapping.payloadKey}`)
+  console.warn(`[DAS:Feedback] Tracking field: ${mapping.payloadKey}`);
 }
 
 /**
  * Create debounced change listener for a tracked field
  */
 function createChangeListener(trackingKey: string, tracked: TrackedField): (e: Event) => void {
-  let debounceTimeout: ReturnType<typeof setTimeout> | null = null
+  let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
   return (_e: Event) => {
-    tracked.interactionDetected = true
+    tracked.interactionDetected = true;
 
     if (debounceTimeout) {
-      clearTimeout(debounceTimeout)
+      clearTimeout(debounceTimeout);
     }
 
     debounceTimeout = setTimeout(() => {
-      const element = tracked.element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-      if (!element) return
+      const element = tracked.element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+      if (!element) return;
 
-      const currentValue = element.value || ''
+      const currentValue = element.value || '';
 
       if (currentValue !== tracked.filledValue) {
         // User changed the value - auto-corrected
-        reportOutcome(trackingKey, 'auto_corrected', currentValue)
+        reportOutcome(trackingKey, 'auto_corrected', currentValue);
       }
-    }, FEEDBACK_CONFIG.changeDebounce)
-  }
+    }, FEEDBACK_CONFIG.changeDebounce);
+  };
 }
 
 // ============================================================================
@@ -148,19 +148,19 @@ async function reportOutcome(
   outcome: FillOutcome,
   correctedValue?: string
 ): Promise<void> {
-  const tracked = trackedFields.get(trackingKey)
-  if (!tracked) return
+  const tracked = trackedFields.get(trackingKey);
+  if (!tracked) return;
 
   // Clean up tracking
-  cleanupTracking(trackingKey)
+  cleanupTracking(trackingKey);
 
   // Calculate interaction time
-  const interactionTime = tracked.interactionDetected ? Date.now() - tracked.fillTime : null
+  const interactionTime = tracked.interactionDetected ? Date.now() - tracked.fillTime : null;
 
   // Compute page hash if not cached
   if (!currentPageHash) {
-    const scanResult = scanPageFields()
-    currentPageHash = computePageHash(window.location.href, scanResult.fields)
+    const scanResult = scanPageFields();
+    currentPageHash = computePageHash(window.location.href, scanResult.fields);
   }
 
   // Record learning entry
@@ -173,13 +173,13 @@ async function reportOutcome(
     outcome,
     interactionTime,
     correctedValue: correctedValue || null,
-  }
+  };
 
   try {
-    await recordLearning(entry)
-    console.warn(`[DAS:Feedback] Recorded ${outcome} for ${tracked.mapping.payloadKey}`)
+    await recordLearning(entry);
+    console.warn(`[DAS:Feedback] Recorded ${outcome} for ${tracked.mapping.payloadKey}`);
   } catch (error) {
-    console.error('[DAS:Feedback] Failed to record learning:', error)
+    console.error('[DAS:Feedback] Failed to record learning:', error);
   }
 }
 
@@ -187,22 +187,22 @@ async function reportOutcome(
  * Clean up tracking for a field
  */
 function cleanupTracking(trackingKey: string): void {
-  const tracked = trackedFields.get(trackingKey)
-  if (!tracked) return
+  const tracked = trackedFields.get(trackingKey);
+  if (!tracked) return;
 
   // Clear timeout
   if (tracked.timeoutId) {
-    clearTimeout(tracked.timeoutId)
+    clearTimeout(tracked.timeoutId);
   }
 
   // Remove listeners
   if (tracked.element && tracked.changeListener) {
-    tracked.element.removeEventListener('change', tracked.changeListener)
-    tracked.element.removeEventListener('input', tracked.changeListener)
-    tracked.element.removeEventListener('blur', tracked.changeListener)
+    tracked.element.removeEventListener('change', tracked.changeListener);
+    tracked.element.removeEventListener('input', tracked.changeListener);
+    tracked.element.removeEventListener('blur', tracked.changeListener);
   }
 
-  trackedFields.delete(trackingKey)
+  trackedFields.delete(trackingKey);
 }
 
 // ============================================================================
@@ -215,8 +215,8 @@ function cleanupTracking(trackingKey: string): void {
  * Call this when form is submitted successfully
  */
 export async function reportFillSuccess(mapping: FieldMapping): Promise<void> {
-  const trackingKey = `${mapping.payloadKey}:${mapping.targetField.selector}`
-  await reportOutcome(trackingKey, 'success')
+  const trackingKey = `${mapping.payloadKey}:${mapping.targetField.selector}`;
+  await reportOutcome(trackingKey, 'success');
 }
 
 /**
@@ -225,7 +225,7 @@ export async function reportFillSuccess(mapping: FieldMapping): Promise<void> {
  * Call this when fill operation failed (element not found, etc.)
  */
 export async function reportFillFailed(mapping: FieldMapping, reason?: string): Promise<void> {
-  const trackingKey = `${mapping.payloadKey}:${mapping.targetField.selector}`
+  const trackingKey = `${mapping.payloadKey}:${mapping.targetField.selector}`;
 
   // If not tracked, create temporary entry
   if (!trackedFields.has(trackingKey)) {
@@ -238,18 +238,18 @@ export async function reportFillFailed(mapping: FieldMapping, reason?: string): 
       interactionDetected: false,
       timeoutId: null,
       changeListener: null,
-    })
+    });
   }
 
-  await reportOutcome(trackingKey, 'failed')
-  console.warn(`[DAS:Feedback] Fill failed: ${reason || 'unknown'}`)
+  await reportOutcome(trackingKey, 'failed');
+  console.warn(`[DAS:Feedback] Fill failed: ${reason || 'unknown'}`);
 }
 
 /**
  * Manually report a mapping as rejected by user
  */
 export async function reportMappingRejected(mapping: FieldMapping): Promise<void> {
-  const trackingKey = `${mapping.payloadKey}:${mapping.targetField.selector}`
+  const trackingKey = `${mapping.payloadKey}:${mapping.targetField.selector}`;
 
   if (!trackedFields.has(trackingKey)) {
     trackedFields.set(trackingKey, {
@@ -261,10 +261,10 @@ export async function reportMappingRejected(mapping: FieldMapping): Promise<void
       interactionDetected: true,
       timeoutId: null,
       changeListener: null,
-    })
+    });
   }
 
-  await reportOutcome(trackingKey, 'rejected')
+  await reportOutcome(trackingKey, 'rejected');
 }
 
 // ============================================================================
@@ -280,7 +280,7 @@ export function trackBatchFill(
   mappings: Array<{ mapping: FieldMapping; filledValue: string }>
 ): void {
   for (const { mapping, filledValue } of mappings) {
-    trackFilledField(mapping, filledValue)
+    trackFilledField(mapping, filledValue);
   }
 }
 
@@ -288,10 +288,10 @@ export function trackBatchFill(
  * Report batch fill success (e.g., form submitted)
  */
 export async function reportBatchSuccess(): Promise<void> {
-  const keys = Array.from(trackedFields.keys())
+  const keys = Array.from(trackedFields.keys());
 
   for (const key of keys) {
-    await reportOutcome(key, 'success')
+    await reportOutcome(key, 'success');
   }
 }
 
@@ -299,15 +299,15 @@ export async function reportBatchSuccess(): Promise<void> {
  * Cancel all tracking (e.g., page navigation)
  */
 export function cancelAllTracking(): void {
-  const keys = Array.from(trackedFields.keys())
+  const keys = Array.from(trackedFields.keys());
 
   for (const key of keys) {
-    const tracked = trackedFields.get(key)
+    const tracked = trackedFields.get(key);
     if (tracked && !tracked.interactionDetected) {
       // Report as timeout if no interaction
-      reportOutcome(key, 'timeout')
+      reportOutcome(key, 'timeout');
     } else {
-      cleanupTracking(key)
+      cleanupTracking(key);
     }
   }
 }
@@ -320,9 +320,9 @@ export function cancelAllTracking(): void {
  * Set current page context for feedback tracking
  */
 export function setPageContext(pageType: PageType, pageHash?: string): void {
-  currentPageType = pageType
+  currentPageType = pageType;
   if (pageHash) {
-    currentPageHash = pageHash
+    currentPageHash = pageHash;
   }
 }
 
@@ -330,13 +330,13 @@ export function setPageContext(pageType: PageType, pageHash?: string): void {
  * Get current tracking status
  */
 export function getTrackingStatus(): {
-  trackedCount: number
-  fields: string[]
+  trackedCount: number;
+  fields: string[];
 } {
   return {
     trackedCount: trackedFields.size,
     fields: Array.from(trackedFields.keys()),
-  }
+  };
 }
 
 // ============================================================================
@@ -345,6 +345,6 @@ export function getTrackingStatus(): {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
-    cancelAllTracking()
-  })
+    cancelAllTracking();
+  });
 }

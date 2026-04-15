@@ -23,7 +23,7 @@ export interface BPMeasurementWizardProps {
 
 /**
  * BPMeasurementData interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-02-04
@@ -466,4 +466,3 @@ export const bpMeasurementStyles = `
   color: var(--accent-primary);
 }
 `;
-

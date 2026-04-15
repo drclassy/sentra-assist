@@ -55,91 +55,91 @@ Target utamanya:
 
 ```ts
 interface TriageInput {
-  request_id: string
-  request_time: string
+  request_id: string;
+  request_time: string;
   source: {
-    app: 'sentra-assist'
-    app_version?: string
-    engine_mode: 'preview' | 'canonical'
-  }
+    app: 'sentra-assist';
+    app_version?: string;
+    engine_mode: 'preview' | 'canonical';
+  };
   patient: {
-    patient_id: string
-    rm: string
-    name?: string
-    gender: 'L' | 'P'
-    age: number
-    dob?: string
-    payer_label?: string
-    bpjs_status?: 'aktif' | 'nonaktif' | 'mandiri' | null
-    kelurahan?: string
-    facility_name?: string
-  }
+    patient_id: string;
+    rm: string;
+    name?: string;
+    gender: 'L' | 'P';
+    age: number;
+    dob?: string;
+    payer_label?: string;
+    bpjs_status?: 'aktif' | 'nonaktif' | 'mandiri' | null;
+    kelurahan?: string;
+    facility_name?: string;
+  };
   vitals: {
-    sbp: number
-    dbp: number
-    hr: number
-    rr: number
-    temp: number
-    spo2: number
+    sbp: number;
+    dbp: number;
+    hr: number;
+    rr: number;
+    temp: number;
+    spo2: number;
     glucose?: {
-      value: number
-      type: 'GDS'
-    }
-    avpu?: 'A' | 'C' | 'V' | 'P' | 'U'
-    supplemental_o2?: boolean
-    pain_score?: number
-    has_copd?: boolean
-    weight_kg?: number
-    height_cm?: number
-    measurement_time?: string
-  }
+      value: number;
+      type: 'GDS';
+    };
+    avpu?: 'A' | 'C' | 'V' | 'P' | 'U';
+    supplemental_o2?: boolean;
+    pain_score?: number;
+    has_copd?: boolean;
+    weight_kg?: number;
+    height_cm?: number;
+    measurement_time?: string;
+  };
   narrative: {
-    symptom_text_raw: string
-    keluhan_utama: string
-    keluhan_tambahan?: string
-    autocomplete_summary?: string
+    symptom_text_raw: string;
+    keluhan_utama: string;
+    keluhan_tambahan?: string;
+    autocomplete_summary?: string;
     autosen_preset?:
       | 'hypertension'
       | 'hyperglycemia'
       | 'hypoglycemia'
       | 'glucose_tolerance'
-      | 'adl'
-  }
+      | 'adl';
+  };
   context: {
-    chronic_diseases: string[]
-    allergies: string[]
-    pregnancy_status: 'hamil' | 'tidak_hamil' | 'tidak_relevan' | 'tidak_diisi'
-    pregnancy_risk?: string
-    special_conditions: string[]
-    disability_type?: string
-    obesity_confirmation?: 'confirmed' | 'not_confirmed'
-  }
+    chronic_diseases: string[];
+    allergies: string[];
+    pregnancy_status: 'hamil' | 'tidak_hamil' | 'tidak_relevan' | 'tidak_diisi';
+    pregnancy_risk?: string;
+    special_conditions: string[];
+    disability_type?: string;
+    obesity_confirmation?: 'confirmed' | 'not_confirmed';
+  };
   bedside_signs?: {
-    structured_signs_text?: string
-    deterioration_summary_text?: string
-  }
+    structured_signs_text?: string;
+    deterioration_summary_text?: string;
+  };
   history?: {
-    visits_used?: number
+    visits_used?: number;
     prefetched_visits?: Array<{
-      encounter_id: string
-      timestamp: string
-      keluhan_utama: string
-      source: 'scrape'
+      encounter_id: string;
+      timestamp: string;
+      keluhan_utama: string;
+      source: 'scrape';
       vitals: {
-        sbp: number
-        dbp: number
-        hr: number
-        rr: number
-        temp: number
-        glucose: number
-        spo2: number
-      }
+        sbp: number;
+        dbp: number;
+        hr: number;
+        rr: number;
+        temp: number;
+        glucose: number;
+        spo2: number;
+      };
       diagnosa?: {
-        icd_x: string
-        nama: string
-      }
-    }>
-  }
+        icd_x: string;
+        nama: string;
+      };
+    }>;
+  };
 }
 ```
 
@@ -147,84 +147,84 @@ interface TriageInput {
 
 ```ts
 interface ClinicalEngineOutput {
-  request_id: string
-  processed_at: string
+  request_id: string;
+  processed_at: string;
   source: {
-    engine: 'dashboard-clinical-engine'
-    engine_version: string
-    mode: 'canonical'
-  }
+    engine: 'dashboard-clinical-engine';
+    engine_version: string;
+    mode: 'canonical';
+  };
   scoring: {
     news2?: {
-      score: number
-      risk_level: 'low' | 'low-medium' | 'medium' | 'high'
-      drivers: string[]
-    }
+      score: number;
+      risk_level: 'low' | 'low-medium' | 'medium' | 'high';
+      drivers: string[];
+    };
     map?: {
-      value: number
-      interpretation: string
-    }
+      value: number;
+      interpretation: string;
+    };
     occult_shock?: {
-      risk_level: 'low' | 'moderate' | 'high' | 'critical'
-      suspected: boolean
-      reasoning: string[]
-    }
-  }
+      risk_level: 'low' | 'moderate' | 'high' | 'critical';
+      suspected: boolean;
+      reasoning: string[];
+    };
+  };
   alerts: Array<{
-    id: string
-    family: 'red_flag' | 'news2' | 'early_warning' | 'trajectory' | 'governance'
-    severity: 'emergency' | 'urgent' | 'warning' | 'info'
-    title: string
-    message: string
-    action?: string
-    criteria_met?: string[]
-  }>
+    id: string;
+    family: 'red_flag' | 'news2' | 'early_warning' | 'trajectory' | 'governance';
+    severity: 'emergency' | 'urgent' | 'warning' | 'info';
+    title: string;
+    message: string;
+    action?: string;
+    criteria_met?: string[];
+  }>;
   early_warning_patterns?: Array<{
-    id: string
-    label: string
-    severity: 'high' | 'medium' | 'low'
-    reasoning: string[]
-    recommendations: string[]
-  }>
+    id: string;
+    label: string;
+    severity: 'high' | 'medium' | 'low';
+    reasoning: string[];
+    recommendations: string[];
+  }>;
   trajectory?: {
-    available: boolean
-    visit_count: number
-    overall_trend?: 'improving' | 'declining' | 'stable' | 'insufficient_data'
-    overall_risk?: 'low' | 'moderate' | 'high' | 'critical'
-    momentum_level?: string
-    deterioration_state?: 'improving' | 'stable' | 'deteriorating' | 'critical'
-    narrative?: string
+    available: boolean;
+    visit_count: number;
+    overall_trend?: 'improving' | 'declining' | 'stable' | 'insufficient_data';
+    overall_risk?: 'low' | 'moderate' | 'high' | 'critical';
+    momentum_level?: string;
+    deterioration_state?: 'improving' | 'stable' | 'deteriorating' | 'critical';
+    narrative?: string;
     recommendations?: Array<{
-      category: 'improvement' | 'concern' | 'action' | 'monitoring'
-      priority: 'high' | 'medium' | 'low'
-      text: string
-    }>
+      category: 'improvement' | 'concern' | 'action' | 'monitoring';
+      priority: 'high' | 'medium' | 'low';
+      text: string;
+    }>;
     raw_context?: {
       trajectory_context?: {
-        momentumLevel: string
-        convergencePattern: string
-        convergenceScore: number
-        worseningParams: string[]
-        isAccelerating: boolean
-        timeToCriticalDays: number | null
-        treatmentResponseNote: string
-        narrative: string
-        visitCount?: number
-      }
-      deterioration_summary_text?: string
-    }
-  }
+        momentumLevel: string;
+        convergencePattern: string;
+        convergenceScore: number;
+        worseningParams: string[];
+        isAccelerating: boolean;
+        timeToCriticalDays: number | null;
+        treatmentResponseNote: string;
+        narrative: string;
+        visitCount?: number;
+      };
+      deterioration_summary_text?: string;
+    };
+  };
   recommendations: {
-    immediate_actions: string[]
-    monitoring_actions: string[]
-    referral_actions: string[]
-    next_best_questions: string[]
-  }
+    immediate_actions: string[];
+    monitoring_actions: string[];
+    referral_actions: string[];
+    next_best_questions: string[];
+  };
   governance: {
-    disclaimer: string
-    review_required: boolean
-    authoritative_engine: 'dashboard'
-  }
+    disclaimer: string;
+    review_required: boolean;
+    authoritative_engine: 'dashboard';
+  };
 }
 ```
 

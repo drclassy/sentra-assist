@@ -1,5 +1,5 @@
 // Designed and constructed by Claudesy.
-// A.C.E. Design System — Footer with workspace info
+// A.C.E. Design System — Footer with workspace info (Carbon Neumorphism edition)
 
 import React from 'react';
 
@@ -22,13 +22,16 @@ export const SidePanelFooter: React.FC<SidePanelFooterProps> = ({
 
   return (
     <div className="footer">
-      <div 
-        className="footer-author cursor-pointer hover:text-[#10B981] transition-colors" 
+      <div
+        className="footer-author cursor-pointer hover:text-[#10B981] transition-colors"
         onClick={onShowCredits}
       >
         SENTRA-ASSIST v1.9.2-beta TRIAL | Clinical Validation
       </div>
-      <div className="footer-text">{`WS:${workspaceCode} ${sectionCode} Shell:${shellState}`}</div>
+      <div className="footer-text">
+        {`WS:${workspaceCode} · ${sectionCode} · Shell:`}
+        <span className={loadingPatient ? 'footer-status--loading' : 'footer-status--ready'}>{shellState}</span>
+      </div>
     </div>
   );
 };

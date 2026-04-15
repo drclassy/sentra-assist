@@ -1,5 +1,4 @@
 # Local AI-agent tooling and prompt files
-.agents/
 .claude/
 .codex/
 .cursor/
@@ -22,12 +21,16 @@ CURSOR-*.md
 # Local build and package manager artifacts
 node_modules/
 .output/
+dist/
 .vscode/
 .wxt/
 
 # Local environment overrides
 .env.local
 .env.*.local
+
+# Local design specs and internal planning docs
+docs/superpowers/
 
 # Test, coverage, and smoke artifacts
 coverage/

@@ -3651,34 +3651,80 @@ textarea:read-only,
 
 /* @keyframes sentra-pink-breathe removed — pink female indicator deprecated */
 
-/* Footer — shell status strip */
+/* Footer — shell status strip — Carbon Neumorphism (Claudesy dark theme) */
 .footer {
-  margin-top: 12px;
-  padding: 14px 12px 12px;
-  border-top: 1px solid var(--border-glow);
-  text-align: center;
+  margin-top: auto;
+  padding: 10px 14px 12px;
   flex-shrink: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(10, 10, 12, 0.35) 100%);
+  /* Solid carbon — bukan transparent, agar terlihat sebagai panel status */
+  background: linear-gradient(160deg, #0e0f10 0%, #0b0c0d 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 0 0 12px 12px;
+  /* Neumorphic inset — sunken status tray */
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02),
+    inset -1px 0 0 rgba(255, 255, 255, 0.015),
+    inset 1px 0 0 rgba(255, 255, 255, 0.015);
+  /* Teal left accent strip */
+  border-left: 2px solid rgba(107, 155, 138, 0.3);
+  border-right: 2px solid rgba(0, 0, 0, 0.4);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top shimmer — aluminium catch light */
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(107, 155, 138, 0.15) 30%,
+    rgba(107, 155, 138, 0.25) 50%,
+    rgba(107, 155, 138, 0.15) 70%,
+    transparent
+  );
+  pointer-events: none;
 }
 
 .footer-text {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
+  font-size: 8.5px;
   color: var(--text-muted);
   line-height: 1.55;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
   word-break: break-word;
+  opacity: 0.82;
+  /* Subtle text depth */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.footer-status--ready {
+  color: rgba(107, 155, 138, 0.9);
+  text-shadow: 0 0 8px rgba(107, 155, 138, 0.35);
+}
+
+.footer-status--loading {
+  color: rgba(180, 140, 90, 0.75);
+  text-shadow: 0 0 6px rgba(180, 140, 90, 0.3);
 }
 
 .footer-author {
-  font-size: 9px;
-  color: var(--text-muted);
-  font-weight: 600;
-  margin-bottom: 6px;
-  letter-spacing: 0.06em;
+  font-size: 8.5px;
+  color: rgba(107, 155, 138, 0.7);
+  font-weight: 700;
+  margin-bottom: 5px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(107, 155, 138, 0.25);
 }
+
 
 /* ============================================================================
    Shell Layout — sidepanel container, tabs, transitions
@@ -5085,62 +5131,96 @@ textarea:read-only,
   cursor: not-allowed;
 }
 
-/* Sentra Uplink — full-width solid dark orange-red */
+/* Sentra Uplink — carbon neumorphism (Claudesy dark theme) */
 .btn-sentra-uplink {
   flex: 1;
   display: block;
   width: 100%;
   min-height: 34px;
   padding: 7px 14px;
-  background: #0a1628;
-  border: 1px solid rgba(59, 130, 246, 0.55);
+  /* Carbon neumorphism: dark surface + directional depth */
+  background: linear-gradient(160deg, #111214 0%, #0d0d0f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  color: #f4efe6;
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.65),
+    -1px -1px 3px rgba(255, 255, 255, 0.025),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   transition:
-    background 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease;
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
 }
 .btn-sentra-uplink:hover:not(:disabled) {
-  background: #0f1f3d;
-  border-color: rgba(59, 130, 246, 0.8);
-  color: #93bbfd;
+  background: linear-gradient(160deg, #161719 0%, #101113 100%);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: var(--text-main);
+  box-shadow:
+    5px 5px 12px rgba(0, 0, 0, 0.7),
+    -1px -1px 4px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
 }
 .btn-sentra-uplink:active:not(:disabled) {
-  background: #071020;
+  transform: translateY(1px);
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.7),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 .btn-sentra-uplink:focus-visible {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  border-color: rgba(107, 155, 138, 0.45);
+  box-shadow:
+    0 0 0 2px rgba(107, 155, 138, 0.18),
+    4px 4px 10px rgba(0, 0, 0, 0.65),
+    -1px -1px 3px rgba(255, 255, 255, 0.025);
 }
 .btn-sentra-uplink:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 
-/* ── AASSIST v2 — Sentra Uplink States ───────────────────────────────────── */
+/* ── AASSIST v2 — Sentra Uplink States (carbon edition) ─────────────────── */
 .sentra-uplink--processing {
-  background: linear-gradient(90deg, #cc2200, #ff6b00) !important;
-  border-color: #ff6b00 !important;
-  color: #fff !important;
-  animation: pulse-processing 1.2s ease-in-out infinite;
+  /* Carbon pulsing — bukan orange, tetap di lane hitam */
+  background: linear-gradient(160deg, #131516 0%, #0e0f10 100%) !important;
+  border-color: rgba(107, 155, 138, 0.35) !important;
+  color: rgba(107, 155, 138, 0.9) !important;
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.65),
+    -1px -1px 3px rgba(255, 255, 255, 0.025),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 0 14px rgba(107, 155, 138, 0.18) !important;
+  animation: pulse-processing-carbon 1.4s ease-in-out infinite;
   cursor: wait;
 }
 .sentra-uplink--completed {
-  background: #007bff !important;
-  border-color: #007bff !important;
-  color: #fff !important;
-  transition: background 0.3s ease, border-color 0.3s ease;
+  /* Completed: teal accent glow (consistent dengan clinical accent) */
+  background: linear-gradient(160deg, #0f1a16 0%, #0b130f 100%) !important;
+  border-color: rgba(107, 155, 138, 0.5) !important;
+  color: rgba(107, 155, 138, 0.95) !important;
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.65),
+    0 0 16px rgba(107, 155, 138, 0.22),
+    inset 0 1px 0 rgba(107, 155, 138, 0.06) !important;
+  transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
 }
-@keyframes pulse-processing {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.78; }
+@keyframes pulse-processing-carbon {
+  0%, 100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 7px rgba(107, 155, 138, 0.18));
+  }
+  50% {
+    opacity: 0.82;
+    filter: drop-shadow(0 0 11px rgba(107, 155, 138, 0.35));
+  }
 }
 
 /* Arrow animation between uplink → kirim dokter */
@@ -5149,7 +5229,8 @@ textarea:read-only,
   align-items: center;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: #007bff;
+  /* Carbon teal — selaras dengan clinical accent */
+  color: rgba(107, 155, 138, 0.85);
   letter-spacing: -1px;
   animation: arrow-slide 0.5s ease forwards;
   margin: 0 4px;
@@ -5159,16 +5240,25 @@ textarea:read-only,
   to   { transform: translateX(0);     opacity: 1; }
 }
 
-/* Kirim Dokter — blue state when uplink completed */
+/* Kirim Dokter — completed state (carbon teal) */
 .btn--blue {
-  background: #007bff !important;
-  border-color: #007bff !important;
-  color: #fff !important;
+  background: linear-gradient(160deg, #0f1a16 0%, #0b130f 100%) !important;
+  border-color: rgba(107, 155, 138, 0.5) !important;
+  color: rgba(107, 155, 138, 0.95) !important;
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.65),
+    0 0 12px rgba(107, 155, 138, 0.18),
+    inset 0 1px 0 rgba(107, 155, 138, 0.05) !important;
 }
 .btn--blue:hover:not(:disabled) {
-  background: #0056cc !important;
-  border-color: #0056cc !important;
+  background: linear-gradient(160deg, #122018 0%, #0d1610 100%) !important;
+  border-color: rgba(107, 155, 138, 0.7) !important;
+  box-shadow:
+    5px 5px 12px rgba(0, 0, 0, 0.7),
+    0 0 18px rgba(107, 155, 138, 0.28),
+    inset 0 1px 0 rgba(107, 155, 138, 0.06) !important;
 }
+
 
 /* ── AASSIST v2 — AVPU Suggestion + Confirmed ────────────────────────────── */
 .avpu-suggestion {

@@ -82,9 +82,30 @@ function formatKeluhanUtama(text: string): string {
 }
 
 /**
- * Expand keluhan_tambahan (additional complaints) to minimum 100-120 words
- * - Add clinical context
- * - Maintain medical professionalism
+ * Truncate text to a maximum word count, cutting at the last sentence boundary.
+ * Prevents ePuskesmas form validation errors (field limit: 225 words).
+ */
+function truncateToWordLimit(text: string, maxWords: number): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text.trim();
+
+  // Trim to maxWords and try to end on a sentence boundary
+  const truncated = words.slice(0, maxWords).join(' ');
+  const lastPeriod = Math.max(
+    truncated.lastIndexOf('. '),
+    truncated.lastIndexOf('! '),
+    truncated.lastIndexOf('? ')
+  );
+  if (lastPeriod > truncated.length * 0.6) {
+    // Sentence boundary found in the last 40% — cut there cleanly
+    return truncated.slice(0, lastPeriod + 1).trim();
+  }
+  return truncated.trim();
+}
+
+/**
+ * Expand keluhan_tambahan (additional complaints) to minimum 100-120 words.
+ * Hard cap at 220 words to stay within ePuskesmas field limit (225 words).
  */
 function expandKeluhanTambahan(text: string): string {
   if (!text || text.trim().length === 0) return text;
@@ -94,8 +115,8 @@ function expandKeluhanTambahan(text: string): string {
   // Count current words
   const wordCount = expanded.split(/\s+/).length;
 
-  // If already 100+ words, return as is
-  if (wordCount >= 100) return expanded;
+  // If already 100+ words, skip expansion but still enforce max cap
+  if (wordCount >= 100) return truncateToWordLimit(expanded, 220);
 
   // Add clinical context based on chief complaint
   const additions: string[] = [];
@@ -145,7 +166,9 @@ function expandKeluhanTambahan(text: string): string {
     expanded += ' ' + additions.join('. ') + '.';
   }
 
-  // Final word count check
+  // Apply hard cap before returning — ePuskesmas limit is 225 words
+  expanded = truncateToWordLimit(expanded, 220);
+
   const finalWordCount = expanded.split(/\s+/).length;
   anamnesaLog.debug(`[Keluhan Tambahan] Expanded from ${wordCount} to ${finalWordCount} words`);
 

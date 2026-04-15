@@ -10,7 +10,7 @@
 The intelligent connector between ePuskesmas and AI-powered clinical decision support.
 
 [![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](package.json)
-[![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/Claudesy/sentra-assist/ci.yml?label=CI&logo=github)](https://github.com/Claudesy/sentra-assist/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Built with WXT](https://img.shields.io/badge/Built%20with-WXT-purple)](https://wxt.dev/)
@@ -380,4 +380,5 @@ pnpm --filter @the-abyss/sentra-assist zip:firefox
 
 Designed and constructed by **Claudesy** (dr. Ferdi Iskandar).
 Maintained by **Sentra Artificial Intelligence**.
-License: **ISC** — see [LICENSE](LICENSE) for full text.
+License: **Proprietary Commercial** — see [LICENSE](LICENSE) for full terms.
+All rights reserved. Commercial licensing inquiries: [sentra-dfi.com](https://sentra-dfi.com)

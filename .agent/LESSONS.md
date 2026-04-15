@@ -13,23 +13,23 @@
 **New rule:** .agent/ at ANY level = CONTEXT.md, PROGRESS.md, HANDOFF.md, LESSONS.md, DECISIONS.md, sessions/ — nothing else at root level of the folder
 **Trigger:** Any .agent/ initialization or audit
 
-### [2026-04-10] Session logs written only to .agent/sessions/ missing Sentratorium
-**Mistake:** Agent wrote session log to .agent/sessions/ but did not update docs/sentratorium/latest.md and AGENT_SESSION_LOG.md
-**New rule:** Every session that changes code MUST update BOTH: (1) .agent/sessions/YYYY-MM-DD.md AND (2) docs/sentratorium/latest.md + docs/sentratorium/AGENT_SESSION_LOG.md
+### [2026-04-10] Session logs written only to .agent/sessions/ missing audit trail
+**Mistake:** Agent wrote session log to .agent/sessions/ but did not keep the session log complete.
+**New rule:** Every session that changes code MUST update .agent/sessions/YYYY-MM-DD.md as the single source of truth.
 **Trigger:** Every session end, every JET J9 commit
 
 ### [2026-04-10] AGENTS.md Section 8 pointed to wrong docs path
-**Mistake:** AGENTS.md said documentation goes to /documentation/ — but real system is docs/sentratorium/
-**New rule:** All documentation path references in AGENTS.md must point to docs/sentratorium/ for session logs and docs/adr/ for architectural decisions
+**Mistake:** AGENTS.md said documentation goes to /documentation/ — but real system is .agent/sessions/
+**New rule:** All documentation path references in AGENTS.md must point to .agent/sessions/ for session logs and docs/adr/ for architectural decisions
 **Trigger:** Any update to AGENTS.md documentation section
 
 ### [2026-04-10] Sentra Assist kept two memory systems after deprecating one
-**Mistake:** `sentra-assist` kept referencing `docs/sentratorium/` and `docs/superpowers/` after the team decided `.agent/` should be the only operational memory system.
+**Mistake:** `sentra-assist` kept referencing external docs and `docs/superpowers/` after the team decided `.agent/` should be the only operational memory system.
 **New rule:** For `sentra-assist`, `.agent/` is the only operational memory source. Legacy systems may exist in history, but they must not stay in active instructions, handoff flow, or checklists.
 **Trigger:** Any update to `AGENTS.md`, `.agent/*`, or session logging workflow
 
 ### [2026-04-10] Dual-log rule is superseded for sentra-assist
-**Mistake:** Historical entries in this file still describe a dual-log workflow using `docs/sentratorium/`.
+**Mistake:** Historical entries in this file still describe a dual-log workflow using external docs.
 **New rule:** For `sentra-assist`, those entries are historical only. The active rule is singular: update `.agent/PROGRESS.md` and `.agent/sessions/YYYY-MM-DD.md`.
 **Trigger:** Any time an agent reads older entries and is unsure which rule is active
 

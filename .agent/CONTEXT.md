@@ -31,7 +31,7 @@
 - Session state, progress, handoff, lessons, and decisions live in `.agent/`
 - Technical documentation lives in `docs/`
 - ADRs live in `docs/adr/`
-- Legacy systems `docs/sentratorium/` and `docs/superpowers/` are deprecated and must not be used as operational memory
+- Legacy system `docs/superpowers/` is deprecated and must not be used as operational memory
 
 ## Critical Commands
 

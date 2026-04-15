@@ -18,6 +18,22 @@
     {
       "tagName": "@internal",
       "syntaxKind": "modifier"
+    },
+    {
+      "tagName": "@module",
+      "syntaxKind": "block"
+    },
+    {
+      "tagName": "@reference",
+      "syntaxKind": "block"
+    },
+    {
+      "tagName": "@sync-with",
+      "syntaxKind": "block"
+    },
+    {
+      "tagName": "@version",
+      "syntaxKind": "block"
     }
   ],
   "supportForTags": {

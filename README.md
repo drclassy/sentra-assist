@@ -90,7 +90,7 @@ The core decision support engine processes every patient encounter through a str
 
 | DAS Layer | Mechanism |
 |-----------|-----------|
-| **DOM Scanner** | Analyzes ePuskesmas page structure, extracts form element signatures |
+| **DAS Scanner** | Analyzes ePuskesmas page structure, extracts form element signatures |
 | **Semantic Mapper** | Gemini Vision-based field semantic understanding |
 | **Field Classifier** | Categorizes fields by clinical role |
 | **Safety Validator** | Prevents filling wrong fields, validates types before injection |
@@ -247,7 +247,7 @@ DAS surfaces clinical data from the active ePuskesmas session into the intellige
 ePuskesmas Page Loads
         │
         ▼
-DAS DOM Scanner — enumerate all inputs
+DAS Scanner — enumerate all inputs
         │
         ▼
 Field Classifier + Semantic Mapper (Gemini Vision fallback)
@@ -281,7 +281,7 @@ sentra-assist/
 │   ├── clinical/              ← Vital autocomplete, dosage DB, triage builder, AAssist v2
 │   ├── iskandar-diagnosis-engine/ ← 8-step pipeline (31 files)
 │   ├── emergency-detector/    ← 4 gates: TTV, HTN, Glucose, Shock
-│   ├── scraper/               ← Static DOM extractors
+│   ├── scraper/               ← Static field extractors
 │   │   └── adaptive/          ← DAS: AI-powered adaptive field detection (11 modules)
 │   ├── rag/                   ← ICD-10 RAG search
 │   ├── handlers/              ← Page-specific fill handlers (anamnesa, diagnosa, resep)

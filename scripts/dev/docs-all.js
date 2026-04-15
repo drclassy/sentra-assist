@@ -13,7 +13,7 @@
  */
 
 const { execSync } = require('child_process');
-const path = require('path');
+const _path = require('path');
 
 console.log('🚀 Starting Complete Documentation Workflow\n');
 console.log('='.repeat(60));
@@ -23,8 +23,8 @@ console.log('\n📝 Step 1/3: Auto-generating missing documentation...\n');
 try {
   execSync('npm run docs:auto', { stdio: 'inherit' });
   console.log('\n✅ Auto-documentation complete!');
-} catch (error) {
-  console.error('❌ Auto-documentation failed:', error.message);
+} catch (_error) {
+  console.error('❌ Auto-documentation failed:', _error.message);
   process.exit(1);
 }
 
@@ -33,8 +33,8 @@ console.log('\n📚 Step 2/3: Generating HTML documentation...\n');
 try {
   execSync('npm run docs:generate', { stdio: 'inherit' });
   console.log('\n✅ HTML documentation generated!');
-} catch (error) {
-  console.error('❌ Documentation generation failed:', error.message);
+} catch (_error) {
+  console.error('❌ Documentation generation failed:', _error.message);
   process.exit(1);
 }
 
@@ -42,7 +42,7 @@ try {
 console.log('\n🌐 Step 3/3: Opening documentation in browser...\n');
 try {
   execSync('npm run docs:serve', { stdio: 'inherit' });
-} catch (error) {
+} catch (_error) {
   // Server might already be running, that's okay
   console.log('\n⚠️  Server might already be running on port 8080');
   console.log('📖 Documentation available at: http://localhost:8080');

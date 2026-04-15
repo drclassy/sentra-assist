@@ -42,5 +42,25 @@ export default tseslint.config(
       'prototype/**',
       'postcss.config.js',
     ],
+  },
+  {
+    // Scripts run in Node/CommonJS — allow require, process, __dirname, and console
+    files: ['scripts/**', 'scripts/**/*.js', 'scripts/**/*.mjs'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        require: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off',
+      'no-console': 'off',
+    },
   }
 )

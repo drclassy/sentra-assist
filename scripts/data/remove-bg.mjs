@@ -8,15 +8,15 @@ import sharp from 'sharp';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const inputPath = path.join(__dirname, '../public/pkm.jpg');
-const outputPath = path.join(__dirname, '../public/pkm.png');
+const __dirnamePath = path.dirname(fileURLToPath(import.meta.url));
+const inputPath = path.join(__dirnamePath, '../public/pkm.jpg');
+const outputPath = path.join(__dirnamePath, '../public/pkm.png');
 
 async function removeWhiteBackground() {
   try {
     // Read the image
     const image = sharp(inputPath);
-    const { width, height } = await image.metadata();
+    const { width: _width, height: _height } = await image.metadata();
 
     // Get raw pixel data
     const { data, info } = await image
@@ -60,8 +60,8 @@ async function removeWhiteBackground() {
       .toFile(outputPath);
 
     console.log(`✓ Created ${outputPath} with transparent background`);
-  } catch (error) {
-    console.error('Error:', error);
+  } catch (_error) {
+    console.error('Error:', _error);
     process.exit(1);
   }
 }

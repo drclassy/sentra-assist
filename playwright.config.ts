@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 const EXTENSION_PATH = path.resolve(__dirname, '.output/chrome-mv3-dev');
-const TEST_PROFILE = path.resolve(__dirname, 'tests/e2e/.test-profile');
+const _TEST_PROFILE = path.resolve(__dirname, 'tests/e2e/.test-profile');
 const AUTH_FILE = path.resolve(__dirname, 'tests/e2e/auth.json');
 
 const storageState = fs.existsSync(AUTH_FILE) ? AUTH_FILE : undefined;

@@ -6,8 +6,8 @@
  */
 
 const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const _fs = require('fs');
+const _path = require('path');
 
 // Configuration
 const CONFIG = {
@@ -30,7 +30,7 @@ function git(command) {
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
     }).trim();
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -222,7 +222,7 @@ switch (command) {
   case 'push':
     autoCommitAndPush();
     break;
-  case 'watch':
+  case 'watch': {
     const interval = parseInt(args[1]) || CONFIG.intervalMinutes;
     if (interval === 0) {
       console.log('❌ Please specify interval in minutes: npm run commit:watch 5');
@@ -231,6 +231,7 @@ switch (command) {
     CONFIG.intervalMinutes = interval;
     watchMode();
     break;
+  }
   default:
     autoCommit();
 }

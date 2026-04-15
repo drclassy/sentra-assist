@@ -23,7 +23,7 @@ const TARGET_DIRS = process.argv[2]
 const VALID_EXTENSIONS = ['.ts', '.tsx'];
 
 // Patterns to detect undocumented exports
-const EXPORT_PATTERNS = [
+const _EXPORT_PATTERNS = [
   /export\s+(async\s+)?function\s+(\w+)/g,
   /export\s+class\s+(\w+)/g,
   /export\s+interface\s+(\w+)/g,

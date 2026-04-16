@@ -11,7 +11,7 @@
 <table>
   <tr>
     <td width="30%" align="center" valign="middle">
-      <img src="https://github.com/Claudesy/sentra-assist/blob/master/public/assist.png?raw=true" alt="Sentra Assist" width="200"/>
+      <img src="https://github.com/Avvicenna/sentra-assist/blob/master/public/assist.png?raw=true" alt="Sentra Assist" width="200"/>
       <br/><br/>
       <strong>SENTRA ASSIST</strong>
     </td>
@@ -29,12 +29,12 @@
 
 [![Version](https://img.shields.io/badge/version-1.0.1-blue?style=for-the-badge)](package.json)
 [![License](https://img.shields.io/badge/License-Community%20%2F%20Enterprise-orange?style=for-the-badge)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/Claudesy/sentra-assist/ci.yml?label=CI&logo=github&style=for-the-badge)](https://github.com/Claudesy/sentra-assist/actions)
+[![CI](https://img.shields.io/github/actions/workflow/status/Avvcenna+/sentra-assist/ci.yml?label=CI&logo=github&style=for-the-badge)](https://github.com/Avvicenna/sentra-assist/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Built with WXT](https://img.shields.io/badge/Built%20with-WXT-7C3AED?style=for-the-badge)](https://wxt.dev/)
 [![Platform](https://img.shields.io/badge/Platform-Sentra%20AI-FE4900?style=for-the-badge)](https://sentrahai.com)
 
-_Designed and built by [Claudesy](https://github.com/Claudesy) (dr. Ferdi Iskandar)_
+_Designed and built by [Avvcenna+](https://github.com/Avvicenna) (dr. Ferdi Iskandar)_
 
 > **"Diagnosis bukan tebakan — setiap keputusan klinis harus bisa dipertanggungjawabkan."** — dr. Ferdi Iskandar, Founder
 
@@ -478,7 +478,7 @@ Commercial licensing: [sentrahai.com](https://sentrahai.com)
 
 ## 🤖 Self-Healing CI
 
-This project is equipped with **Auto-Fix** capabilities via `claudesy-devkit`.
+This project is equipped with **Auto-Fix** capabilities via `Avvcenna+-devkit`.
 If CI fails due to formatting or minor linting issues:
 
 1. The **Auto-Fix CI** bot triggers automatically.
@@ -490,7 +490,7 @@ If CI fails due to formatting or minor linting issues:
 
 <div align="center">
 
-Designed and built by **[Claudesy](https://github.com/Claudesy)** (dr. Ferdi Iskandar)
+Designed and built by **[Avvcenna+](https://github.com/Avvicenna)** (dr. Ferdi Iskandar)
 Maintained by **Sentra Artificial Intelligence**
 
 </div>

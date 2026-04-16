@@ -29,7 +29,7 @@ export interface AuthUser {
 
 /**
  * AuthTokens interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -43,7 +43,7 @@ export interface AuthTokens {
 
 /**
  * AuthSession interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -147,7 +147,7 @@ export async function isAuthenticated(): Promise<boolean> {
 
 /**
  * getAccessToken
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -160,7 +160,7 @@ export async function getAccessToken(): Promise<string | null> {
 
 /**
  * getServerBaseUrl
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

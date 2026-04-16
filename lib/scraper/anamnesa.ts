@@ -37,7 +37,7 @@ const getSelectValue = (selector: string): string => {
 
 /**
  * AnamnesaScrapeResult interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15

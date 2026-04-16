@@ -16,7 +16,7 @@ export type AvpuLevel = 'A' | 'V' | 'P' | 'U';
 
 /**
  * AvpuResult interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -55,7 +55,7 @@ const COLOR_ABNORMAL = '#FF6B00';
 
 /**
  * VitalsForAvpu interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -71,7 +71,7 @@ export interface VitalsForAvpu {
 
 /**
  * determineAVPU
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

@@ -21,7 +21,7 @@ export interface CorrectionSuggestion {
 
 /**
  * SymptomInput interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15

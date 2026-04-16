@@ -50,7 +50,7 @@ export interface BridgeEntry {
 
 /**
  * BridgeEntryDetail interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -93,7 +93,7 @@ const STORAGE_KEY = 'sentra:bridge-config';
 
 /**
  * BridgeConfig interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -106,7 +106,7 @@ export interface BridgeConfig {
 
 /**
  * BridgeAuthSource type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -115,7 +115,7 @@ export interface BridgeConfig {
 export type BridgeAuthSource = 'none' | 'dashboard-session' | 'automation-token';
 /**
  * BridgeRuntimeReadiness type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -130,7 +130,7 @@ export type BridgeRuntimeReadiness =
 
 /**
  * BridgeRuntimeStatus interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -170,7 +170,7 @@ async function getBridgeAuthSource(): Promise<BridgeAuthSource> {
 
 /**
  * getBridgeConfig
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -196,7 +196,7 @@ export async function getBridgeConfig(): Promise<BridgeConfig> {
 
 /**
  * saveBridgeConfig
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -244,7 +244,7 @@ export async function fetchPendingEntries(): Promise<BridgeEntry[]> {
 
 /**
  * fetchEntryDetail
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -258,7 +258,7 @@ export async function fetchEntryDetail(id: string): Promise<BridgeEntryDetail> {
 
 /**
  * claimEntry
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -274,7 +274,7 @@ export async function claimEntry(id: string): Promise<void> {
 
 /**
  * reportProcessing
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -289,7 +289,7 @@ export async function reportProcessing(id: string): Promise<void> {
 
 /**
  * reportComplete
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -304,7 +304,7 @@ export async function reportComplete(id: string, result: RMETransferResult): Pro
 
 /**
  * reportFailed
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -365,7 +365,7 @@ function getBridgeVerificationMessage(authSource: BridgeAuthSource): string {
 
 /**
  * getBridgeRuntimeStatus
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -462,7 +462,7 @@ export async function getBridgeRuntimeStatus(): Promise<BridgeRuntimeStatus> {
 
 /**
  * CanonicalPregnancyStatus type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -472,7 +472,7 @@ export type CanonicalPregnancyStatus = 'hamil' | 'tidak_hamil' | 'tidak_relevan'
 
 /**
  * CanonicalTriageInput interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -563,7 +563,7 @@ export interface CanonicalTriageInput {
 
 /**
  * CanonicalClinicalEngineOutput interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -658,7 +658,7 @@ interface CanonicalEngineResponse {
 
 /**
  * CanonicalDifferentialInput interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -698,7 +698,7 @@ export interface CanonicalDifferentialInput {
 
 /**
  * CanonicalDifferentialOutput interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -846,7 +846,7 @@ function isAnamnesisMissingField(value: unknown): value is AnamnesisMissingField
 
 /**
  * isAnamnesisExtractionResult
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -904,7 +904,7 @@ export function isAnamnesisExtractionResult(value: unknown): value is AnamnesisE
 
 /**
  * isCanonicalClinicalEngineOutput
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -941,7 +941,7 @@ export function isCanonicalClinicalEngineOutput(
 
 /**
  * isCanonicalDifferentialOutput
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -969,7 +969,7 @@ export function isCanonicalDifferentialOutput(
 
 /**
  * ConsultPayload interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -1107,7 +1107,7 @@ export function filterDoctorsForDisplay(doctors: OnlineDoctor[]): OnlineDoctor[]
 
 /**
  * getOnlineDoctors
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -1129,7 +1129,7 @@ export async function getOnlineDoctors(): Promise<OnlineDoctor[]> {
 
 /**
  * sendConsultToDoctor
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -1174,7 +1174,7 @@ export async function sendConsultToDoctor(
 
 /**
  * evaluateCanonicalClinicalEngine
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -1198,7 +1198,7 @@ export async function evaluateCanonicalClinicalEngine(
 
 /**
  * evaluateCanonicalDifferential
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -1225,7 +1225,7 @@ export async function evaluateCanonicalDifferential(
 
 /**
  * extractClinicalAnamnesis
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -1297,7 +1297,7 @@ interface PatientSyncResponse {
 
 /**
  * PatientSyncResult interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15

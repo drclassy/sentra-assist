@@ -44,7 +44,7 @@ import { browser } from 'wxt/browser';
 
 /**
  * ScreeningAlert interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -72,7 +72,7 @@ export interface ScreeningAlert {
 
 /**
  * TTVInferenceData interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -332,7 +332,7 @@ const ttvLog = createLogger('TTVInferenceUI', 'content');
 
 /**
  * getDoctorInitials
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -348,7 +348,7 @@ export const getDoctorInitials = (name: string): string =>
 
 /**
  * formatLastSeenRelative
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -372,7 +372,7 @@ export const formatLastSeenRelative = (iso?: string): string => {
 
 /**
  * toSafeAutoTextReason
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -459,7 +459,7 @@ const humanize = (value: string): string => value.replace(/_/g, ' ').replace(/\s
 
 /**
  * matchesPreferredPoli
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -476,7 +476,7 @@ export const matchesPreferredPoli = (doctor: OnlineDoctor, keywords: string[]): 
 
 /**
  * matchesPreferredFacility
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -562,7 +562,7 @@ const buildForwardSummary = ({
 
 /**
  * buildAlerts
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -987,7 +987,7 @@ const buildSenautoOutput = (draft: ComposedAnamnesaDraft, summary: string): stri
 
 /**
  * buildCanonicalVitalOutput
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -1143,7 +1143,7 @@ async function patientPseudonymToken(rm: string): Promise<string> {
 
 /**
  * TTVInferenceUI
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

@@ -1,6 +1,6 @@
 /**
  * VitalScreeningProfile interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -45,7 +45,7 @@ function pediatricHypotensionFloor(age: number): number {
 
 /**
  * getVitalScreeningProfile
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

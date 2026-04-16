@@ -15,7 +15,7 @@ const SOURCE_RANK: Record<FieldSource, number> = {
 
 /**
  * FieldMeta interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -60,7 +60,7 @@ export interface OverrideAttemptLog {
 
 /**
  * buildBlockedOverrideLog
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

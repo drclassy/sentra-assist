@@ -46,15 +46,15 @@ _Designed and built by [Claudesy](https://github.com/Claudesy) (dr. Ferdi Iskand
 
 A generic CDSS treats every patient as a global baseline. Sentra Assist treats every patient as a member of a specific Indonesian primary healthcare population — with the disease priors, drug availability, and clinical context that actually exists at the puskesmas level.
 
-| Dimension | Generic CDSS | Sentra Assist |
-|---|---|---|
-| **Disease priors** | Foreign textbook static values | Bayesian weights from 45,030 real Indonesian cases |
-| **Emergency detection** | Single threshold rules | 4-gate protocol: TTV inference → HTN crisis → Glucose crisis → Occult shock |
-| **Drug interaction check** | Limited or cloud-only | 173,071+ DDI entries (DDInter 2.0), runs offline |
-| **Form automation** | None | DAS adaptive extraction + full anamnesa / diagnosa / resep auto-fill |
-| **RME integration** | Manual double-entry | Transfer orchestrator with retry, deduplication, and session bridge |
-| **Safety architecture** | Soft warnings | Non-overridable Traffic Light gate before every suggestion |
-| **AI reasoning** | Single model | DeepSeek R1 + Vertex AI Gemini with KB-only offline fallback |
+| Dimension                  | Generic CDSS                   | Sentra Assist                                                               |
+| -------------------------- | ------------------------------ | --------------------------------------------------------------------------- |
+| **Disease priors**         | Foreign textbook static values | Bayesian weights from 45,030 real Indonesian cases                          |
+| **Emergency detection**    | Single threshold rules         | 4-gate protocol: TTV inference → HTN crisis → Glucose crisis → Occult shock |
+| **Drug interaction check** | Limited or cloud-only          | 173,071+ DDI entries (DDInter 2.0), runs offline                            |
+| **Form automation**        | None                           | DAS adaptive extraction + full anamnesa / diagnosa / resep auto-fill        |
+| **RME integration**        | Manual double-entry            | Transfer orchestrator with retry, deduplication, and session bridge         |
+| **Safety architecture**    | Soft warnings                  | Non-overridable Traffic Light gate before every suggestion                  |
+| **AI reasoning**           | Single model                   | DeepSeek R1 + Vertex AI Gemini with KB-only offline fallback                |
 
 ---
 
@@ -64,11 +64,11 @@ A generic CDSS treats every patient as a global baseline. Sentra Assist treats e
 
 **Target Users:**
 
-| Persona | Role | Pain Point Solved |
-|---|---|---|
-| General Practitioner | Patient encounters, diagnosis | Diagnostic uncertainty, ICD-10 coding, prescription safety |
-| Nurse / Perawat | Vital sign recording, anamnesis | Form double-entry, TTV completeness |
-| Clinical Administrator | Referral coordination | RME transfer errors, incomplete referral data |
+| Persona                | Role                            | Pain Point Solved                                          |
+| ---------------------- | ------------------------------- | ---------------------------------------------------------- |
+| General Practitioner   | Patient encounters, diagnosis   | Diagnostic uncertainty, ICD-10 coding, prescription safety |
+| Nurse / Perawat        | Vital sign recording, anamnesis | Form double-entry, TTV completeness                        |
+| Clinical Administrator | Referral coordination           | RME transfer errors, incomplete referral data              |
 
 ---
 
@@ -89,67 +89,67 @@ A generic CDSS treats every patient as a global baseline. Sentra Assist treats e
 
 ### Emergency Detection
 
-| # | Feature | Status | Primary User |
-|---|---------|--------|--------------|
-| 1 | TTV Inference — Gate 1 | ✅ Live | Doctor, Nurse |
-| 2 | Hypertension Crisis Triage — Gate 2 | ✅ Live | Doctor |
-| 3 | Glucose Crisis Management — Gate 3 | ✅ Live | Doctor |
-| 4 | Occult Shock Detector — Gate 4 | ✅ Live | Doctor |
-| 5 | Hypoglycemia 15-15 Interactive Timer | ✅ Live | Doctor, Nurse |
+| #   | Feature                              | Status  | Primary User  |
+| --- | ------------------------------------ | ------- | ------------- |
+| 1   | TTV Inference — Gate 1               | ✅ Live | Doctor, Nurse |
+| 2   | Hypertension Crisis Triage — Gate 2  | ✅ Live | Doctor        |
+| 3   | Glucose Crisis Management — Gate 3   | ✅ Live | Doctor        |
+| 4   | Occult Shock Detector — Gate 4       | ✅ Live | Doctor        |
+| 5   | Hypoglycemia 15-15 Interactive Timer | ✅ Live | Doctor, Nurse |
 
 ### Iskandar Diagnosis Engine
 
-| # | Feature | Status | Primary User |
-|---|---------|--------|--------------|
-| 6 | Red Flag Checker (sepsis, ACS, stroke, preeclampsia, anaphylaxis) | ✅ Live | Doctor |
-| 7 | Symptom Matcher — 159-disease knowledge base | ✅ Live | Doctor |
-| 8 | Epidemiology Weights — 45,030 Indonesian cases | ✅ Live | Doctor |
-| 9 | LLM Reasoner — DeepSeek R1 + Vertex AI Gemini | ✅ Live | Doctor |
-| 10 | Traffic Light Safety Gate | ✅ Live | Doctor |
-| 11 | ICD-10 RAG Search | ✅ Live | Doctor |
-| 12 | Diagnosis Confidence Meter | ✅ Live | Doctor |
-| 13 | Clinical Differential Display | ✅ Live | Doctor |
+| #   | Feature                                                           | Status  | Primary User |
+| --- | ----------------------------------------------------------------- | ------- | ------------ |
+| 6   | Red Flag Checker (sepsis, ACS, stroke, preeclampsia, anaphylaxis) | ✅ Live | Doctor       |
+| 7   | Symptom Matcher — 159-disease knowledge base                      | ✅ Live | Doctor       |
+| 8   | Epidemiology Weights — 45,030 Indonesian cases                    | ✅ Live | Doctor       |
+| 9   | LLM Reasoner — DeepSeek R1 + Vertex AI Gemini                     | ✅ Live | Doctor       |
+| 10  | Traffic Light Safety Gate                                         | ✅ Live | Doctor       |
+| 11  | ICD-10 RAG Search                                                 | ✅ Live | Doctor       |
+| 12  | Diagnosis Confidence Meter                                        | ✅ Live | Doctor       |
+| 13  | Clinical Differential Display                                     | ✅ Live | Doctor       |
 
 ### Drug Safety
 
-| # | Feature | Status | Primary User |
-|---|---------|--------|--------------|
-| 14 | DDI Checker — 173,071+ interactions (DDInter 2.0) | ✅ Live | Doctor |
-| 15 | Pharmacotherapy Reasoner | ✅ Live | Doctor |
-| 16 | Dosage Calculator — Pediatric + Geriatric | ✅ Live | Doctor |
-| 17 | Prescription Form Auto-fill (ResepForm) | ✅ Live | Doctor |
+| #   | Feature                                           | Status  | Primary User |
+| --- | ------------------------------------------------- | ------- | ------------ |
+| 14  | DDI Checker — 173,071+ interactions (DDInter 2.0) | ✅ Live | Doctor       |
+| 15  | Pharmacotherapy Reasoner                          | ✅ Live | Doctor       |
+| 16  | Dosage Calculator — Pediatric + Geriatric         | ✅ Live | Doctor       |
+| 17  | Prescription Form Auto-fill (ResepForm)           | ✅ Live | Doctor       |
 
 ### Clinical Analytics
 
-| # | Feature | Status | Primary User |
-|---|---------|--------|--------------|
-| 18 | Clinical Trajectory Analyzer — 5-visit trend | ✅ Live | Doctor |
-| 19 | Mortality Proxy Scoring | ✅ Live | Doctor |
-| 20 | Chronic Disease Classifier — 11 categories | ✅ Live | Doctor |
-| 21 | Vital Sign Screening Profiles (age-stratified) | ✅ Live | Doctor, Nurse |
+| #   | Feature                                        | Status  | Primary User  |
+| --- | ---------------------------------------------- | ------- | ------------- |
+| 18  | Clinical Trajectory Analyzer — 5-visit trend   | ✅ Live | Doctor        |
+| 19  | Mortality Proxy Scoring                        | ✅ Live | Doctor        |
+| 20  | Chronic Disease Classifier — 11 categories     | ✅ Live | Doctor        |
+| 21  | Vital Sign Screening Profiles (age-stratified) | ✅ Live | Doctor, Nurse |
 
 ### DAS — Form Automation
 
-| # | Feature | Status | Primary User |
-|---|---------|--------|--------------|
-| 22 | DAS Scanner — adaptive field discovery | ✅ Live | System |
-| 23 | Gemini Vision Field Classifier | ✅ Live | System |
-| 24 | Confidence-Scored Field Mapping | ✅ Live | System |
-| 25 | Self-Healing Remapper | ✅ Live | System |
-| 26 | Learning Store — per-facility persistence | ✅ Live | System |
-| 27 | Anamnesa Page Auto-fill | ✅ Live | Doctor, Nurse |
-| 28 | Diagnosa Page Auto-fill | ✅ Live | Doctor |
-| 29 | Resep Page Auto-fill | ✅ Live | Doctor |
+| #   | Feature                                   | Status  | Primary User  |
+| --- | ----------------------------------------- | ------- | ------------- |
+| 22  | DAS Scanner — adaptive field discovery    | ✅ Live | System        |
+| 23  | Gemini Vision Field Classifier            | ✅ Live | System        |
+| 24  | Confidence-Scored Field Mapping           | ✅ Live | System        |
+| 25  | Self-Healing Remapper                     | ✅ Live | System        |
+| 26  | Learning Store — per-facility persistence | ✅ Live | System        |
+| 27  | Anamnesa Page Auto-fill                   | ✅ Live | Doctor, Nurse |
+| 28  | Diagnosa Page Auto-fill                   | ✅ Live | Doctor        |
+| 29  | Resep Page Auto-fill                      | ✅ Live | Doctor        |
 
 ### Integration & Security
 
-| # | Feature | Status | Primary User |
-|---|---------|--------|--------------|
-| 30 | Dashboard Bridge — real-time polling | ✅ Live | System |
-| 31 | RME Transfer Orchestrator | ✅ Live | Doctor |
-| 32 | Dashboard-backed Auth (shared user accounts) | ✅ Live | All |
-| 33 | PII Anonymizer | ✅ Live | System |
-| 34 | Audit Trail — SHA-256 blockchain-lite chain | ✅ Live | System |
+| #   | Feature                                      | Status  | Primary User |
+| --- | -------------------------------------------- | ------- | ------------ |
+| 30  | Dashboard Bridge — real-time polling         | ✅ Live | System       |
+| 31  | RME Transfer Orchestrator                    | ✅ Live | Doctor       |
+| 32  | Dashboard-backed Auth (shared user accounts) | ✅ Live | All          |
+| 33  | PII Anonymizer                               | ✅ Live | System       |
+| 34  | Audit Trail — SHA-256 blockchain-lite chain  | ✅ Live | System       |
 
 ---
 
@@ -157,12 +157,12 @@ A generic CDSS treats every patient as a global baseline. Sentra Assist treats e
 
 ### Prerequisites
 
-| Requirement | Version | Notes |
-|---|---|---|
-| Node.js | ≥ 22.x | Required for WXT toolchain |
-| pnpm | ≥ 9.x | Workspace package manager |
-| Google Cloud Project | — | Vertex AI API enabled |
-| Sentra Dashboard Account | — | Required for auth and patient sync |
+| Requirement              | Version | Notes                              |
+| ------------------------ | ------- | ---------------------------------- |
+| Node.js                  | ≥ 22.x  | Required for WXT toolchain         |
+| pnpm                     | ≥ 9.x   | Workspace package manager          |
+| Google Cloud Project     | —       | Vertex AI API enabled              |
+| Sentra Dashboard Account | —       | Required for auth and patient sync |
 
 ### Installation
 
@@ -193,6 +193,7 @@ pnpm --filter @the-abyss/sentra-assist dev:firefox
 ```
 
 Load unpacked:
+
 - **Chrome:** `chrome://extensions` → Enable Developer Mode → Load Unpacked → `.output/chrome-mv3-dev/`
 - **Firefox:** `about:debugging` → Load Temporary Add-on → `.output/firefox-mv2-dev/manifest.json`
 
@@ -233,13 +234,13 @@ Classifies 8 HTN types per FKTP 2024 guidelines, detects Hypertensive Mediated O
 
 **Classification Matrix:**
 
-| Type | Criteria | Action |
-|---|---|---|
-| HTN Urgency | SBP ≥180, no organ damage | Oral antihypertensive, 1h recheck |
-| HTN Emergency | SBP ≥180 + organ damage signs | Captopril SL, immediate referral |
-| Resistant HTN | BP uncontrolled on 3+ drugs | Specialist referral |
-| White-coat HTN | High in-clinic, normal ambulatory | Ambulatory monitoring |
-| Masked HTN | Normal in-clinic, high ambulatory | 24h monitoring |
+| Type           | Criteria                          | Action                            |
+| -------------- | --------------------------------- | --------------------------------- |
+| HTN Urgency    | SBP ≥180, no organ damage         | Oral antihypertensive, 1h recheck |
+| HTN Emergency  | SBP ≥180 + organ damage signs     | Captopril SL, immediate referral  |
+| Resistant HTN  | BP uncontrolled on 3+ drugs       | Specialist referral               |
+| White-coat HTN | High in-clinic, normal ambulatory | Ambulatory monitoring             |
+| Masked HTN     | Normal in-clinic, high ambulatory | 24h monitoring                    |
 
 ---
 
@@ -251,10 +252,10 @@ Screens glucose values (GDS, GDP, 2JTTGO, HbA1c) against PERKENI 2024 thresholds
 
 ```typescript
 glucoseClassifier.classify({
-  gds: 42,        // mg/dL
+  gds: 42, // mg/dL
   symptoms: ['tremor', 'sweating', 'confusion'],
-  weight: 65
-})
+  weight: 65,
+});
 // → { crisis: 'HYPOGLYCEMIA', rule: '15-15', activateTimer: true }
 ```
 
@@ -310,11 +311,11 @@ sequenceDiagram
 
 **Auto-fill coverage:**
 
-| Page | Fields |
-|---|---|
+| Page     | Fields                                                                                              |
+| -------- | --------------------------------------------------------------------------------------------------- |
 | Anamnesa | Keluhan utama, keluhan tambahan, duration, TTV fields, physical exam checkboxes, skala nyeri slider |
-| Diagnosa | ICD-10 primary + secondary, jenis kasus, kunjungan type |
-| Resep | Medication name, dosage, aturan pakai, duration, signa (with autocomplete) |
+| Diagnosa | ICD-10 primary + secondary, jenis kasus, kunjungan type                                             |
+| Resep    | Medication name, dosage, aturan pakai, duration, signa (with autocomplete)                          |
 
 ---
 
@@ -449,15 +450,15 @@ pnpm --filter @the-abyss/sentra-assist zip:firefox
 
 ## Troubleshooting
 
-| Issue | Solution |
-|---|---|
-| Extension not loading | Enable Developer Mode at `chrome://extensions/`, load unpacked from `.output/chrome-mv3-dev/` |
-| `pnpm install` fails | Verify Node.js ≥22 and pnpm ≥9 via `node -v` and `pnpm -v` |
-| Vertex AI auth errors | Confirm Google Cloud project access and Vertex AI API is enabled |
-| Sidepanel shows "Login required" | Check Dashboard base URL in Settings — must point to a running Sentra Dashboard instance |
-| Form not auto-filling | DAS may need a re-scan — click **Inisialisasi** in the header status bar |
-| Word limit error on submit | ePuskesmas field limit is 225 words — Sentra caps keluhan automatically at 220 words |
-| TypeScript errors | Run `pnpm typecheck` for full output |
+| Issue                            | Solution                                                                                      |
+| -------------------------------- | --------------------------------------------------------------------------------------------- |
+| Extension not loading            | Enable Developer Mode at `chrome://extensions/`, load unpacked from `.output/chrome-mv3-dev/` |
+| `pnpm install` fails             | Verify Node.js ≥22 and pnpm ≥9 via `node -v` and `pnpm -v`                                    |
+| Vertex AI auth errors            | Confirm Google Cloud project access and Vertex AI API is enabled                              |
+| Sidepanel shows "Login required" | Check Dashboard base URL in Settings — must point to a running Sentra Dashboard instance      |
+| Form not auto-filling            | DAS may need a re-scan — click **Inisialisasi** in the header status bar                      |
+| Word limit error on submit       | ePuskesmas field limit is 225 words — Sentra caps keluhan automatically at 220 words          |
+| TypeScript errors                | Run `pnpm typecheck` for full output                                                          |
 
 ---
 
@@ -465,11 +466,11 @@ pnpm --filter @the-abyss/sentra-assist zip:firefox
 
 Sentra Assist is dual-licensed. See [LICENSE](LICENSE) for full terms.
 
-| Use Case | License |
-|---|---|
-| Individual clinician / researcher / student | Free — Apache 2.0 |
-| Puskesmas / clinic / hospital deployment | Enterprise license required |
-| Vendor / integrator / government program | Enterprise license required |
+| Use Case                                    | License                     |
+| ------------------------------------------- | --------------------------- |
+| Individual clinician / researcher / student | Free — Apache 2.0           |
+| Puskesmas / clinic / hospital deployment    | Enterprise license required |
+| Vendor / integrator / government program    | Enterprise license required |
 
 Commercial licensing: [sentrahai.com](https://sentrahai.com)
 
@@ -477,8 +478,9 @@ Commercial licensing: [sentrahai.com](https://sentrahai.com)
 
 ## 🤖 Self-Healing CI
 
-This project is equipped with **Auto-Fix** capabilities via `claudesy-devkit`. 
+This project is equipped with **Auto-Fix** capabilities via `claudesy-devkit`.
 If CI fails due to formatting or minor linting issues:
+
 1. The **Auto-Fix CI** bot triggers automatically.
 2. It attempts to repair the code using `pnpm format` and `pnpm lint:fix`.
 3. If successful, it opens a **Pull Request** with the fixes.

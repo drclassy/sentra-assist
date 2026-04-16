@@ -23,7 +23,7 @@ export type { AuthSession, AuthTokens, AuthUser };
 
 /**
  * AuthCredentials interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -36,7 +36,7 @@ export interface AuthCredentials {
 
 /**
  * AuthResponse interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -116,7 +116,7 @@ export async function getAuthConfig(): Promise<AuthConfig> {
 
 /**
  * saveAuthConfig
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -173,7 +173,7 @@ export async function getStoredSession(): Promise<AuthSession | null> {
 
 /**
  * saveSession
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -186,7 +186,7 @@ export async function saveSession(session: AuthSession): Promise<void> {
 
 /**
  * clearSession
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -199,7 +199,7 @@ export async function clearSession(): Promise<void> {
 
 /**
  * isAuthenticated
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -342,7 +342,7 @@ function parseErrorMessage(status: number, text: string): string {
 
 /**
  * ApiBaseUrlProbeResult interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -356,7 +356,7 @@ export interface ApiBaseUrlProbeResult {
 
 /**
  * probeApiBaseUrl
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

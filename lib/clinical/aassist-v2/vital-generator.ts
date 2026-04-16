@@ -55,7 +55,7 @@ export type AassistPreset = 'hipertensi' | 'hipotensi' | 'hiperglikemi';
 
 /**
  * GenerateVitalsOptions interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -69,7 +69,7 @@ export interface GenerateVitalsOptions {
 
 /**
  * GeneratedVitals interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -87,7 +87,7 @@ export interface GeneratedVitals {
 
 /**
  * AutocompleteMetadata interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -102,7 +102,7 @@ export interface AutocompleteMetadata {
 
 /**
  * GenerateVitalsResult interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15

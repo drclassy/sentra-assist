@@ -1,6 +1,6 @@
 /**
  * cn
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

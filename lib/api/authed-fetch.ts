@@ -23,7 +23,7 @@ export class AuthRequiredError extends Error {
 
 /**
  * BridgeApiError class
- * 
+ *
  * @remarks
  * TODO: Add class description and usage examples
  * Auto-generated on 2026-04-15
@@ -42,7 +42,7 @@ export class BridgeApiError extends Error {
 
 /**
  * BridgeResponseFormatError class
- * 
+ *
  * @remarks
  * TODO: Add class description and usage examples
  * Auto-generated on 2026-04-15

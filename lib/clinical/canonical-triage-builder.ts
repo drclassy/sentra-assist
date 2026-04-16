@@ -4,7 +4,7 @@ import { AutosenPreset, DisabilityType, ObesityConfirmation } from '@/lib/clinic
 
 /**
  * BuildCanonicalTriageInputArgs interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -94,7 +94,7 @@ function composeStructuredSignsText(args: BuildCanonicalTriageInputArgs): string
 
 /**
  * buildCanonicalRequestId
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -106,7 +106,7 @@ export function buildCanonicalRequestId(patientRM: string): string {
 
 /**
  * buildCanonicalTriageInput
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

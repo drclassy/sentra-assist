@@ -6,7 +6,7 @@ import type {
 
 /**
  * ComposeAnamnesaInput interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -36,7 +36,7 @@ export interface ComposeAnamnesaInput {
 
 /**
  * ComposedAnamnesaDraft interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -441,7 +441,7 @@ function getSymptomImpact(symptoms: string[]): string | null {
 
 /**
  * composeAnamnesaDraft
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -598,7 +598,7 @@ function createExtractionMissingFacts(
 
 /**
  * buildAnamnesisShadowSuggestion
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -618,7 +618,7 @@ export function buildAnamnesisShadowSuggestion(missingFields: AnamnesisMissingFi
 
 /**
  * composeAnamnesaDraftFromExtraction
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

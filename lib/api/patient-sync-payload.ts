@@ -41,7 +41,7 @@ export interface PatientSyncStructuredSigns {
 
 /**
  * PatientSyncPayload interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -126,7 +126,7 @@ function mergeStructuredSection<T extends Record<string, boolean | number | unde
 
 /**
  * mergeStructuredSigns
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -156,7 +156,7 @@ export function mergeStructuredSigns(
 
 /**
  * applyAlertDerivedStructuredSigns
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -192,7 +192,7 @@ export function applyAlertDerivedStructuredSigns(
 
 /**
  * inferStructuredSignsFromPatientSyncInput
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -340,7 +340,7 @@ export function inferStructuredSignsFromPatientSyncInput(
 
 /**
  * buildPatientSyncPayload
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

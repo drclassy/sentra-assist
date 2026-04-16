@@ -8,7 +8,7 @@ import { generateVitals, type AassistPreset } from '@/lib/clinical/aassist-v2/vi
 
 /**
  * VitalAutofillValues interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -26,7 +26,7 @@ export interface VitalAutofillValues {
 
 /**
  * VitalAutofillResult interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -171,7 +171,7 @@ function applyPresetVitals(
 
 /**
  * buildVitalAutofill
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

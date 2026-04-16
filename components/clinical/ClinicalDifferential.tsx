@@ -93,7 +93,7 @@ const ICD_EMERGENCY_HEAD_MAP: Record<string, string> = {
 
 /**
  * normalizeIcdCode
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -124,7 +124,7 @@ export function normalizeIcdCode(value: string | undefined): string {
 
 /**
  * isReadableDiagnosisName
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -148,7 +148,7 @@ function isCodeLikeDiagnosisName(value: string | undefined): boolean {
 
 /**
  * isLikelyIcdCode
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -180,7 +180,7 @@ function pregnancyStatusLabel(status: PregnancyStatus): string {
 
 /**
  * buildConfirmedChronicSuggestion
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15
@@ -206,7 +206,7 @@ export function buildConfirmedChronicSuggestion(diagnosis: {
 
 /**
  * buildUiFallbackDiagnoses
- * 
+ *
  * @remarks
  * TODO: Add detailed description, parameters, and examples
  * Auto-generated on 2026-04-15

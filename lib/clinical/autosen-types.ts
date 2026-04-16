@@ -1,6 +1,6 @@
 /**
  * AutosenPreset type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -17,7 +17,7 @@ export type AutosenPreset =
 
 /**
  * DisabilityType type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -38,7 +38,7 @@ export type DisabilityType =
 
 /**
  * ObesityConfirmation type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15

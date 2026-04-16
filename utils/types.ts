@@ -13,7 +13,7 @@ export type PageType = 'anamnesa' | 'diagnosa' | 'resep' | 'unknown';
 
 /**
  * AturanPakai type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -22,7 +22,7 @@ export type PageType = 'anamnesa' | 'diagnosa' | 'resep' | 'unknown';
 export type AturanPakai = '1' | '2' | '3' | '4' | '5';
 /**
  * DiagnosaJenis type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -31,7 +31,7 @@ export type AturanPakai = '1' | '2' | '3' | '4' | '5';
 export type DiagnosaJenis = 'PRIMER' | 'SEKUNDER';
 /**
  * DiagnosaKasus type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -40,7 +40,7 @@ export type DiagnosaJenis = 'PRIMER' | 'SEKUNDER';
 export type DiagnosaKasus = 'BARU' | 'LAMA';
 /**
  * Prioritas type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -63,7 +63,7 @@ export type AnamnesisMissingField =
 
 /**
  * AnamnesisExtractionResult interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -162,7 +162,7 @@ export interface ResepFillPayload {
 
 /**
  * AnamnesaFillPayload interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -319,7 +319,7 @@ export interface AnamnesaFillPayload {
 
 /**
  * DiagnosaFillPayload interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -366,7 +366,7 @@ export interface ScrapeRequest {
 
 /**
  * ScrapePayload interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -388,7 +388,7 @@ export interface FieldConfig {
 
 /**
  * PageFieldMap interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -406,7 +406,7 @@ export type RMETransferStepStatus = 'anamnesa' | 'diagnosa' | 'resep';
 
 /**
  * RMETransferStepState type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -423,7 +423,7 @@ export type RMETransferStepState =
 
 /**
  * RMETransferErrorClass type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -433,7 +433,7 @@ export type RMETransferErrorClass = 'recoverable' | 'fatal';
 
 /**
  * RMETransferReasonCode type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -457,7 +457,7 @@ export type RMETransferReasonCode =
 
 /**
  * RMETransferStepResult interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -478,7 +478,7 @@ export interface RMETransferStepResult {
 
 /**
  * RMETransferState type
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -488,7 +488,7 @@ export type RMETransferState = 'success' | 'partial' | 'failed' | 'cancelled';
 
 /**
  * RMETransferPayload interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -514,7 +514,7 @@ export interface RMETransferPayload {
 
 /**
  * RMETransferResult interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15
@@ -533,7 +533,7 @@ export interface RMETransferResult {
 
 /**
  * RMETransferProgressEvent interface
- * 
+ *
  * @remarks
  * TODO: Add type description and property documentation
  * Auto-generated on 2026-04-15

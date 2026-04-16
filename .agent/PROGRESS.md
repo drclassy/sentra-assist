@@ -1,11 +1,12 @@
 # PROGRESS.md — sentra-assist
+
 <!-- Agent MUST update at every session end or completed JET phase. -->
 
 ## Current Status
 
-**Last updated:** 2026-04-16  
-**Last session:** Fix GitHub Actions security workflow failures (pnpm audit endpoint retired + CodeQL permission error)  
-**Active phase:** Complete ✅
+**Last updated:** 2026-04-16
+**Last session:** Review-and-ship: git hygiene (`.playwright-mcp/`, `.agents`), threshold tests fixed + gates green
+**Active phase:** VS Inference / TTV shipped as local commit (push deferred to Chief)
 
 ---
 
@@ -27,6 +28,7 @@
 
 ## 🔄 In Progress
 
+- [ ] Push `master` (or PR branch) after Chief approval — local commit includes VS Inference / TTV / thresholds / sidepanel styles
 - [ ] Finalize deletion policy for remaining legacy tracked files in `git status`
 - [ ] Normalize `.agent/` to be the only operational memory system
 
@@ -34,6 +36,7 @@
 
 ## ⏳ Next Candidates
 
+- [ ] Refactor: extract `useTTVInference` + presentational subcomponents from [`components/clinical/TTVInferenceUI.tsx`](./components/clinical/TTVInferenceUI.tsx) (incremental PRs; preserve behavior)
 - [ ] Audit historical references in `docs/codex-progress.md`
 - [ ] Separate safe-to-commit deletes from items needing manual review
 
@@ -52,5 +55,7 @@
 3. Review untracked files that are likely real additions versus local clutter
 
 ---
+
 <!-- 2026-04-15 timestamp update — Claude Code -->
+
 **Session 2026-04-15:** Timestamp updated as part of monorepo-wide PROGRESS.md batch sync. No code changes this session for this app. Awaiting next task assignment.

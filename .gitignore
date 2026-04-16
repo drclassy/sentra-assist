@@ -43,3 +43,9 @@ coverage/
 playwright-report/
 test-results/
 output/
+
+# Playwright MCP / IDE browser automation scratch logs (do not commit)
+.playwright-mcp/
+
+# Local agent workspace (untracked tooling)
+.agents

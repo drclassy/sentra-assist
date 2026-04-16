@@ -610,6 +610,7 @@ function App() {
                   demographicStatus={demographicStatus}
                   historyStatus={historyStatus}
                   doctorOnlineCount={0}
+                  alertCount={emergencyAlerts.length}
                   onInitialisasi={() => {
                     setPatientData(defaultPatient);
                     setTTVState(initialTTVState);
@@ -791,45 +792,49 @@ function App() {
 // --- SUBCOMPONENTS (EmergencyDashboard, ErrorBoundary) ---
 function EmergencyDashboard({ alerts }: { alerts: ScreeningAlert[] }) {
   return (
-    <div className="emergency-dashboard">
-      <div className="emergency-header">
-        <div className="emergency-header__eyebrow">SENTRA ASSIST — EMERGENCY</div>
-        <h2>Alert Klinis Aktif</h2>
-        <div className="emergency-header__stats">
-          <div className="emergency-stat-pill">
-            <span className="emergency-stat-pill__label">TOTAL</span>
-            <span className="emergency-stat-pill__value">{alerts.length}</span>
-          </div>
-          <div className="emergency-stat-pill">
-            <span className="emergency-stat-pill__label">KRITIS</span>
-            <span className="emergency-stat-pill__value">
-              {alerts.filter((a) => a.severity === 'critical').length}
-            </span>
-          </div>
-        </div>
+    <div className="emg-timeline">
+      <div className="emg-timeline__header">
+        <span className="emg-timeline__eyebrow">SENTRA ASSIST · CLINICAL FINDINGS</span>
+        {alerts.length > 0 && (
+          <span className="emg-timeline__tally">{alerts.length} temuan</span>
+        )}
       </div>
 
       {alerts.length === 0 ? (
-        <div className="emergency-empty">
-          <p>Tidak ada alert aktif</p>
-          <span>Sistem monitoring berjalan normal</span>
+        <div className="emg-timeline__empty">
+          <span className="emg-timeline__empty-line">— Tidak ada temuan aktif</span>
+          <span className="emg-timeline__empty-sub">Input vital sign untuk memulai skrining</span>
         </div>
       ) : (
-        <div className="emergency-section">
-          <div className="emergency-cards">
-            {alerts.map((a) => (
-              <div key={a.id} className={`emergency-card emergency-card-${a.severity}`}>
-                <div className="emergency-card-header">
-                  <div className="emergency-card-heading">
-                    <span className="emergency-card-kicker">{a.severity.toUpperCase()}</span>
-                    <span className="emergency-card-title">{a.title}</span>
-                  </div>
-                  <div className={`emergency-indicator ${a.severity}`} />
-                </div>
-                {a.reasoning ? <p className="emergency-card-reasoning">{a.reasoning}</p> : null}
+        <div className="emg-timeline__track">
+          {alerts.map((a, i) => (
+            <div
+              key={a.id}
+              className="emg-entry"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div className="emg-entry__spine">
+                <div className="emg-entry__dot" />
+                {i < alerts.length - 1 && <div className="emg-entry__line" />}
               </div>
-            ))}
-          </div>
+              <div className="emg-entry__content">
+                <div className="emg-entry__meta">
+                  <span className="emg-entry__gate">
+                    {a.gate.replace('GATE_', 'G').replace(/_/g, '·')}
+                  </span>
+                </div>
+                <div className="emg-entry__title">{a.title}</div>
+                <div className="emg-entry__reasoning">{a.reasoning}</div>
+                {a.recommendations.length > 0 && (
+                  <ul className="emg-entry__recs">
+                    {a.recommendations.map((rec, j) => (
+                      <li key={j} className="emg-entry__rec">{rec}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

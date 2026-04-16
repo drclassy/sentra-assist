@@ -38,6 +38,7 @@ interface SidePanelHeaderProps {
   historyStatus?: ShellStatus;
   doctorOnlineCount?: number;
   onInitialisasi?: () => void;
+  alertCount?: number;
 }
 
 const engineButtons: EngineButton[] = [
@@ -57,6 +58,7 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
   demographicStatus = 'standby',
   doctorOnlineCount = 0,
   onInitialisasi,
+  alertCount = 0,
 }) => {
   const isReady = demographicStatus === 'ready';
   const doctorOnline = doctorOnlineCount > 0;
@@ -143,6 +145,12 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
               onKeyDown={(e) => handleEngineTabKeyDown(e, engine.id)}
             >
               {engine.label}
+              {engine.id === 'emergency' && alertCount > 0 && (
+                <span
+                  className="engine-tab-dot"
+                  aria-label={`${alertCount} temuan klinis aktif`}
+                />
+              )}
             </button>
           );
         })}

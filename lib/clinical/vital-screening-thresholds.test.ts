@@ -32,9 +32,25 @@ describe('getVitalScreeningProfile', () => {
     expect(profile.isPediatric).toBe(false);
     expect(profile.isOlderAdult).toBe(false);
     expect(profile.label).toBe('Dewasa');
+    expect(profile.cohort).toBe('adult');
     expect(profile.bradycardiaThreshold).toBe(50);
     expect(profile.tachycardiaThreshold).toBe(130);
-    expect(profile.severeHypertensionSbp).toBe(180);
+    expect(profile.severeHypertensionSbp).toBe(160);
+    expect(profile.severeHypertensionDbp).toBe(100);
+  });
+
+  it('clamps non-finite age to infant-like floor', () => {
+    const profile = getVitalScreeningProfile(Number.NaN);
+
+    expect(profile.cohort).toBe('infant');
+    expect(profile.hypotensionSbpFloor).toBe(70);
+  });
+
+  it('switches to adult cohort at exactly 18 years', () => {
+    const profile = getVitalScreeningProfile(18);
+
+    expect(profile.cohort).toBe('adult');
+    expect(profile.isPediatric).toBe(false);
   });
 
   it('uses older adult profile from 65 years and carries geriatric screening notes', () => {

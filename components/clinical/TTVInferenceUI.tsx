@@ -38,7 +38,7 @@ import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-
 import { playSound } from '@/utils/sound';
 import { createLogger } from '@/utils/logger';
 import type { AnamnesisMissingField } from '@/utils/types';
-import { AlertTriangle, ChevronDown, RefreshCw, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, ChevronDown, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { browser } from 'wxt/browser';
 
@@ -2859,30 +2859,30 @@ export function TTVInferenceUI({
       </div>
 
       {alerts.length > 0 ? (
-        <div className="rounded-[10px] border border-[rgba(245,158,11,0.28)] bg-[rgba(245,158,11,0.06)] px-3 py-3">
-          <div className="mb-2 flex items-center gap-2">
-            <ShieldAlert className="h-4 w-4 text-[#F59E0B]" />
-            <div className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
-              Alert Preview
-            </div>
+        <div className="alert-timeline-preview">
+          <div className="alert-timeline-preview__header">
+            <span className="alert-timeline-preview__label">TEMUAN KLINIS</span>
+            <span className="alert-timeline-preview__count">{alerts.length}</span>
           </div>
-          <div className="space-y-2">
-            {alerts.slice(0, 3).map((alert) => (
+          <div className="alert-timeline-preview__track">
+            {alerts.slice(0, 3).map((alert, i) => (
               <div
                 key={alert.id}
-                className="rounded-[8px] border border-[var(--border-subtle)] bg-[var(--neu-inset-bg)] px-3 py-2"
+                className="alert-timeline-entry"
+                style={{ animationDelay: `${i * 80}ms` }}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] uppercase tracking-[0.08em] text-[#F59E0B]">
-                    {alert.severity}
-                  </span>
-                  <span className="text-[10px] text-[var(--text-muted)]">{alert.gate}</span>
+                <div className="alert-timeline-entry__spine">
+                  <div className="alert-timeline-entry__dot" />
+                  {i < Math.min(alerts.length, 3) - 1 && (
+                    <div className="alert-timeline-entry__line" />
+                  )}
                 </div>
-                <div className="mt-1 text-[12px] font-medium text-[var(--text-main)]">
-                  {alert.title}
-                </div>
-                <div className="mt-1 text-[11px] leading-5 text-[var(--text-muted)]">
-                  {alert.reasoning}
+                <div className="alert-timeline-entry__body">
+                  <div className="alert-timeline-entry__gate">
+                    {alert.gate.replace('GATE_', 'G').replace(/_/g, '·')}
+                  </div>
+                  <div className="alert-timeline-entry__title">{alert.title}</div>
+                  <div className="alert-timeline-entry__reasoning">{alert.reasoning}</div>
                 </div>
               </div>
             ))}

@@ -153,8 +153,8 @@ export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
       tachycardiaThreshold: 130,
       bradypneaThreshold: 10,
       tachypneaThreshold: 30,
-      severeHypertensionSbp: 180,
-      severeHypertensionDbp: 120,
+      severeHypertensionSbp: 160,
+      severeHypertensionDbp: 100,
     };
   }
 
@@ -168,8 +168,8 @@ export function getVitalScreeningProfile(age: number): VitalScreeningProfile {
     tachycardiaThreshold: 130,
     bradypneaThreshold: 10,
     tachypneaThreshold: 30,
-    severeHypertensionSbp: 180,
-    severeHypertensionDbp: 120,
+    severeHypertensionSbp: 160,
+    severeHypertensionDbp: 100,
     geriatricSingleFeverThreshold: 37.8,
     geriatricRepeatFeverThreshold: 37.2,
     geriatricTemperatureNote:

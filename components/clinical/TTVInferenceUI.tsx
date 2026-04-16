@@ -649,25 +649,26 @@ export const buildAlerts = (
         title: avpuTitleMap[avpuResult.avpu] ?? `AVPU: ${avpuResult.avpu}`,
         gate: 'GATE_0_AVPU',
         reasoning: avpuResult.reason.join(' | '),
-        recommendations: avpuResult.avpu === 'U'
-          ? [
-              'Aktifkan respons emergensi segera — panggil bantuan.',
-              'Evaluasi ABC: airway, breathing, circulation.',
-              'Posisikan pasien aman — recovery position jika napas ada.',
-              'Siapkan AED dan pastikan akses IV.',
-            ]
-          : avpuResult.avpu === 'P'
-          ? [
-              'Evaluasi tingkat kesadaran dengan GCS segera.',
-              'Nilai ABC dan pertahankan airway.',
-              'Monitor serial tanda vital setiap 5 menit.',
-              'Eskalasi segera ke dokter penanggung jawab.',
-            ]
-          : [
-              'Monitor ketat — nilai ulang AVPU setiap 15 menit.',
-              'Korelasikan dengan BP, SpO2, dan status mental.',
-              'Eskalasi jika AVPU memburuk ke P atau U.',
-            ],
+        recommendations:
+          avpuResult.avpu === 'U'
+            ? [
+                'Aktifkan respons emergensi segera — panggil bantuan.',
+                'Evaluasi ABC: airway, breathing, circulation.',
+                'Posisikan pasien aman — recovery position jika napas ada.',
+                'Siapkan AED dan pastikan akses IV.',
+              ]
+            : avpuResult.avpu === 'P'
+              ? [
+                  'Evaluasi tingkat kesadaran dengan GCS segera.',
+                  'Nilai ABC dan pertahankan airway.',
+                  'Monitor serial tanda vital setiap 5 menit.',
+                  'Eskalasi segera ke dokter penanggung jawab.',
+                ]
+              : [
+                  'Monitor ketat — nilai ulang AVPU setiap 15 menit.',
+                  'Korelasikan dengan BP, SpO2, dan status mental.',
+                  'Eskalasi jika AVPU memburuk ke P atau U.',
+                ],
         clinicalData: { sbp, spo2, hr, rr },
       });
     }
@@ -675,9 +676,26 @@ export const buildAlerts = (
 
   // ── GATE_1B: Occult shock — via detectOccultShock() (MSF Guidelines) ────────
   if (!physiology.isPediatric && sbp > 0 && dbp > 0) {
-    const hasDizziness = hasKeywordSignal(symptomText, ['pusing', 'oyong', 'mau pingsan', 'berputar', 'vertigo']);
-    const hasWeakness = hasKeywordSignal(symptomText, ['lemas', 'lemah', 'tidak kuat', 'lesu', 'loyo']);
-    const hasPresyncope = hasKeywordSignal(symptomText, ['hampir pingsan', 'mau jatuh', 'kunang', 'gelap']);
+    const hasDizziness = hasKeywordSignal(symptomText, [
+      'pusing',
+      'oyong',
+      'mau pingsan',
+      'berputar',
+      'vertigo',
+    ]);
+    const hasWeakness = hasKeywordSignal(symptomText, [
+      'lemas',
+      'lemah',
+      'tidak kuat',
+      'lesu',
+      'loyo',
+    ]);
+    const hasPresyncope = hasKeywordSignal(symptomText, [
+      'hampir pingsan',
+      'mau jatuh',
+      'kunang',
+      'gelap',
+    ]);
     const hasSyncope = hasKeywordSignal(symptomText, ['pingsan', 'hilang kesadaran', 'jatuh tiba']);
 
     const shockInput: OccultShockInput = {
@@ -686,12 +704,13 @@ export const buildAlerts = (
         current_dbp: dbp,
         glucose: glucose > 0 ? glucose : undefined,
       },
-      last_3_visits: context?.bpHistory?.map((h) => ({
-        visit_date: h.visit_date ?? '',
-        sbp: h.sbp,
-        dbp: h.dbp,
-        location: h.location,
-      })) ?? [],
+      last_3_visits:
+        context?.bpHistory?.map((h) => ({
+          visit_date: h.visit_date ?? '',
+          sbp: h.sbp,
+          dbp: h.dbp,
+          location: h.location,
+        })) ?? [],
       symptoms: {
         dizziness: hasDizziness,
         presyncope: hasPresyncope,
@@ -703,21 +722,27 @@ export const buildAlerts = (
 
     const shockResult = detectOccultShock(shockInput);
 
-    if ((shockResult.risk_level === 'CRITICAL' || shockResult.risk_level === 'HIGH') && !hasHypotension) {
+    if (
+      (shockResult.risk_level === 'CRITICAL' || shockResult.risk_level === 'HIGH') &&
+      !hasHypotension
+    ) {
       alerts.push({
         id: 'occult-shock-alert',
         type: 'occult_shock',
         severity: shockResult.risk_level === 'CRITICAL' ? 'critical' : 'high',
-        title: shockResult.risk_level === 'CRITICAL'
-          ? `Shock terdeteksi — MAP ${shockResult.map} mmHg${shockResult.delta_sbp ? `, ΔSBP ${shockResult.delta_sbp}` : ''}`
-          : `Curiga occult shock — ΔSBP ${shockResult.delta_sbp ?? '?'} mmHg dari baseline`,
+        title:
+          shockResult.risk_level === 'CRITICAL'
+            ? `Shock terdeteksi — MAP ${shockResult.map} mmHg${shockResult.delta_sbp ? `, ΔSBP ${shockResult.delta_sbp}` : ''}`
+            : `Curiga occult shock — ΔSBP ${shockResult.delta_sbp ?? '?'} mmHg dari baseline`,
         gate: 'GATE_1_HEMODYNAMIC',
         reasoning: [
           ...shockResult.triggers,
           shockResult.baseline_bp
             ? `Baseline pasien: ${shockResult.baseline_bp.sbp}/${shockResult.baseline_bp.dbp} mmHg (median 3 kunjungan).`
             : '',
-        ].filter(Boolean).join(' | '),
+        ]
+          .filter(Boolean)
+          .join(' | '),
         recommendations: shockResult.recommendations.filter((r) => r.trim() !== ''),
         clinicalData: { sbp, dbp, map },
       });
@@ -773,9 +798,10 @@ export const buildAlerts = (
         const titleMap: Record<string, string> = {
           stage1: `Hipertensi Grade 1 (${sbp}/${dbp} mmHg)`,
           stage2: `Hipertensi Grade 2 — eskalasi diperlukan (${sbp}/${dbp} mmHg)`,
-          crisis: htnResult.type === 'HTN_EMERGENCY'
-            ? `EMERGENSI HIPERTENSI — rujuk IGD segera (${sbp}/${dbp} mmHg)`
-            : `Urgensi Hipertensi — tata laksana segera (${sbp}/${dbp} mmHg)`,
+          crisis:
+            htnResult.type === 'HTN_EMERGENCY'
+              ? `EMERGENSI HIPERTENSI — rujuk IGD segera (${sbp}/${dbp} mmHg)`
+              : `Urgensi Hipertensi — tata laksana segera (${sbp}/${dbp} mmHg)`,
         };
 
         alerts.push({
@@ -3004,7 +3030,9 @@ export function TTVInferenceUI({
       {alerts.length > 0 ? (
         <div className="alert-timeline-preview">
           <div className="alert-timeline-preview__header">
-            <span className="alert-timeline-preview__label alert-timeline-preview__label--pulse">TEMUAN KLINIS</span>
+            <span className="alert-timeline-preview__label alert-timeline-preview__label--pulse">
+              TEMUAN KLINIS
+            </span>
             <span className="alert-timeline-preview__count">{alerts.length}</span>
           </div>
           <div className="alert-timeline-preview__track">
@@ -3031,8 +3059,12 @@ export function TTVInferenceUI({
                     role="button"
                     tabIndex={0}
                     onClick={() => onAccessEmergency?.()}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onAccessEmergency?.(); }}
-                  >Access Emergency ↑</div>
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') onAccessEmergency?.();
+                    }}
+                  >
+                    Access Emergency ↑
+                  </div>
                 </div>
               </div>
             ))}

@@ -2214,8 +2214,15 @@ textarea:read-only,
 }
 
 @keyframes engine-dot-pulse {
-  0%, 100% { opacity: 0.9; transform: scale(1); }
-  50%       { opacity: 0.35; transform: scale(0.7); }
+  0%,
+  100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.7);
+  }
 }
 
 /* ── ENGINE BUTTON: RED ALERT MODE ─────────────────────────────────────────── */
@@ -2231,8 +2238,15 @@ textarea:read-only,
 }
 
 @keyframes engine-alert-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 40, 40, 0); border-color: rgba(220, 40, 40, 0.75); }
-  50%       { box-shadow: 0 0 0 3px rgba(220, 40, 40, 0.18); border-color: rgba(220, 40, 40, 0.45); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 40, 40, 0);
+    border-color: rgba(220, 40, 40, 0.75);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(220, 40, 40, 0.18);
+    border-color: rgba(220, 40, 40, 0.45);
+  }
 }
 
 /* Access Emergency clickable label */
@@ -2279,8 +2293,13 @@ textarea:read-only,
 }
 
 @keyframes emg-status-breathe {
-  0%, 100% { opacity: 0.9; }
-  50%       { opacity: 0.45; }
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.45;
+  }
 }
 
 .emg-timeline__tally {

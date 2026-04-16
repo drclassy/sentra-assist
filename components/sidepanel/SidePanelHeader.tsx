@@ -146,10 +146,7 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
             >
               {engine.label}
               {engine.id === 'emergency' && alertCount > 0 && (
-                <span
-                  className="engine-tab-dot"
-                  aria-label={`${alertCount} temuan klinis aktif`}
-                />
+                <span className="engine-tab-dot" aria-label={`${alertCount} temuan klinis aktif`} />
               )}
             </button>
           );

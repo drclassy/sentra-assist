@@ -654,7 +654,9 @@ function App() {
                               setAnamnesaDraft(d.anamnesaDraft);
                             }}
                             onAlertsChange={setEmergencyAlerts}
-                            onAccessEmergency={() => { handleEngineChange('emergency'); }}
+                            onAccessEmergency={() => {
+                              handleEngineChange('emergency');
+                            }}
                             showMaskedName={false}
                             ttvState={ttvState}
                             onTTVStateChange={setTTVState}
@@ -748,7 +750,14 @@ function App() {
                         variants={tabPanelVariants}
                         className="shell-tab-panel w-full"
                       >
-                        <EmergencyDashboard alerts={emergencyAlerts} onScrollToTab={() => document.getElementById('sidepanel-tab-emergency')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+                        <EmergencyDashboard
+                          alerts={emergencyAlerts}
+                          onScrollToTab={() =>
+                            document
+                              .getElementById('sidepanel-tab-emergency')
+                              ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                          }
+                        />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -791,16 +800,22 @@ function App() {
 }
 
 // --- SUBCOMPONENTS (EmergencyDashboard, ErrorBoundary) ---
-function EmergencyDashboard({ alerts, onScrollToTab }: { alerts: ScreeningAlert[]; onScrollToTab?: () => void }) {
+function EmergencyDashboard({
+  alerts,
+  onScrollToTab,
+}: {
+  alerts: ScreeningAlert[];
+  onScrollToTab?: () => void;
+}) {
   return (
     <div className="emg-timeline">
       <div className="emg-timeline__header">
-        <span className={`emg-timeline__eyebrow${alerts.length > 0 ? ' emg-timeline__eyebrow--active' : ''}`}>
+        <span
+          className={`emg-timeline__eyebrow${alerts.length > 0 ? ' emg-timeline__eyebrow--active' : ''}`}
+        >
           SENTRA ASSIST · EMERGENCY STATUS
         </span>
-        {alerts.length > 0 && (
-          <span className="emg-timeline__tally">{alerts.length} temuan</span>
-        )}
+        {alerts.length > 0 && <span className="emg-timeline__tally">{alerts.length} temuan</span>}
       </div>
 
       {alerts.length === 0 ? (
@@ -811,11 +826,7 @@ function EmergencyDashboard({ alerts, onScrollToTab }: { alerts: ScreeningAlert[
       ) : (
         <div className="emg-timeline__track">
           {alerts.map((a, i) => (
-            <div
-              key={a.id}
-              className="emg-entry"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
+            <div key={a.id} className="emg-entry" style={{ animationDelay: `${i * 60}ms` }}>
               <div className="emg-entry__spine">
                 <div className="emg-entry__dot" />
                 {i < alerts.length - 1 && <div className="emg-entry__line" />}
@@ -831,7 +842,9 @@ function EmergencyDashboard({ alerts, onScrollToTab }: { alerts: ScreeningAlert[
                 {a.recommendations.length > 0 && (
                   <ul className="emg-entry__recs">
                     {a.recommendations.map((rec, j) => (
-                      <li key={j} className="emg-entry__rec">{rec}</li>
+                      <li key={j} className="emg-entry__rec">
+                        {rec}
+                      </li>
                     ))}
                   </ul>
                 )}
@@ -840,8 +853,12 @@ function EmergencyDashboard({ alerts, onScrollToTab }: { alerts: ScreeningAlert[
                   role="button"
                   tabIndex={0}
                   onClick={() => onScrollToTab?.()}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onScrollToTab?.(); }}
-                >Access Emergency ↑</div>
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') onScrollToTab?.();
+                  }}
+                >
+                  Access Emergency ↑
+                </div>
               </div>
             </div>
           ))}

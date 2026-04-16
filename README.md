@@ -32,7 +32,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Claudesy/sentra-assist/ci.yml?label=CI&logo=github&style=for-the-badge)](https://github.com/Claudesy/sentra-assist/actions)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Built with WXT](https://img.shields.io/badge/Built%20with-WXT-7C3AED?style=for-the-badge)](https://wxt.dev/)
-[![Platform](https://img.shields.io/badge/Platform-Sentra%20AI-FE4900?style=for-the-badge)](https://sentra-dfi.com)
+[![Platform](https://img.shields.io/badge/Platform-Sentra%20AI-FE4900?style=for-the-badge)](https://sentrahai.com)
 
 _Designed and built by [Claudesy](https://github.com/Claudesy) (dr. Ferdi Iskandar)_
 
@@ -471,7 +471,18 @@ Sentra Assist is dual-licensed. See [LICENSE](LICENSE) for full terms.
 | Puskesmas / clinic / hospital deployment | Enterprise license required |
 | Vendor / integrator / government program | Enterprise license required |
 
-Commercial licensing: [sentra-dfi.com](https://sentrahai.com)
+Commercial licensing: [sentrahai.com](https://sentrahai.com)
+
+---
+
+## 🤖 Self-Healing CI
+
+This project is equipped with **Auto-Fix** capabilities via `claudesy-devkit`. 
+If CI fails due to formatting or minor linting issues:
+1. The **Auto-Fix CI** bot triggers automatically.
+2. It attempts to repair the code using `pnpm format` and `pnpm lint:fix`.
+3. If successful, it opens a **Pull Request** with the fixes.
+4. Merge the PR to restore CI status to green.
 
 ---
 

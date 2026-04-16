@@ -1,5 +1,21 @@
 # PROGRESS.md — sentra-assist
 
+## 2026-04-17 — Remote Migration to Avvicenna
+
+**Event:** Repo pushed to primary GitHub account.
+
+- **New remote:** `origin` → `https://github.com/Avvicenna/sentra-assist.git` (PRIVATE)
+- **Old remote:** preserved as `origin-claudesy` → `https://github.com/Claudesy/sentra-assist.git`
+- **Branch pushed:** `master` (tracking `origin/master`)
+- **Migration commits:**
+  - `2849963` — `chore: sync working state before remote migration to Avvicenna` (8 files: .agent logs + sidepanel UI refinement + .mcp.json)
+  - `794ebd0` — `style: apply prettier formatting` (4 files, fix pre-push hook block)
+- **Pre-push hook:** Prettier initially failed → re-run `npx prettier --write .` → second commit → push passed (Prettier + ESLint + TypeScript all green).
+- **Rollback:** `git remote rename origin-claudesy origin` restores prior state.
+
+---
+
+
 <!-- Agent MUST update at every session end or completed JET phase. -->
 
 ## Current Status

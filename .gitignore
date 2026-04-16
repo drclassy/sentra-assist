@@ -35,6 +35,9 @@ dist/
 # Local design specs and internal planning docs
 docs/superpowers/
 
+# Auto-generated TypeDoc API documentation
+docs/api/
+
 # Test, coverage, and smoke artifacts
 coverage/
 playwright-report/

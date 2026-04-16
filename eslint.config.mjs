@@ -41,6 +41,7 @@ export default tseslint.config(
       'vscode-cursor-fix/**',
       'prototype/**',
       'postcss.config.js',
+      'docs/**',
     ],
   },
   {

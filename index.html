@@ -1,0 +1,730 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Sentra Assist API Documentation - v1.0.1</title><meta name="description" content="Documentation for Sentra Assist API Documentation"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script><script async src="assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">Sentra Assist API Documentation - v1.0.1</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>Sentra Assist API Documentation - v1.0.1</h1></div><div class="tsd-panel tsd-typography"><div align="center">
+<h1 id="sentra-assist" class="tsd-anchor-link">Sentra Assist<a href="#sentra-assist" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p><strong>The Intelligent Connector Between ePuskesmas and AI-Powered Clinical Decision Support</strong></p>
+</div>
+<h2 id="overview" class="tsd-anchor-link">Overview<a href="#overview" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+  <tr>
+    <td width="30%" align="center" valign="middle">
+      <img src="https://github.com/Claudesy/sentra-assist/blob/master/public/assist.png?raw=true" alt="Sentra Assist" width="200"/>
+      <br/><br/>
+      <strong>SENTRA ASSIST</strong>
+    </td>
+    <td width="70%" valign="top">
+      <p><strong>Sentra Assist</strong> is a browser extension that connects ePuskesmas patient data to the <strong>AADI (Advanced Augmentative Diagnostic Intelligence)</strong> engine — embedding real-time clinical decision support directly into the EMR workflow as an intelligent sidepanel companion. It requires no infrastructure changes at the clinic level and works within the existing ePuskesmas session.</p>
+      <p>At its core, Sentra Assist is powered by the <strong>Iskandar Diagnosis Engine</strong>: an 8-step AI pipeline combining deterministic safety rules, a 159-disease knowledge base weighted by <strong>Bayesian priors from 45,030 real Indonesian clinical cases</strong>, DeepSeek R1 reasoning, and Vertex AI Gemini — all routed through a non-overridable Traffic Light safety gate before a single suggestion reaches the clinician.</p>
+      <p>Patient data is surfaced from the active ePuskesmas session via <strong>DAS (Data Ascension System)</strong>, an adaptive extraction layer that auto-discovers form fields, builds confidence-scored mappings using Gemini Vision, and self-heals when ePuskesmas UI changes — eliminating brittle selector maintenance entirely.</p>
+    </td>
+  </tr>
+</table>
+<div align="center">
+<p><sub><i>Clinical sidepanel companion — embedded decision intelligence at the point of care</i></sub></p>
+<p><a href="package.json"><img src="https://img.shields.io/badge/version-1.0.1-blue?style=for-the-badge" alt="Version"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/License-Community%20%2F%20Enterprise-orange?style=for-the-badge" alt="License"></a>
+<a href="https://github.com/Claudesy/sentra-assist/actions"><img src="https://img.shields.io/github/actions/workflow/status/Claudesy/sentra-assist/ci.yml?label=CI&amp;logo=github&amp;style=for-the-badge" alt="CI"></a>
+<a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&amp;logo=typescript" alt="TypeScript"></a>
+<a href="https://wxt.dev/"><img src="https://img.shields.io/badge/Built%20with-WXT-7C3AED?style=for-the-badge" alt="Built with WXT"></a>
+<a href="https://sentrahai.com"><img src="https://img.shields.io/badge/Platform-Sentra%20AI-FE4900?style=for-the-badge" alt="Platform"></a></p>
+<p><em>Designed and built by <a href="https://github.com/Claudesy">Claudesy</a> (dr. Ferdi Iskandar)</em></p>
+<blockquote>
+<p><strong>&quot;Diagnosis bukan tebakan — setiap keputusan klinis harus bisa dipertanggungjawabkan.&quot;</strong> — dr. Ferdi Iskandar, Founder</p>
+</blockquote>
+</div>
+<hr>
+<h2 id="why-a-locally-calibrated-decision-support-layer" class="tsd-anchor-link">Why a Locally-Calibrated Decision Support Layer<a href="#why-a-locally-calibrated-decision-support-layer" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>A generic CDSS treats every patient as a global baseline. Sentra Assist treats every patient as a member of a specific Indonesian primary healthcare population — with the disease priors, drug availability, and clinical context that actually exists at the puskesmas level.</p>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Generic CDSS</th>
+<th>Sentra Assist</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Disease priors</strong></td>
+<td>Foreign textbook static values</td>
+<td>Bayesian weights from 45,030 real Indonesian cases</td>
+</tr>
+<tr>
+<td><strong>Emergency detection</strong></td>
+<td>Single threshold rules</td>
+<td>4-gate protocol: TTV inference → HTN crisis → Glucose crisis → Occult shock</td>
+</tr>
+<tr>
+<td><strong>Drug interaction check</strong></td>
+<td>Limited or cloud-only</td>
+<td>173,071+ DDI entries (DDInter 2.0), runs offline</td>
+</tr>
+<tr>
+<td><strong>Form automation</strong></td>
+<td>None</td>
+<td>DAS adaptive extraction + full anamnesa / diagnosa / resep auto-fill</td>
+</tr>
+<tr>
+<td><strong>RME integration</strong></td>
+<td>Manual double-entry</td>
+<td>Transfer orchestrator with retry, deduplication, and session bridge</td>
+</tr>
+<tr>
+<td><strong>Safety architecture</strong></td>
+<td>Soft warnings</td>
+<td>Non-overridable Traffic Light gate before every suggestion</td>
+</tr>
+<tr>
+<td><strong>AI reasoning</strong></td>
+<td>Single model</td>
+<td>DeepSeek R1 + Vertex AI Gemini with KB-only offline fallback</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="executive-summary" class="tsd-anchor-link">Executive Summary<a href="#executive-summary" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><strong>Sentra Assist</strong> is a browser extension built for Indonesian primary healthcare clinicians working inside ePuskesmas. It delivers four core capabilities in a single non-intrusive sidepanel: emergency detection, AI diagnosis support, drug safety, and documentation automation — without replacing the existing EMR workflow.</p>
+<p><strong>Target Users:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Persona</th>
+<th>Role</th>
+<th>Pain Point Solved</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>General Practitioner</td>
+<td>Patient encounters, diagnosis</td>
+<td>Diagnostic uncertainty, ICD-10 coding, prescription safety</td>
+</tr>
+<tr>
+<td>Nurse / Perawat</td>
+<td>Vital sign recording, anamnesis</td>
+<td>Form double-entry, TTV completeness</td>
+</tr>
+<tr>
+<td>Clinical Administrator</td>
+<td>Referral coordination</td>
+<td>RME transfer errors, incomplete referral data</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="table-of-contents" class="tsd-anchor-link">Table of Contents<a href="#table-of-contents" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ul>
+<li><a href="#features-overview">Features Overview</a></li>
+<li><a href="#quickstart">Quickstart</a></li>
+<li><a href="#detailed-features">Detailed Features</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#testing-and-quality-gates">Testing and Quality Gates</a></li>
+<li><a href="#deployment">Deployment</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+<hr>
+<h2 id="features-overview" class="tsd-anchor-link">Features Overview<a href="#features-overview" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="emergency-detection" class="tsd-anchor-link">Emergency Detection<a href="#emergency-detection" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature</th>
+<th>Status</th>
+<th>Primary User</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>TTV Inference — Gate 1</td>
+<td>✅ Live</td>
+<td>Doctor, Nurse</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Hypertension Crisis Triage — Gate 2</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Glucose Crisis Management — Gate 3</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Occult Shock Detector — Gate 4</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Hypoglycemia 15-15 Interactive Timer</td>
+<td>✅ Live</td>
+<td>Doctor, Nurse</td>
+</tr>
+</tbody>
+</table>
+<h3 id="iskandar-diagnosis-engine" class="tsd-anchor-link">Iskandar Diagnosis Engine<a href="#iskandar-diagnosis-engine" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature</th>
+<th>Status</th>
+<th>Primary User</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6</td>
+<td>Red Flag Checker (sepsis, ACS, stroke, preeclampsia, anaphylaxis)</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Symptom Matcher — 159-disease knowledge base</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Epidemiology Weights — 45,030 Indonesian cases</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>9</td>
+<td>LLM Reasoner — DeepSeek R1 + Vertex AI Gemini</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Traffic Light Safety Gate</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>11</td>
+<td>ICD-10 RAG Search</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Diagnosis Confidence Meter</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Clinical Differential Display</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+</tbody>
+</table>
+<h3 id="drug-safety" class="tsd-anchor-link">Drug Safety<a href="#drug-safety" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature</th>
+<th>Status</th>
+<th>Primary User</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>14</td>
+<td>DDI Checker — 173,071+ interactions (DDInter 2.0)</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Pharmacotherapy Reasoner</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Dosage Calculator — Pediatric + Geriatric</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>17</td>
+<td>Prescription Form Auto-fill (ResepForm)</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+</tbody>
+</table>
+<h3 id="clinical-analytics" class="tsd-anchor-link">Clinical Analytics<a href="#clinical-analytics" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature</th>
+<th>Status</th>
+<th>Primary User</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>18</td>
+<td>Clinical Trajectory Analyzer — 5-visit trend</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>19</td>
+<td>Mortality Proxy Scoring</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>20</td>
+<td>Chronic Disease Classifier — 11 categories</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>21</td>
+<td>Vital Sign Screening Profiles (age-stratified)</td>
+<td>✅ Live</td>
+<td>Doctor, Nurse</td>
+</tr>
+</tbody>
+</table>
+<h3 id="das-form-automation" class="tsd-anchor-link">DAS — Form Automation<a href="#das-form-automation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature</th>
+<th>Status</th>
+<th>Primary User</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>22</td>
+<td>DAS Scanner — adaptive field discovery</td>
+<td>✅ Live</td>
+<td>System</td>
+</tr>
+<tr>
+<td>23</td>
+<td>Gemini Vision Field Classifier</td>
+<td>✅ Live</td>
+<td>System</td>
+</tr>
+<tr>
+<td>24</td>
+<td>Confidence-Scored Field Mapping</td>
+<td>✅ Live</td>
+<td>System</td>
+</tr>
+<tr>
+<td>25</td>
+<td>Self-Healing Remapper</td>
+<td>✅ Live</td>
+<td>System</td>
+</tr>
+<tr>
+<td>26</td>
+<td>Learning Store — per-facility persistence</td>
+<td>✅ Live</td>
+<td>System</td>
+</tr>
+<tr>
+<td>27</td>
+<td>Anamnesa Page Auto-fill</td>
+<td>✅ Live</td>
+<td>Doctor, Nurse</td>
+</tr>
+<tr>
+<td>28</td>
+<td>Diagnosa Page Auto-fill</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>29</td>
+<td>Resep Page Auto-fill</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+</tbody>
+</table>
+<h3 id="integration-security" class="tsd-anchor-link">Integration &amp; Security<a href="#integration-security" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature</th>
+<th>Status</th>
+<th>Primary User</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>30</td>
+<td>Dashboard Bridge — real-time polling</td>
+<td>✅ Live</td>
+<td>System</td>
+</tr>
+<tr>
+<td>31</td>
+<td>RME Transfer Orchestrator</td>
+<td>✅ Live</td>
+<td>Doctor</td>
+</tr>
+<tr>
+<td>32</td>
+<td>Dashboard-backed Auth (shared user accounts)</td>
+<td>✅ Live</td>
+<td>All</td>
+</tr>
+<tr>
+<td>33</td>
+<td>PII Anonymizer</td>
+<td>✅ Live</td>
+<td>System</td>
+</tr>
+<tr>
+<td>34</td>
+<td>Audit Trail — SHA-256 blockchain-lite chain</td>
+<td>✅ Live</td>
+<td>System</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="quickstart" class="tsd-anchor-link">Quickstart<a href="#quickstart" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="prerequisites" class="tsd-anchor-link">Prerequisites<a href="#prerequisites" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Version</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node.js</td>
+<td>≥ 22.x</td>
+<td>Required for WXT toolchain</td>
+</tr>
+<tr>
+<td>pnpm</td>
+<td>≥ 9.x</td>
+<td>Workspace package manager</td>
+</tr>
+<tr>
+<td>Google Cloud Project</td>
+<td>—</td>
+<td>Vertex AI API enabled</td>
+</tr>
+<tr>
+<td>Sentra Dashboard Account</td>
+<td>—</td>
+<td>Required for auth and patient sync</td>
+</tr>
+</tbody>
+</table>
+<h3 id="installation" class="tsd-anchor-link">Installation<a href="#installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-2">install</span><br/><span class="hl-0">cp</span><span class="hl-1"> </span><span class="hl-2">.env.example</span><span class="hl-1"> </span><span class="hl-2">.env.local</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="environment-variables" class="tsd-anchor-link">Environment Variables<a href="#environment-variables" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="env">VITE_SENTRA_API_URL=https://crew.puskesmasbalowerti.com
+VITE_SENTRA_API_KEY=your-api-key
+VITE_FACILITY_ID=PUSKESMAS_BALOWERTI
+VITE_USE_MOCK=false
+</code><button type="button">Copy</button></pre>
+
+<blockquote>
+<p>Never commit <code>.env.local</code> or any file containing credentials, API keys, or patient data.</p>
+</blockquote>
+<h3 id="development" class="tsd-anchor-link">Development<a href="#development" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-3"># Chrome (hot reload)</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">dev</span><br/><br/><span class="hl-3"># Firefox</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">dev:firefox</span>
+</code><button type="button">Copy</button></pre>
+
+<p>Load unpacked:</p>
+<ul>
+<li><strong>Chrome:</strong> <code>chrome://extensions</code> → Enable Developer Mode → Load Unpacked → <code>.output/chrome-mv3-dev/</code></li>
+<li><strong>Firefox:</strong> <code>about:debugging</code> → Load Temporary Add-on → <code>.output/firefox-mv2-dev/manifest.json</code></li>
+</ul>
+<h3 id="production-build" class="tsd-anchor-link">Production Build<a href="#production-build" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">build</span><span class="hl-1">          </span><span class="hl-3"># Chrome MV3</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">zip</span><span class="hl-1">            </span><span class="hl-3"># Chrome Web Store ZIP</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">build:firefox</span><span class="hl-1">  </span><span class="hl-3"># Firefox MV2</span>
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h2 id="detailed-features" class="tsd-anchor-link">Detailed Features<a href="#detailed-features" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="1-ttv-inference-gate-1" class="tsd-anchor-link">1. TTV Inference — Gate 1<a href="#1-ttv-inference-gate-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Infers unmeasured vital signs (pulse, respiratory rate, temperature ranges) from patient complaints using evidence-based pattern matching. The form is pre-filled before the doctor opens the encounter, reducing documentation time and ensuring vital sign completeness.</p>
+<p><strong>Flow:</strong></p>
+<pre><code class="mermaid">flowchart LR
+    A[Patient complaint text] --> B[TTV Inference Engine]
+    B --> C{Vitals present?}
+    C -- Missing --> D[Infer from complaint patterns]
+    C -- Present --> E[Validate against age thresholds]
+    D --> E
+    E --> F[Pre-fill vital sign fields]
+    F --> G[Flag anomalies for Gate 2-4]
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h3 id="2-hypertension-crisis-triage-gate-2" class="tsd-anchor-link">2. Hypertension Crisis Triage — Gate 2<a href="#2-hypertension-crisis-triage-gate-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Classifies 8 HTN types per FKTP 2024 guidelines, detects Hypertensive Mediated Organ Damage (HMOD) red flags, and guides the Captopril SL protocol when HTN Emergency is confirmed.</p>
+<p><strong>Classification Matrix:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Criteria</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTN Urgency</td>
+<td>SBP ≥180, no organ damage</td>
+<td>Oral antihypertensive, 1h recheck</td>
+</tr>
+<tr>
+<td>HTN Emergency</td>
+<td>SBP ≥180 + organ damage signs</td>
+<td>Captopril SL, immediate referral</td>
+</tr>
+<tr>
+<td>Resistant HTN</td>
+<td>BP uncontrolled on 3+ drugs</td>
+<td>Specialist referral</td>
+</tr>
+<tr>
+<td>White-coat HTN</td>
+<td>High in-clinic, normal ambulatory</td>
+<td>Ambulatory monitoring</td>
+</tr>
+<tr>
+<td>Masked HTN</td>
+<td>Normal in-clinic, high ambulatory</td>
+<td>24h monitoring</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="3-glucose-crisis-management-gate-3" class="tsd-anchor-link">3. Glucose Crisis Management — Gate 3<a href="#3-glucose-crisis-management-gate-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Screens glucose values (GDS, GDP, 2JTTGO, HbA1c) against PERKENI 2024 thresholds. Identifies DKA/HHS red flags and activates the 15-15 interactive timer for active hypoglycemia management.</p>
+<p><strong>API (internal):</strong></p>
+<pre><code class="typescript"><span class="hl-5">glucoseClassifier</span><span class="hl-1">.</span><span class="hl-0">classify</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-5">gds:</span><span class="hl-1"> </span><span class="hl-6">42</span><span class="hl-1">, </span><span class="hl-3">// mg/dL</span><br/><span class="hl-1">  </span><span class="hl-5">symptoms:</span><span class="hl-1"> [</span><span class="hl-2">&#39;tremor&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;sweating&#39;</span><span class="hl-1">, </span><span class="hl-2">&#39;confusion&#39;</span><span class="hl-1">],</span><br/><span class="hl-1">  </span><span class="hl-5">weight:</span><span class="hl-1"> </span><span class="hl-6">65</span><span class="hl-1">,</span><br/><span class="hl-1">});</span><br/><span class="hl-3">// → { crisis: &#39;HYPOGLYCEMIA&#39;, rule: &#39;15-15&#39;, activateTimer: true }</span>
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h3 id="4-iskandar-diagnosis-engine-8-step-pipeline" class="tsd-anchor-link">4. Iskandar Diagnosis Engine — 8-Step Pipeline<a href="#4-iskandar-diagnosis-engine-8-step-pipeline" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>The core decision support engine processes every encounter through a deterministic-first, AI-enriched pipeline. No AI output reaches the clinician without passing the Traffic Light safety gate.</p>
+<pre><code class="mermaid">flowchart TD
+    A[Clinical Input] --> B[1. Anonymizer — strip PII]
+    B --> C[2. Red Flag Checker — deterministic]
+    C --> D{Critical flag?}
+    D -- Yes --> E[IMMEDIATE ALERT — bypass AI]
+    D -- No --> F[3. Symptom Matcher — 159 diseases]
+    F --> G[4. Epidemiology Weights — 45,030 cases]
+    G --> H[5. LLM Reasoner — DeepSeek R1 / Gemini]
+    H --> I[6. Traffic Light Gate — 8 rules]
+    I --> J[7. ICD-10 Validation]
+    J --> K[8. Audit Logger — SHA-256 chain]
+    K --> L[Suggestions delivered to UI]
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h3 id="5-das-data-ascension-system" class="tsd-anchor-link">5. DAS — Data Ascension System<a href="#5-das-data-ascension-system" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>DAS surfaces clinical data from the active ePuskesmas session into the intelligence pipeline. Instead of brittle hardcoded CSS selectors, DAS uses adaptive fingerprinting with multi-signal confidence scoring — self-healing when ePuskesmas changes its UI.</p>
+<pre><code class="mermaid">sequenceDiagram
+    participant Page as ePuskesmas Page
+    participant Scanner as DAS Scanner
+    participant Classifier as Field Classifier
+    participant Vision as Gemini Vision
+    participant Store as Learning Store
+    participant Engine as Iskandar Engine
+
+    Page->>Scanner: Page load event
+    Scanner->>Classifier: Enumerate all inputs
+    Classifier->>Classifier: Score against clinical schema
+    alt Confidence >= 0.85
+        Classifier->>Store: Confirm and cache mapping
+    else Confidence < 0.85
+        Classifier->>Vision: Request Gemini Vision analysis
+        Vision-->>Classifier: Semantic field identification
+        Classifier->>Store: Save learned mapping
+    end
+    Store->>Engine: Deliver normalized clinical payload
+    Engine->>Page: Trigger auto-fill
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Auto-fill coverage:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Page</th>
+<th>Fields</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Anamnesa</td>
+<td>Keluhan utama, keluhan tambahan, duration, TTV fields, physical exam checkboxes, skala nyeri slider</td>
+</tr>
+<tr>
+<td>Diagnosa</td>
+<td>ICD-10 primary + secondary, jenis kasus, kunjungan type</td>
+</tr>
+<tr>
+<td>Resep</td>
+<td>Medication name, dosage, aturan pakai, duration, signa (with autocomplete)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="6-rme-transfer-orchestrator" class="tsd-anchor-link">6. RME Transfer Orchestrator<a href="#6-rme-transfer-orchestrator" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Manages multi-step referral data transfer to ePuskesmas: anamnesa → diagnosa → resep, with per-step retry logic, deduplication, and Dashboard bridge synchronization.</p>
+<pre><code class="mermaid">sequenceDiagram
+    actor Doctor
+    participant Sidepanel
+    participant Orchestrator as Transfer Orchestrator
+    participant Bridge as Dashboard Bridge
+    participant ePuskesmas
+
+    Doctor->>Sidepanel: Confirm referral data
+    Sidepanel->>Orchestrator: initiateTransfer(payload)
+    Orchestrator->>Bridge: Register transfer request
+    Bridge-->>Orchestrator: ack + transfer_id
+    Orchestrator->>ePuskesmas: Fill anamnesa page
+    Orchestrator->>ePuskesmas: Fill diagnosa page
+    Orchestrator->>ePuskesmas: Fill resep page
+    ePuskesmas-->>Orchestrator: Submit confirmation
+    Orchestrator->>Bridge: POST /api/bridge/complete
+    Bridge-->>Sidepanel: Transfer complete
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h2 id="architecture" class="tsd-anchor-link">Architecture<a href="#architecture" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="extension-layers" class="tsd-anchor-link">Extension Layers<a href="#extension-layers" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code><span class="hl-1">┌─────────────────────────────────────────────────────────────┐</span><br/><span class="hl-1">│                  </span><span class="hl-5">Sidepanel</span><span class="hl-1"> </span><span class="hl-0">UI</span><span class="hl-1"> (</span><span class="hl-5">React</span><span class="hl-1"> + </span><span class="hl-5">Tailwind</span><span class="hl-1">)             │</span><br/><span class="hl-1">│   </span><span class="hl-5">Emergency</span><span class="hl-1"> </span><span class="hl-5">Gates</span><span class="hl-1"> · </span><span class="hl-5">Iskandar</span><span class="hl-1"> </span><span class="hl-5">Engine</span><span class="hl-1"> · </span><span class="hl-5">Drug</span><span class="hl-1"> </span><span class="hl-5">Safety</span><span class="hl-1"> · </span><span class="hl-7">DAS</span><span class="hl-1"> </span><span class="hl-7">UI</span><span class="hl-1">  │</span><br/><span class="hl-1">└──────────────────────────┬──────────────────────────────────┘</span><br/><span class="hl-1">                           │</span><br/><span class="hl-1">┌──────────────────────────▼──────────────────────────────────┐</span><br/><span class="hl-1">│              </span><span class="hl-5">Background</span><span class="hl-1"> </span><span class="hl-0">Script</span><span class="hl-1"> (</span><span class="hl-7">WXT</span><span class="hl-1"> </span><span class="hl-7">MV3</span><span class="hl-1">)                     │</span><br/><span class="hl-1">│       </span><span class="hl-5">Bridge</span><span class="hl-1"> </span><span class="hl-5">Polling</span><span class="hl-1"> · </span><span class="hl-5">Auth</span><span class="hl-1"> </span><span class="hl-5">Refresh</span><span class="hl-1"> · </span><span class="hl-5">Message</span><span class="hl-1"> </span><span class="hl-5">Routing</span><span class="hl-1">        │</span><br/><span class="hl-1">└──────────┬────────────────┬───────────────┬─────────────────┘</span><br/><span class="hl-1">           │                │               │</span><br/><span class="hl-1">┌──────────▼───┐  ┌─────────▼──────┐  ┌────▼────────────────┐</span><br/><span class="hl-1">│  </span><span class="hl-5">Dashboard</span><span class="hl-1">   │  │  </span><span class="hl-5">Vertex</span><span class="hl-1"> </span><span class="hl-7">AI</span><span class="hl-1"> /   │  │  </span><span class="hl-5">Content</span><span class="hl-1"> </span><span class="hl-5">Script</span><span class="hl-1">     │</span><br/><span class="hl-1">│  </span><span class="hl-7">API</span><span class="hl-1">         │  │  </span><span class="hl-5">DeepSeek</span><span class="hl-1"> </span><span class="hl-7">R1</span><span class="hl-1">   │  │  </span><span class="hl-7">DAS</span><span class="hl-1"> </span><span class="hl-5">Extraction</span><span class="hl-1">     │</span><br/><span class="hl-1">│  </span><span class="hl-5">Auth</span><span class="hl-1"> + </span><span class="hl-5">Sync</span><span class="hl-1"> │  │  </span><span class="hl-5">Reasoning</span><span class="hl-1">     │  │  </span><span class="hl-5">Form</span><span class="hl-1"> </span><span class="hl-5">Auto</span><span class="hl-1">-</span><span class="hl-5">fill</span><span class="hl-1">     │</span><br/><span class="hl-1">└──────────────┘  └────────────────┘  └─────────────────────┘</span>
+</code><button>Copy</button></pre>
+
+<h3 id="project-structure" class="tsd-anchor-link">Project Structure<a href="#project-structure" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code><span class="hl-5">sentra</span><span class="hl-1">-</span><span class="hl-5">assist</span><span class="hl-1">/</span><br/><span class="hl-1">├── </span><span class="hl-5">entrypoints</span><span class="hl-1">/</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">sidepanel</span><span class="hl-1">/             ← </span><span class="hl-5">Main</span><span class="hl-1"> </span><span class="hl-5">Assist</span><span class="hl-1"> </span><span class="hl-0">UI</span><span class="hl-1"> (</span><span class="hl-5">React</span><span class="hl-1">)</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">login</span><span class="hl-1">/                 ← </span><span class="hl-5">Auth</span><span class="hl-1"> </span><span class="hl-5">entrypoint</span><br/><span class="hl-1">│   └── </span><span class="hl-5">background</span><span class="hl-1">.</span><span class="hl-5">ts</span><span class="hl-1">          ← </span><span class="hl-5">Messaging</span><span class="hl-1">, </span><span class="hl-5">bridge</span><span class="hl-1"> </span><span class="hl-5">orchestration</span><br/><span class="hl-1">├── </span><span class="hl-5">components</span><span class="hl-1">/</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">clinical</span><span class="hl-1">/              ← </span><span class="hl-7">TTV</span><span class="hl-1">, </span><span class="hl-7">HTN</span><span class="hl-1">, </span><span class="hl-5">Glucose</span><span class="hl-1">, </span><span class="hl-5">Shock</span><span class="hl-1">, </span><span class="hl-5">Dosage</span><span class="hl-1">, </span><span class="hl-5">Differential</span><span class="hl-1">, </span><span class="hl-5">Resep</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">cdss</span><span class="hl-1">/                  ← </span><span class="hl-7">CDSS</span><span class="hl-1"> </span><span class="hl-5">widget</span><span class="hl-1">, </span><span class="hl-5">confidence</span><span class="hl-1"> </span><span class="hl-5">meter</span><span class="hl-1">, </span><span class="hl-5">diagnosis</span><span class="hl-1"> </span><span class="hl-5">cards</span><span class="hl-1">, </span><span class="hl-5">red</span><span class="hl-1"> </span><span class="hl-5">flags</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">sidepanel</span><span class="hl-1">/             ← </span><span class="hl-5">Shell</span><span class="hl-1">, </span><span class="hl-5">header</span><span class="hl-1">, </span><span class="hl-5">footer</span><span class="hl-1">, </span><span class="hl-5">login</span><span class="hl-1">, </span><span class="hl-5">credits</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">providers</span><span class="hl-1">/             ← </span><span class="hl-5">ThemeProvider</span><br/><span class="hl-1">│   └── </span><span class="hl-5">ui</span><span class="hl-1">/                    ← </span><span class="hl-5">ThemeToggle</span><span class="hl-1">, </span><span class="hl-5">TextEffect</span><br/><span class="hl-1">├── </span><span class="hl-5">lib</span><span class="hl-1">/</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">iskandar</span><span class="hl-1">-</span><span class="hl-5">diagnosis</span><span class="hl-1">-</span><span class="hl-5">engine</span><span class="hl-1">/ ← </span><span class="hl-6">8</span><span class="hl-1">-</span><span class="hl-5">step</span><span class="hl-1"> </span><span class="hl-0">pipeline</span><span class="hl-1"> (</span><span class="hl-6">31</span><span class="hl-1"> </span><span class="hl-5">files</span><span class="hl-1">)</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">emergency</span><span class="hl-1">-</span><span class="hl-5">detector</span><span class="hl-1">/    ← </span><span class="hl-6">4</span><span class="hl-1"> </span><span class="hl-8">gates</span><span class="hl-1">: </span><span class="hl-7">TTV</span><span class="hl-1">, </span><span class="hl-7">HTN</span><span class="hl-1">, </span><span class="hl-5">Glucose</span><span class="hl-1">, </span><span class="hl-5">Shock</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">api</span><span class="hl-1">/                   ← </span><span class="hl-5">Auth</span><span class="hl-1">, </span><span class="hl-5">bridge</span><span class="hl-1">, </span><span class="hl-5">polling</span><span class="hl-1">, </span><span class="hl-5">Vertex</span><span class="hl-1"> </span><span class="hl-7">AI</span><span class="hl-1">, </span><span class="hl-5">DeepSeek</span><span class="hl-1">, </span><span class="hl-5">audit</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">clinical</span><span class="hl-1">/              ← </span><span class="hl-5">Vital</span><span class="hl-1"> </span><span class="hl-5">autocomplete</span><span class="hl-1">, </span><span class="hl-5">dosage</span><span class="hl-1"> </span><span class="hl-7">DB</span><span class="hl-1">, </span><span class="hl-5">triage</span><span class="hl-1"> </span><span class="hl-5">builder</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">scraper</span><span class="hl-1">/               ← </span><span class="hl-5">Static</span><span class="hl-1"> </span><span class="hl-5">field</span><span class="hl-1"> </span><span class="hl-5">extractors</span><br/><span class="hl-1">│   │   └── </span><span class="hl-5">adaptive</span><span class="hl-1">/          ← </span><span class="hl-8">DAS</span><span class="hl-1">: </span><span class="hl-7">AI</span><span class="hl-1">-</span><span class="hl-5">powered</span><span class="hl-1"> </span><span class="hl-5">adaptive</span><span class="hl-1"> </span><span class="hl-0">detection</span><span class="hl-1"> (</span><span class="hl-6">11</span><span class="hl-1"> </span><span class="hl-5">modules</span><span class="hl-1">)</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">rag</span><span class="hl-1">/                   ← </span><span class="hl-7">ICD</span><span class="hl-1">-</span><span class="hl-6">10</span><span class="hl-1"> </span><span class="hl-7">RAG</span><span class="hl-1"> </span><span class="hl-5">search</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">handlers</span><span class="hl-1">/              ← </span><span class="hl-5">Page</span><span class="hl-1"> </span><span class="hl-5">fill</span><span class="hl-1"> </span><span class="hl-0">handlers</span><span class="hl-1"> (</span><span class="hl-5">anamnesa</span><span class="hl-1">, </span><span class="hl-5">diagnosa</span><span class="hl-1">, </span><span class="hl-5">resep</span><span class="hl-1">)</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">rme</span><span class="hl-1">/                   ← </span><span class="hl-5">Transfer</span><span class="hl-1"> </span><span class="hl-5">orchestrator</span><span class="hl-1">, </span><span class="hl-5">payload</span><span class="hl-1"> + </span><span class="hl-5">prognosis</span><span class="hl-1"> </span><span class="hl-5">mapper</span><br/><span class="hl-1">│   └── </span><span class="hl-5">filler</span><span class="hl-1">/                ← </span><span class="hl-5">Form</span><span class="hl-1"> </span><span class="hl-5">fill</span><span class="hl-1"> </span><span class="hl-0">core</span><span class="hl-1"> (</span><span class="hl-5">content</span><span class="hl-1"> </span><span class="hl-5">script</span><span class="hl-1"> </span><span class="hl-5">bridge</span><span class="hl-1">)</span><br/><span class="hl-1">├── </span><span class="hl-5">utils</span><span class="hl-1">/                     ← </span><span class="hl-5">Audio</span><span class="hl-1">, </span><span class="hl-5">logger</span><span class="hl-1">, </span><span class="hl-5">messaging</span><span class="hl-1">, </span><span class="hl-5">name</span><span class="hl-1">-</span><span class="hl-5">masking</span><span class="hl-1">, </span><span class="hl-5">storage</span><br/><span class="hl-1">├── </span><span class="hl-5">data</span><span class="hl-1">/                      ← </span><span class="hl-7">DDI</span><span class="hl-1"> </span><span class="hl-0">database</span><span class="hl-1"> (173</span><span class="hl-5">k</span><span class="hl-1">+ </span><span class="hl-5">entries</span><span class="hl-1">), </span><span class="hl-5">field</span><span class="hl-1"> </span><span class="hl-5">mappings</span><br/><span class="hl-1">├── </span><span class="hl-5">public</span><span class="hl-1">/                    ← </span><span class="hl-5">Extension</span><span class="hl-1"> </span><span class="hl-5">assets</span><span class="hl-1">, </span><span class="hl-5">clinical</span><span class="hl-1"> </span><span class="hl-7">JSON</span><span class="hl-1"> </span><span class="hl-5">data</span><br/><span class="hl-1">├── </span><span class="hl-5">scripts</span><span class="hl-1">/</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">build</span><span class="hl-1">/                 ← </span><span class="hl-5">Database</span><span class="hl-1"> </span><span class="hl-5">optimization</span><br/><span class="hl-1">│   ├── </span><span class="hl-5">data</span><span class="hl-1">/                  ← </span><span class="hl-5">Data</span><span class="hl-1"> </span><span class="hl-5">conversion</span><br/><span class="hl-1">│   └── </span><span class="hl-5">dev</span><span class="hl-1">/                   ← </span><span class="hl-5">Dev</span><span class="hl-1"> </span><span class="hl-5">automation</span><span class="hl-1">, </span><span class="hl-5">smoke</span><span class="hl-1"> </span><span class="hl-5">tests</span><br/><span class="hl-1">└── </span><span class="hl-5">tests</span><span class="hl-1">/                     ← </span><span class="hl-5">Vitest</span><span class="hl-1"> </span><span class="hl-5">setup</span>
+</code><button>Copy</button></pre>
+
+<hr>
+<h2 id="testing-and-quality-gates" class="tsd-anchor-link">Testing and Quality Gates<a href="#testing-and-quality-gates" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="running-tests" class="tsd-anchor-link">Running Tests<a href="#running-tests" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">test</span><span class="hl-1">             </span><span class="hl-3"># Unit + integration (264 tests)</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">test:contract</span><span class="hl-1">    </span><span class="hl-3"># Bridge API contracts</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">typecheck</span><span class="hl-1">        </span><span class="hl-3"># tsc --noEmit strict</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">lint</span><span class="hl-1">             </span><span class="hl-3"># ESLint + Prettier</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="required-before-merge" class="tsd-anchor-link">Required Before Merge<a href="#required-before-merge" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>All four gates must pass:</p>
+<pre><code><span class="hl-1">✅ </span><span class="hl-5">pnpm</span><span class="hl-1"> </span><span class="hl-5">test</span><span class="hl-1">          — </span><span class="hl-6">264</span><span class="hl-1">/</span><span class="hl-6">264</span><br/><span class="hl-1">✅ </span><span class="hl-5">pnpm</span><span class="hl-1"> </span><span class="hl-8">test</span><span class="hl-1">:</span><span class="hl-5">contract</span><span class="hl-1"> — </span><span class="hl-5">bridge</span><span class="hl-1"> </span><span class="hl-5">contracts</span><br/><span class="hl-1">✅ </span><span class="hl-5">pnpm</span><span class="hl-1"> </span><span class="hl-5">typecheck</span><span class="hl-1">     — </span><span class="hl-5">zero</span><span class="hl-1"> </span><span class="hl-5">errors</span><br/><span class="hl-1">✅ </span><span class="hl-5">pnpm</span><span class="hl-1"> </span><span class="hl-5">lint</span><span class="hl-1">          — </span><span class="hl-5">zero</span><span class="hl-1"> </span><span class="hl-5">warnings</span>
+</code><button>Copy</button></pre>
+
+<hr>
+<h2 id="deployment" class="tsd-anchor-link">Deployment<a href="#deployment" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="chrome-web-store" class="tsd-anchor-link">Chrome Web Store<a href="#chrome-web-store" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">build</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">zip</span><br/><span class="hl-3"># Upload ZIP to Chrome Web Store Developer Dashboard</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="firefox-add-ons" class="tsd-anchor-link">Firefox Add-ons<a href="#firefox-add-ons" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">build:firefox</span><br/><span class="hl-0">pnpm</span><span class="hl-1"> </span><span class="hl-4">--filter</span><span class="hl-1"> </span><span class="hl-2">@the-abyss/sentra-assist</span><span class="hl-1"> </span><span class="hl-2">zip:firefox</span><br/><span class="hl-3"># Upload to Firefox Add-on Developer Hub</span>
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h2 id="troubleshooting" class="tsd-anchor-link">Troubleshooting<a href="#troubleshooting" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Solution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Extension not loading</td>
+<td>Enable Developer Mode at <code>chrome://extensions/</code>, load unpacked from <code>.output/chrome-mv3-dev/</code></td>
+</tr>
+<tr>
+<td><code>pnpm install</code> fails</td>
+<td>Verify Node.js ≥22 and pnpm ≥9 via <code>node -v</code> and <code>pnpm -v</code></td>
+</tr>
+<tr>
+<td>Vertex AI auth errors</td>
+<td>Confirm Google Cloud project access and Vertex AI API is enabled</td>
+</tr>
+<tr>
+<td>Sidepanel shows &quot;Login required&quot;</td>
+<td>Check Dashboard base URL in Settings — must point to a running Sentra Dashboard instance</td>
+</tr>
+<tr>
+<td>Form not auto-filling</td>
+<td>DAS may need a re-scan — click <strong>Inisialisasi</strong> in the header status bar</td>
+</tr>
+<tr>
+<td>Word limit error on submit</td>
+<td>ePuskesmas field limit is 225 words — Sentra caps keluhan automatically at 220 words</td>
+</tr>
+<tr>
+<td>TypeScript errors</td>
+<td>Run <code>pnpm typecheck</code> for full output</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="license" class="tsd-anchor-link">License<a href="#license" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Sentra Assist is dual-licensed. See <a href="media/LICENSE">LICENSE</a> for full terms.</p>
+<table>
+<thead>
+<tr>
+<th>Use Case</th>
+<th>License</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Individual clinician / researcher / student</td>
+<td>Free — Apache 2.0</td>
+</tr>
+<tr>
+<td>Puskesmas / clinic / hospital deployment</td>
+<td>Enterprise license required</td>
+</tr>
+<tr>
+<td>Vendor / integrator / government program</td>
+<td>Enterprise license required</td>
+</tr>
+</tbody>
+</table>
+<p>Commercial licensing: <a href="https://sentrahai.com">sentrahai.com</a></p>
+<hr>
+<h2 id="🤖-self-healing-ci" class="tsd-anchor-link">🤖 Self-Healing CI<a href="#🤖-self-healing-ci" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>This project is equipped with <strong>Auto-Fix</strong> capabilities via <code>claudesy-devkit</code>.
+If CI fails due to formatting or minor linting issues:</p>
+<ol>
+<li>The <strong>Auto-Fix CI</strong> bot triggers automatically.</li>
+<li>It attempts to repair the code using <code>pnpm format</code> and <code>pnpm lint:fix</code>.</li>
+<li>If successful, it opens a <strong>Pull Request</strong> with the fixes.</li>
+<li>Merge the PR to restore CI status to green.</li>
+</ol>
+<hr>
+<div align="center">
+<p>Designed and built by <strong><a href="https://github.com/Claudesy">Claudesy</a></strong> (dr. Ferdi Iskandar)
+Maintained by <strong>Sentra Artificial Intelligence</strong></p>
+</div>
+<!-- Test autofix: Thu Apr 16 12:50:45 SEAST 2026 --></div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-private" name="private"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Private</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#sentra-assist"><span>Sentra <wbr/>Assist</span></a><ul><li><a href="#overview"><span>Overview</span></a></li><li><a href="#why-a-locally-calibrated-decision-support-layer"><span>Why a <wbr/>Locally-<wbr/>Calibrated <wbr/>Decision <wbr/>Support <wbr/>Layer</span></a></li><li><a href="#executive-summary"><span>Executive <wbr/>Summary</span></a></li><li><a href="#table-of-contents"><span>Table of <wbr/>Contents</span></a></li><li><a href="#features-overview"><span>Features <wbr/>Overview</span></a></li><li><ul><li><a href="#emergency-detection"><span>Emergency <wbr/>Detection</span></a></li><li><a href="#iskandar-diagnosis-engine"><span>Iskandar <wbr/>Diagnosis <wbr/>Engine</span></a></li><li><a href="#drug-safety"><span>Drug <wbr/>Safety</span></a></li><li><a href="#clinical-analytics"><span>Clinical <wbr/>Analytics</span></a></li><li><a href="#das-form-automation"><span>DAS — <wbr/>Form <wbr/>Automation</span></a></li><li><a href="#integration-security"><span>Integration &amp; <wbr/>Security</span></a></li></ul></li><li><a href="#quickstart"><span>Quickstart</span></a></li><li><ul><li><a href="#prerequisites"><span>Prerequisites</span></a></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#environment-variables"><span>Environment <wbr/>Variables</span></a></li><li><a href="#development"><span>Development</span></a></li><li><a href="#production-build"><span>Production <wbr/>Build</span></a></li></ul></li><li><a href="#detailed-features"><span>Detailed <wbr/>Features</span></a></li><li><ul><li><a href="#1-ttv-inference-gate-1"><span>1. <wbr/>TTV <wbr/>Inference — <wbr/>Gate 1</span></a></li><li><a href="#2-hypertension-crisis-triage-gate-2"><span>2. <wbr/>Hypertension <wbr/>Crisis <wbr/>Triage — <wbr/>Gate 2</span></a></li><li><a href="#3-glucose-crisis-management-gate-3"><span>3. <wbr/>Glucose <wbr/>Crisis <wbr/>Management — <wbr/>Gate 3</span></a></li><li><a href="#4-iskandar-diagnosis-engine-8-step-pipeline"><span>4. <wbr/>Iskandar <wbr/>Diagnosis <wbr/>Engine — 8-<wbr/>Step <wbr/>Pipeline</span></a></li><li><a href="#5-das-data-ascension-system"><span>5. <wbr/>DAS — <wbr/>Data <wbr/>Ascension <wbr/>System</span></a></li><li><a href="#6-rme-transfer-orchestrator"><span>6. <wbr/>RME <wbr/>Transfer <wbr/>Orchestrator</span></a></li></ul></li><li><a href="#architecture"><span>Architecture</span></a></li><li><ul><li><a href="#extension-layers"><span>Extension <wbr/>Layers</span></a></li><li><a href="#project-structure"><span>Project <wbr/>Structure</span></a></li></ul></li><li><a href="#testing-and-quality-gates"><span>Testing and <wbr/>Quality <wbr/>Gates</span></a></li><li><ul><li><a href="#running-tests"><span>Running <wbr/>Tests</span></a></li><li><a href="#required-before-merge"><span>Required <wbr/>Before <wbr/>Merge</span></a></li></ul></li><li><a href="#deployment"><span>Deployment</span></a></li><li><ul><li><a href="#chrome-web-store"><span>Chrome <wbr/>Web <wbr/>Store</span></a></li><li><a href="#firefox-add-ons"><span>Firefox <wbr/>Add-<wbr/>ons</span></a></li></ul></li><li><a href="#troubleshooting"><span>Troubleshooting</span></a></li><li><a href="#license"><span>License</span></a></li><li><a href="#🤖-self-healing-ci"><span>🤖 <wbr/>Self-<wbr/>Healing <wbr/>CI</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">Sentra Assist API Documentation - v1.0.1</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>

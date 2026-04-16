@@ -21,10 +21,10 @@ const OUTPUT_COMPACT = path.join(__dirname, '../data/ddi-database.min.json');
 
 // Severity mapping
 const SEVERITY_MAP = {
-  'unknown': 0,
-  'minor': 1,
-  'moderate': 2,
-  'major': 3,
+  unknown: 0,
+  minor: 1,
+  moderate: 2,
+  major: 3,
 };
 
 function normalizeDrugName(name) {
@@ -33,7 +33,7 @@ function normalizeDrugName(name) {
     .toLowerCase()
     .trim()
     .replace(/\s*\([^)]*\)\s*/g, '') // Remove parenthetical info like (topical)
-    .replace(/[^a-z0-9]/g, '');      // Keep only alphanumeric
+    .replace(/[^a-z0-9]/g, ''); // Keep only alphanumeric
 }
 
 function parseSeverity(level) {
@@ -77,7 +77,7 @@ async function main() {
 
   console.log('Reading merged CSV...');
   const content = fs.readFileSync(mergedFile, 'utf-8');
-  const lines = content.split('\n').filter(l => l.trim());
+  const lines = content.split('\n').filter((l) => l.trim());
 
   console.log(`Total lines: ${lines.length}`);
 
@@ -86,7 +86,7 @@ async function main() {
 
   // Build drug index and interactions
   const drugIndex = new Map(); // drugName -> index
-  const interactions = [];     // [[drugA_idx, drugB_idx, severity], ...]
+  const interactions = []; // [[drugA_idx, drugB_idx, severity], ...]
   const seenPairs = new Set(); // To track unique pairs
 
   let drugCounter = 0;
@@ -160,11 +160,11 @@ async function main() {
       drugs: drugIndex.size,
       interactions: interactions.length,
       byLevel: {
-        major: interactions.filter(i => i[2] === 3).length,
-        moderate: interactions.filter(i => i[2] === 2).length,
-        minor: interactions.filter(i => i[2] === 1).length,
-        unknown: interactions.filter(i => i[2] === 0).length,
-      }
+        major: interactions.filter((i) => i[2] === 3).length,
+        moderate: interactions.filter((i) => i[2] === 2).length,
+        minor: interactions.filter((i) => i[2] === 1).length,
+        unknown: interactions.filter((i) => i[2] === 0).length,
+      },
     },
     severityCodes: { unknown: 0, minor: 1, moderate: 2, major: 3 },
     drugs: Object.fromEntries(drugIndex),

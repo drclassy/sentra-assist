@@ -23,7 +23,9 @@
     background: var(--sentra-card);
     border-color: var(--sentra-border);
     color: var(--text-main);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 20px 40px -10px rgba(0,0,0,0.5);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04),
+      0 20px 40px -10px rgba(0, 0, 0, 0.5);
   }
 
   .sentra-card--inset {
@@ -68,7 +70,7 @@
   }
   /* Light = illuminated dark — active state harus glow teal, bukan emerald-50 putih */
   .light .engine-btn.active {
-    color: #7AB8A4;
+    color: #7ab8a4;
     background: rgba(16, 185, 129, 0.15);
     border-color: rgba(16, 185, 129, 0.45);
     box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);

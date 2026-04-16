@@ -1,7 +1,7 @@
 // Architected and built by Claudesy.
-import js from '@eslint/js'
-import react from 'eslint-plugin-react'
-import tseslint from 'typescript-eslint'
+import js from '@eslint/js';
+import react from 'eslint-plugin-react';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   js.configs.recommended,
@@ -64,4 +64,4 @@ export default tseslint.config(
       'no-console': 'off',
     },
   }
-)
+);

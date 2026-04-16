@@ -21,8 +21,8 @@ async function main() {
   console.log(`  - Interactions: ${data.stats.interactions}`);
 
   // Filter to only Major (3) and Moderate (2) interactions
-  const clinicalInteractions = data.interactions.filter(([, , severity]) =>
-    severity === 3 || severity === 2
+  const clinicalInteractions = data.interactions.filter(
+    ([, , severity]) => severity === 3 || severity === 2
   );
 
   // Find drugs that are actually used in clinical interactions
@@ -62,9 +62,9 @@ async function main() {
       drugs: newDrugNames.length,
       interactions: remappedInteractions.length,
       byLevel: {
-        major: remappedInteractions.filter(i => i[2] === 3).length,
-        moderate: remappedInteractions.filter(i => i[2] === 2).length,
-      }
+        major: remappedInteractions.filter((i) => i[2] === 3).length,
+        moderate: remappedInteractions.filter((i) => i[2] === 2).length,
+      },
     },
     severityCodes: { moderate: 2, major: 3 },
     drugs: newDrugs,

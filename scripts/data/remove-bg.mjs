@@ -19,10 +19,7 @@ async function removeWhiteBackground() {
     const { width: _width, height: _height } = await image.metadata();
 
     // Get raw pixel data
-    const { data, info } = await image
-      .ensureAlpha()
-      .raw()
-      .toBuffer({ resolveWithObject: true });
+    const { data, info } = await image.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
     // Debug: sample some pixel values
     console.log('Sample pixels from center area:');
@@ -30,7 +27,9 @@ async function removeWhiteBackground() {
     const centerX = Math.floor(info.width / 2);
     for (let dy = -5; dy <= 5; dy++) {
       const idx = ((centerY + dy) * info.width + centerX) * 4;
-      console.log(`  Pixel [${centerX}, ${centerY + dy}]: R=${data[idx]}, G=${data[idx+1]}, B=${data[idx+2]}, A=${data[idx+3]}`);
+      console.log(
+        `  Pixel [${centerX}, ${centerY + dy}]: R=${data[idx]}, G=${data[idx + 1]}, B=${data[idx + 2]}, A=${data[idx + 3]}`
+      );
     }
 
     // Process pixels - remove white/light pixels
@@ -53,8 +52,8 @@ async function removeWhiteBackground() {
       raw: {
         width: info.width,
         height: info.height,
-        channels: 4
-      }
+        channels: 4,
+      },
     })
       .png()
       .toFile(outputPath);

@@ -1,6 +1,6 @@
 // Designed and constructed by Claudesy.
 /* eslint-disable @typescript-eslint/no-require-imports, no-undef */
-const { fontFamily } = require('tailwindcss/defaultTheme')
+const { fontFamily } = require('tailwindcss/defaultTheme');
 
 module.exports = {
   darkMode: 'class',
@@ -128,4 +128,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};

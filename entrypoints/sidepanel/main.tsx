@@ -654,6 +654,7 @@ function App() {
                               setAnamnesaDraft(d.anamnesaDraft);
                             }}
                             onAlertsChange={setEmergencyAlerts}
+                            onAccessEmergency={() => { handleEngineChange('emergency'); }}
                             showMaskedName={false}
                             ttvState={ttvState}
                             onTTVStateChange={setTTVState}
@@ -747,7 +748,7 @@ function App() {
                         variants={tabPanelVariants}
                         className="shell-tab-panel w-full"
                       >
-                        <EmergencyDashboard alerts={emergencyAlerts} />
+                        <EmergencyDashboard alerts={emergencyAlerts} onScrollToTab={() => document.getElementById('sidepanel-tab-emergency')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -790,11 +791,13 @@ function App() {
 }
 
 // --- SUBCOMPONENTS (EmergencyDashboard, ErrorBoundary) ---
-function EmergencyDashboard({ alerts }: { alerts: ScreeningAlert[] }) {
+function EmergencyDashboard({ alerts, onScrollToTab }: { alerts: ScreeningAlert[]; onScrollToTab?: () => void }) {
   return (
     <div className="emg-timeline">
       <div className="emg-timeline__header">
-        <span className="emg-timeline__eyebrow">SENTRA ASSIST · CLINICAL FINDINGS</span>
+        <span className={`emg-timeline__eyebrow${alerts.length > 0 ? ' emg-timeline__eyebrow--active' : ''}`}>
+          SENTRA ASSIST · EMERGENCY STATUS
+        </span>
         {alerts.length > 0 && (
           <span className="emg-timeline__tally">{alerts.length} temuan</span>
         )}
@@ -832,6 +835,13 @@ function EmergencyDashboard({ alerts }: { alerts: ScreeningAlert[] }) {
                     ))}
                   </ul>
                 )}
+                <div
+                  className="emg-entry__access"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onScrollToTab?.()}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onScrollToTab?.(); }}
+                >Access Emergency ↑</div>
               </div>
             </div>
           ))}

@@ -20,4 +20,5 @@ Deep-dive review and ship checklist executed against working tree vs `origin/mas
 2. Longer term: split [`TTVInferenceUI.tsx`](./components/clinical/TTVInferenceUI.tsx) into hooks/subcomponents (see PROGRESS “Next candidates”).
 
 ---
+
 **Status:** Latest commit on `master` contains this batch (`git log -1`); push/PR pending Chief

@@ -2200,16 +2200,53 @@ textarea:read-only,
   pointer-events: none;
 }
 
-/* Engine tab — subtle finding dot */
+/* Engine tab — clinical finding dot with pulse */
 .engine-tab-dot {
   display: inline-block;
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: rgba(244, 239, 230, 0.55);
-  margin-left: 5px;
+  background: rgba(244, 239, 230, 0.9);
+  margin-left: 6px;
   vertical-align: middle;
   flex-shrink: 0;
+  animation: engine-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes engine-dot-pulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.7); }
+}
+
+/* ── ENGINE BUTTON: RED ALERT MODE ─────────────────────────────────────────── */
+.engine-btn--alert-active {
+  border-color: rgba(220, 40, 40, 0.75) !important;
+  color: rgba(230, 60, 60, 0.95) !important;
+  background: rgba(180, 20, 20, 0.12) !important;
+  animation: engine-alert-pulse 1.8s ease-in-out infinite;
+}
+
+.engine-btn--alert-active .engine-tab-dot {
+  background: rgba(230, 60, 60, 0.9);
+}
+
+@keyframes engine-alert-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 40, 40, 0); border-color: rgba(220, 40, 40, 0.75); }
+  50%       { box-shadow: 0 0 0 3px rgba(220, 40, 40, 0.18); border-color: rgba(220, 40, 40, 0.45); }
+}
+
+/* Access Emergency clickable label */
+.emg-entry__access,
+.alert-timeline-entry__access {
+  cursor: pointer;
+  user-select: none;
+}
+
+.emg-entry__access:hover,
+.alert-timeline-entry__access:hover {
+  color: rgba(220, 50, 50, 1);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* ── MEDICAL TIMELINE (EmergencyDashboard + Alert Preview) ─────────────────── */
@@ -2234,6 +2271,16 @@ textarea:read-only,
   text-transform: uppercase;
   color: rgba(244, 239, 230, 0.35);
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
+}
+
+.emg-timeline__eyebrow--active {
+  color: rgba(220, 50, 50, 0.9);
+  animation: emg-status-breathe 2.2s ease-in-out infinite;
+}
+
+@keyframes emg-status-breathe {
+  0%, 100% { opacity: 0.9; }
+  50%       { opacity: 0.45; }
 }
 
 .emg-timeline__tally {
@@ -2455,6 +2502,29 @@ textarea:read-only,
   font-size: 10px;
   color: rgba(244, 239, 230, 0.42);
   line-height: 1.5;
+}
+
+.alert-timeline-entry__access {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(220, 50, 50, 0.75);
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  margin-top: 5px;
+}
+
+.alert-timeline-preview__label--pulse {
+  animation: emg-status-breathe 2.2s ease-in-out infinite;
+  color: rgba(220, 50, 50, 0.85) !important;
+}
+
+.emg-entry__access {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(220, 50, 50, 0.75);
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  margin-top: 6px;
 }
 
 .engine-btn:focus-visible {

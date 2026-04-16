@@ -30,10 +30,16 @@ import {
 import { buildVitalAutofill } from '@/lib/clinical/vital-autocomplete';
 import { getVitalScreeningProfile } from '@/lib/clinical/vital-screening-thresholds';
 import {
-  calculateBaseline,
-  SHOCK_THRESHOLDS,
+  detectOccultShock,
   type HistoricalBP,
+  type OccultShockInput,
 } from '@/lib/emergency-detector/occult-shock-detector';
+import {
+  classifyHypertension,
+  getHTNSeverity,
+  type BPMeasurementSession,
+} from '@/lib/emergency-detector/htn-classifier';
+import { classifyBloodGlucose } from '@/lib/emergency-detector/glucose-classifier';
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store';
 import { playSound } from '@/utils/sound';
 import { createLogger } from '@/utils/logger';
@@ -194,6 +200,7 @@ interface TTVInferenceUIProps {
   patientKelurahan?: string;
   onComplete?: (data: TTVInferenceData) => void;
   onAlertsChange?: (alerts: ScreeningAlert[]) => void;
+  onAccessEmergency?: () => void;
   showMaskedName?: boolean;
   ttvState?: TTVStateShape;
   onTTVStateChange?: (state: TTVStateShape) => void;
@@ -620,89 +627,224 @@ export const buildAlerts = (
     });
   }
 
-  // GATE_1B: Relative hypotension — occult shock pada pasien HTN
-  if (
-    !physiology.isPediatric &&
-    context?.knownHTN &&
-    context.bpHistory &&
-    context.bpHistory.length >= 3 &&
-    sbp > 0 &&
-    dbp > 0
-  ) {
-    const baseline = calculateBaseline(context.bpHistory);
-    if (baseline) {
-      const deltaSbp = baseline.sbp - sbp;
-      if (deltaSbp >= SHOCK_THRESHOLDS.RELATIVE_HYPOTENSION_DELTA && !hasHypotension) {
+  // ── GATE_AVPU: Consciousness level — via avpu-engine.ts ─────────────────────
+  if (sbp > 0 && spo2 > 0) {
+    const glucoseSafe = glucose > 0 ? glucose : -1;
+    const avpuResult = determineAVPU({ sbp, spo2, rr, hr, glucose: glucoseSafe });
+    if (avpuResult.avpu !== 'A') {
+      const avpuSeverityMap: Record<string, ScreeningAlert['severity']> = {
+        V: 'high',
+        P: 'critical',
+        U: 'critical',
+      };
+      const avpuTitleMap: Record<string, string> = {
+        V: `Penurunan respons — AVPU: VERBAL (${sbp} mmHg / SpO2 ${spo2}%)`,
+        P: `Penurunan kesadaran berat — AVPU: PAIN (SBP ${sbp} / SpO2 ${spo2}%)`,
+        U: `TIDAK RESPONSIF — AVPU: UNRESPONSIVE — AKTIFKAN EMERGENCY`,
+      };
+      alerts.push({
+        id: 'avpu-alert',
+        type: 'avpu_abnormal',
+        severity: avpuSeverityMap[avpuResult.avpu] ?? 'high',
+        title: avpuTitleMap[avpuResult.avpu] ?? `AVPU: ${avpuResult.avpu}`,
+        gate: 'GATE_0_AVPU',
+        reasoning: avpuResult.reason.join(' | '),
+        recommendations: avpuResult.avpu === 'U'
+          ? [
+              'Aktifkan respons emergensi segera — panggil bantuan.',
+              'Evaluasi ABC: airway, breathing, circulation.',
+              'Posisikan pasien aman — recovery position jika napas ada.',
+              'Siapkan AED dan pastikan akses IV.',
+            ]
+          : avpuResult.avpu === 'P'
+          ? [
+              'Evaluasi tingkat kesadaran dengan GCS segera.',
+              'Nilai ABC dan pertahankan airway.',
+              'Monitor serial tanda vital setiap 5 menit.',
+              'Eskalasi segera ke dokter penanggung jawab.',
+            ]
+          : [
+              'Monitor ketat — nilai ulang AVPU setiap 15 menit.',
+              'Korelasikan dengan BP, SpO2, dan status mental.',
+              'Eskalasi jika AVPU memburuk ke P atau U.',
+            ],
+        clinicalData: { sbp, spo2, hr, rr },
+      });
+    }
+  }
+
+  // ── GATE_1B: Occult shock — via detectOccultShock() (MSF Guidelines) ────────
+  if (!physiology.isPediatric && sbp > 0 && dbp > 0) {
+    const hasDizziness = hasKeywordSignal(symptomText, ['pusing', 'oyong', 'mau pingsan', 'berputar', 'vertigo']);
+    const hasWeakness = hasKeywordSignal(symptomText, ['lemas', 'lemah', 'tidak kuat', 'lesu', 'loyo']);
+    const hasPresyncope = hasKeywordSignal(symptomText, ['hampir pingsan', 'mau jatuh', 'kunang', 'gelap']);
+    const hasSyncope = hasKeywordSignal(symptomText, ['pingsan', 'hilang kesadaran', 'jatuh tiba']);
+
+    const shockInput: OccultShockInput = {
+      vitals: {
+        current_sbp: sbp,
+        current_dbp: dbp,
+        glucose: glucose > 0 ? glucose : undefined,
+      },
+      last_3_visits: context?.bpHistory?.map((h) => ({
+        visit_date: h.visit_date ?? '',
+        sbp: h.sbp,
+        dbp: h.dbp,
+        location: h.location,
+      })) ?? [],
+      symptoms: {
+        dizziness: hasDizziness,
+        presyncope: hasPresyncope,
+        syncope: hasSyncope,
+        weakness: hasWeakness,
+      },
+      known_htn: Boolean(context?.knownHTN),
+    };
+
+    const shockResult = detectOccultShock(shockInput);
+
+    if ((shockResult.risk_level === 'CRITICAL' || shockResult.risk_level === 'HIGH') && !hasHypotension) {
+      alerts.push({
+        id: 'occult-shock-alert',
+        type: 'occult_shock',
+        severity: shockResult.risk_level === 'CRITICAL' ? 'critical' : 'high',
+        title: shockResult.risk_level === 'CRITICAL'
+          ? `Shock terdeteksi — MAP ${shockResult.map} mmHg${shockResult.delta_sbp ? `, ΔSBP ${shockResult.delta_sbp}` : ''}`
+          : `Curiga occult shock — ΔSBP ${shockResult.delta_sbp ?? '?'} mmHg dari baseline`,
+        gate: 'GATE_1_HEMODYNAMIC',
+        reasoning: [
+          ...shockResult.triggers,
+          shockResult.baseline_bp
+            ? `Baseline pasien: ${shockResult.baseline_bp.sbp}/${shockResult.baseline_bp.dbp} mmHg (median 3 kunjungan).`
+            : '',
+        ].filter(Boolean).join(' | '),
+        recommendations: shockResult.recommendations.filter((r) => r.trim() !== ''),
+        clinicalData: { sbp, dbp, map },
+      });
+    }
+  }
+
+  // ── GATE 2: HTN — via htn-classifier.ts (FKTP 2024) ───────────────────────
+  if (sbp > 0 && dbp > 0) {
+    if (physiology.isPediatric) {
+      // Pediatric: tetap pakai physiology thresholds (tabel usia/gender)
+      if (sbp >= physiology.severeHypertensionSbp || dbp >= physiology.severeHypertensionDbp) {
         alerts.push({
-          id: 'occult-shock-relative-hypotension',
-          type: 'occult_shock',
-          severity: 'high',
-          title: 'Hipotensi relatif — curiga occult shock',
-          gate: 'GATE_1_HEMODYNAMIC',
-          reasoning: `TD saat ini ${sbp}/${dbp} mmHg turun ${deltaSbp} mmHg dari baseline pasien (${baseline.sbp}/${baseline.dbp} mmHg, median 3 kunjungan). Pasien hipertensi dapat shock pada TD yang tampak "normal".`,
+          id: 'hypertensive-alert',
+          type: 'hypertensive_crisis',
+          severity: 'critical',
+          title: `Tekanan darah sangat tinggi untuk ${physiology.label}`,
+          gate: 'GATE_2_BP',
+          reasoning: `Tekanan darah ${sbp}/${dbp} mmHg sangat tinggi untuk ${ageContext}. ${physiology.bpScreeningDisclaimer ?? ''}`,
           recommendations: [
-            'Nilai gejala akut: pusing, hampir pingsan, lemah.',
-            'Cek perfusi: CRT, suhu akral, status mental.',
-            'Serial BP setiap 15 menit.',
-            'Eskalasi jika ada gejala atau memburuk.',
+            'Nilai gejala target organ seperti nyeri dada, sesak, atau gangguan neurologis.',
+            'Ulangi pengukuran setelah pasien istirahat dan posisi benar.',
+            'Prioritaskan review dokter di kunjungan ini.',
           ],
+          clinicalData: { sbp, dbp, map },
+        });
+      }
+    } else {
+      // Adult/geriatric: pakai htn-classifier.ts penuh
+      const htnSeverity = getHTNSeverity({ sbp, dbp });
+
+      if (htnSeverity === 'stage1' || htnSeverity === 'stage2' || htnSeverity === 'crisis') {
+        const bpSession: BPMeasurementSession = {
+          readings: [{ sbp, dbp }],
+          final_bp: { sbp, dbp },
+          measurement_quality: 'acceptable',
+        };
+
+        const knownHTN = Boolean(context?.knownHTN);
+        const htnResult = classifyHypertension(
+          bpSession,
+          // Red flags tidak tersedia dari input manual — default ke undefined
+          // sehingga classifier default ke HTN_URGENCY (bukan EMERGENCY) tanpa red flags
+          undefined,
+          { on_medication: knownHTN }
+        );
+
+        const severityMap: Record<string, ScreeningAlert['severity']> = {
+          stage1: 'warning',
+          stage2: 'high',
+          crisis: 'critical',
+        };
+
+        const titleMap: Record<string, string> = {
+          stage1: `Hipertensi Grade 1 (${sbp}/${dbp} mmHg)`,
+          stage2: `Hipertensi Grade 2 — eskalasi diperlukan (${sbp}/${dbp} mmHg)`,
+          crisis: htnResult.type === 'HTN_EMERGENCY'
+            ? `EMERGENSI HIPERTENSI — rujuk IGD segera (${sbp}/${dbp} mmHg)`
+            : `Urgensi Hipertensi — tata laksana segera (${sbp}/${dbp} mmHg)`,
+        };
+
+        alerts.push({
+          id: 'hypertensive-alert',
+          type: 'hypertensive_crisis',
+          severity: severityMap[htnSeverity] ?? 'high',
+          title: titleMap[htnSeverity] ?? `Hipertensi terdeteksi (${sbp}/${dbp} mmHg)`,
+          gate: 'GATE_2_BP',
+          reasoning: htnResult.reasoning,
+          recommendations: htnResult.recommendations,
           clinicalData: { sbp, dbp, map },
         });
       }
     }
   }
 
-  if (sbp >= physiology.severeHypertensionSbp || dbp >= physiology.severeHypertensionDbp) {
-    alerts.push({
-      id: 'hypertensive-alert',
-      type: 'hypertensive_crisis',
-      severity: 'critical',
-      title: physiology.isPediatric
-        ? `Tekanan darah sangat tinggi untuk ${physiology.label}`
-        : 'Krisis hipertensi perlu eksklusi emergensi',
-      gate: 'GATE_2_BP',
-      reasoning: physiology.isPediatric
-        ? `Tekanan darah ${sbp}/${dbp} mmHg sangat tinggi untuk ${ageContext}. ${physiology.bpScreeningDisclaimer}`
-        : `Tekanan darah ${sbp}/${dbp} mmHg berada pada rentang krisis hipertensi.`,
-      recommendations: [
-        'Nilai gejala target organ seperti nyeri dada, sesak, atau gangguan neurologis.',
-        'Ulangi pengukuran setelah pasien istirahat dan posisi benar.',
-        'Prioritaskan review dokter di kunjungan ini.',
-      ],
-      clinicalData: { sbp, dbp, map },
+  // ── GATE 3: GLUCOSE — via glucose-classifier.ts (PERKENI 2024 / ADA 2026) ─
+  if (glucose > 0) {
+    const glucoseResult = classifyBloodGlucose({
+      gds: glucose,
+      sample_type: 'capillary',
+      has_classic_symptoms: false, // Tidak ada input gejala klasik dari form TTV
     });
-  }
 
-  if (glucose > 0 && glucose < 70) {
-    alerts.push({
-      id: 'hypoglycemia-alert',
-      type: 'hypoglycemia',
-      severity: 'high',
-      title: 'Hipoglikemia membutuhkan koreksi cepat',
-      gate: 'GATE_3_GLUCOSE',
-      reasoning: `Glukosa sewaktu ${glucose} mg/dL berada di bawah ambang aman.`,
-      recommendations: [
-        'Berikan koreksi glukosa oral atau IV sesuai kondisi pasien.',
-        'Recheck glukosa dalam 15 menit.',
-        'Pantau perubahan kesadaran dan risiko kejang.',
-      ],
-      clinicalData: { glucose },
-    });
-  } else if (glucose >= 300) {
-    alerts.push({
-      id: 'hyperglycemia-alert',
-      type: 'hyperglycemia',
-      severity: 'high',
-      title: 'Hiperglikemia berat terdeteksi',
-      gate: 'GATE_3_GLUCOSE',
-      reasoning: `Glukosa sewaktu ${glucose} mg/dL membutuhkan evaluasi komplikasi metabolik.`,
-      recommendations: [
-        'Evaluasi tanda dehidrasi, poliuria, dan penurunan kesadaran.',
-        'Pertimbangkan keton bila tersedia.',
-        'Prioritaskan review dokter untuk tata laksana lanjutan.',
-      ],
-      clinicalData: { glucose },
-    });
+    if (glucoseResult.category === 'HYPOGLYCEMIA_CRISIS') {
+      alerts.push({
+        id: 'hypoglycemia-alert',
+        type: 'hypoglycemia',
+        severity: 'critical',
+        title: `Hipoglikemia — tangani segera (GDS ${glucose} mg/dL)`,
+        gate: 'GATE_3_GLUCOSE',
+        reasoning: glucoseResult.reasoning,
+        recommendations: glucoseResult.recommendations,
+        clinicalData: { glucose },
+      });
+    } else if (glucoseResult.category === 'HYPERGLYCEMIA_CRISIS') {
+      alerts.push({
+        id: 'hyperglycemia-crisis-alert',
+        type: 'hyperglycemia',
+        severity: 'critical',
+        title: `Krisis hiperglikemia — curiga DKA/HHS (GDS ${glucose} mg/dL)`,
+        gate: 'GATE_3_GLUCOSE',
+        reasoning: glucoseResult.reasoning,
+        recommendations: glucoseResult.recommendations,
+        clinicalData: { glucose },
+      });
+    } else if (glucoseResult.category === 'DIABETES_CONFIRMED') {
+      alerts.push({
+        id: 'diabetes-alert',
+        type: 'hyperglycemia',
+        severity: 'high',
+        title: `Hiperglikemia berat — evaluasi DM (GDS ${glucose} mg/dL)`,
+        gate: 'GATE_3_GLUCOSE',
+        reasoning: glucoseResult.reasoning,
+        recommendations: glucoseResult.recommendations,
+        clinicalData: { glucose },
+      });
+    } else if (glucoseResult.category === 'PREDIABETES') {
+      alerts.push({
+        id: 'prediabetes-alert',
+        type: 'hyperglycemia',
+        severity: 'warning',
+        title: `Prediabetes terdeteksi (GDS ${glucose} mg/dL)`,
+        gate: 'GATE_3_GLUCOSE',
+        reasoning: glucoseResult.reasoning,
+        recommendations: glucoseResult.recommendations,
+        clinicalData: { glucose },
+      });
+    }
   }
 
   if (spo2 > 0 && spo2 < 90) {
@@ -1174,6 +1316,7 @@ export function TTVInferenceUI({
   canonicalOutput: canonicalOutputProp = null,
   prefetchedVisits,
   onSentraUplink,
+  onAccessEmergency,
 }: TTVInferenceUIProps): JSX.Element {
   const [localState, setLocalState] = useState<TTVStateShape>(DEFAULT_STATE);
   const [historyFlags, setHistoryFlags] =
@@ -2861,7 +3004,7 @@ export function TTVInferenceUI({
       {alerts.length > 0 ? (
         <div className="alert-timeline-preview">
           <div className="alert-timeline-preview__header">
-            <span className="alert-timeline-preview__label">TEMUAN KLINIS</span>
+            <span className="alert-timeline-preview__label alert-timeline-preview__label--pulse">TEMUAN KLINIS</span>
             <span className="alert-timeline-preview__count">{alerts.length}</span>
           </div>
           <div className="alert-timeline-preview__track">
@@ -2883,6 +3026,13 @@ export function TTVInferenceUI({
                   </div>
                   <div className="alert-timeline-entry__title">{alert.title}</div>
                   <div className="alert-timeline-entry__reasoning">{alert.reasoning}</div>
+                  <div
+                    className="alert-timeline-entry__access"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onAccessEmergency?.()}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onAccessEmergency?.(); }}
+                  >Access Emergency ↑</div>
                 </div>
               </div>
             ))}

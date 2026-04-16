@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "pencil": {
+      "command": "C:\\Users\\claud\\.pencil\\mcp\\antigravity\\out\\mcp-server-windows-x64.exe",
+      "args": ["--app", "antigravity"],
+      "env": {}
+    },
+    "notebooklm": {
+      "command": "npx",
+      "args": ["-y", "notebooklm-mcp@latest"]
+    }
+  }
+}

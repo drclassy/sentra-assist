@@ -140,7 +140,7 @@ export const SidePanelHeader: React.FC<SidePanelHeaderProps> = ({
               tabIndex={selected ? 0 : -1}
               aria-selected={selected}
               aria-controls={panelId}
-              className={`engine-btn engine-tab ${selected ? 'active' : ''}`}
+              className={`engine-btn engine-tab ${selected ? 'active' : ''}${engine.id === 'emergency' && alertCount > 0 ? ' engine-btn--alert-active' : ''}`}
               onClick={() => onEngineChange(engine.id)}
               onKeyDown={(e) => handleEngineTabKeyDown(e, engine.id)}
             >

@@ -5,7 +5,7 @@
 ## Current Status
 
 **Last updated:** 2026-04-16
-**Last session:** Review-and-ship: git hygiene (`.playwright-mcp/`, `.agents`), threshold tests fixed + gates green
+**Last session:** Cursor global `~/.cursor/mcp.json`: GitHub MCP switched from deprecated `@modelcontextprotocol/server-github` to official remote `api.githubcopilot.com/mcp/` (Chief must set PAT)
 **Active phase:** VS Inference / TTV shipped as local commit (push deferred to Chief)
 
 ---

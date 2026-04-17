@@ -1,7 +1,7 @@
 # AGENTS.md — apps/healthcare/sentra-assist
 
 <!-- Cross-tool agent instructions -->
-<!-- Last updated: 2026-04-15 | Owner: Chief | Projects: Sentra / The Abyss -->
+<!-- Last updated: 2026-04-17 | Owner: Chief | Projects: Sentra / The Abyss -->
 
 ---
 
@@ -14,11 +14,11 @@ This file adds **scoped** instructions for this package only. If anything confli
 
 ---
 
-## 1. Project Introduction
+## 1. Project Identity
 
-**Sentra Assist** (`@the-abyss/sentra-assist`) is a browser extension delivering clinical decision support for safer diagnosis in ePuskesmas.
+**Sentra Assist** (`@the-abyss/sentra-assist`) is a WXT browser extension delivering clinical decision support inside ePuskesmas via a sidepanel.
 
-**Tech stack:** WXT, React 18, Tailwind CSS, Lucide Icons, Vertex AI, Vitest, Playwright, Node.js ≥22, pnpm ≥9, TypeScript strict.
+**Tech stack:** WXT, React 18, Tailwind CSS, Lucide Icons, Vertex AI, Vitest + jsdom + Testing Library, Playwright, Node.js ≥22, pnpm ≥9, TypeScript `strict`.
 
 ---
 
@@ -62,9 +62,11 @@ Every non-trivial task follows JET per root `AGENTS.md` §2.
 ```text
 sentra-assist/
 ├── entrypoints/
-│   ├── sidepanel/             ← Main Assist UI
-│   ├── login/                 ← Dashboard-backed auth UI
-│   └── background.ts          ← Messaging, bridge orchestration
+│   ├── sidepanel/             ← Main Assist UI (React)
+│   ├── login/                 ← Auth entrypoint (separate bundle)
+│   ├── background.ts          ← MV3 background script, bridge orchestration
+│   ├── content.ts             ← Content script (DAS extraction)
+│   └── inject.content.ts      ← Injected content script
 ├── components/
 │   ├── clinical/              ← TTV, diagnosis, settings, alerts, ResepForm
 │   ├── cdss/                  ← CDSS widget, confidence meter, diagnosis cards
@@ -76,44 +78,43 @@ sentra-assist/
 │   ├── clinical/              ← Inference, composition, rules, tenaga-medis
 │   ├── scraper/               ← DOM scraping (static)
 │   │   └── adaptive/          ← DAS: AI-powered adaptive field detection
-│   ├── iskandar-diagnosis-engine/ ← Core diagnosis engine
-│   ├── handlers/              ← Page-specific fill handlers
-│   ├── rme/                   ← RME transfer and payload mapping
+│   ├── iskandar-diagnosis-engine/ ← Core diagnosis engine (8-step pipeline)
+│   ├── handlers/              ← Page-specific fill handlers (anamnesa, diagnosa, resep)
+│   ├── rme/                   ← RME transfer orchestrator + payload mapping
 │   ├── rag/                   ← ICD-10 RAG search
-│   ├── emergency-detector/    ← Glucose, HTN, shock detection
+│   ├── emergency-detector/    ← 4-gate emergency detection (TTV, HTN, Glucose, Shock)
 │   └── filler/                ← Form filling core (content script bridge)
 ├── utils/                     ← Shared utilities (audio, logger, messaging, sound)
 ├── types/                     ← API and global type definitions
 ├── data/                      ← Clinical data (DDI, field mappings)
 ├── public/                    ← Extension assets (icons, fonts, sounds)
-├── scripts/
-│   ├── build/                 ← Database optimization
-│   ├── data/                  ← Data conversion scripts
-│   └── dev/                   ← Dev automation and smoke tests
-└── tests/                     ← Vitest setup
+├── scripts/                   ← Build optimization, data conversion, dev automation
+└── tests/                     ← Vitest setup (jsdom globals)
 ```
 
 ---
 
-## 5. Commands & Setup
+## 5. Commands
 
 ```powershell
-# Dependencies
+# Install (run from monorepo root)
 pnpm install
 
 # Development
-pnpm --filter @the-abyss/sentra-assist dev              # WXT dev (Chrome)
-pnpm --filter @the-abyss/sentra-assist dev:firefox      # WXT dev (Firefox)
+pnpm --filter @the-abyss/sentra-assist dev              # Chrome MV3 hot reload
+pnpm --filter @the-abyss/sentra-assist dev:firefox      # Firefox MV2
 
 # Build
-pnpm --filter @the-abyss/sentra-assist build
-pnpm --filter @the-abyss/sentra-assist build:firefox
+pnpm --filter @the-abyss/sentra-assist build            # Chrome MV3
+pnpm --filter @the-abyss/sentra-assist build:firefox    # Firefox MV2
+pnpm --filter @the-abyss/sentra-assist zip              # Chrome Web Store ZIP
+pnpm --filter @the-abyss/sentra-assist zip:firefox      # Firefox ZIP
 
 # Quality gates (must all pass before commit)
 pnpm --filter @the-abyss/sentra-assist test
-pnpm --filter @the-abyss/sentra-assist test:contract
+pnpm --filter @the-abyss/sentra-assist test:contract    # Bridge API contract guard
 pnpm --filter @the-abyss/sentra-assist lint
-pnpm --filter @the-abyss/sentra-assist typecheck
+pnpm --filter @the-abyss/sentra-assist typecheck        # tsc --noEmit strict
 
 # Single test / pattern
 pnpm --filter @the-abyss/sentra-assist test -- lib/api/bridge-client.test.ts
@@ -126,62 +127,68 @@ pnpm --filter @the-abyss/sentra-assist format
 
 ---
 
-## 6. Code Style Guidelines
+## 6. WXT & Extension Quirks
 
-### Language & Output
+- **Entrypoints:** WXT auto-discovers files in `entrypoints/`. `*.content.ts` = content scripts, `*.html` dirs = pages, `background.ts` = service worker.
+- **No popup:** The action button opens the sidepanel, not a popup. `login/` is a separate page bundle — do not merge it into `sidepanel/`.
+- **Build output:** `.output/chrome-mv3-dev/` (dev) and `.output/chrome-mv3-prod/` (build). Load unpacked from these paths, not `dist/`.
+- **Env loading:** Vite env vars use `import.meta.env.VITE_*`. `VITE_DEBUG=true` enables scoped debug logging; `VITE_DEBUG_*` controls per-module channels (background, content, filler, riwayat).
+- **Content Security Policy:** Defined in `wxt.config.ts`. External scripts are blocked; inline styles are blocked. Use Tailwind classes only.
+- **Postinstall:** `wxt prepare` runs automatically after `pnpm install` to generate `.wxt/` types.
 
-- Output language: **English** for all code, comments, docs, and agent communication.
-- Commit messages: Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`).
-- Commit trailer: `Agent: Claude · Phase: Execution · Handoff: [session-id]`
+---
+
+## 7. Code Style
 
 ### Formatting
 
-- Prettier config: `semi: true`, `singleQuote: true`, `tabWidth: 2`, `trailingComma: es5`, `printWidth: 100`.
+- Prettier: `semi: true`, `singleQuote: true`, `tabWidth: 2`, `trailingComma: es5`, `printWidth: 100`.
 - Run `pnpm --filter @the-abyss/sentra-assist format` before committing.
 
 ### Imports
 
-- Use explicit `type` imports for types: `import type { Foo } from '@/lib/foo'`.
+- Explicit `type` imports for types: `import type { Foo } from '@/lib/foo'`.
 - Path aliases: prefer `@/` for first-party code. `~/` is also valid (legacy).
-- Group imports: (1) external libs, (2) internal `@/` modules, (3) types, (4) relative (avoid if possible).
+- Group: (1) external libs, (2) internal `@/` modules, (3) types, (4) relative (avoid if possible).
 
 ### Types & Naming
 
-- TypeScript `strict: true`. Enable explicit return types on exported functions.
+- TypeScript `strict: true`. Explicit return types on exported functions.
 - Interfaces over `type` for object shapes.
-- PascalCase for components, interfaces, types, enums.
-- camelCase for functions, variables, hooks.
-- SCREAMING_SNAKE_CASE for true constants.
-- React components: prefer `export function ComponentName(props: Props)` over `React.FC`.
+- PascalCase: components, interfaces, types, enums. camelCase: functions, variables, hooks. SCREAMING_SNAKE_CASE: true constants.
+- React: prefer `export function ComponentName(props: Props)` over `React.FC`.
 
 ### Error Handling
 
 - **No silent catch blocks.** Always log or re-throw.
 - ESLint `no-console` is active (allow: `warn`, `error`). Use `createLogger()` from `~/utils/logger` for app logs.
-- Prefer `try/catch` with typed error checks: `error instanceof Error ? error.message : String(error)`.
+- `utils/logger.ts` is the **only** file exempt from `no-console`.
+- Logger auto-redacts PHI/PII keys (patient, nama, NIK, alamat, keluhan, diagnosa, resep, etc.).
+- Prefer typed error checks: `error instanceof Error ? error.message : String(error)`.
 
 ### React Patterns
 
 - Functional components only.
-- Props interface defined above component.
+- Props interface above component.
 - Hooks named `usePascalCase`.
 - Tailwind classes for styling; avoid inline `style` except for dynamic values.
 
 ### Testing
 
-- Unit: Vitest + jsdom + Testing Library. Globals enabled.
-- Test files: co-locate as `*.test.ts` or `*.test.tsx` next to source.
-- Contract guard: `lib/api/bridge-client.test.ts` must pass for all bridge interactions.
+- Unit: Vitest + jsdom + Testing Library. **Globals enabled** (`expect`, `describe`, `it` available without import).
+- Setup file: `tests/setup.ts` (imports `@testing-library/jest-dom/vitest`).
+- Co-locate tests as `*.test.ts` or `*.test.tsx` next to source.
+- **Contract guard:** `lib/api/bridge-client.test.ts` must pass for any bridge interaction change.
 - E2E: Playwright in `tests/e2e/`.
 
 ---
 
-## 7. Technical Constraints
+## 8. Technical Constraints
 
 **Always do:**
 
 - Server-backed truth: Dashboard server is source of truth for auth.
-- AI constraints: All Vertex AI calls must go through `lib/` abstraction. Never call Vertex AI directly from UI components.
+- AI abstraction: All Vertex AI calls go through `lib/` abstractions. Never call Vertex AI directly from UI components.
 - Sync policy: Sync/consult actions count as success only after server ack.
 - Prefer edit over create; max 1 new file per session.
 
@@ -193,100 +200,7 @@ pnpm --filter @the-abyss/sentra-assist format
 
 ---
 
-## 9. Onboarding New Team Members
-
-Welcome to Sentra Assist. Follow this checklist to get up to speed:
-
-1. **Read Documentation in Order:**
-   - `README.md`
-   - `AGENTS.md`
-   - `CODING_STANDARD.md`
-   - `docs/architecture/`
-   - `docs/adr/`
-
-2. **Set Up Local Development Environment:**
-   - Install Node.js ≥22 and pnpm ≥9
-   - Run `pnpm install`
-   - Copy `.env.example` to `.env.local`
-   - Load the unpacked extension in Chrome
-
-3. **Complete First Contribution:**
-   - Pick a `good first issue` or small bug fix
-   - Follow the JET Workflow Protocol (§3)
-   - Request code review from a senior team member
-
-4. **Participate in Code Review:**
-   - Review at least one PR before merging your own
-   - Understand the Pre-PR Checklist (§8)
-
----
-
-## 10. Emergency Procedures
-
-If you encounter a **critical issue** (production outage, data breach, patient safety concern, or security vulnerability):
-
-1. **Stop all changes** immediately. Do not commit or push.
-2. **Document the issue** in `.agent/HANDOFF.md` with:
-   - What happened
-   - When it happened
-   - Impact assessment
-   - Steps taken so far
-3. **Contact the Primary Contact:** Chief / Claudesy (Project Owner)
-4. **Escalation Path:**
-   - Level 1: Chief / Claudesy
-   - Level 2: Sentra (Principal Infrastructure Engineer)
-   - Level 3: Healthcare compliance officer (for PHI/PHI issues)
-5. **Do not attempt a fix alone** for Class C issues (security/PHI/infrastructure).
-
----
-
-## 11. Tool Usage Guidelines
-
-### IDE & Editor
-
-- Use VS Code with the recommended extensions (see `.vscode/extensions.json` if present).
-- Enable Format on Save with Prettier.
-- Use the TypeScript strict language server.
-
-### Git
-
-- Commit early, commit often.
-- Use Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`).
-- Always include the commit trailer: `Agent: Claude · Phase: Execution · Handoff: [session-id]`.
-- Never commit `.env.local`, secrets, or patient data.
-
-### Debugging
-
-- Use `VITE_DEBUG=true` for verbose logging during development.
-- Use Chrome DevTools for background script and content script debugging.
-- Use `console.warn` and `console.error` sparingly; prefer `createLogger()` from `~/utils/logger`.
-
-### AI Assistants
-
-- All AI-generated code must be reviewed before commit.
-- Never ask AI to generate or refactor code that handles PHI/PHI without human oversight.
-- AI must follow JET Protocol for all non-trivial tasks.
-
----
-
-## 12. Code Review Checklist
-
-Reviewers must verify the following before approving a PR:
-
-- [ ] **Functionality:** The code does what it claims to do.
-- [ ] **Type Safety:** No `any` types; strict TypeScript compliance.
-- [ ] **Error Handling:** No silent catch blocks; all errors are logged or re-thrown.
-- [ ] **Security:** No secrets, credentials, or PHI/PHI in the diff.
-- [ ] **Testing:** New code has corresponding tests; all tests pass.
-- [ ] **Performance:** No obvious N+1 queries or unnecessary re-renders.
-- [ ] **Accessibility:** Interactive elements are keyboard-accessible and have proper ARIA attributes.
-- [ ] **Documentation:** Public APIs have JSDoc comments; ADRs are updated for architectural changes.
-- [ ] **Style:** Follows Prettier and ESLint rules; imports are grouped correctly.
-- [ ] **WXT Safety:** `wxt.config.ts` was not modified without explicit Chief approval.
-
----
-
-## 8. Pre-PR Checklist
+## 9. Pre-PR Checklist
 
 - [ ] `test`, `test:contract`, `lint`, `typecheck` all pass
 - [ ] No secrets or PII in diff
@@ -294,3 +208,4 @@ Reviewers must verify the following before approving a PR:
 - [ ] `.agent/sessions/YYYY-MM-DD.md` written
 - [ ] Commit follows Conventional Commits + trailer present
 - [ ] No unnecessary new files
+- [ ] `wxt.config.ts` unchanged (unless Chief approved)

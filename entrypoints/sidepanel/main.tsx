@@ -813,22 +813,22 @@ function EmergencyDashboard({
         <span
           className={`emg-timeline__eyebrow${alerts.length > 0 ? ' emg-timeline__eyebrow--active' : ''}`}
         >
-          SENTRA ASSIST · EMERGENCY STATUS
+          SENTRA ASSIST · STATUS DARURAT
         </span>
         {alerts.length > 0 && <span className="emg-timeline__tally">{alerts.length} temuan</span>}
       </div>
 
       {alerts.length === 0 ? (
         <div className="emg-timeline__empty">
-          <span className="emg-timeline__empty-line">— Tidak ada temuan aktif</span>
-          <span className="emg-timeline__empty-sub">Input vital sign untuk memulai skrining</span>
+          <span className="emg-timeline__empty-line">— Tidak ada temuan darurat aktif</span>
+          <span className="emg-timeline__empty-sub">Masukkan tanda vital untuk memulai skrining klinis</span>
         </div>
       ) : (
         <div className="emg-timeline__track">
           {alerts.map((a, i) => (
             <div key={a.id} className="emg-entry" style={{ animationDelay: `${i * 60}ms` }}>
               <div className="emg-entry__spine">
-                <div className="emg-entry__dot" />
+                <div className={`emg-entry__dot emg-entry__dot--${a.severity}`} />
                 {i < alerts.length - 1 && <div className="emg-entry__line" />}
               </div>
               <div className="emg-entry__content">
@@ -857,7 +857,7 @@ function EmergencyDashboard({
                     if (e.key === 'Enter' || e.key === ' ') onScrollToTab?.();
                   }}
                 >
-                  Access Emergency ↑
+                  Akses Darurat ↑
                 </div>
               </div>
             </div>

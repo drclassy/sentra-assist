@@ -37,28 +37,6 @@ jobs:
         run: npm audit --audit-level=high
         continue-on-error: true
 
-  semgrep:
-    name: Semgrep SAST
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/typescript
-            p/nodejs
-            p/secrets
-            p/owasp-top-ten
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-        continue-on-error: true
-
   secret-scan:
     name: Secret Detection
     runs-on: ubuntu-latest

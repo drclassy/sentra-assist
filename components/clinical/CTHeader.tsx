@@ -59,7 +59,7 @@ export const CTHeader: React.FC<CTHeaderProps> = ({
         <div className="sidepanel-shell-header__brand-copy">
           <h1 className="sidepanel-shell-header__title">{title}</h1>
           <p className="sidepanel-shell-header__subtitle">{subtitle}</p>
-          {meta && <p className="text-small mt-1">{meta}</p>}
+          {meta && <p className="text-small mt-1" style={{ color: 'var(--text-muted)' }}>{meta}</p>}
         </div>
 
         <div className="sidepanel-shell-header__section-block">

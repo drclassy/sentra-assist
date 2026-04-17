@@ -197,16 +197,8 @@ function scoreToRiskLevel(score: number): RiskLevel {
   return 'low';
 }
 
-const PAGE_BG_STYLE = {
-  background: 'linear-gradient(180deg, #1e1e24 0%, #16161a 100%)',
-  WebkitFontSmoothing: 'antialiased',
-  MozOsxFontSmoothing: 'grayscale',
-  textRendering: 'geometricPrecision',
-} as React.CSSProperties;
-
-const PAGE_TOP_GLOW_STYLE: React.CSSProperties = {
-  background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255,69,0,0.03) 0%, transparent 60%)',
-};
+// PAGE_BG_STYLE → .ct-neu-shell (style.css)
+// PAGE_TOP_GLOW_STYLE → .ct-top-glow (style.css)
 
 function humanizeToken(value: string): string {
   return value.replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
@@ -441,6 +433,10 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
     const bpTrend = analysis.vitalTrends.find((t) => t.parameter === 'sbp');
     const dbpTrend = analysis.vitalTrends.find((t) => t.parameter === 'dbp');
     const hrTrend = analysis.vitalTrends.find((t) => t.parameter === 'hr');
+    const rrTrend = analysis.vitalTrends.find((t) => t.parameter === 'rr');
+    const spo2Trend = analysis.vitalTrends.find((t) => t.parameter === 'spo2');
+    const tempTrend = analysis.vitalTrends.find((t) => t.parameter === 'temp');
+    const glucoseTrend = analysis.vitalTrends.find((t) => t.parameter === 'glucose');
 
     if (!bpTrend || bpTrend.values.length === 0) return null;
 
@@ -448,12 +444,16 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       { name: 'SBP', data: bpTrend.values },
       { name: 'DBP', data: dbpTrend?.values || [] },
       { name: 'HR', data: hrTrend?.values || [] },
+      { name: 'RR', data: rrTrend?.values || [] },
+      { name: 'SpO2', data: spo2Trend?.values || [] },
+      { name: 'Temp×10', data: (tempTrend?.values || []).map((v) => Math.round(v * 10)) },
+      { name: 'GDS÷10', data: (glucoseTrend?.values || []).map((v) => Math.round(v / 10)) },
     ].filter((s) => s.data.length > 0);
 
     const options: ApexCharts.ApexOptions = {
       chart: {
         type: 'area',
-        height: 180,
+        height: 220,
         background: 'transparent',
         toolbar: { show: false },
         zoom: { enabled: false },
@@ -467,10 +467,13 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       },
       theme: { mode: 'dark' },
       colors: [
-        getComputedStyle(document.documentElement).getPropertyValue('--accent-primary').trim() ||
-          '#FF4500',
-        getComputedStyle(document.documentElement).getPropertyValue('--cream').trim() || '#dcd7cc',
-        getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#c0bbb2',
+        '#FFCC8C', // SBP — amber
+        'rgba(255,204,140,0.45)', // DBP — amber faint
+        '#60A5FA', // HR — blue
+        '#34D399', // RR — green
+        '#A78BFA', // SpO2 — purple
+        '#FB923C', // Temp×10 — orange
+        '#F87171', // GDS÷10 — red
       ],
       stroke: { curve: 'smooth', width: 2 },
       fill: {
@@ -536,10 +539,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   // Render: Loading
   if (phase === 'loading') {
     return (
-      <div className="ct-neu-shell relative min-h-screen w-full p-5" style={PAGE_BG_STYLE}>
+      <div className="ct-neu-shell relative min-h-screen w-full p-5">
         <div
-          className="absolute top-0 left-0 right-0 h-40 pointer-events-none"
-          style={PAGE_TOP_GLOW_STYLE}
+          className="ct-top-glow absolute top-0 left-0 right-0 h-40 pointer-events-none"
         />
         <CTHeader
           title="Sentra Assist"
@@ -548,19 +550,6 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           meta="Analisis perjalanan klinis dan risiko perburukan pasien"
           onBack={onBack}
         />
-        <div className="neu-card-inset p-1.5 mb-7 relative z-10">
-          <div className="flex gap-1.5">
-            <button
-              onClick={onBack}
-              className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab text-muted font-medium"
-            >
-              Satellite Processing
-            </button>
-            <button className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab-active text-platinum font-semibold">
-              Clinical Trajectory
-            </button>
-          </div>
-        </div>
         <div className="ttv-section p-8 flex flex-col items-center justify-center gap-4">
           <div className="w-8 h-8 border-3 border-pulse-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-small text-muted">Menganalisis riwayat kunjungan...</p>
@@ -572,10 +561,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   // Render: Error
   if (phase === 'error') {
     return (
-      <div className="ct-neu-shell relative min-h-screen w-full p-5" style={PAGE_BG_STYLE}>
+      <div className="ct-neu-shell relative min-h-screen w-full p-5">
         <div
-          className="absolute top-0 left-0 right-0 h-40 pointer-events-none"
-          style={PAGE_TOP_GLOW_STYLE}
+          className="ct-top-glow absolute top-0 left-0 right-0 h-40 pointer-events-none"
         />
         <CTHeader
           title="Sentra Assist"
@@ -584,19 +572,6 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           meta="Analisis perjalanan klinis dan risiko perburukan pasien"
           onBack={onBack}
         />
-        <div className="neu-card-inset p-1.5 mb-7 relative z-10">
-          <div className="flex gap-1.5">
-            <button
-              onClick={onBack}
-              className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab text-muted font-medium"
-            >
-              Satellite Processing
-            </button>
-            <button className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab-active text-platinum font-semibold">
-              Clinical Trajectory
-            </button>
-          </div>
-        </div>
         <div className="ttv-section p-6 flex flex-col items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-critical/20 border border-critical/50 flex items-center justify-center">
             <span className="text-2xl text-critical">!</span>
@@ -611,7 +586,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         </div>
         {scrapeLog.length > 0 && (
           <div className="neu-card-inset mt-4 p-4">
-            <div className="ttv-label mb-2" style={{ color: '#F59E0B' }}>
+            <div className="ttv-label mb-2 ct-warning-label">
               ERROR DIAGNOSTICS
             </div>
             {scrapeLog.map((line, i) => (
@@ -688,11 +663,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
   return (
     <div
       className="ct-neu-shell relative min-h-screen w-full p-5 flex flex-col gap-4"
-      style={PAGE_BG_STYLE}
     >
       <div
-        className="absolute top-0 left-0 right-0 h-40 pointer-events-none"
-        style={PAGE_TOP_GLOW_STYLE}
+        className="ct-top-glow absolute top-0 left-0 right-0 h-40 pointer-events-none"
       />
       <CTHeader
         title="Sentra Assist"
@@ -702,20 +675,6 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
         onBack={onBack}
       />
 
-      {/* Top Tab Navigation */}
-      <div className="neu-card-inset p-1.5 mb-7 relative z-10">
-        <div className="flex gap-1.5">
-          <button
-            onClick={onBack}
-            className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab text-muted font-medium"
-          >
-            Satellite Processing
-          </button>
-          <button className="motion-press flex-1 py-2 px-2 rounded-lg text-body relative neu-tab-active text-platinum font-semibold">
-            Clinical Trajectory
-          </button>
-        </div>
-      </div>
 
       <div className="ttv-section p-4">
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -729,11 +688,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           <span
             className="ct-neu-chip"
             style={{
-              color: canonicalOutput ? '#6B9B8A' : canonicalError ? '#F59E0B' : '#c0bbb2',
-              borderColor: canonicalOutput ? 'rgba(16,185,129,0.35)' : 'rgba(255,255,255,0.08)',
-              fontSize: '10px',
-              padding: '4px 10px',
-            }}
+              '--ct-c': canonicalOutput ? 'var(--ct-green)' : canonicalError ? 'var(--ct-amber)' : 'var(--text-muted)',
+              '--ct-bc': canonicalOutput ? 'var(--ct-green-border-strong)' : undefined,
+            } as React.CSSProperties}
           >
             {isCanonicalLoading ? 'SYNCING' : canonicalOutput ? 'CANONICAL READY' : 'PREVIEW ONLY'}
           </span>
@@ -786,12 +743,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                   {canonicalImmediateActions.slice(0, 3).map((item, index) => (
                     <span
                       key={`${item}-${index}`}
-                      className="ct-neu-chip text-muted"
-                      style={{
-                        borderColor: 'rgba(255,255,255,0.06)',
-                        fontSize: '10px',
-                        padding: '4px 10px',
-                      }}
+                      className="ct-neu-chip ct-neu-chip--muted"
                     >
                       {item}
                     </span>
@@ -806,12 +758,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                   {canonicalMonitoringActions.slice(0, 3).map((item, index) => (
                     <span
                       key={`${item}-${index}`}
-                      className="ct-neu-chip text-muted"
-                      style={{
-                        borderColor: 'rgba(255,255,255,0.06)',
-                        fontSize: '10px',
-                        padding: '4px 10px',
-                      }}
+                      className="ct-neu-chip ct-neu-chip--muted"
                     >
                       {item}
                     </span>
@@ -826,12 +773,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                   {canonicalReferralActions.slice(0, 3).map((item, index) => (
                     <span
                       key={`${item}-${index}`}
-                      className="ct-neu-chip text-muted"
-                      style={{
-                        borderColor: 'rgba(255,255,255,0.06)',
-                        fontSize: '10px',
-                        padding: '4px 10px',
-                      }}
+                      className="ct-neu-chip ct-neu-chip--muted"
                     >
                       {item}
                     </span>
@@ -855,14 +797,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       {chartConfig && (
         <div className="ttv-section p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="ttv-section-title">TREND VISUALIZATION (PREVIEW LOKAL)</h3>
+            <h3 className="ttv-section-title">TREND VITAL SIGNS (7 PARAMETER)</h3>
             <span
-              className="ct-neu-chip text-muted"
-              style={{
-                borderColor: 'rgba(255,255,255,0.06)',
-                fontSize: '10px',
-                padding: '4px 10px',
-              }}
+              className="ct-neu-chip ct-neu-chip--muted"
             >
               {visitCount} kunjungan
             </span>
@@ -875,7 +812,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                 options={chartConfig.options}
                 series={chartConfig.series}
                 type="area"
-                height={180}
+                height={220}
               />
             </React.Suspense>
           </div>
@@ -903,29 +840,20 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       {/* Trajectory Status - Expanded */}
       <div className="ttv-section p-5">
         <div className="flex items-start gap-4 mb-4">
-          <span className="text-3xl" style={{ color: TREND_COLOR[analysis.overallTrend] }}>
+          <span className="ct-trend-icon" style={{ '--ct-c': TREND_COLOR[analysis.overallTrend] } as React.CSSProperties}>
             {TREND_ICON[analysis.overallTrend]}
           </span>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <span
                 className="ct-neu-chip"
-                style={{
-                  color: TREND_COLOR[analysis.overallTrend],
-                  borderColor: TREND_COLOR[analysis.overallTrend],
-                  fontSize: '10px',
-                  padding: '4px 10px',
-                }}
+                style={{ '--ct-c': TREND_COLOR[analysis.overallTrend], '--ct-bc': TREND_COLOR[analysis.overallTrend] } as React.CSSProperties}
               >
                 {TREND_LABEL[analysis.overallTrend]}
               </span>
               <span
                 className="ct-neu-chip"
-                style={{
-                  color: RISK_STYLE[analysis.overallRisk].color,
-                  background: RISK_STYLE[analysis.overallRisk].bg,
-                  borderColor: RISK_STYLE[analysis.overallRisk].border,
-                }}
+                style={{ '--ct-c': RISK_STYLE[analysis.overallRisk].color, '--ct-bg': RISK_STYLE[analysis.overallRisk].bg, '--ct-bc': RISK_STYLE[analysis.overallRisk].border } as React.CSSProperties}
               >
                 {humanizeToken(analysis.overallRisk).toUpperCase()}
               </span>
@@ -949,8 +877,8 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           <div className="neu-card-inset p-3">
             <div className="ttv-label text-tertiary mb-1">Risk Level</div>
             <div
-              className="text-small font-mono"
-              style={{ color: RISK_STYLE[analysis.overallRisk].color }}
+              className="ct-metric-value"
+              style={{ '--ct-c': RISK_STYLE[analysis.overallRisk].color } as React.CSSProperties}
             >
               {humanizeToken(analysis.overallRisk).toUpperCase()}
             </div>
@@ -970,25 +898,13 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <span
               className="ct-neu-chip"
-              style={{
-                color: urgencyStyle.color,
-                background: urgencyStyle.bg,
-                borderColor: urgencyStyle.border,
-                fontSize: '10px',
-                padding: '4px 10px',
-              }}
+              style={{ '--ct-c': urgencyStyle.color, '--ct-bg': urgencyStyle.bg, '--ct-bc': urgencyStyle.border } as React.CSSProperties}
             >
               {urgencyStyle.label}
             </span>
             <span
               className="ct-neu-chip"
-              style={{
-                color: deteriorationStyle.color,
-                background: deteriorationStyle.bg,
-                borderColor: deteriorationStyle.border,
-                fontSize: '10px',
-                padding: '4px 10px',
-              }}
+              style={{ '--ct-c': deteriorationStyle.color, '--ct-bg': deteriorationStyle.bg, '--ct-bc': deteriorationStyle.border } as React.CSSProperties}
             >
               {deteriorationStyle.label}
             </span>
@@ -1023,12 +939,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             {analysis.clinical_safe_output.drivers.slice(0, 3).map((driver, i) => (
               <span
                 key={i}
-                className="ct-neu-chip text-muted"
-                style={{
-                  borderColor: 'rgba(255,255,255,0.06)',
-                  fontSize: '10px',
-                  padding: '4px 10px',
-                }}
+                className="ct-neu-chip ct-neu-chip--muted"
               >
                 {humanizeToken(driver)}
               </span>
@@ -1050,7 +961,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                 ACUTE ATTACK RISK (24H)
               </h3>
             </div>
-            <span className="font-mono text-muted" style={{ fontSize: '9px' }}>
+            <span className="ct-section-meta">
               high/critical: {highAcuteRiskCount}/5
             </span>
           </div>
@@ -1060,9 +971,9 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             const level = scoreToRiskLevel(risk.value);
             const style = RISK_STYLE[level];
             return (
-              <div key={risk.label} className="ct-neu-cell" style={{ borderColor: style.border }}>
+              <div key={risk.label} className="ct-neu-cell" style={{ '--ct-bc': style.border } as React.CSSProperties}>
                 <div className="ct-neu-cell-label">{risk.label}</div>
-                <div className="text-small font-mono font-bold mt-1" style={{ color: style.color }}>
+                <div className="ct-metric-value" style={{ '--ct-c': style.color } as React.CSSProperties}>
                   {risk.value}
                 </div>
               </div>
@@ -1081,7 +992,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                 EARLY WARNING + VOLATILITY
               </h3>
             </div>
-            <span className="font-mono text-muted" style={{ fontSize: '9px' }}>
+            <span className="ct-section-meta">
               breaches: {analysis.early_warning_burden.total_breaches_last5} | volatility:{' '}
               {analysis.trajectory_volatility.volatility_index}
             </span>
@@ -1096,8 +1007,8 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
           <div className="neu-card-inset p-2.5">
             <div className="ttv-label text-tertiary">Stability Label</div>
             <div
-              className="text-small font-mono font-bold mt-1"
-              style={{ color: stabilityStyle.color }}
+              className="ct-metric-value"
+              style={{ '--ct-c': stabilityStyle.color } as React.CSSProperties}
             >
               {stabilityStyle.label}
             </div>
@@ -1113,12 +1024,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
               {activeBreaches.map((item) => (
                 <span
                   key={item.label}
-                  className="ct-neu-chip text-muted"
-                  style={{
-                    borderColor: 'rgba(255,255,255,0.06)',
-                    fontSize: '10px',
-                    padding: '4px 10px',
-                  }}
+                  className="ct-neu-chip ct-neu-chip--muted"
                 >
                   {item.label}: {item.count}
                 </span>
@@ -1139,12 +1045,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
               {etaEntries.map(([key, value]) => (
                 <span
                   key={key}
-                  className="ct-neu-chip text-muted"
-                  style={{
-                    borderColor: 'rgba(255,255,255,0.06)',
-                    fontSize: '10px',
-                    padding: '4px 10px',
-                  }}
+                  className="ct-neu-chip ct-neu-chip--muted"
                 >
                   {humanizeToken(key.replace('_hours_to_critical', '')).toUpperCase()}: {value}h
                 </span>
@@ -1166,7 +1067,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                   RISK DRIVERS + DATA GAPS
                 </h3>
               </div>
-              <span className="font-mono text-muted" style={{ fontSize: '9px' }}>
+              <span className="ct-section-meta">
                 drivers: {analysis.clinical_safe_output.drivers.length} | missing:{' '}
                 {analysis.clinical_safe_output.missing_data.length}
               </span>
@@ -1190,8 +1091,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             {analysis.clinical_safe_output.missing_data.length > 0 && (
               <div>
                 <div
-                  className="text-tiny font-bold uppercase tracking-wide mb-1"
-                  style={{ color: '#F59E0B' }}
+                  className="text-tiny font-bold uppercase tracking-wide mb-1 ct-warning-label"
                 >
                   MISSING DATA
                 </div>
@@ -1199,12 +1099,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
                   {analysis.clinical_safe_output.missing_data.slice(0, 8).map((item, i) => (
                     <span
                       key={i}
-                      className="ct-neu-chip text-muted"
-                      style={{
-                        borderColor: 'rgba(255,255,255,0.06)',
-                        fontSize: '10px',
-                        padding: '4px 10px',
-                      }}
+                      className="ct-neu-chip ct-neu-chip--muted"
                     >
                       {humanizeToken(item)}
                     </span>
@@ -1236,7 +1131,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
               <span className="text-muted text-sm">▸</span>
               <h3 className="text-small font-bold text-platinum uppercase tracking-wide">SenCal</h3>
             </div>
-            <span className="font-mono text-muted" style={{ fontSize: '9px' }}>
+            <span className="ct-section-meta">
               kalkulator medis
             </span>
           </div>
@@ -1254,19 +1149,11 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
             {analysis.recommendations.map((rec, i) => (
               <div key={i} className="neu-card-inset px-3 py-2.5 flex items-start gap-2">
                 <span
-                  className="ttv-label flex-shrink-0 mt-0.5"
-                  style={{
-                    color:
-                      rec.priority === 'high'
-                        ? '#EF4444'
-                        : rec.priority === 'medium'
-                          ? '#F59E0B'
-                          : '#6B7280',
-                  }}
+                  className={`ttv-label flex-shrink-0 mt-0.5 ct-priority--${rec.priority}`}
                 >
                   {rec.priority}
                 </span>
-                <span className="text-small text-platinum" style={{ lineHeight: '1.5' }}>
+                <span className="ct-rec-text">
                   {rec.text}
                 </span>
               </div>
@@ -1278,7 +1165,7 @@ export const ClinicalTrajectory: React.FC<ClinicalTrajectoryProps> = ({
       {/* Scraper Diagnostics (only when ≤1 visit) */}
       {scrapeLog.length > 0 && visitCount <= 1 && (
         <div className="neu-card-inset p-4">
-          <div className="ttv-label mb-2" style={{ color: '#F59E0B' }}>
+          <div className="ttv-label mb-2 ct-warning-label">
             SCRAPER DIAGNOSTICS
           </div>
           {scrapeLog.map((line, i) => (
@@ -1319,9 +1206,9 @@ function MetricTile({
   const toneStyle = RISK_STYLE[tone];
   const displayValue = typeof value === 'string' ? humanizeToken(value) : value;
   return (
-    <div className="neu-card-inset p-2.5" style={{ borderColor: toneStyle.border }}>
+    <div className="neu-card-inset p-2.5 ct-metric-tile" style={{ '--ct-bc': toneStyle.border } as React.CSSProperties}>
       <div className="ttv-label text-tertiary">{label}</div>
-      <div className="text-small font-mono font-bold mt-1" style={{ color: toneStyle.color }}>
+      <div className="ct-metric-value" style={{ '--ct-c': toneStyle.color } as React.CSSProperties}>
         {displayValue}
       </div>
     </div>
@@ -1337,24 +1224,13 @@ function TrendCard({ trend }: { trend: VitalTrend }) {
       <div className="flex items-center gap-2 flex-1">
         <span
           className="ct-neu-chip"
-          style={{
-            color: trendColor,
-            borderColor: trendColor,
-            fontSize: '10px',
-            padding: '4px 10px',
-          }}
+          style={{ '--ct-c': trendColor, '--ct-bc': trendColor } as React.CSSProperties}
         >
           {TREND_ICON[trend.trend]} {trend.label}
         </span>
         <span
           className="ct-neu-chip"
-          style={{
-            color: riskStyle.color,
-            background: riskStyle.bg,
-            borderColor: riskStyle.border,
-            fontSize: '10px',
-            padding: '4px 10px',
-          }}
+          style={{ '--ct-c': riskStyle.color, '--ct-bg': riskStyle.bg, '--ct-bc': riskStyle.border } as React.CSSProperties}
         >
           {trend.risk.toUpperCase()}
         </span>

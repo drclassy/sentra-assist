@@ -40,6 +40,9 @@ import {
   type BPMeasurementSession,
 } from '@/lib/emergency-detector/htn-classifier';
 import { classifyBloodGlucose } from '@/lib/emergency-detector/glucose-classifier';
+import { buildClinicalSnapshot } from '@/lib/emergency-detector/clinical-snapshot';
+import { CLINICAL_PATTERNS } from '@/lib/emergency-detector/clinical-patterns';
+import { evaluatePatterns, patternMatchesToAlerts } from '@/lib/emergency-detector/pattern-engine';
 import type { VisitRecord } from '@/lib/iskandar-diagnosis-engine/visit-history-store';
 import { playSound } from '@/utils/sound';
 import { createLogger } from '@/utils/logger';
@@ -1080,6 +1083,14 @@ export const buildAlerts = (
     });
   }
 
+  // ── PATTERN ENGINE v2: Evaluate 70 clinical patterns ──────────────────────
+  const snapshot = buildClinicalSnapshot(state, patient, context);
+  const existingAlertIds = alerts.map((a) => a.id);
+  const patternMatches = evaluatePatterns(snapshot, CLINICAL_PATTERNS, existingAlertIds, {
+    tierFilter: ['A', 'B'],
+  });
+  alerts.push(...patternMatchesToAlerts(patternMatches));
+
   return alerts;
 };
 
@@ -1330,7 +1341,7 @@ export function TTVInferenceUI({
   onAlertsChange,
   ttvState,
   onTTVStateChange,
-  onNavigateToTrajectory: _onNavigateToTrajectory,
+  onNavigateToTrajectory,
   onChronicHistoryChange,
   prefilledHistoryFlags,
   extractedSpecialConditions = [],
@@ -3063,7 +3074,7 @@ export function TTVInferenceUI({
                       if (e.key === 'Enter' || e.key === ' ') onAccessEmergency?.();
                     }}
                   >
-                    Access Emergency ↑
+                    Akses Darurat ↑
                   </div>
                 </div>
               </div>
@@ -3228,6 +3239,30 @@ export function TTVInferenceUI({
         <div className="doctor-picker-panel__feedback doctor-picker-panel__feedback--success">
           {doctorPickerNotice}
         </div>
+      ) : null}
+
+      {onNavigateToTrajectory && uplinkState === 'completed' ? (
+        <button
+          type="button"
+          className="traj-nav-card"
+          onClick={onNavigateToTrajectory}
+          aria-label="Lanjut ke Clinical Trajectory"
+        >
+          <span className="traj-nav-card__icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          </span>
+          <span className="traj-nav-card__body">
+            <span className="traj-nav-card__title">Clinical Trajectory</span>
+            <span className="traj-nav-card__desc">Analisis trend vital &amp; stratifikasi risiko</span>
+          </span>
+          <span className="traj-nav-card__arrow" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </span>
+        </button>
       ) : null}
 
       {canonicalError && canonicalError.length > 0 && outputMode === 'vital' ? (

@@ -1687,7 +1687,115 @@ textarea:read-only,
   margin-top: 2px;
 }
 
-/* Header — 8px baseline compact */
+/* ── CTHeader — Clinical screen header (Trajectory, Differential) ──────────
+   Matches .card-header visual identity exactly so all pages look the same.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.sidepanel-shell-header {
+  z-index: 1;
+  margin-bottom: 10px;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 16px;
+}
+
+.sidepanel-shell-header__eyebrow-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  min-height: 20px;
+}
+
+.sidepanel-shell-header__ownership {
+  font-size: 7px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.sidepanel-shell-back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+.sidepanel-shell-back-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.sidepanel-shell-header__brand-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sidepanel-shell-header__brand-copy {
+  text-align: center;
+  flex: 1;
+}
+
+.sidepanel-shell-header__title {
+  margin: 0 0 2px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 28px;
+  background: linear-gradient(135deg, #f4efe6 0%, #cfc6b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidepanel-shell-header__subtitle {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+.sidepanel-shell-header__section-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.sidepanel-shell-header__section-label {
+  font-size: 7px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.sidepanel-shell-header__section-value {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-med);
+}
+
+/* ── Header — 8px baseline compact ───────────────────────────────────────── */
 .card-header {
   z-index: 1;
   margin-bottom: 10px;
@@ -2274,16 +2382,16 @@ textarea:read-only,
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(244, 239, 230, 0.08);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .emg-timeline__eyebrow {
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(244, 239, 230, 0.35);
+  color: var(--text-muted);
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
 }
 
@@ -2305,7 +2413,7 @@ textarea:read-only,
 .emg-timeline__tally {
   font-size: 10px;
   letter-spacing: 0.06em;
-  color: rgba(244, 239, 230, 0.4);
+  color: var(--text-muted);
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
 }
 
@@ -2317,14 +2425,16 @@ textarea:read-only,
 }
 
 .emg-timeline__empty-line {
-  font-size: 12px;
-  color: rgba(244, 239, 230, 0.45);
-  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
 }
 
 .emg-timeline__empty-sub {
-  font-size: 11px;
-  color: rgba(244, 239, 230, 0.22);
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  opacity: 0.5;
 }
 
 .emg-timeline__track {
@@ -2335,7 +2445,7 @@ textarea:read-only,
 /* Individual timeline entry */
 .emg-entry {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   animation: emg-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -2350,35 +2460,75 @@ textarea:read-only,
   }
 }
 
+/* Spine — vertical line with motion */
 .emg-entry__spine {
   display: flex;
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
-  width: 12px;
-  padding-top: 3px;
+  width: 14px;
+  padding-top: 4px;
 }
 
 .emg-entry__dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  border: 1px solid rgba(244, 239, 230, 0.5);
+  border: 1.5px solid var(--accent-med);
   background: transparent;
   flex-shrink: 0;
+  animation: emg-dot-pulse 2.4s ease-in-out infinite;
+}
+
+.emg-entry__dot--critical {
+  border-color: rgba(220, 50, 50, 0.8);
+  background: rgba(220, 50, 50, 0.15);
+  animation: emg-dot-critical 1.8s ease-in-out infinite;
+}
+
+.emg-entry__dot--high {
+  border-color: rgba(220, 160, 40, 0.7);
+  background: rgba(220, 160, 40, 0.1);
+}
+
+.emg-entry__dot--warning {
+  border-color: var(--accent-med);
+  background: transparent;
+}
+
+@keyframes emg-dot-pulse {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+
+@keyframes emg-dot-critical {
+  0%, 100% { opacity: 0.8; box-shadow: 0 0 0 0 rgba(220, 50, 50, 0); }
+  50%      { opacity: 1;   box-shadow: 0 0 0 3px rgba(220, 50, 50, 0.15); }
 }
 
 .emg-entry__line {
   flex: 1;
   width: 1px;
-  background: rgba(244, 239, 230, 0.1);
   margin: 4px 0;
-  min-height: 16px;
+  min-height: 20px;
+  background: linear-gradient(
+    180deg,
+    var(--accent-med) 0%,
+    transparent 100%
+  );
+  animation: emg-line-flow 2.5s ease-in-out infinite;
+  opacity: 0.35;
+}
+
+@keyframes emg-line-flow {
+  0%   { opacity: 0.15; background-position: 0 -20px; }
+  50%  { opacity: 0.45; }
+  100% { opacity: 0.15; background-position: 0 20px; }
 }
 
 .emg-entry__content {
   flex: 1;
-  padding-bottom: 20px;
+  padding-bottom: 18px;
 }
 
 .emg-entry__meta {
@@ -2386,24 +2536,26 @@ textarea:read-only,
 }
 
 .emg-entry__gate {
-  font-size: 9px;
+  font-size: 8px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(244, 239, 230, 0.3);
+  color: var(--text-muted);
   font-family: var(--font-mono, 'JetBrains Mono', monospace);
 }
 
 .emg-entry__title {
-  font-size: 12px;
-  font-weight: 500;
-  color: rgba(244, 239, 230, 0.88);
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  color: var(--text-main);
   line-height: 1.4;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .emg-entry__reasoning {
-  font-size: 11px;
-  color: rgba(244, 239, 230, 0.5);
+  font-size: 10px;
+  font-family: var(--font-ui);
+  color: var(--text-muted);
   line-height: 1.55;
   margin-bottom: 8px;
 }
@@ -2414,12 +2566,14 @@ textarea:read-only,
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
 }
 
 .emg-entry__rec {
-  font-size: 11px;
-  color: rgba(244, 239, 230, 0.65);
+  font-size: 10px;
+  font-family: var(--font-ui);
+  color: var(--text-main);
+  opacity: 0.75;
   line-height: 1.5;
   padding-left: 10px;
   position: relative;
@@ -2429,7 +2583,7 @@ textarea:read-only,
   content: '—';
   position: absolute;
   left: 0;
-  color: rgba(244, 239, 230, 0.25);
+  color: var(--text-muted);
 }
 
 /* Compact Alert Preview (inside TTV form) */
@@ -4222,6 +4376,7 @@ textarea:read-only,
 .emergency-header__eyebrow {
   font-size: 9px;
   font-weight: 600;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
   color: var(--accent-med);
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -4230,14 +4385,18 @@ textarea:read-only,
 }
 
 .emergency-header h2 {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-ui);
   color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   margin: 0 0 4px;
 }
 
 .emergency-header__description {
-  font-size: 11px;
+  font-size: 10px;
+  font-family: var(--font-ui);
   color: var(--text-muted);
   line-height: 1.5;
   margin: 0;
@@ -4264,14 +4423,16 @@ textarea:read-only,
 
 .emergency-stat-pill__label {
   font-size: 9px;
+  font-family: var(--font-ui);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .emergency-stat-pill__value {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-field);
   color: var(--text-main);
 }
 
@@ -4287,14 +4448,16 @@ textarea:read-only,
 }
 
 .emergency-empty p {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
+  font-family: var(--font-ui);
   color: var(--text-main);
   margin: 0 0 4px;
 }
 
 .emergency-empty span {
-  font-size: 11px;
+  font-size: 10px;
+  font-family: var(--font-ui);
   color: var(--text-muted);
   line-height: 1.5;
 }
@@ -4309,7 +4472,8 @@ textarea:read-only,
   align-items: center;
   gap: 8px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
+  font-family: var(--font-ui);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
@@ -4380,20 +4544,23 @@ textarea:read-only,
 
 .emergency-card-kicker {
   font-size: 8px;
-  font-weight: 700;
+  font-weight: 600;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-muted);
 }
 
 .emergency-card-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
+  font-family: var(--font-ui);
   color: var(--text-main);
 }
 
 .emergency-card-gate {
   font-size: 8px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
   color: var(--text-muted);
   padding: 2px 6px;
   background: rgba(255, 255, 255, 0.05);
@@ -4408,6 +4575,7 @@ textarea:read-only,
 .emergency-card-block-label {
   font-size: 8px;
   font-weight: 600;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -4416,7 +4584,8 @@ textarea:read-only,
 }
 
 .emergency-card-reasoning {
-  font-size: 11px;
+  font-size: 10px;
+  font-family: var(--font-ui);
   color: var(--text-main);
   line-height: 1.5;
   margin: 0;
@@ -4427,13 +4596,15 @@ textarea:read-only,
 }
 
 .emergency-rec-item {
-  font-size: 11px;
+  font-size: 10px;
+  font-family: var(--font-ui);
   color: var(--text-main);
   line-height: 1.6;
   padding: 2px 0;
 }
 
 .emergency-rec-section {
+  font-family: var(--font-ui);
   color: var(--text-muted);
   font-weight: 600;
   margin-top: 4px;
@@ -4447,6 +4618,7 @@ textarea:read-only,
 .emergency-diagram-area h3 {
   font-size: 10px;
   font-weight: 600;
+  font-family: var(--font-ui);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -4474,14 +4646,15 @@ textarea:read-only,
 
 .diagram-label {
   font-size: 9px;
+  font-family: var(--font-ui);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
 
 .diagram-value {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
+  font-family: var(--font-field);
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-main);
 }
@@ -5751,6 +5924,281 @@ textarea:read-only,
     0 0 18px rgba(107, 155, 138, 0.28),
     inset 0 1px 0 rgba(107, 155, 138, 0.06) !important;
 }
+
+/* ── Clinical Trajectory — Section & Card Structure ───────────────────────── */
+/*
+ * These classes are used throughout ClinicalTrajectory.tsx but were missing
+ * CSS definitions — causing plain-HTML appearance with no visual containment.
+ */
+
+.ttv-section {
+  border-radius: 10px;
+  border: 1px solid var(--sentra-border);
+  background: var(--sentra-card);
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.ttv-section-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.ttv-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.neu-card-inset {
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* ── Clinical Trajectory Navigation Card ───────────────────────────────────── */
+.traj-nav-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(107, 155, 138, 0.25);
+  border-left: 2.5px solid var(--sentra-green);
+  background:
+    linear-gradient(135deg, rgba(107, 155, 138, 0.06) 0%, rgba(10, 10, 12, 0.95) 100%);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(107, 155, 138, 0.04);
+  font-family: var(--font-ui);
+  text-align: left;
+  color: inherit;
+}
+.traj-nav-card:hover {
+  border-color: rgba(107, 155, 138, 0.5);
+  background:
+    linear-gradient(135deg, rgba(107, 155, 138, 0.1) 0%, rgba(10, 10, 12, 0.95) 100%);
+  box-shadow:
+    5px 5px 14px rgba(0, 0, 0, 0.6),
+    0 0 16px rgba(107, 155, 138, 0.12),
+    inset 0 1px 0 rgba(107, 155, 138, 0.06);
+  transform: translateX(2px);
+}
+.traj-nav-card:active {
+  transform: translateX(0);
+  box-shadow:
+    2px 2px 6px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(107, 155, 138, 0.04);
+}
+
+.traj-nav-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(107, 155, 138, 0.1);
+  border: 1px solid rgba(107, 155, 138, 0.2);
+  color: var(--sentra-green);
+  flex-shrink: 0;
+}
+.traj-nav-card:hover .traj-nav-card__icon {
+  background: rgba(107, 155, 138, 0.16);
+  border-color: rgba(107, 155, 138, 0.35);
+  box-shadow: 0 0 10px rgba(107, 155, 138, 0.15);
+}
+
+.traj-nav-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.traj-nav-card__title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.traj-nav-card__desc {
+  font-size: 9.5px;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.traj-nav-card__arrow {
+  display: flex;
+  align-items: center;
+  color: rgba(107, 155, 138, 0.5);
+  flex-shrink: 0;
+  transition: transform 0.22s ease, color 0.22s ease;
+}
+.traj-nav-card:hover .traj-nav-card__arrow {
+  color: var(--sentra-green);
+  transform: translateX(3px);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   CLINICAL TRAJECTORY — ct-* classes
+   Sentra design token extraction from ClinicalTrajectory.tsx
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Semantic color tokens (trajectory-specific) ───────────────────────────── */
+:root {
+  --ct-green: var(--sentra-green);
+  --ct-amber: #f59e0b;
+  --ct-red: #ef4444;
+  --ct-red-critical: #dc2626;
+  --ct-cyan: #06b6d4;
+  --ct-amber-bg: rgba(245, 158, 11, 0.1);
+  --ct-amber-border: rgba(245, 158, 11, 0.3);
+  --ct-red-bg: rgba(239, 68, 68, 0.1);
+  --ct-red-border: rgba(239, 68, 68, 0.3);
+  --ct-red-crit-bg: rgba(220, 38, 38, 0.15);
+  --ct-red-crit-border: rgba(220, 38, 38, 0.5);
+  --ct-green-bg: rgba(16, 185, 129, 0.1);
+  --ct-green-border: rgba(16, 185, 129, 0.3);
+  --ct-green-bg-strong: rgba(16, 185, 129, 0.12);
+  --ct-green-border-strong: rgba(16, 185, 129, 0.35);
+}
+
+/* ── Root shell ────────────────────────────────────────────────────────────── */
+.ct-neu-shell {
+  background: linear-gradient(180deg, var(--sentra-card) 0%, var(--sentra-bg) 100%);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+  font-family: var(--font-ui);
+}
+
+.ct-top-glow {
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    rgba(235, 89, 57, 0.03) 0%,
+    transparent 60%
+  );
+}
+
+/* ── Chip — the universal inline badge ─────────────────────────────────────── */
+/*
+ * Dynamic colors via CSS custom properties set inline:
+ *   style={{ '--ct-c': color, '--ct-bg': bg, '--ct-bc': borderColor }}
+ */
+.ct-neu-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--ct-bc, rgba(255, 255, 255, 0.08));
+  background: var(--ct-bg, transparent);
+  color: var(--ct-c, var(--text-muted));
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+/* Preset chip modifiers for static-color chips */
+.ct-neu-chip--muted {
+  --ct-bc: rgba(255, 255, 255, 0.06);
+  --ct-c: var(--text-muted);
+}
+
+/* ── Cell — risk matrix grid tile ──────────────────────────────────────────── */
+.ct-neu-cell {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--ct-bc, rgba(255, 255, 255, 0.08));
+  background: var(--sentra-card);
+  transition: border-color 0.15s ease;
+}
+
+.ct-neu-cell-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Metric value — dynamic-colored bold text inside cells/tiles ───────────── */
+.ct-metric-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 4px;
+  color: var(--ct-c, var(--text-main));
+}
+
+/* ── Section subtitle (9px mono) ───────────────────────────────────────────── */
+.ct-section-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* ── Trend icon (large directional arrow) ──────────────────────────────────── */
+.ct-trend-icon {
+  font-size: 1.875rem;
+  line-height: 1;
+  color: var(--ct-c, var(--ct-green));
+}
+
+/* ── Warning label (amber ERROR DIAGNOSTICS / MISSING DATA / SCRAPER) ──────── */
+.ct-warning-label {
+  color: var(--ct-amber);
+}
+
+/* ── Recommendation priority badges ────────────────────────────────────────── */
+.ct-priority--high {
+  color: var(--ct-red);
+}
+.ct-priority--medium {
+  color: var(--ct-amber);
+}
+.ct-priority--low {
+  color: var(--sentra-muted);
+}
+
+/* ── Recommendation text ───────────────────────────────────────────────────── */
+.ct-rec-text {
+  font-size: 12px;
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+/* ── MetricTile border + color via custom props ────────────────────────────── */
+.ct-metric-tile {
+  border-color: var(--ct-bc, rgba(255, 255, 255, 0.08));
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── AASSIST v2 — AVPU Suggestion + Confirmed ────────────────────────────── */
 .avpu-suggestion {

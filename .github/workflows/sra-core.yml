@@ -1,0 +1,46 @@
+name: SRA — Sentra Reliability Agent
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  reliability-check:
+    name: SRA Health Scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: SRA: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: SRA: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          
+      - name: SRA: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          
+      - name: SRA: Diagnosis & Install
+        run: |
+          echo "SRA: Memulai pemeriksaan kesehatan sistem..."
+          pnpm install --no-frozen-lockfile
+          
+      - name: SRA: Auto-Fix & Quality
+        run: |
+          pnpm lint:fix || true
+          pnpm format || true
+          
+      - name: SRA Status Report
+        if: failure()
+        run: |
+          echo "### 🚨 LAPORAN SRA: ADA MASALAH TEKNIS" >> $GITHUB_STEP_SUMMARY
+          echo "Chief, SRA mendeteksi kegagalan pada pengecekan kualitas. Tim developer perlu memeriksa log di bawah ini agar sistem Sentra tetap andal." >> $GITHUB_STEP_SUMMARY

@@ -336,16 +336,16 @@ stateDiagram-v2
 
 ## 6. Key Design Principles
 
-| Principle | Implementation |
-|-----------|---------------|
-| **Background as broker** | All cross-context communication routes through background.ts. Side Panel never talks to Content Script directly (except one `getPatientInfo` shortcut). |
-| **Engines are local-first** | Diagnosis, trajectory, emergency detection all run in-browser with zero API dependency. AI services are optional enhancers. |
-| **Pattern-as-data** | 70 clinical patterns are declarative `Criterion[]` arrays, not 70 separate functions. One engine evaluates all. |
-| **Enricher pattern** | Existing detectors (AVPU, HTN, Glucose, Shock) are never modified — they populate derived values consumed by new patterns. |
-| **Deduplication** | Pattern Engine skips patterns whose `supersededBy` matches existing buildAlerts() output IDs. |
-| **Negation-aware NLP** | Indonesian symptom text parsing handles "tidak sesak", "sesak (-)", "menyangkal nyeri" to reduce false positives. |
-| **Tiered activation** | Tier A (vitals only) + Tier B (vitals + keywords) active now. Tier C (needs new UI inputs) defined but gated. |
-| **Storage separation** | Sensitive tokens in `session` (RAM), persistent data in `local`, cross-device config in `sync`. |
+| Principle                   | Implementation                                                                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Background as broker**    | All cross-context communication routes through background.ts. Side Panel never talks to Content Script directly (except one `getPatientInfo` shortcut). |
+| **Engines are local-first** | Diagnosis, trajectory, emergency detection all run in-browser with zero API dependency. AI services are optional enhancers.                             |
+| **Pattern-as-data**         | 70 clinical patterns are declarative `Criterion[]` arrays, not 70 separate functions. One engine evaluates all.                                         |
+| **Enricher pattern**        | Existing detectors (AVPU, HTN, Glucose, Shock) are never modified — they populate derived values consumed by new patterns.                              |
+| **Deduplication**           | Pattern Engine skips patterns whose `supersededBy` matches existing buildAlerts() output IDs.                                                           |
+| **Negation-aware NLP**      | Indonesian symptom text parsing handles "tidak sesak", "sesak (-)", "menyangkal nyeri" to reduce false positives.                                       |
+| **Tiered activation**       | Tier A (vitals only) + Tier B (vitals + keywords) active now. Tier C (needs new UI inputs) defined but gated.                                           |
+| **Storage separation**      | Sensitive tokens in `session` (RAM), persistent data in `local`, cross-device config in `sync`.                                                         |
 
 ---
 

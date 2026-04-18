@@ -821,7 +821,9 @@ function EmergencyDashboard({
       {alerts.length === 0 ? (
         <div className="emg-timeline__empty">
           <span className="emg-timeline__empty-line">— Tidak ada temuan darurat aktif</span>
-          <span className="emg-timeline__empty-sub">Masukkan tanda vital untuk memulai skrining klinis</span>
+          <span className="emg-timeline__empty-sub">
+            Masukkan tanda vital untuk memulai skrining klinis
+          </span>
         </div>
       ) : (
         <div className="emg-timeline__track">

@@ -18,16 +18,16 @@ import type { ClinicalGateId } from './gate-registry';
 
 /** Comparison operators for criterion evaluation. */
 export type CriterionOp =
-  | 'gte'     // >=
-  | 'lte'     // <=
-  | 'gt'      // >
-  | 'lt'      // <
-  | 'eq'      // ===
-  | 'neq'     // !==
-  | 'true'    // value === true
-  | 'false'   // value === false
+  | 'gte' // >=
+  | 'lte' // <=
+  | 'gt' // >
+  | 'lt' // <
+  | 'eq' // ===
+  | 'neq' // !==
+  | 'true' // value === true
+  | 'false' // value === false
   | 'between' // value >= min && value <= max
-  | 'in';     // value in comma-separated list
+  | 'in'; // value in comma-separated list
 
 /**
  * A single testable condition within a pattern.

@@ -56,8 +56,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.SEPSIS_EARLY,
     severity: 'critical',
     title: 'Sepsis suspected + tanda infeksi — qSOFA {rr}/{sbp}',
-    reasoning:
-      'qSOFA >=2 DENGAN dugaan infeksi aktif. Risiko mortalitas tinggi.',
+    reasoning: 'qSOFA >=2 DENGAN dugaan infeksi aktif. Risiko mortalitas tinggi.',
     requiredCriteria: [
       { field: 'symptoms.suspectedInfection', op: 'true', value: true, label: 'Dugaan infeksi' },
     ],
@@ -86,8 +85,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.SEPSIS_EARLY,
     severity: 'warning',
     title: 'Infeksi sistemik / sepsis awal — Demam + HR >90 + RR >=20',
-    reasoning:
-      'Demam >=38 + HR >90 + RR >=20 mengarah ke infeksi sistemik / sepsis awal.',
+    reasoning: 'Demam >=38 + HR >90 + RR >=20 mengarah ke infeksi sistemik / sepsis awal.',
     requiredCriteria: [
       { field: 'vitals.temp', op: 'gte', value: 38.0, label: 'Temp >= 38.0' },
       { field: 'vitals.hr', op: 'gt', value: 90, label: 'HR > 90' },
@@ -114,7 +112,12 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     reasoning:
       'Lansia sering afebrile saat sepsis. RR dan HR naik tanpa demam tetap curiga infeksi berat.',
     requiredCriteria: [
-      { field: 'patient.physiology.isOlderAdult', op: 'true', value: true, label: 'Lansia >=65 tahun' },
+      {
+        field: 'patient.physiology.isOlderAdult',
+        op: 'true',
+        value: true,
+        label: 'Lansia >=65 tahun',
+      },
       { field: 'vitals.hr', op: 'gt', value: 90, label: 'HR > 90' },
       { field: 'vitals.rr', op: 'gte', value: 22, label: 'RR >= 22' },
       { field: 'vitals.temp', op: 'lt', value: 38.0, label: 'Temp < 38 (tidak demam)' },
@@ -174,9 +177,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     title: 'Septic shock suspected — SBP {sbp}, MAP {map}',
     reasoning:
       'Sepsis criteria terpenuhi + SBP <90 atau MAP <65. Definisi syok: hipotensi persisten + disfungsi perfusi. Mortalitas tinggi.',
-    requiredCriteria: [
-      { field: 'vitals.rr', op: 'gte', value: 22, label: 'RR >= 22 (qSOFA)' },
-    ],
+    requiredCriteria: [{ field: 'vitals.rr', op: 'gte', value: 22, label: 'RR >= 22 (qSOFA)' }],
     scoredCriteria: [
       { field: 'vitals.sbp', op: 'lt', value: 90, label: 'SBP < 90' },
       { field: 'derived.map', op: 'lt', value: 65, label: 'MAP < 65' },
@@ -253,8 +254,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.SHOCK_INDEX,
     severity: 'high',
     title: 'Hemodynamic instability — Shock Index {shockIndex}',
-    reasoning:
-      'Shock Index >= 1.0. Risiko mortalitas meningkat signifikan.',
+    reasoning: 'Shock Index >= 1.0. Risiko mortalitas meningkat signifikan.',
     requiredCriteria: [
       { field: 'derived.shockIndex', op: 'gte', value: 1.0, label: 'SI >= 1.0' },
       { field: 'derived.shockIndex', op: 'lt', value: 1.2, label: 'SI < 1.2' },
@@ -278,11 +278,8 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.SHOCK_INDEX,
     severity: 'critical',
     title: 'Syok hemodinamik — Shock Index {shockIndex}',
-    reasoning:
-      'Shock Index >= 1.2. Risiko mortalitas sangat tinggi. Segera intervensi.',
-    requiredCriteria: [
-      { field: 'derived.shockIndex', op: 'gte', value: 1.2, label: 'SI >= 1.2' },
-    ],
+    reasoning: 'Shock Index >= 1.2. Risiko mortalitas sangat tinggi. Segera intervensi.',
+    requiredCriteria: [{ field: 'derived.shockIndex', op: 'gte', value: 1.2, label: 'SI >= 1.2' }],
     recommendations: [
       'ABCDE segera',
       'O2, cairan IV bolus',
@@ -330,12 +327,16 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.RESP_FAILURE,
     severity: 'critical',
     title: 'Gagal napas akut — RR {rr}, SpO2 {spo2}%',
-    reasoning:
-      'RR >=30 + SpO2 <90% tanpa O2 suplementasi. Risiko gagal napas tinggi.',
+    reasoning: 'RR >=30 + SpO2 <90% tanpa O2 suplementasi. Risiko gagal napas tinggi.',
     requiredCriteria: [
       { field: 'vitals.rr', op: 'gte', value: 30, label: 'RR >= 30' },
       { field: 'vitals.spo2', op: 'lt', value: 90, label: 'SpO2 < 90%' },
-      { field: 'patient.supplementalO2', op: 'false', value: false, label: 'Tanpa O2 suplementasi' },
+      {
+        field: 'patient.supplementalO2',
+        op: 'false',
+        value: false,
+        label: 'Tanpa O2 suplementasi',
+      },
     ],
     recommendations: [
       'O2 segera: masker 6-10 L/menit',
@@ -379,11 +380,8 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.RESP_FAILURE,
     severity: 'critical',
     title: 'Gagal napas berat — sulit bicara + otot bantu napas',
-    reasoning:
-      'Sulit berbicara dan/atau penggunaan otot bantu napas menandakan gagal napas berat.',
-    requiredCriteria: [
-      { field: 'vitals.rr', op: 'gte', value: 25, label: 'RR >= 25' },
-    ],
+    reasoning: 'Sulit berbicara dan/atau penggunaan otot bantu napas menandakan gagal napas berat.',
+    requiredCriteria: [{ field: 'vitals.rr', op: 'gte', value: 25, label: 'RR >= 25' }],
     scoredCriteria: [
       { field: 'symptoms.difficultySpeaking', op: 'true', value: true, label: 'Sulit bicara' },
       { field: 'symptoms.accessoryMuscles', op: 'true', value: true, label: 'Otot bantu napas' },
@@ -503,7 +501,12 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
       { field: 'symptoms.chestPain', op: 'true', value: true, label: 'Nyeri dada tipikal' },
     ],
     scoredCriteria: [
-      { field: 'symptoms.chestPainDuration20min', op: 'true', value: true, label: 'Durasi >= 20 menit' },
+      {
+        field: 'symptoms.chestPainDuration20min',
+        op: 'true',
+        value: true,
+        label: 'Durasi >= 20 menit',
+      },
       { field: 'vitals.hr', op: 'gt', value: 100, label: 'HR > 100 (takikardia)' },
       { field: 'vitals.sbp', op: 'lt', value: 90, label: 'SBP < 90 (hipotensi)' },
       { field: 'symptoms.diaphoresis', op: 'true', value: true, label: 'Keringat dingin' },
@@ -587,7 +590,12 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     reasoning:
       'Onset tiba-tiba: kelemahan wajah/anggota gerak satu sisi, gangguan bicara, atau gangguan penglihatan mendadak.',
     requiredCriteria: [
-      { field: 'symptoms.focalNeuroDeficit', op: 'true', value: true, label: 'Defisit neurologis fokal' },
+      {
+        field: 'symptoms.focalNeuroDeficit',
+        op: 'true',
+        value: true,
+        label: 'Defisit neurologis fokal',
+      },
       { field: 'symptoms.suddenOnset', op: 'true', value: true, label: 'Onset mendadak' },
     ],
     recommendations: [
@@ -667,7 +675,12 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
       'Paparan alergen + gejala kulit/mukosa + kompromi respirasi atau kardiovaskular. Sesuai definisi klinis anafilaksis.',
     requiredCriteria: [
       { field: 'symptoms.allergenExposure', op: 'true', value: true, label: 'Paparan alergen' },
-      { field: 'symptoms.skinMucosalSymptoms', op: 'true', value: true, label: 'Gejala kulit/mukosa' },
+      {
+        field: 'symptoms.skinMucosalSymptoms',
+        op: 'true',
+        value: true,
+        label: 'Gejala kulit/mukosa',
+      },
     ],
     scoredCriteria: [
       { field: 'symptoms.dyspnea', op: 'true', value: true, label: 'Sesak napas' },
@@ -700,7 +713,12 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
       'Paparan alergen + gejala kulit/mukosa TANPA kompromi respirasi/kardiovaskular saat ini. Bisa eskalasi.',
     requiredCriteria: [
       { field: 'symptoms.allergenExposure', op: 'true', value: true, label: 'Paparan alergen' },
-      { field: 'symptoms.skinMucosalSymptoms', op: 'true', value: true, label: 'Gejala kulit/mukosa' },
+      {
+        field: 'symptoms.skinMucosalSymptoms',
+        op: 'true',
+        value: true,
+        label: 'Gejala kulit/mukosa',
+      },
     ],
     recommendations: [
       'Pantau ketat — bisa eskalasi ke anafilaksis',
@@ -756,8 +774,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.DKA_HHS,
     severity: 'critical',
     title: 'HHS suspected — glucose {glucose} (sangat tinggi)',
-    reasoning:
-      'Glucose >=600 mg/dL mengarah ke HHS. Mortalitas tinggi tanpa penanganan.',
+    reasoning: 'Glucose >=600 mg/dL mengarah ke HHS. Mortalitas tinggi tanpa penanganan.',
     requiredCriteria: [
       { field: 'vitals.glucose', op: 'gte', value: 600, label: 'Glucose >= 600 (HHS threshold)' },
     ],
@@ -781,9 +798,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     title: 'Early DKA — glucose {glucose} + gejala metabolik',
     reasoning:
       'Glucose 200-250 + gejala metabolik (poliuria, polidipsia, mual, lemas). DKA bisa terjadi pada glucose tidak terlalu tinggi.',
-    requiredCriteria: [
-      { field: 'vitals.glucose', op: 'gte', value: 200, label: 'Glucose >= 200' },
-    ],
+    requiredCriteria: [{ field: 'vitals.glucose', op: 'gte', value: 200, label: 'Glucose >= 200' }],
     scoredCriteria: [
       { field: 'symptoms.kussmaulBreathing', op: 'true', value: true, label: 'Napas Kussmaul' },
       { field: 'symptoms.giSymptoms', op: 'true', value: true, label: 'Mual/muntah' },
@@ -845,9 +860,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     title: 'Status asthmaticus — sulit bicara / silent chest',
     reasoning:
       'Sulit bicara (hanya beberapa kata per napas) atau penurunan wheeze (silent chest) = eksaserbasi berat / near-fatal.',
-    requiredCriteria: [
-      { field: 'symptoms.dyspnea', op: 'true', value: true, label: 'Sesak' },
-    ],
+    requiredCriteria: [{ field: 'symptoms.dyspnea', op: 'true', value: true, label: 'Sesak' }],
     scoredCriteria: [
       { field: 'symptoms.difficultySpeaking', op: 'true', value: true, label: 'Sulit bicara' },
       { field: 'symptoms.accessoryMuscles', op: 'true', value: true, label: 'Otot bantu napas' },
@@ -877,9 +890,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     title: 'Anemia sedang-berat / perdarahan kronis',
     reasoning:
       'HR meningkat saat aktivitas ringan + pucat + RR agak naik + BP normal/rendah. Mengarah ke anemia sedang-berat.',
-    requiredCriteria: [
-      { field: 'vitals.hr', op: 'gt', value: 100, label: 'HR > 100' },
-    ],
+    requiredCriteria: [{ field: 'vitals.hr', op: 'gt', value: 100, label: 'HR > 100' }],
     scoredCriteria: [
       { field: 'symptoms.pallor', op: 'true', value: true, label: 'Pucat' },
       { field: 'symptoms.fatigue', op: 'true', value: true, label: 'Lelah/capek' },
@@ -986,9 +997,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     title: 'Bradikardia signifikan — HR {hr}',
     reasoning:
       'HR <50 (non-atlet). Curiga blok jantung, efek obat, gangguan konduksi, TIK meningkat.',
-    requiredCriteria: [
-      { field: 'vitals.hr', op: 'lt', value: 50, label: 'HR < 50' },
-    ],
+    requiredCriteria: [{ field: 'vitals.hr', op: 'lt', value: 50, label: 'HR < 50' }],
     scoredCriteria: [
       { field: 'symptoms.dizziness', op: 'true', value: true, label: 'Pusing' },
       { field: 'symptoms.weakness', op: 'true', value: true, label: 'Lemas' },
@@ -1016,9 +1025,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     title: 'Kode MERAH — AVPU != A mendadak',
     reasoning:
       'Penurunan kesadaran mendadak. Curiga hipoglikemia, hipoksia, syok, stroke, trauma kepala, sepsis berat, intoksikasi.',
-    requiredCriteria: [
-      { field: 'patient.avpuManual', op: 'neq', value: 'A', label: 'AVPU != A' },
-    ],
+    requiredCriteria: [{ field: 'patient.avpuManual', op: 'neq', value: 'A', label: 'AVPU != A' }],
     recommendations: [
       'KODE MERAH: cek gula darah dan vital sign SEGERA',
       'Jaga jalan napas, posisi miring bila risiko muntah',
@@ -1120,8 +1127,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.SEPSIS_EARLY,
     severity: 'warning',
     title: 'Infeksi ringan — demam tanpa red flag vital',
-    reasoning:
-      'Demam >=38 + RR normal + HR normal + keluhan lokal. Tidak emergensi.',
+    reasoning: 'Demam >=38 + RR normal + HR normal + keluhan lokal. Tidak emergensi.',
     requiredCriteria: [
       { field: 'vitals.temp', op: 'gte', value: 38.0, label: 'Temp >= 38' },
       { field: 'vitals.rr', op: 'lt', value: 22, label: 'RR < 22 (normal)' },
@@ -1195,9 +1201,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     title: 'Depresi napas akibat obat — RR {rr}, SpO2 {spo2}%',
     reasoning:
       'RR rendah (<12) + SpO2 turun + kesadaran menurun. Curiga depresi napas akibat obat sedatif/opioid.',
-    requiredCriteria: [
-      { field: 'vitals.rr', op: 'lt', value: 12, label: 'RR < 12 (bradypnea)' },
-    ],
+    requiredCriteria: [{ field: 'vitals.rr', op: 'lt', value: 12, label: 'RR < 12 (bradypnea)' }],
     scoredCriteria: [
       { field: 'vitals.spo2', op: 'lt', value: 94, label: 'SpO2 < 94%' },
       { field: 'patient.avpuManual', op: 'neq', value: 'A', label: 'Kesadaran menurun' },
@@ -1250,8 +1254,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.SEPSIS_EARLY,
     severity: 'critical',
     title: 'Meningitis/ensefalitis suspected',
-    reasoning:
-      'Demam + tanda meningeal. Hindari pungsi lumbal di FKTP; rujuk emergensi.',
+    reasoning: 'Demam + tanda meningeal. Hindari pungsi lumbal di FKTP; rujuk emergensi.',
     requiredCriteria: [
       { field: 'vitals.temp', op: 'gte', value: 38.0, label: 'Demam >= 38' },
       { field: 'vitals.hr', op: 'gt', value: 90, label: 'HR > 90' },
@@ -1273,8 +1276,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.SEPTIC_SHOCK,
     severity: 'critical',
     title: 'Sepsis meningokokus — demam + petekie + toksik',
-    reasoning:
-      'Demam + ruam petekie/purpura + HR dan RR naik + BP turun. Sepsis berat.',
+    reasoning: 'Demam + ruam petekie/purpura + HR dan RR naik + BP turun. Sepsis berat.',
     requiredCriteria: [
       { field: 'vitals.temp', op: 'gte', value: 38.0, label: 'Demam' },
       { field: 'vitals.hr', op: 'gt', value: 100, label: 'HR > 100' },
@@ -1297,8 +1299,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.SHOCK_INDEX,
     severity: 'critical',
     title: 'Dengue berat / syok dengue — HR {hr}, SBP {sbp}',
-    reasoning:
-      'Demam + HR naik + RR naik + tanda perdarahan + tanda syok. Curiga dengue berat.',
+    reasoning: 'Demam + HR naik + RR naik + tanda perdarahan + tanda syok. Curiga dengue berat.',
     requiredCriteria: [
       { field: 'vitals.temp', op: 'gte', value: 38.0, label: 'Demam' },
       { field: 'vitals.hr', op: 'gt', value: 100, label: 'HR > 100' },
@@ -1414,8 +1415,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.SEPSIS_EARLY,
     severity: 'high',
     title: 'Sepsis pada pasien DM — risiko tinggi',
-    reasoning:
-      'qSOFA criteria + diketahui DM. Risiko sepsis dan mortalitas lebih tinggi pada DM.',
+    reasoning: 'qSOFA criteria + diketahui DM. Risiko sepsis dan mortalitas lebih tinggi pada DM.',
     requiredCriteria: [
       { field: 'history.knownDM', op: 'true', value: true, label: 'Riwayat DM' },
       { field: 'vitals.rr', op: 'gte', value: 22, label: 'RR >= 22' },
@@ -1439,8 +1439,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.RESP_ASTHMA_COPD,
     severity: 'high',
     title: 'Eksaserbasi asma — riwayat asma + sesak + RR tinggi',
-    reasoning:
-      'Riwayat asma + sesak napas memburuk + wheezing + RR >=24 dan/atau SpO2 <94.',
+    reasoning: 'Riwayat asma + sesak napas memburuk + wheezing + RR >=24 dan/atau SpO2 <94.',
     requiredCriteria: [
       { field: 'history.knownAsthma', op: 'true', value: true, label: 'Riwayat asma' },
       { field: 'symptoms.dyspnea', op: 'true', value: true, label: 'Sesak' },
@@ -1462,8 +1461,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.RESP_ASTHMA_COPD,
     severity: 'high',
     title: 'Eksaserbasi COPD — riwayat COPD + sesak + RR tinggi',
-    reasoning:
-      'Riwayat COPD + sesak napas memburuk + RR naik.',
+    reasoning: 'Riwayat COPD + sesak napas memburuk + RR naik.',
     requiredCriteria: [
       { field: 'history.knownCOPD', op: 'true', value: true, label: 'Riwayat COPD' },
       { field: 'symptoms.dyspnea', op: 'true', value: true, label: 'Sesak' },
@@ -1486,18 +1484,13 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.DKA_HHS,
     severity: 'critical',
     title: 'DKA pada pasien DM — glucose {glucose} + Kussmaul',
-    reasoning:
-      'Diketahui DM + glucose tinggi + napas Kussmaul + gejala GI. DKA confirmed context.',
+    reasoning: 'Diketahui DM + glucose tinggi + napas Kussmaul + gejala GI. DKA confirmed context.',
     requiredCriteria: [
       { field: 'history.knownDM', op: 'true', value: true, label: 'Riwayat DM' },
       { field: 'vitals.glucose', op: 'gte', value: 250, label: 'Glucose >= 250' },
       { field: 'symptoms.kussmaulBreathing', op: 'true', value: true, label: 'Napas Kussmaul' },
     ],
-    recommendations: [
-      'Cairan IV segera',
-      'JANGAN insulin mandiri',
-      'Rujuk emergensi ke RS',
-    ],
+    recommendations: ['Cairan IV segera', 'JANGAN insulin mandiri', 'Rujuk emergensi ke RS'],
     actionProtocolId: 'PROTO_DKA_HHS',
     tier: 'C',
     requiresVitals: ['glucose'],
@@ -1586,18 +1579,18 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.RESP_ASTHMA_COPD,
     severity: 'high',
     title: 'Eksaserbasi asma anak',
-    reasoning:
-      'Anak: RR tinggi + wheezing + kesulitan bicara/menangis.',
+    reasoning: 'Anak: RR tinggi + wheezing + kesulitan bicara/menangis.',
     requiredCriteria: [
       { field: 'patient.age', op: 'lt', value: 18, label: 'Anak/remaja' },
       { field: 'symptoms.wheezing', op: 'true', value: true, label: 'Wheezing' },
-      { field: 'symptoms.difficultySpeaking', op: 'true', value: true, label: 'Sulit bicara/menangis' },
+      {
+        field: 'symptoms.difficultySpeaking',
+        op: 'true',
+        value: true,
+        label: 'Sulit bicara/menangis',
+      },
     ],
-    recommendations: [
-      'Nebulizer; O2',
-      'Pantau RR/SpO2',
-      'Bila tidak membaik: rujuk',
-    ],
+    recommendations: ['Nebulizer; O2', 'Pantau RR/SpO2', 'Bila tidak membaik: rujuk'],
     actionProtocolId: 'PROTO_RESP_FAILURE',
     tier: 'B',
     requiresVitals: [],
@@ -1656,8 +1649,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     gate: CLINICAL_GATE.DKA_HHS,
     severity: 'critical',
     title: 'Hipoglikemia berat — glucose {glucose} + kesadaran menurun',
-    reasoning:
-      'Gula darah rendah + perubahan kesadaran. Life-threatening.',
+    reasoning: 'Gula darah rendah + perubahan kesadaran. Life-threatening.',
     requiredCriteria: [
       { field: 'vitals.glucose', op: 'lt', value: 70, label: 'Glucose < 70' },
       { field: 'patient.avpuManual', op: 'neq', value: 'A', label: 'AVPU != A' },
@@ -1683,9 +1675,7 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
     title: 'Hipertiroid / thyroid storm — HR {hr}',
     reasoning:
       'HR >120 + RR naik + tremor + berkeringat + BB turun + tidak demam + BP bisa tinggi.',
-    requiredCriteria: [
-      { field: 'vitals.hr', op: 'gt', value: 120, label: 'HR > 120' },
-    ],
+    requiredCriteria: [{ field: 'vitals.hr', op: 'gt', value: 120, label: 'HR > 120' }],
     recommendations: [
       'Tidak selalu emergensi',
       'Bila HR sangat tinggi, lemas, atau gangguan mental: konsultasi dokter, pertimbangkan rujuk',
@@ -1736,7 +1726,12 @@ export const CLINICAL_PATTERNS: readonly ClinicalPattern[] = [
       'Vital sign normal/nyaris normal tapi sangat bingung/disorientasi. Tanda gangguan akut otak. Mortalitas tinggi.',
     requiredCriteria: [
       { field: 'patient.physiology.isOlderAdult', op: 'true', value: true, label: 'Lansia' },
-      { field: 'symptoms.alteredMentalStatus', op: 'true', value: true, label: 'Bingung/disorientasi' },
+      {
+        field: 'symptoms.alteredMentalStatus',
+        op: 'true',
+        value: true,
+        label: 'Bingung/disorientasi',
+      },
     ],
     recommendations: [
       'Anggap kondisi serius meski vital normal',

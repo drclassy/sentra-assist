@@ -157,9 +157,7 @@ function resolveTemplate(template: string, snapshot: ClinicalSnapshot): string {
       case 'map':
         return snapshot.derived.map != null ? String(snapshot.derived.map) : '--';
       case 'shockIndex':
-        return snapshot.derived.shockIndex != null
-          ? snapshot.derived.shockIndex.toFixed(2)
-          : '--';
+        return snapshot.derived.shockIndex != null ? snapshot.derived.shockIndex.toFixed(2) : '--';
       case 'avpuLevel':
         return snapshot.derived.avpuLevel;
       case 'htnSeverity':
@@ -188,10 +186,7 @@ function resolveTemplate(template: string, snapshot: ClinicalSnapshot): string {
  *
  * Adjusted by: pattern.confidenceWeight and scored criteria ratio.
  */
-function calculateConfidence(
-  pattern: ClinicalPattern,
-  score?: ScoreResult
-): number {
+function calculateConfidence(pattern: ClinicalPattern, score?: ScoreResult): number {
   const tierBase: Record<PatternTier, number> = { A: 0.9, B: 0.7, C: 0.5 };
   let confidence = tierBase[pattern.tier];
 

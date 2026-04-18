@@ -77,13 +77,11 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'B',
-        action:
-          'Jika asma/COPD: mulai nebulizer bronkodilator sesuai protokol lokal.',
+        action: 'Jika asma/COPD: mulai nebulizer bronkodilator sesuai protokol lokal.',
       },
       {
         phase: 'C',
-        action:
-          'Cek nadi, tekanan darah, CRT; bila tanda syok, aktifkan juga paket syok.',
+        action: 'Cek nadi, tekanan darah, CRT; bila tanda syok, aktifkan juga paket syok.',
       },
       {
         phase: 'other',
@@ -95,8 +93,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'other',
-        action:
-          'Siapkan rujuk emergensi ke IGD RS, hubungi SPGDT/PSC bila tersedia.',
+        action: 'Siapkan rujuk emergensi ke IGD RS, hubungi SPGDT/PSC bila tersedia.',
       },
     ],
     referralCriteria: [
@@ -132,8 +129,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'C',
-        action:
-          'Hentikan perdarahan luar bila ada (tekan langsung, balut tekan).',
+        action: 'Hentikan perdarahan luar bila ada (tekan langsung, balut tekan).',
       },
       {
         phase: 'C',
@@ -146,8 +142,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'other',
-        action:
-          'Siapkan dokumen dan komunikasi rujuk emergensi ke RS; aktifkan SPGDT.',
+        action: 'Siapkan dokumen dan komunikasi rujuk emergensi ke RS; aktifkan SPGDT.',
       },
     ],
     referralCriteria: [
@@ -177,8 +172,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'C',
-        action:
-          'Cek BP berulang, nadi, CRT; bila SBP <90, ikuti paket syok.',
+        action: 'Cek BP berulang, nadi, CRT; bila SBP <90, ikuti paket syok.',
       },
       {
         phase: 'D',
@@ -186,8 +180,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'other',
-        action:
-          'Mulai cairan IV bila ada tanda hipoperfusi (tunduk ke panduan lokal).',
+        action: 'Mulai cairan IV bila ada tanda hipoperfusi (tunduk ke panduan lokal).',
       },
       {
         phase: 'other',
@@ -195,8 +188,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'other',
-        action:
-          'Bila kecurigaan sepsis berat/septic shock kuat, rujuk ke RS secepatnya.',
+        action: 'Bila kecurigaan sepsis berat/septic shock kuat, rujuk ke RS secepatnya.',
       },
     ],
     referralCriteria: [
@@ -227,8 +219,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'C',
-        action:
-          'Adrenalin IM segera (0,3-0,5 mg IM dewasa — detail dosis mengacu panduan lokal).',
+        action: 'Adrenalin IM segera (0,3-0,5 mg IM dewasa — detail dosis mengacu panduan lokal).',
       },
       {
         phase: 'C',
@@ -317,8 +308,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'C',
-        action:
-          'Pantau BP; jangan turunkan agresif di FKTP tanpa indikasi khusus.',
+        action: 'Pantau BP; jangan turunkan agresif di FKTP tanpa indikasi khusus.',
       },
       {
         phase: 'other',
@@ -326,13 +316,11 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'other',
-        action:
-          'Jaga kepala agak tinggi (sekitar 30 derajat) bila kesadaran menurun.',
+        action: 'Jaga kepala agak tinggi (sekitar 30 derajat) bila kesadaran menurun.',
       },
       {
         phase: 'other',
-        action:
-          'Rujuk secepat mungkin (time critical — door-to-needle window).',
+        action: 'Rujuk secepat mungkin (time critical — door-to-needle window).',
       },
       {
         phase: 'other',
@@ -367,8 +355,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'C',
-        action:
-          'Pasang infus dan mulai cairan (NaCl 0,9% sesuai SOP lokal).',
+        action: 'Pasang infus dan mulai cairan (NaCl 0,9% sesuai SOP lokal).',
       },
       {
         phase: 'D',
@@ -376,13 +363,11 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'other',
-        action:
-          'Jangan berikan insulin mandiri di FKTP kecuali ada panduan/kompetensi yang jelas.',
+        action: 'Jangan berikan insulin mandiri di FKTP kecuali ada panduan/kompetensi yang jelas.',
       },
       {
         phase: 'other',
-        action:
-          'Rujuk emergensi ke RS dengan fasilitas rawat inap/ICU.',
+        action: 'Rujuk emergensi ke RS dengan fasilitas rawat inap/ICU.',
       },
     ],
     referralCriteria: [
@@ -405,8 +390,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
     steps: [
       {
         phase: 'A',
-        action:
-          'Pastikan jalan napas, posisi miring bila muntah.',
+        action: 'Pastikan jalan napas, posisi miring bila muntah.',
       },
       {
         phase: 'B',
@@ -418,8 +402,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'D',
-        action:
-          'Bila pasien masih bisa minum: berikan glukosa oral cepat serap (air gula/juice).',
+        action: 'Bila pasien masih bisa minum: berikan glukosa oral cepat serap (air gula/juice).',
       },
       {
         phase: 'D',
@@ -467,8 +450,7 @@ export const ACTION_PROTOCOLS: readonly ActionProtocol[] = [
       },
       {
         phase: 'other',
-        action:
-          'Lanjutkan sampai sistem rujukan tiba / alat lanjutan tersedia.',
+        action: 'Lanjutkan sampai sistem rujukan tiba / alat lanjutan tersedia.',
       },
     ],
     referralCriteria: [

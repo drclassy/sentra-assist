@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   reliability-check:
-    name: SRA Health Scan
+    name: SRA Health Scan & Auto-Fix
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -31,16 +31,29 @@ jobs:
           
       - name: SRA: Diagnosis & Install
         run: |
-          echo "SRA: Memulai pemeriksaan kesehatan sistem..."
           pnpm install --no-frozen-lockfile
           
-      - name: SRA: Auto-Fix & Quality
+      - name: SRA: Auto-Fix Execution
         run: |
+          echo "SRA: Menjalankan perbaikan otomatis..."
           pnpm lint:fix || true
           pnpm format || true
           
+      - name: SRA: Save & Push Changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "Sentra Reliability Agent (SRA)"
+            git config user.email "sra@sentra.ai"
+            git add .
+            git commit -m "fix: auto-remediation by SRA (lint & format)"
+            git push
+            echo "✅ SRA: Perbaikan otomatis berhasil dikirim balik."
+          else
+            echo "✅ SRA: Tidak ada masalah yang perlu diperbaiki."
+          fi
+
       - name: SRA Status Report
         if: failure()
         run: |
-          echo "### 🚨 LAPORAN SRA: ADA MASALAH TEKNIS" >> $GITHUB_STEP_SUMMARY
-          echo "Chief, SRA mendeteksi kegagalan pada pengecekan kualitas. Tim developer perlu memeriksa log di bawah ini agar sistem Sentra tetap andal." >> $GITHUB_STEP_SUMMARY
+          echo "### 🚨 LAPORAN SRA: GAGAL TOTAL" >> $GITHUB_STEP_SUMMARY
+          echo "Chief, ada error yang SRA tidak bisa perbaiki sendiri. Tim developer harus turun tangan." >> $GITHUB_STEP_SUMMARY

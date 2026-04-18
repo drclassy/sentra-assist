@@ -1,0 +1,11 @@
+name: Sentra Assist Sweep Configuration
+version: "1"
+
+repo:
+  name: sentra-assist
+  type: cdss
+  critical: true
+
+settings:
+  model: "gpt-3.5-turbo"
+  temperature: 0.2

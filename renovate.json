@@ -1,6 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:best-practices", ":dependencyDashboard", "group:monorepos"],
+  "extends": [
+    "config:best-practices",
+    ":dependencyDashboard",
+    "group:monorepos"
+  ],
   "packageRules": [
     {
       "description": "Auto-merge patch updates — low risk, CI must pass first",
@@ -22,7 +26,7 @@
       "labels": ["major-update", "needs-review"]
     }
   ],
-  "schedule": ["every monday"],
+  "schedule": ["on monday"],
   "prHourlyLimit": 3,
   "prConcurrentLimit": 5,
   "labels": ["dependencies", "renovate"],
@@ -30,6 +34,6 @@
   "rangeStrategy": "bump",
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["every sunday"]
+    "schedule": ["on sunday"]
   }
 }

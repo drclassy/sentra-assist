@@ -31,22 +31,22 @@ importers:
         version: 4.5.7(@types/react@18.3.28)(react@18.3.1)
     devDependencies:
       '@eslint/js':
-        specifier: ^9.0.0
+        specifier: 9.39.4
         version: 9.39.4
       '@playwright/test':
-        specifier: ^1.48.0
+        specifier: 1.59.1
         version: 1.59.1
       '@testing-library/jest-dom':
-        specifier: ^6.6.0
+        specifier: 6.9.1
         version: 6.9.1
       '@testing-library/react':
-        specifier: ^16.0.0
+        specifier: 16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/chrome':
-        specifier: ^0.1.36
+        specifier: 0.1.42
         version: 0.1.42
       '@types/node':
-        specifier: ^22.10.7
+        specifier: 22.19.18
         version: 22.19.18
       '@types/react':
         specifier: ^18.3.18
@@ -55,67 +55,67 @@ importers:
         specifier: ^18.3.6
         version: 18.3.7(@types/react@18.3.28)
       '@vitest/ui':
-        specifier: ^2.0.0
+        specifier: 2.1.9
         version: 2.1.9(vitest@2.1.9)
       '@webext-core/messaging':
-        specifier: ^1.4.0
+        specifier: 1.4.0
         version: 1.4.0
       '@wxt-dev/module-react':
-        specifier: ^1.1.5
+        specifier: 1.2.2
         version: 1.2.2(vite@6.4.2(@types/node@22.19.18)(jiti@1.21.7)(lightningcss@1.32.0)(yaml@2.8.4))(wxt@0.20.25(@types/node@22.19.18)(eslint@9.39.4(jiti@1.21.7))(jiti@1.21.7)(lightningcss@1.32.0)(rollup@4.60.3)(yaml@2.8.4))
       '@wxt-dev/storage':
-        specifier: ^1.2.6
+        specifier: 1.2.8
         version: 1.2.8
       autoprefixer:
-        specifier: ^10.4.16
+        specifier: 10.5.0
         version: 10.5.0(postcss@8.5.14)
       eslint:
-        specifier: ^9.0.0
+        specifier: 9.39.4
         version: 9.39.4(jiti@1.21.7)
       eslint-plugin-react:
-        specifier: ^7.37.0
+        specifier: 7.37.5
         version: 7.37.5(eslint@9.39.4(jiti@1.21.7))
       jsdom:
-        specifier: ^25.0.0
+        specifier: 25.0.1
         version: 25.0.1
       playwright:
-        specifier: ^1.48.0
+        specifier: 1.59.1
         version: 1.59.1
       postcss:
-        specifier: ^8.4.32
+        specifier: 8.5.14
         version: 8.5.14
       prettier:
-        specifier: ^3.3.0
+        specifier: 3.8.3
         version: 3.8.3
       react:
-        specifier: ^18.3.1
+        specifier: 18.3.1
         version: 18.3.1
       react-dom:
-        specifier: ^18.3.1
+        specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
       sharp:
-        specifier: ^0.34.5
+        specifier: 0.34.5
         version: 0.34.5
       tailwindcss:
-        specifier: ^3.4.0
+        specifier: 3.4.19
         version: 3.4.19(yaml@2.8.4)
       typedoc:
-        specifier: ^0.28.16
+        specifier: 0.28.19
         version: 0.28.19(typescript@5.9.3)
       typescript:
-        specifier: ^5.8.3
+        specifier: 5.9.3
         version: 5.9.3
       typescript-eslint:
-        specifier: ^8.0.0
+        specifier: 8.59.2
         version: 8.59.2(eslint@9.39.4(jiti@1.21.7))(typescript@5.9.3)
       vite:
-        specifier: ^6.0.7
+        specifier: 6.4.2
         version: 6.4.2(@types/node@22.19.18)(jiti@1.21.7)(lightningcss@1.32.0)(yaml@2.8.4)
       vitest:
-        specifier: ^2.0.0
+        specifier: 2.1.9
         version: 2.1.9(@types/node@22.19.18)(@vitest/ui@2.1.9)(jsdom@25.0.1)(lightningcss@1.32.0)
       wxt:
-        specifier: ^0.20.13
+        specifier: 0.20.25
         version: 0.20.25(@types/node@22.19.18)(eslint@9.39.4(jiti@1.21.7))(jiti@1.21.7)(lightningcss@1.32.0)(rollup@4.60.3)(yaml@2.8.4)
 
 packages:

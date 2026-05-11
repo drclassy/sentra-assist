@@ -27,7 +27,7 @@ importers:
         specifier: ^1.9.0
         version: 1.9.0(apexcharts@5.11.0)(react@18.3.1)
       zustand:
-        specifier: ^4.5.0
+        specifier: ^4.5.7
         version: 4.5.7(@types/react@18.3.28)(react@18.3.1)
     devDependencies:
       '@eslint/js':

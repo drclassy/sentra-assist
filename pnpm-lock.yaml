@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@google-cloud/vertexai':
-        specifier: ^1.10.0
+        specifier: ^1.12.0
         version: 1.12.0
       '@pieces.app/pieces-os-client':
         specifier: ^4.1.0

@@ -15,7 +15,7 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       apexcharts:
-        specifier: ^5.11.0
+        specifier: ^5.12.0
         version: 5.12.0
       framer-motion:
         specifier: ^12.38.0

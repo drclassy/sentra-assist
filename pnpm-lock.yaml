@@ -24,8 +24,8 @@ importers:
         specifier: ^1.16.0
         version: 1.16.0(react@18.3.1)
       react-apexcharts:
-        specifier: ^1.9.0
-        version: 1.9.0(apexcharts@5.12.0)(react@18.3.1)
+        specifier: ^2.1.0
+        version: 2.1.0(apexcharts@5.12.0)(react@18.3.1)
       zustand:
         specifier: ^4.5.7
         version: 4.5.7(@types/react@18.3.28)(react@18.3.1)
@@ -3380,10 +3380,10 @@ packages:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
 
-  react-apexcharts@1.9.0:
-    resolution: {integrity: sha512-DDBzQFuKdwyCEZnji1yIcjlnV8hRr4VDabS5Y3iuem/WcTq6n4VbjWPzbPm3aOwW4I+rf/gA3zWqhws4z9CwLw==}
+  react-apexcharts@2.1.0:
+    resolution: {integrity: sha512-xrmeTKRKHh3cvvLc8SasqFjlOgIqGpyHc81qjnRtcjUM0Fu7qEjgVRWGPokGFjqhwRZVgEym8zmuEyYr5LMYIg==}
     peerDependencies:
-      apexcharts: '>=4.0.0'
+      apexcharts: '>=5.10.1'
       react: '>=16.8.0'
 
   react-dom@18.3.1:
@@ -7388,7 +7388,7 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-apexcharts@1.9.0(apexcharts@5.12.0)(react@18.3.1):
+  react-apexcharts@2.1.0(apexcharts@5.12.0)(react@18.3.1):
     dependencies:
       apexcharts: 5.12.0
       prop-types: 15.8.1

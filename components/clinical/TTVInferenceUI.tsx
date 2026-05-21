@@ -725,10 +725,15 @@ export const buildAlerts = (
 
     const shockResult = detectOccultShock(shockInput);
 
-    if (
-      (shockResult.risk_level === 'CRITICAL' || shockResult.risk_level === 'HIGH') &&
-      !hasHypotension
-    ) {
+    const hasRelativeHypotensionTrigger = shockResult.triggers.some((trigger) =>
+      trigger.includes('Relative hypotension')
+    );
+    const shouldTriggerOccultShockAlert =
+      shockResult.risk_level === 'CRITICAL' ||
+      shockResult.risk_level === 'HIGH' ||
+      (shockResult.risk_level === 'MODERATE' && hasRelativeHypotensionTrigger);
+
+    if (shouldTriggerOccultShockAlert && !hasHypotension) {
       alerts.push({
         id: 'occult-shock-alert',
         type: 'occult_shock',
@@ -776,7 +781,7 @@ export const buildAlerts = (
       // Adult/geriatric: pakai htn-classifier.ts penuh
       const htnSeverity = getHTNSeverity({ sbp, dbp });
 
-      if (htnSeverity === 'stage1' || htnSeverity === 'stage2' || htnSeverity === 'crisis') {
+      if (htnSeverity === 'stage2' || htnSeverity === 'crisis') {
         const bpSession: BPMeasurementSession = {
           readings: [{ sbp, dbp }],
           final_bp: { sbp, dbp },
@@ -833,7 +838,7 @@ export const buildAlerts = (
       alerts.push({
         id: 'hypoglycemia-alert',
         type: 'hypoglycemia',
-        severity: 'critical',
+        severity: 'high',
         title: `Hipoglikemia — tangani segera (GDS ${glucose} mg/dL)`,
         gate: 'GATE_3_GLUCOSE',
         reasoning: glucoseResult.reasoning,
@@ -851,7 +856,7 @@ export const buildAlerts = (
         recommendations: glucoseResult.recommendations,
         clinicalData: { glucose },
       });
-    } else if (glucoseResult.category === 'DIABETES_CONFIRMED') {
+    } else if (glucose >= 300 || glucoseResult.category === 'DIABETES_CONFIRMED') {
       alerts.push({
         id: 'diabetes-alert',
         type: 'hyperglycemia',

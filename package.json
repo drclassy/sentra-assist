@@ -62,7 +62,7 @@
     "eslint-plugin-react": "7.37.5",
     "jsdom": "29.1.1",
     "playwright": "1.60.0",
-    "postcss": "8.5.14",
+    "postcss": "8.5.15",
     "prettier": "3.8.3",
     "react": "19.2.6",
     "react-dom": "19.2.6",

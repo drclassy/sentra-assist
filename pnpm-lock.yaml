@@ -28,7 +28,7 @@ importers:
         version: 2.1.0(apexcharts@5.13.0)(react@19.2.6)
       zustand:
         specifier: ^5.0.13
-        version: 5.0.13(@types/react@19.2.14)(react@19.2.6)
+        version: 5.0.13(@types/react@19.2.15)(react@19.2.6)
     devDependencies:
       '@eslint/js':
         specifier: 10.0.1
@@ -41,7 +41,7 @@ importers:
         version: 6.9.1
       '@testing-library/react':
         specifier: 16.3.2
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@types/chrome':
         specifier: 0.1.42
         version: 0.1.42
@@ -49,11 +49,11 @@ importers:
         specifier: 24.12.4
         version: 24.12.4
       '@types/react':
-        specifier: 19.2.14
-        version: 19.2.14
+        specifier: 19.2.15
+        version: 19.2.15
       '@types/react-dom':
         specifier: 19.2.3
-        version: 19.2.3(@types/react@19.2.14)
+        version: 19.2.3(@types/react@19.2.15)
       '@vitest/ui':
         specifier: 4.1.6
         version: 4.1.6(vitest@4.1.6)
@@ -903,8 +903,8 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
-  '@types/react@19.2.14':
-    resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
+  '@types/react@19.2.15':
+    resolution: {integrity: sha512-eRwcGNHve+E8qtEQSSRl6urh+rFop4v8gm6O8rGv25CodbvFdLjA1vVQ1KkiFE0w0UPOnb8tDiFKL5lp0rtY5Q==}
 
   '@types/retry@0.12.0':
     resolution: {integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==}
@@ -4065,15 +4065,15 @@ snapshots:
       picocolors: 1.1.1
       redent: 3.0.0
 
-  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@babel/runtime': 7.29.2
       '@testing-library/dom': 10.4.1
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
     optionalDependencies:
-      '@types/react': 19.2.14
-      '@types/react-dom': 19.2.3(@types/react@19.2.14)
+      '@types/react': 19.2.15
+      '@types/react-dom': 19.2.3(@types/react@19.2.15)
 
   '@tybys/wasm-util@0.10.2':
     dependencies:
@@ -4118,11 +4118,11 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
-  '@types/react-dom@19.2.3(@types/react@19.2.14)':
+  '@types/react-dom@19.2.3(@types/react@19.2.15)':
     dependencies:
-      '@types/react': 19.2.14
+      '@types/react': 19.2.15
 
-  '@types/react@19.2.14':
+  '@types/react@19.2.15':
     dependencies:
       csstype: 3.2.3
 
@@ -7068,7 +7068,7 @@ snapshots:
 
   zod@4.4.3: {}
 
-  zustand@5.0.13(@types/react@19.2.14)(react@19.2.6):
+  zustand@5.0.13(@types/react@19.2.15)(react@19.2.6):
     optionalDependencies:
-      '@types/react': 19.2.14
+      '@types/react': 19.2.15
       react: 19.2.6

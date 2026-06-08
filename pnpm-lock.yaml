@@ -58,8 +58,8 @@ importers:
         specifier: 4.1.7
         version: 4.1.7(vitest@4.1.7)
       '@webext-core/messaging':
-        specifier: 3.0.1
-        version: 3.0.1
+        specifier: 3.0.2
+        version: 3.0.2
       '@wxt-dev/module-react':
         specifier: 1.2.2
         version: 1.2.2(vite@8.0.14(@types/node@24.13.0)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))(wxt@0.20.26(@types/node@24.13.0)(eslint@10.4.1(jiti@2.7.0))(jiti@2.7.0)(rolldown@1.0.2)(yaml@2.9.0))
@@ -1032,8 +1032,8 @@ packages:
   '@webext-core/match-patterns@1.0.3':
     resolution: {integrity: sha512-NY39ACqCxdKBmHgw361M9pfJma8e4AZo20w9AY+5ZjIj1W2dvXC8J31G5fjfOGbulW9w4WKpT8fPooi0mLkn9A==}
 
-  '@webext-core/messaging@3.0.1':
-    resolution: {integrity: sha512-xZ1DTIm/ZHBqKUf1+DczTywbF9MKeJ9ib3iUQIilh9o/2ETYprDDL+Gk5p28GEF82YW5+M2G7LVGpySfcvNpkg==}
+  '@webext-core/messaging@3.0.2':
+    resolution: {integrity: sha512-tUeF0s+3d/Am6jKuXpET973ZatN3sD3mp6Fy/3GYzIQG3TQbc1Ia9I4x7lwysLSL4teroMVkoyFwafmbrGn/WA==}
 
   '@wxt-dev/browser@0.1.43':
     resolution: {integrity: sha512-RMB0zgfe7uuiTp18s9taLeKXoOCLBV418797dnEggiMWmM1JDJekiLtlvrNc6QeZg+amDBy2/KKYuQB2kh/K9A==}
@@ -4289,7 +4289,7 @@ snapshots:
 
   '@webext-core/match-patterns@1.0.3': {}
 
-  '@webext-core/messaging@3.0.1':
+  '@webext-core/messaging@3.0.2':
     dependencies:
       '@aklinker1/zero-serialize-error': 1.0.2
       webextension-polyfill: 0.10.0

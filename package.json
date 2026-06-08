@@ -54,7 +54,7 @@
     "@types/react": "19.2.15",
     "@types/react-dom": "19.2.3",
     "@vitest/ui": "4.1.7",
-    "@webext-core/messaging": "3.0.1",
+    "@webext-core/messaging": "3.0.2",
     "@wxt-dev/module-react": "1.2.2",
     "@wxt-dev/storage": "1.2.8",
     "autoprefixer": "10.5.0",
